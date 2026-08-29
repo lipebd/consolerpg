@@ -1,8 +1,12 @@
 package rpg.characters;
 
+import java.util.List;
+import rpg.items.DropEntry;
+
 // Represents an enemy controlled by the game.
 public class Enemy extends GameCharacter {
 	
+	private final List<DropEntry> dropTable;
     private String description;
     private final EnemyRank rank;
     
@@ -16,6 +20,7 @@ public class Enemy extends GameCharacter {
 	        int healingPower,
 	        int luck,
 	        EnemyRank rank,
+	        List<DropEntry> dropTable,
 	        String description
 	) {
 	    super(
@@ -29,8 +34,9 @@ public class Enemy extends GameCharacter {
 	            luck
 	    );
 
-	    this.description = description;
 	    this.rank = rank;
+	    this.dropTable = List.copyOf(dropTable);
+	    this.description = description;
 	}
 	
 	public String getDescription() {
@@ -39,5 +45,9 @@ public class Enemy extends GameCharacter {
 	
 	public EnemyRank getRank() {
 	    return rank;
+	}
+	
+	public List<DropEntry> getDropTable() {
+	    return dropTable;
 	}
 }

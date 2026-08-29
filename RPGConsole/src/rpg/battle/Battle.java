@@ -2,11 +2,11 @@ package rpg.battle;
 
 import java.util.Scanner;
 import java.util.List;
-
 import rpg.skills.Skill;
 import rpg.characters.Enemy;
 import rpg.characters.Player;
 import rpg.characters.GameCharacter;
+import rpg.ui.ItemMenu;
 
 // Controls a battle between a player and an enemy.
 public class Battle {
@@ -15,12 +15,14 @@ public class Battle {
 	private Enemy enemy;
 	private Scanner scanner;
 	private boolean playerFled;
+	private ItemMenu itemMenu;
 
 	public Battle(Player player, Enemy enemy, Scanner scanner) {
 		this.player = player;
 		this.enemy = enemy;
 		this.playerFled = false;
 		this.scanner = scanner;
+		this.itemMenu = new ItemMenu(player, scanner);
 	}
 
 	public BattleResult start() {
@@ -61,14 +63,6 @@ public class Battle {
 				target.getName() + " sofreu "
 						+ damage + " de dano. HP atual: "
 						+ target.getCurrentHp() +  "/"
-						+ target.getMaxHp() + ".");
-	}
-
-	private void displayHeal(GameCharacter target, int recoveryAmount) {
-		System.out.println(
-				target.getName() + " recuperou "
-						+ recoveryAmount + " de HP. HP atual: "
-						+ target.getCurrentHp() + "/"
 						+ target.getMaxHp() + ".");
 	}
 
@@ -134,9 +128,7 @@ public class Battle {
 			
 			case "4" -> displayEnemyAnalysis();
 			
-			case "5" -> System.out.println(
-			        "Você não possui itens utilizáveis."
-			);
+			case "5" -> validAction = itemMenu.open();
 
 			case "6" -> {
 			    playerFled = true;
@@ -315,4 +307,5 @@ public class Battle {
 	    System.out.println("ATK: " + enemy.getAttack());
 	    System.out.println("DEF: " + enemy.getDefense());
 	}
+	
 }

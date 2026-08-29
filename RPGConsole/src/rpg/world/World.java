@@ -3,6 +3,8 @@ package rpg.world;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Random;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import rpg.battle.Battle;
 import rpg.battle.BattleResult;
@@ -12,6 +14,11 @@ import rpg.characters.EnemyRank;
 import rpg.world.scenarios.Scenario;
 import rpg.world.scenarios.ScenarioAction;
 import rpg.world.scenarios.CombatScenario;
+import rpg.items.DropEntry;
+import rpg.items.Item;
+import rpg.items.ItemCatalog;
+import rpg.ui.ItemMenu;
+import rpg.ui.GameOverScreen;
 
 // Controls navigation and interaction with the game world.
 public class World {
@@ -24,6 +31,7 @@ public class World {
 	private Scanner scanner;
 	private boolean running;
 	private boolean shouldDisplayScenarioDescription;
+	private ItemMenu itemMenu;
 
 	public World(
 			Player player,
@@ -36,6 +44,7 @@ public class World {
 		this.running = true;
 		this.random = new Random();
 		this.shouldDisplayScenarioDescription = true;
+		this.itemMenu = new ItemMenu(player, scanner);
 	}
 
 	public void start() {
@@ -43,8 +52,6 @@ public class World {
 			displayCurrentScenario();
 			executeScenarioMenu();
 		}
-
-		System.out.println("\nJogo encerrado.");
 	}
 
 	private void displayCurrentScenario() {
@@ -77,8 +84,12 @@ public class World {
 		String choice = scanner.nextLine();
 
 		if (choice.equals("0")) {
-			running = false;
-			return;
+		    System.out.println(
+		            "\nObrigado por testar a V1!"
+		    );
+
+		    running = false;
+		    return;
 		}
 
 		try {
@@ -107,6 +118,8 @@ public class World {
 		case EXPLORE -> explore();
 
 		case VIEW_STATUS -> displayPlayerStatus();
+		
+		case INVENTORY -> itemMenu.open();
 
 		case TRAVEL -> System.out.println(
 				"\nNão há outros destinos disponíveis."
@@ -160,6 +173,14 @@ public class World {
 				0,
 				0,
 				EnemyRank.COMMON,
+				List.of(
+				        new DropEntry(
+				                ItemCatalog.MERUMA,
+				                50,
+				                1,
+				                1
+				        )
+				),
 				"Descrição do Lobermo."
 				);
 
@@ -180,8 +201,10 @@ public class World {
 		case FLED ->
 		shouldDisplayScenarioDescription = true;
 
-		case DEFEAT ->
-		running = false;
+		case DEFEAT -> {
+		    GameOverScreen.show(player);
+		    running = false;
+		}
 		}
 	}
 
@@ -207,18 +230,23 @@ public class World {
 				player.gainExperience(experienceReward);
 
 		player.addGold(goldReward);
+		
+		Map<Item, Integer> collectedItems =
+		        collectEnemyDrops(defeatedEnemy);
 
 		displayBattleRewards(
-				experienceReward,
-				goldReward,
-				levelsGained
-				);
+		        experienceReward,
+		        goldReward,
+		        levelsGained,
+		        collectedItems
+		);
 	}
 
 	private void displayBattleRewards(
 	        int experienceReward,
 	        int goldReward,
-	        int levelsGained
+	        int levelsGained,
+	        Map<Item, Integer> collectedItems
 	) {
 	    System.out.println("\n[RESULTADO DA BATALHA]");
 
@@ -244,6 +272,24 @@ public class World {
 	                + player.getLevel() + "]"
 	        );
 	    }
+	    
+	    System.out.println("\nItens encontrados:");
+
+	    if (collectedItems.isEmpty()) {
+	        System.out.println("- Nenhum");
+	    } else {
+	        for (Map.Entry<Item, Integer> entry
+	                : collectedItems.entrySet()) {
+
+	            Item item = entry.getKey();
+	            int quantity = entry.getValue();
+
+	            System.out.println(
+	                    "- " + item.getName()
+	                    + " x" + quantity
+	            );
+	        }
+	    }
 
 	    waitForContinue();
 	}
@@ -261,6 +307,38 @@ public class World {
 
 	        System.out.println("Opção inválida.");
 	    }
+	}
+	
+	private Map<Item, Integer> collectEnemyDrops(
+	        Enemy defeatedEnemy
+	) {
+	    Map<Item, Integer> collectedItems =
+	            new LinkedHashMap<>();
+
+	    for (DropEntry dropEntry
+	            : defeatedEnemy.getDropTable()) {
+
+	        int quantity = dropEntry.rollQuantity(random);
+
+	        if (quantity > 0) {
+	            Item item = dropEntry.getItem();
+
+	            player.getInventory().addItem(
+	                    item,
+	                    quantity
+	            );
+
+	            int currentQuantity =
+	                    collectedItems.getOrDefault(item, 0);
+
+	            collectedItems.put(
+	                    item,
+	                    currentQuantity + quantity
+	            );
+	        }
+	    }
+
+	    return collectedItems;
 	}
 
 }

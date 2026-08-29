@@ -4,6 +4,7 @@ package rpg.world.scenarios;
 public enum ScenarioAction {
 
     EXPLORE("Explorar"),
+    INVENTORY("Itens"),
     VIEW_STATUS("Ver status"),
     TRAVEL("Viajar");
 

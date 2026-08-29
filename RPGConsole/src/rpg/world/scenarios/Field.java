@@ -21,10 +21,11 @@ public class Field extends CombatScenario {
 
     @Override
     public List<ScenarioAction> getAvailableActions() {
-        return List.of(
-                ScenarioAction.EXPLORE,
-                ScenarioAction.VIEW_STATUS,
-                ScenarioAction.TRAVEL
-        );
+    	return List.of(
+    	        ScenarioAction.EXPLORE,
+    	        ScenarioAction.INVENTORY,
+    	        ScenarioAction.VIEW_STATUS,
+    	        ScenarioAction.TRAVEL
+    	);
     }
 }
