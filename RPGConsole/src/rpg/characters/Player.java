@@ -1,6 +1,7 @@
 package rpg.characters;
 
 import java.util.ArrayList;
+import rpg.items.Inventory;
 import java.util.List;
 
 import rpg.skills.Skill;
@@ -9,7 +10,8 @@ import rpg.skills.Skill;
 public class Player extends GameCharacter {
 	
 	private static final int BASE_EXPERIENCE_REQUIREMENT = 50;
-
+	
+	private final Inventory inventory;
 	private int experience;
 	private int gold;	
 	private int level;
@@ -38,6 +40,7 @@ public class Player extends GameCharacter {
 		
 		this.level = 1;
 		this.skills = new ArrayList<>();
+		this.inventory = new Inventory();
 		this.experience = 0;
 		this.gold = 0;
 	}
@@ -113,6 +116,10 @@ public class Player extends GameCharacter {
 
 	public int getGold() {
 	    return gold;
+	}
+	
+	public Inventory getInventory() {
+	    return inventory;
 	}
 
 }
