@@ -10,7 +10,7 @@ import rpg.battle.Battle;
 import rpg.battle.BattleResult;
 import rpg.characters.Player;
 import rpg.characters.Enemy;
-import rpg.characters.EnemyRank;
+import rpg.enemies.EnemyCatalog;
 import rpg.world.scenarios.Scenario;
 import rpg.world.scenarios.ScenarioAction;
 import rpg.world.scenarios.CombatScenario;
@@ -24,7 +24,7 @@ import rpg.ui.GameOverScreen;
 public class World {
 
 	private static final int ENCOUNTER_CHANCE = 50;
-
+	private final EnemyCatalog enemyCatalog;
 	private Random random;
 	private Player player;
 	private Scenario currentScenario;
@@ -34,17 +34,20 @@ public class World {
 	private ItemMenu itemMenu;
 
 	public World(
-			Player player,
-			Scenario initialScenario,
-			Scanner scanner
-			) {
-		this.player = player;
-		this.currentScenario = initialScenario;
-		this.scanner = scanner;
-		this.running = true;
-		this.random = new Random();
-		this.shouldDisplayScenarioDescription = true;
-		this.itemMenu = new ItemMenu(player, scanner);
+	        Player player,
+	        Scenario initialScenario,
+	        Scanner scanner,
+	        EnemyCatalog enemyCatalog
+	) {
+	    this.player = player;
+	    this.currentScenario = initialScenario;
+	    this.scanner = scanner;
+	    this.enemyCatalog = enemyCatalog;
+
+	    this.running = true;
+	    this.random = new Random();
+	    this.shouldDisplayScenarioDescription = true;
+	    this.itemMenu = new ItemMenu(player, scanner);
 	}
 
 	public void start() {
@@ -161,51 +164,45 @@ public class World {
 	}
 
 	private void startLobermoEncounter() {
-		System.out.println("\nUm Lobermo apareceu!");
+	    Enemy enemy = enemyCatalog
+	            .getById("lobermo")
+	            .createEnemy(
+	                    List.of(
+	                            new DropEntry(
+	                                    ItemCatalog.MERUMA,
+	                                    50,
+	                                    1,
+	                                    1
+	                            )
+	                    )
+	            );
 
-		Enemy lobermo = new Enemy(
-				"Lobermo",
-				50,
-				0,
-				0,
-				8,
-				5,
-				0,
-				0,
-				EnemyRank.COMMON,
-				List.of(
-				        new DropEntry(
-				                ItemCatalog.MERUMA,
-				                50,
-				                1,
-				                1
-				        )
-				),
-				"Descrição do Lobermo."
-				);
+	    System.out.println(
+	            "\nUm " + enemy.getName() + " apareceu!"
+	    );
 
-		Battle battle = new Battle(
-				player,
-				lobermo,
-				scanner
-				);
+	    Battle battle = new Battle(
+	            player,
+	            enemy,
+	            scanner
+	    );
 
-		BattleResult result = battle.start();
+	    BattleResult result = battle.start();
 
-		switch (result) {
-		case VICTORY -> {
-			grantBattleRewards(lobermo);
-			shouldDisplayScenarioDescription = true;
-		}
+	    switch (result) {
+	        case VICTORY -> {
+	            grantBattleRewards(enemy);
+	            shouldDisplayScenarioDescription = true;
+	        }
 
-		case FLED ->
-		shouldDisplayScenarioDescription = true;
+	        case FLED ->
+	            shouldDisplayScenarioDescription = true;
 
-		case DEFEAT -> {
-		    GameOverScreen.show(player);
-		    running = false;
-		}
-		}
+	        case DEFEAT -> {
+	            GameOverScreen.show(player);
+	            running = false;
+	        }
+	    }
 	}
 
 	private void grantBattleRewards(Enemy defeatedEnemy) {

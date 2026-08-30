@@ -17,26 +17,8 @@ public class Player extends GameCharacter {
 	private int level;
 	private List<Skill> skills;
 
-	public Player(
-			String name, 
-			int maxHp, 
-			int maxMp, 
-			int maxSp, 
-			int attack, 
-			int defense, 
-			int healingPower, 
-			int luck
-			) {
-		super(
-				name,
-				maxHp,
-				maxMp,
-				maxSp,
-				attack,
-				defense,
-				healingPower,
-				luck
-				);
+	public Player(String name, CharacterStats stats) {
+	    super(name, stats);
 		
 		this.level = 1;
 		this.skills = new ArrayList<>();

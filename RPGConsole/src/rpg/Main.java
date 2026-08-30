@@ -3,13 +3,18 @@ package rpg;
 import rpg.world.World;
 import rpg.world.scenarios.Field;
 import rpg.world.scenarios.Scenario;
+import rpg.characters.CharacterStats;
 import rpg.characters.Player;
 import rpg.skills.DamageType;
 import rpg.skills.Skill;
 import rpg.ui.TitleScreen;
 import rpg.ui.ConsoleUI;
+import rpg.enemies.EnemyCatalog;
+import rpg.enemies.EnemyLoader;
 
 import java.util.Scanner;
+import java.io.IOException;
+import java.nio.file.Path;
 
 // Starts the game and controls its initial execution.
 public class Main {
@@ -18,12 +23,44 @@ public class Main {
 		
 		Scanner scanner = new Scanner(System.in);
 		
+		EnemyCatalog enemyCatalog;
+
+		try {
+		    EnemyLoader enemyLoader = new EnemyLoader();
+
+		    enemyCatalog = enemyLoader.load(
+		            Path.of("data", "enemies.txt")
+		    );
+		} catch (IOException | IllegalArgumentException exception) {
+		    System.out.println(
+		            "Não foi possível carregar os dados dos inimigos."
+		    );
+
+		    System.out.println(exception.getMessage());
+		    return;
+		}
+		System.out.println(
+		        "Inimigo carregado: "
+		        + enemyCatalog.getById("lobermo").getName()
+		);
+		
 		TitleScreen.show(scanner);
 		ConsoleUI.clearScreen();
 		
-//Ordem atual dos parâmetros: nome, HP, MP, SP, ataque, defesa, poder de cura, sorte
-		Player player =
-				new Player("Flagelo", 120, 50, 110, 15, 14, 50, 10);
+		CharacterStats flageloStats = new CharacterStats(
+		        120, // HP
+		        50,  // MP
+		        110, // SP
+		        15,  // ATK
+		        14,  // DEF
+		        9,   // MAG
+		        12,  // RES
+		        12,  // VEL
+		        10   // LCK
+		);
+
+		Player player = new Player("Flagelo", flageloStats);
+		
 		Skill investida = new Skill(
 		        "Investida",
 		        1,
@@ -53,7 +90,8 @@ public class Main {
 		World world = new World(
 		        player,
 		        currentScenario,
-		        scanner
+		        scanner,
+		        enemyCatalog
 		);
 
 		world.start();

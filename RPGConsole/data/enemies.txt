@@ -1,0 +1,2 @@
+# id;name;maxHp;maxMp;maxSp;attack;defense;magic;resistance;speed;luck;rank;description
+lobermo;Lobermo;50;0;0;8;5;0;0;0;0;COMMON;Predador comum de Verdes Ermos. Uma pequena criatura lupina que não oferece risco aos aventureiros experientes, mas perigoso para quem sai de despreparado de Bree.
