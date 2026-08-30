@@ -6,7 +6,7 @@ import java.util.Scanner;
 public final class TitleScreen {
 
     private static final String GAME_TITLE =
-            "RPG CONSOLE — V1";
+            "RPG CONSOLE — V2";
 
     private TitleScreen() {
     }

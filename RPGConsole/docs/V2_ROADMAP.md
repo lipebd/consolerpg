@@ -21,10 +21,10 @@ parties and multiple enemies.
 - [x] Add stable IDs to scenarios.
 - [x] Create area encounter entries.
 - [x] Create `data/encounters.txt`.
-- [ ] Create the encounter data loader.
-- [ ] Create the random encounter generator.
-- [ ] Remove `startLobermoEncounter()`.
-- [ ] Allow each area to define its available enemies.
+- [x] Create the encounter data loader.
+- [x] Create the random encounter generator.
+- [x] Remove `startLobermoEncounter()`.
+- [x] Allow each area to define its available enemies.
 
 ## Phase 2 — Linear exploration
 
@@ -41,15 +41,18 @@ Possible events:
 
 Tasks:
 
-- [ ] Create `ExplorationEventType`.
-- [ ] Create `ExplorationSession`.
-- [ ] Store the current exploration position.
-- [ ] Configure the length of each explorable area.
-- [ ] Generate one event for each position.
-- [ ] Limit the merchant to one appearance per area session.
-- [ ] Allow an exploration session without a merchant.
-- [ ] Complete Verdes Ermos after five exploration actions.
+- [x] Create `ExplorationEventType`.
+- [x] Create `ExplorationSession`.
+- [x] Store the current exploration position.
+- [x] Configure the length of each explorable area.
+- [x] Generate one event for each position.
+- [x] Limit the merchant to one appearance per area session.
+- [x] Allow an exploration session without a merchant.
+- [x] Complete Verdes Ermos after five exploration actions.
 - [ ] Unlock travel after reaching the final position.
+- [ ] Create fixed exploration branching points.
+- [ ] Allow a branching point to load another scenario.
+- [ ] End the current exploration session when entering a branch.
 
 ## Phase 3 — Additional area
 
@@ -103,6 +106,18 @@ Tasks:
 - [ ] Update project documentation.
 - [ ] Create the V2 release build.
 - [ ] Create the V2 Git tag.
+
+## Future defeat and rescue flow
+
+This phase must be implemented only after Bree is fully functional.
+
+- [ ] Remove the Game Over flow.
+- [ ] Create a full HP, MP and SP restoration operation.
+- [ ] Display a defeat and rescue message.
+- [ ] End the current exploration session after defeat.
+- [ ] Return the player or party to Bree.
+- [ ] Preserve EXP, gold, items and character progression.
+- [ ] Support full-party defeat after the party system is implemented.
 
 ## Outside the V2 scope
 
