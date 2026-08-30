@@ -18,7 +18,7 @@ RPGConsole separates technical language from game content.
 | Packages | English | `rpg.world.encounters` |
 | Technical comments and Javadoc | English | `// Loads enemy definitions...` |
 | Developer-facing exception messages | English | `Enemy ID cannot be empty.` |
-| Text displayed to the player | Brazilian Portuguese | `VocÃª encontrou uma MerumÃ£!` |
+| Text displayed to the player | Brazilian Portuguese | `Você encontrou uma Merumã` |
 | Display names for game content | Brazilian Portuguese | `Gruta de Relamparrocha` |
 | Stable content IDs | Brazilian Portuguese without accents | `gruta_relamparrocha` |
 
