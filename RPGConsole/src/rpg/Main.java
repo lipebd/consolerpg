@@ -103,8 +103,8 @@ public class Main {
 				0, // merchant chance
 				10, // epic encounter chance
 				30, // special area chance
-				1, // minimum enemies
-				3, // maximum enemies
+				2, // minimum enemies
+				2, // maximum enemies
 				"Você avança pelos túneis eletrificados da gruta.",
 				"Você encontrou uma câmara incomum entre as eletrorrochas!");
 

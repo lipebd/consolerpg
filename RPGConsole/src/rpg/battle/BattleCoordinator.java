@@ -3,6 +3,7 @@ package rpg.battle;
 import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
+import java.util.ArrayList;
 
 import rpg.battle.rewards.BattleRewards;
 import rpg.battle.rewards.BattleRewardService;
@@ -37,19 +38,48 @@ public final class BattleCoordinator {
 	}
 
 	public BattleResult start(EnemyDefinition enemyDefinition, CombatScenario combatScenario) {
-		Enemy enemy = createEnemy(enemyDefinition);
+		Objects.requireNonNull(enemyDefinition, "Enemy definition cannot be null.");
 
-		System.out.println("\nUm " + enemy.getName() + " apareceu!");
+		return start(List.of(enemyDefinition), combatScenario);
+	}
 
-		Battle battle = new Battle(player, enemy, scanner);
+	public BattleResult start(List<EnemyDefinition> enemyDefinitions, CombatScenario combatScenario) {
+		Objects.requireNonNull(enemyDefinitions, "Enemy definition list cannot be null.");
+
+		Objects.requireNonNull(combatScenario, "Combat scenario cannot be null.");
+
+		if (enemyDefinitions.isEmpty()) {
+			throw new IllegalArgumentException("Enemy definition list cannot be empty.");
+		}
+
+		List<Enemy> enemies = createEnemies(enemyDefinitions);
+
+		displayEncounterMessage(enemies);
+
+		EnemyBattleGroup enemyGroup = new EnemyBattleGroup(enemies);
+
+		Battle battle = new Battle(player, enemyGroup, scanner);
 
 		BattleResult result = battle.start();
 
 		if (result == BattleResult.VICTORY) {
-			grantVictoryRewards(enemy, combatScenario);
+			grantVictoryRewards(enemies, combatScenario);
 		}
 
 		return result;
+	}
+
+	private List<Enemy> createEnemies(List<EnemyDefinition> enemyDefinitions) {
+		List<Enemy> enemies = new ArrayList<>();
+
+		for (EnemyDefinition enemyDefinition : enemyDefinitions) {
+
+			Objects.requireNonNull(enemyDefinition, "Enemy definition cannot be null.");
+
+			enemies.add(createEnemy(enemyDefinition));
+		}
+
+		return List.copyOf(enemies);
 	}
 
 	private Enemy createEnemy(EnemyDefinition enemyDefinition) {
@@ -58,9 +88,19 @@ public final class BattleCoordinator {
 		return enemyDefinition.createEnemy(dropTable);
 	}
 
-	private void grantVictoryRewards(Enemy defeatedEnemy, CombatScenario combatScenario) {
-		BattleRewards rewards = rewardService.grantRewards(player, defeatedEnemy, combatScenario);
+	private void grantVictoryRewards(List<Enemy> defeatedEnemies, CombatScenario combatScenario) {
+		BattleRewards rewards = rewardService.grantRewards(player, defeatedEnemies, combatScenario);
 
 		rewardScreen.show(player, rewards);
+	}
+
+	private void displayEncounterMessage(List<Enemy> enemies) {
+		if (enemies.size() == 1) {
+			System.out.println("\nUm " + enemies.get(0).getName() + " apareceu!");
+
+			return;
+		}
+
+		System.out.println("\nUm grupo de inimigos apareceu!");
 	}
 }

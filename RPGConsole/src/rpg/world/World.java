@@ -3,6 +3,7 @@ package rpg.world;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.List;
 
 import rpg.battle.BattleCoordinator;
 import rpg.battle.BattleResult;
@@ -172,16 +173,22 @@ public class World {
 	}
 
 	private void startRandomEncounter(int position, boolean specialArea) {
-		Optional<EnemyDefinition> selectedDefinition = encounterGenerator.generate(currentScenario.getId(), position,
-				specialArea);
+		if (!(currentScenario instanceof CombatScenario combatScenario)) {
+			throw new IllegalStateException("A random encounter can only occur " + "inside a combat scenario.");
+		}
 
-		if (selectedDefinition.isEmpty()) {
+		ExplorationSettings settings = combatScenario.getExplorationSettings();
+
+		List<EnemyDefinition> selectedDefinitions = encounterGenerator.generateGroup(currentScenario.getId(), position,
+				specialArea, settings.getMinEnemies(), settings.getMaxEnemies());
+
+		if (selectedDefinitions.isEmpty()) {
 			System.out.println("Nenhum inimigo foi encontrado nesta região.");
 
 			return;
 		}
 
-		startEncounter(selectedDefinition.get());
+		startEncounter(selectedDefinitions);
 	}
 
 	private void executeExplorationEvent(ExplorationEventType eventType, int position, boolean specialArea) {
@@ -236,12 +243,17 @@ public class World {
 		startEncounter(epicDefinition);
 	}
 
+	// sobrecarga de métodos
 	private BattleResult startEncounter(EnemyDefinition enemyDefinition) {
+		return startEncounter(List.of(enemyDefinition));
+	}
+
+	private BattleResult startEncounter(List<EnemyDefinition> enemyDefinitions) {
 		if (!(currentScenario instanceof CombatScenario combatScenario)) {
 			throw new IllegalStateException("A battle can only start " + "inside a combat scenario.");
 		}
 
-		BattleResult result = battleCoordinator.start(enemyDefinition, combatScenario);
+		BattleResult result = battleCoordinator.start(enemyDefinitions, combatScenario);
 
 		switch (result) {
 		case VICTORY, FLED -> shouldDisplayScenarioDescription = true;
