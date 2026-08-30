@@ -1,6 +1,5 @@
 package rpg.world;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Scanner;
@@ -19,6 +18,7 @@ import rpg.ui.ConsoleUI;
 import rpg.ui.EpicEncounterMenu;
 import rpg.ui.GameOverScreen;
 import rpg.ui.ItemMenu;
+import rpg.ui.ScenarioActionMenu;
 import rpg.ui.TravelMenu;
 import rpg.world.encounters.EncounterCatalog;
 import rpg.world.encounters.EncounterGenerator;
@@ -36,6 +36,7 @@ import rpg.world.travel.TravelCatalog;
 // Controls navigation and interaction with the game world.
 public class World {
 
+	private final ScenarioActionMenu scenarioActionMenu;
 	private final BattleCoordinator battleCoordinator;
 	private final EpicEncounterMenu epicEncounterMenu;
 	private final EnemyCatalog enemyCatalog;
@@ -45,7 +46,6 @@ public class World {
 	private Random random;
 	private Player player;
 	private Scenario currentScenario;
-	private Scanner scanner;
 	private boolean running;
 	private boolean shouldDisplayScenarioDescription;
 	private ItemMenu itemMenu;
@@ -56,7 +56,6 @@ public class World {
 			TravelCatalog travelCatalog) {
 		this.player = player;
 		this.currentScenario = initialScenario;
-		this.scanner = scanner;
 		this.random = new Random();
 		BattleRewardService rewardService = new BattleRewardService(random);
 		BattleRewardScreen rewardScreen = new BattleRewardScreen(scanner);
@@ -66,6 +65,7 @@ public class World {
 		this.explorationEventGenerator = new ExplorationEventGenerator(random);
 		this.travelMenu = new TravelMenu(scanner, scenarioCatalog, travelCatalog);
 		this.epicEncounterMenu = new EpicEncounterMenu(scanner);
+		this.scenarioActionMenu = new ScenarioActionMenu(scanner);
 		this.running = true;
 		this.shouldDisplayScenarioDescription = true;
 		if (initialScenario instanceof CombatScenario combatScenario) {
@@ -91,41 +91,16 @@ public class World {
 	}
 
 	private void executeScenarioMenu() {
-		List<ScenarioAction> actions = currentScenario.getAvailableActions();
+		Optional<ScenarioAction> selectedAction = scenarioActionMenu.selectAction(currentScenario);
 
-		System.out.println("\nO que deseja fazer?");
-
-		for (int index = 0; index < actions.size(); index++) {
-			System.out.print("[" + (index + 1) + "] " + actions.get(index) + " | ");
-		}
-
-		System.out.println("[0] Encerrar jogo");
-		System.out.print("> ");
-
-		String choice = scanner.nextLine();
-
-		if (choice.equals("0")) {
-			System.out.println("\nObrigado por testar a V1!");
+		if (selectedAction.isEmpty()) {
+			System.out.println("\nObrigado por testar a V2!");
 
 			running = false;
 			return;
 		}
 
-		try {
-			int selectedIndex = Integer.parseInt(choice) - 1;
-
-			if (selectedIndex < 0 || selectedIndex >= actions.size()) {
-				System.out.println("Opção inválida.");
-				return;
-			}
-
-			ScenarioAction selectedAction = actions.get(selectedIndex);
-
-			executeScenarioAction(selectedAction);
-
-		} catch (NumberFormatException exception) {
-			System.out.println("Digite o número de uma ação.");
-		}
+		executeScenarioAction(selectedAction.get());
 	}
 
 	private void executeScenarioAction(ScenarioAction action) {

@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
+import java.util.List;
 
 import rpg.characters.Enemy;
 import rpg.characters.Player;
@@ -14,90 +15,79 @@ import rpg.world.scenarios.CombatScenario;
 // Calculates and grants rewards after a battle victory.
 public final class BattleRewardService {
 
-    private final Random random;
+	private final Random random;
 
-    public BattleRewardService(Random random) {
-        this.random = Objects.requireNonNull(
-                random,
-                "Random generator cannot be null."
-        );
-    }
+	public BattleRewardService(Random random) {
+		this.random = Objects.requireNonNull(random, "Random generator cannot be null.");
+	}
 
-    public BattleRewards grantRewards(
-            Player player,
-            Enemy defeatedEnemy,
-            CombatScenario combatScenario
-    ) {
-        double rankMultiplier =
-                defeatedEnemy
-                .getRank()
-                .getRewardMultiplier();
+	// sobrecarga pra tipos de parametros diferentes
+	public BattleRewards grantRewards(Player player, Enemy defeatedEnemy, CombatScenario combatScenario) {
+		Objects.requireNonNull(defeatedEnemy, "Defeated enemy cannot be null.");
 
-        int experienceReward = (int) Math.round(
-                combatScenario.getBaseExperienceReward()
-                * rankMultiplier
-        );
+		return grantRewards(player, List.of(defeatedEnemy), combatScenario);
+	}
 
-        int goldReward = (int) Math.round(
-                combatScenario.getBaseGoldReward()
-                * rankMultiplier
-        );
+	public BattleRewards grantRewards(Player player, List<Enemy> defeatedEnemies, CombatScenario combatScenario) {
+		Objects.requireNonNull(player, "Player cannot be null.");
 
-        int levelsGained =
-                player.gainExperience(experienceReward);
+		Objects.requireNonNull(defeatedEnemies, "Defeated enemy list cannot be null.");
 
-        player.addGold(goldReward);
+		Objects.requireNonNull(combatScenario, "Combat scenario cannot be null.");
 
-        Map<Item, Integer> collectedItems =
-                collectEnemyDrops(
-                        player,
-                        defeatedEnemy
-                );
+		if (defeatedEnemies.isEmpty()) {
+			throw new IllegalArgumentException("Defeated enemy list cannot be empty.");
+		}
 
-        return new BattleRewards(
-                experienceReward,
-                goldReward,
-                levelsGained,
-                collectedItems
-        );
-    }
+		int experienceReward = 0;
+		int goldReward = 0;
 
-    private Map<Item, Integer> collectEnemyDrops(
-            Player player,
-            Enemy defeatedEnemy
-    ) {
-        Map<Item, Integer> collectedItems =
-                new LinkedHashMap<>();
+		for (Enemy defeatedEnemy : defeatedEnemies) {
+			Objects.requireNonNull(defeatedEnemy, "Defeated enemy cannot be null.");
 
-        for (DropEntry dropEntry
-                : defeatedEnemy.getDropTable()) {
+			double rankMultiplier = defeatedEnemy.getRank().getRewardMultiplier();
 
-            int quantity =
-                    dropEntry.rollQuantity(random);
+			experienceReward += (int) Math.round(combatScenario.getBaseExperienceReward() * rankMultiplier);
 
-            if (quantity <= 0) {
-                continue;
-            }
+			goldReward += (int) Math.round(combatScenario.getBaseGoldReward() * rankMultiplier);
+		}
 
-            Item item = dropEntry.getItem();
+		int levelsGained = player.gainExperience(experienceReward);
 
-            player.getInventory().addItem(
-                    item,
-                    quantity
-            );
+		player.addGold(goldReward);
 
-            int currentQuantity =
-                    collectedItems.getOrDefault(
-                            item,
-                            0
-                    );
+		Map<Item, Integer> collectedItems = collectEnemyDrops(defeatedEnemies);
 
-            collectedItems.put(
-                    item,
-                    currentQuantity + quantity
-            );
-        }
+		addCollectedItemsToInventory(player, collectedItems);
 
-        return collectedItems;
-    }
+		return new BattleRewards(experienceReward, goldReward, levelsGained, collectedItems);
+	}
+
+	private Map<Item, Integer> collectEnemyDrops(List<Enemy> defeatedEnemies) {
+		Map<Item, Integer> collectedItems = new LinkedHashMap<>();
+
+		for (Enemy defeatedEnemy : defeatedEnemies) {
+			for (DropEntry dropEntry : defeatedEnemy.getDropTable()) {
+
+				int quantity = dropEntry.rollQuantity(random);
+
+				if (quantity <= 0) {
+					continue;
+				}
+
+				Item item = dropEntry.getItem();
+
+				collectedItems.merge(item, quantity, Integer::sum);
+			}
+		}
+
+		return collectedItems;
+	}
+
+	private void addCollectedItemsToInventory(Player player, Map<Item, Integer> collectedItems) {
+		for (Map.Entry<Item, Integer> entry : collectedItems.entrySet()) {
+
+			player.getInventory().addItem(entry.getKey(), entry.getValue());
+		}
+	}
 }
