@@ -1,164 +1,255 @@
-# RPGConsole — Guia de Pacotes e Classes
+# RPGConsole — Architecture
 
-Este documento apresenta a estrutura atual do projeto e a responsabilidade principal de cada pacote, classe e enum. Ele não substitui a documentação detalhada do código; serve como um mapa rápido para retomar o desenvolvimento.
+## Purpose
 
-## Visão geral
+This document summarizes the current project structure, the responsibility of each package and the main data and runtime flows.
 
-O projeto está organizado por domínio:
+The architecture is evolving incrementally. The current priority is to keep domain rules, console presentation, external data loading and game-flow coordination separated without adding abstractions before they are useful.
 
-| Pacote | Responsabilidade |
-|---|---|
-| `rpg` | Inicialização e composição das partes do jogo. |
-| `rpg.characters` | Personagens, atributos e ranks de inimigos. |
-| `rpg.battle` | Execução e resultado das batalhas. |
-| `rpg.skills` | Definição de habilidades e tipos de dano. |
-| `rpg.items` | Itens, inventário, catálogo e drops. |
-| `rpg.enemies` | Definições externas de inimigos e seu carregamento. |
-| `rpg.world` | Loop principal do mundo, exploração e recompensas. |
-| `rpg.world.scenarios` | Hierarquia e tipos de cenários. |
-| `rpg.world.encounters` | Regras, carregamento e sorteio de encontros. |
-| `rpg.world.exploration` | Configuração e estado da exploração linear. |
-| `rpg.ui` | Telas e menus reutilizáveis do console. |
+## Main conventions
 
-## `rpg`
+- Java identifiers and technical comments are written in English.
+- Player-facing texts are written in Brazilian Portuguese.
+- Stable content IDs use lowercase letters and underscores without accents.
+- Definitions contain reusable immutable data.
+- Runtime objects contain mutable state for one active game instance.
+- External references are validated during initialization.
+- Console input belongs to menus and screens rather than domain classes.
 
-| Tipo | Nome | Finalidade | Observação importante |
-|---|---|---|---|
-| Classe | `Main` | Ponto de entrada do programa. Carrega dados, cria o jogador, o cenário inicial e o mundo. | É a raiz de composição: conecta os objetos, mas não deve concentrar regras do jogo. |
+## Package overview
 
-## `rpg.characters`
-
-| Tipo | Nome | Finalidade | Observação importante |
-|---|---|---|---|
-| Classe-base | `GameCharacter` | Reúne o estado e os comportamentos compartilhados por jogadores e inimigos. | Guarda HP, MP e SP atuais, atributos de combate, ataque, defesa, dano e recuperação. |
-| Classe | `CharacterStats` | Agrupa os atributos iniciais de um personagem. | É imutável e contém HP, MP, SP, ATK, DEF, MAG, RES, VEL e LCK. Evita construtores gigantes em toda a hierarquia. |
-| Classe | `Player` | Representa o personagem controlado pelo jogador. | Acrescenta progressão, EXP, nível, ouro, habilidades e inventário ao comportamento básico. |
-| Classe | `Enemy` | Representa uma instância de inimigo usada em batalha. | Possui rank, descrição e tabela de drops. Cada encontro deve criar uma instância nova. |
-| Enum | `EnemyRank` | Classifica a dificuldade e o valor de recompensa dos inimigos. | Inclui `COMMON`, `VETERAN`, `LEADER`, `BOSS`, `EPIC` e `LEGENDARY`, cada um com nome exibido e multiplicador. |
-
-## `rpg.battle`
-
-| Tipo | Nome | Finalidade | Observação importante |
-|---|---|---|---|
-| Classe | `Battle` | Controla o loop de batalha, turnos, ações, habilidades, itens, análise e fuga. | Atualmente trabalha com um jogador e um inimigo. Será refatorada na fase de party e múltiplos inimigos. |
-| Enum | `BattleResult` | Representa como uma batalha terminou. | Valores atuais: vitória, derrota ou fuga. Permite ao `World` reagir sem interpretar textos da batalha. |
-
-## `rpg.skills`
-
-| Tipo | Nome | Finalidade | Observação importante |
-|---|---|---|---|
-| Classe | `Skill` | Armazena os dados de uma habilidade. | Reúne nome, nível de aquisição, tipo de dano, poder, cura, custos de MP/SP e descrição. |
-| Enum | `DamageType` | Representa a natureza do dano de uma habilidade. | Mantém o identificador técnico em inglês e um texto apropriado para exibição em português. |
-
-## `rpg.items`
-
-| Tipo | Nome | Finalidade | Observação importante |
-|---|---|---|---|
-| Classe-base | `Item` | Define os dados e o contrato comum dos itens. | O ID estável é usado na identidade lógica do item e será importante para arquivos externos e saves. |
-| Classe | `HealingItem` | Representa um item consumível que recupera HP. | Utiliza `GameCharacter.recoverHp()` para aplicar a cura sem ultrapassar o HP máximo. |
-| Classe | `ItemCatalog` | Centraliza os itens conhecidos pelo jogo. | Atualmente utiliza constantes, como `MERUMA`; futuramente poderá ser preenchido a partir de `items.txt`. |
-| Classe | `Inventory` | Guarda itens e suas quantidades. | Usa uma associação `Item -> Integer` e é utilizado dentro e fora de batalha. |
-| Classe | `DropEntry` | Define uma possibilidade de drop. | Guarda item, chance e quantidade mínima/máxima, além de realizar o sorteio da quantidade. |
-
-## `rpg.enemies`
-
-| Tipo | Nome | Finalidade | Observação importante |
-|---|---|---|---|
-| Classe | `EnemyDefinition` | Representa o molde imutável usado para criar inimigos. | Guarda ID, nome, `CharacterStats`, rank, descrição e drops. `createEnemy()` produz uma instância com recursos cheios. |
-| Classe | `EnemyCatalog` | Armazena as definições de inimigos por ID. | Permite localizar, por exemplo, a definição associada a `lobermo`. |
-| Classe | `EnemyLoader` | Converte as linhas de `data/enemies.txt` em definições. | Valida quantidade de campos, números e valores do enum antes de registrar cada inimigo. |
-
-## `rpg.world`
-
-| Tipo | Nome | Finalidade | Observação importante |
-|---|---|---|---|
-| Classe | `World` | Controla o loop do mundo, menus de cenário, exploração, batalhas, resultados e recompensas. | Mantém o cenário e a sessão de exploração atuais. O drop de Merumã do Lobermo ainda está temporariamente definido aqui. |
-
-O `World` coordena outros componentes, mas as regras específicas ficam em objetos menores:
-
-- `Scenario` informa onde o jogador está.
-- `ExplorationSession` informa em qual casa ele está.
-- `EncounterGenerator` escolhe o inimigo.
-- `Battle` executa a luta.
-- `ItemMenu` apresenta e utiliza itens.
-
-## `rpg.world.scenarios`
-
-| Tipo | Nome | Finalidade | Observação importante |
-|---|---|---|---|
-| Classe abstrata | `Scenario` | Estrutura comum de todos os cenários. | Possui ID estável, nome, descrição e contrato para ações disponíveis. É a base exigida para a herança dos cenários. |
-| Classe abstrata | `CombatScenario` | Base para cenários que permitem exploração e combate. | Acrescenta recompensas-base e `ExplorationSettings`. |
-| Classe | `Field` | Representa um campo aberto explorável. | Define ações como explorar, inventário, status e viagem. Verdes Ermos é atualmente uma instância desta classe. |
-| Enum | `ScenarioAction` | Lista todas as ações que algum cenário pode oferecer. | Cada tipo de cenário escolhe quais valores disponibiliza ao jogador. |
-
-## `rpg.world.encounters`
-
-| Tipo | Nome | Finalidade | Observação importante |
-|---|---|---|---|
-| Enum | `EncounterAreaRestriction` | Define em qual terreno uma entrada pode aparecer. | Valores: `NORMAL_ONLY`, `SPECIAL_ONLY` e `ANY`. |
-| Classe | `EncounterEntry` | Representa a relação entre cenário e inimigo. | Guarda faixa de posições, peso, máximo de cópias e restrição de terreno. É semelhante a um registro de tabela de interseção. |
-| Classe | `EncounterCatalog` | Agrupa as entradas de encontro por ID de cenário. | Filtra candidatos usando cenário, posição e indicação de área especial. |
-| Classe | `EncounterLoader` | Carrega e valida `data/encounters.txt`. | Verifica também se cada `enemyId` existe no `EnemyCatalog`. |
-| Classe | `EncounterGenerator` | Seleciona uma definição de inimigo por sorteio ponderado. | Retorna `Optional.empty()` quando não existe candidato elegível. Atualmente escolhe apenas um inimigo. |
-
-### Dados preparados para uso futuro
-
-`EncounterEntry.maxCopies` e `ExplorationSettings.minEnemies/maxEnemies` já existem, mas ainda não controlam a batalha atual. Eles serão utilizados quando o gerador passar a montar grupos de até três inimigos.
-
-## `rpg.world.exploration`
-
-| Tipo | Nome | Finalidade | Observação importante |
-|---|---|---|---|
-| Classe | `ExplorationSettings` | Guarda as regras imutáveis de exploração de uma área. | Contém número de casas, chances de encontro e área especial, limites de inimigos e mensagens dos terrenos. |
-| Classe | `ExplorationSession` | Guarda o estado mutável de uma exploração em andamento. | Controla a posição atual, conclusão da área e sorteio de terreno especial nas casas intermediárias. |
-
-## `rpg.ui`
-
-| Tipo | Nome | Finalidade | Observação importante |
-|---|---|---|---|
-| Classe | `TitleScreen` | Apresenta a tela inicial e aguarda Enter. | Exibe o título provisório e os integrantes do grupo. |
-| Classe | `GameOverScreen` | Apresenta a tela de derrota. | Agradece ao jogador por testar a versão atual. |
-| Classe | `ConsoleUI` | Reúne utilidades gerais da interface de console. | Atualmente oferece a limpeza simulada da tela. |
-| Classe | `ItemMenu` | Apresenta o inventário e permite usar itens. | É reutilizado dentro e fora das batalhas. |
-
-## Arquivos externos
-
-| Arquivo | Finalidade | Estado atual |
+| Package | Responsibility | Main types |
 |---|---|---|
-| `data/enemies.txt` | Define inimigos, atributos, rank e descrição. | Implementado e carregado na inicialização. |
-| `data/encounters.txt` | Relaciona cenários e inimigos, com posições, pesos, cópias e terreno. | Implementado e carregado na inicialização. |
-| `data/enemy_drops.txt` | Definirá drops por inimigo. | Planejado. |
-| `data/items.txt` | Definirá itens externos. | Planejado. |
+| `rpg` | Application entry point and dependency construction | `Main` |
+| `rpg.characters` | Character state, attributes and ranks | `GameCharacter`, `CharacterStats`, `Player`, `Enemy`, `EnemyRank` |
+| `rpg.battle` | Turn-based battle execution and coordination | `Battle`, `BattleResult`, `BattleCoordinator` |
+| `rpg.battle.rewards` | Reward calculation and result data | `BattleRewardService`, `BattleRewards` |
+| `rpg.skills` | Skill definitions and damage types | `Skill`, `DamageType` |
+| `rpg.items` | Items, inventory and individual drop rules | `Item`, `HealingItem`, `ItemCatalog`, `Inventory`, `DropEntry` |
+| `rpg.enemies` | Enemy definitions and external enemy/drop loading | `EnemyDefinition`, `EnemyCatalog`, `EnemyLoader`, `EnemyDropCatalog`, `EnemyDropLoader` |
+| `rpg.world` | Active world state and high-level coordination | `World` |
+| `rpg.world.scenarios` | Scenario hierarchy and scenario registry | `Scenario`, `CombatScenario`, `Field`, `Dungeon`, `City`, `DungeonSettings`, `ScenarioCatalog`, `ScenarioAction` |
+| `rpg.world.encounters` | Encounter availability and weighted selection | `EncounterEntry`, `EncounterCatalog`, `EncounterLoader`, `EncounterGenerator`, `EncounterAreaRestriction` |
+| `rpg.world.exploration` | Exploration configuration, progress and event selection | `ExplorationSettings`, `ExplorationSession`, `ExplorationEventGenerator`, `ExplorationEventType` |
+| `rpg.world.travel` | Directed routes between scenarios | `TravelCatalog` |
+| `rpg.ui` | Console menus and screens | `TitleScreen`, `GameOverScreen`, `ConsoleUI`, `ItemMenu`, `TravelMenu`, `ScenarioActionMenu`, `EpicEncounterMenu`, `BattleRewardScreen` |
 
-## Fluxos principais
+## Application initialization
 
-### Inicialização
+`Main` acts as the current composition root. It creates and connects the objects required by the game.
 
-`Main -> EnemyLoader -> EnemyCatalog -> EncounterLoader -> EncounterCatalog -> World`
+Initialization includes:
 
-### Exploração
+1. Creating the shared `Scanner`.
+2. Loading enemy definitions.
+3. Loading enemy drop definitions.
+4. Loading encounter definitions.
+5. Creating scenarios and their exploration settings.
+6. Registering scenarios and travel routes.
+7. Creating the test player and initial skills.
+8. Creating `World` with the required catalogs and services.
+9. Starting the world loop.
 
-`World -> ExplorationSession -> EncounterGenerator -> EnemyDefinition -> Enemy -> Battle`
+External data is loaded before gameplay. Invalid data prevents the game from starting with partially inconsistent catalogs.
 
-### Recompensas
+## Character model
 
-`BattleResult -> World -> EXP/ouro -> DropEntry -> Inventory`
+```text
+GameCharacter
+├── Player
+└── Enemy
+```
 
-## Pontos temporários conhecidos
+`CharacterStats` groups immutable initial values:
 
-- O sistema de batalha ainda é um contra um.
-- O gerador ainda seleciona somente um inimigo.
-- `maxCopies`, `minEnemies` e `maxEnemies` ainda não são consumidos pelo combate.
-- O drop de Merumã do Lobermo ainda está em `World`.
-- O catálogo de itens ainda usa constantes.
-- Somente Verdes Ermos está conectado ao loop atual do mundo.
-- A opção de viagem ainda não muda de cenário.
+- maximum HP, MP and SP;
+- attack and defense;
+- magic and resistance;
+- speed and luck.
 
-## Regra de manutenção
+`GameCharacter` copies these definitions and stores mutable current HP, MP and SP. It also implements shared behavior such as attacking, defending, spending resources, receiving damage and recovering HP.
 
-Atualize este documento quando:
+`Player` adds player-specific state such as level, EXP, gold, inventory and learned skills.
 
-- uma classe ou enum for criado, removido ou renomeado;
-- uma responsabilidade importante mudar de pacote;
-- um comportamento temporário for substituído pela implementação definitiva;
-- um novo arquivo externo for introduzido.
+`Enemy` adds rank, description and its runtime drop table.
+
+## Scenario model
+
+```text
+Scenario
+├── City
+└── CombatScenario
+    ├── Field
+    └── Dungeon
+```
+
+`Scenario` defines the stable ID, display name, description and available actions shared by all scenarios.
+
+`CombatScenario` adds base EXP and gold rewards plus `ExplorationSettings`.
+
+`Field` represents open exploration areas.
+
+`Dungeon` adds `DungeonSettings`, including boss and optional epic enemy IDs.
+
+`City` represents non-combat settlements. Bree currently exists as a basic destination and will later receive inn, shop and tavern functionality.
+
+`ScenarioCatalog` resolves stable scenario IDs to scenario objects.
+
+## Definition and runtime separation
+
+Enemy data is separated into two layers:
+
+| Layer | Example | Purpose |
+|---|---|---|
+| Definition | `EnemyDefinition` for `lobermo` | Reusable immutable template loaded once |
+| Runtime object | One `Enemy` Lobermo in a battle | Mutable HP, MP, SP and battle state |
+
+The same `EnemyDefinition` can create many independent `Enemy` objects without sharing mutable battle state.
+
+The same principle will later apply to external item, scenario and class definitions.
+
+## Enemy data flow
+
+```text
+data/enemies.txt
+        ↓
+EnemyLoader
+        ↓
+EnemyCatalog
+        ↓
+EnemyDefinition
+        ↓
+Enemy runtime instance
+```
+
+`EnemyCatalog` is the central registry used by encounters, bosses, epic encounters and drop validation.
+
+## Encounter data flow
+
+```text
+data/encounters.txt
+        ↓
+EncounterLoader
+        ↓
+EncounterCatalog
+        ↓
+EncounterGenerator
+        ↓
+eligible EnemyDefinition
+```
+
+An `EncounterEntry` associates an enemy ID with:
+
+- scenario ID;
+- minimum and maximum exploration positions;
+- relative selection weight;
+- maximum copies in a future enemy group;
+- normal, special or unrestricted area availability.
+
+The current generator returns one eligible enemy definition. The next version will generate a list while enforcing scenario group-size settings and `maxCopies`.
+
+## Enemy drop data flow
+
+```text
+data/enemy_drops.txt
+        ↓
+EnemyDropLoader
+        ↓
+EnemyDropCatalog
+        ↓
+BattleCoordinator creates Enemy
+        ↓
+Enemy drop table
+        ↓
+BattleRewardService
+        ↓
+Inventory + BattleRewards
+```
+
+Each `DropEntry` is rolled independently. Equal items are grouped in a `Map<Item, Integer>` and displayed as one consolidated quantity.
+
+Item equality and hash codes use the stable item ID, allowing logically equal items to share the same map key.
+
+## Exploration flow
+
+```text
+ScenarioActionMenu selects EXPLORE
+        ↓
+World advances ExplorationSession
+        ↓
+normal or special area is determined
+        ↓
+ExplorationEventGenerator selects event
+        ↓
+World dispatches the event consequence
+```
+
+`ExplorationSettings` defines:
+
+- exploration length;
+- battle, item, merchant and epic chances;
+- special-area chance;
+- minimum and maximum enemy-group size;
+- normal and special-area messages.
+
+`ExplorationSession` stores mutable progress and ensures that merchant and epic events cannot be repeated beyond their configured session rules.
+
+The last position of a dungeon bypasses random event generation and starts its forced boss encounter.
+
+## Battle flow
+
+```text
+World requests an encounter
+        ↓
+BattleCoordinator creates the Enemy with drops
+        ↓
+Battle executes turns and returns BattleResult
+        ↓
+BattleCoordinator grants victory rewards
+        ↓
+World applies world-state consequences
+```
+
+Responsibilities:
+
+- `Battle` controls turn order, actions, damage, items, skills, fleeing and the end condition.
+- `BattleCoordinator` creates battle participants, runs the battle and triggers victory rewards.
+- `BattleRewardService` calculates and grants EXP, gold and item drops.
+- `BattleRewards` stores the consolidated reward result.
+- `BattleRewardScreen` displays rewards and waits for the player to continue.
+- `World` handles consequences outside the battle, such as scenario redisplay, boss retreat and temporary Game Over behavior.
+
+`BattleRewardService` supports both a single defeated enemy and `List<Enemy>`, preparing reward aggregation for enemy groups.
+
+## Travel flow
+
+`TravelCatalog` stores directed source-to-destination relationships. A route must be registered separately for each permitted direction.
+
+`World` decides whether travel is currently allowed. Combat scenarios require a completed exploration session, while cities may allow immediate travel.
+
+`TravelMenu` displays every registered destination and returns the selected `Scenario`. `World` then performs the actual scenario change and creates a new exploration session when required.
+
+## UI boundaries
+
+The UI package contains console-specific behavior:
+
+- reading and validating menu input;
+- displaying title, status and result information;
+- asking for confirmations;
+- waiting for the player to continue.
+
+`World` no longer stores a `Scanner`. It receives one during construction and passes it to the UI and battle objects that actually require console input.
+
+## Current temporary boundaries
+
+The following implementations remain intentionally temporary:
+
+- battle supports one player and one enemy;
+- the exploration item event directly grants Merumã;
+- the merchant has no merchandise;
+- items are defined as constants in `ItemCatalog`;
+- scenarios, exploration settings, dungeon settings and travel routes are constructed in Java;
+- Bree is not fully implemented;
+- defeat still opens `GameOverScreen` instead of rescuing the party in Bree.
+
+These limitations are tracked in `V2_ROADMAP.md` and should be replaced incrementally rather than through one large rewrite.
