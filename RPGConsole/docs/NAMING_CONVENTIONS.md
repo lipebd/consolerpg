@@ -1,4 +1,4 @@
-# RPGConsole â€” Naming Conventions
+# RPGConsole — Naming Conventions
 
 ## Purpose
 
@@ -18,7 +18,7 @@ RPGConsole separates technical language from game content.
 | Packages | English | `rpg.world.encounters` |
 | Technical comments and Javadoc | English | `// Loads enemy definitions...` |
 | Developer-facing exception messages | English | `Enemy ID cannot be empty.` |
-| Text displayed to the player | Brazilian Portuguese | `VocÃª encontrou uma MerumÃ£!` |
+| Text displayed to the player | Brazilian Portuguese | `Você encontrou uma Merumã!` |
 | Display names for game content | Brazilian Portuguese | `Gruta de Relamparrocha` |
 | Stable content IDs | Brazilian Portuguese without accents | `gruta_relamparrocha` |
 
@@ -175,13 +175,13 @@ Subclass names describe a more specific concept:
 
 ```text
 Scenario
-â”œâ”€â”€ City
-â””â”€â”€ CombatScenario
-    â”œâ”€â”€ Field
-    â””â”€â”€ Dungeon
+├── City
+└── CombatScenario
+    ├── Field
+    └── Dungeon
 ```
 
-Use inheritance only for a genuine â€œis aâ€ relationship. Use composition for â€œhas aâ€ relationships:
+Use inheritance only for a genuine “is a” relationship. Use composition for “has a” relationships:
 
 ```text
 Enemy is a GameCharacter.
@@ -227,7 +227,7 @@ Use enum constant names in external data files because loaders call `valueOf()`.
 If a player-facing translation is required, store a display label in the enum instead of translating the constant at every call site:
 
 ```java
-PHYSICAL("FÃ­sico")
+PHYSICAL("Físico")
 ```
 
 ## Fields and local variables
@@ -400,7 +400,7 @@ Examples:
 | Scenario | `verdes_ermos` | `Verdes Ermos` |
 | Dungeon | `gruta_relamparrocha` | `Gruta de Relamparrocha` |
 | Enemy | `mestre_eletrogoblin` | `Mestre Eletrogoblin` |
-| Item | `meruma` | `MerumÃ£` |
+| Item | `meruma` | `Merumã` |
 
 Do not translate stable IDs when translating display names.
 
@@ -468,17 +468,17 @@ Do not rename or reorder fields without updating:
 Player-facing text uses natural Brazilian Portuguese with accents and punctuation:
 
 ```java
-System.out.println("VocÃª encontrou uma MerumÃ£!");
+System.out.println("Você encontrou uma Merumã!");
 ```
 
 Do not expose raw enum constants or stable IDs directly to the player:
 
 ```text
 Avoid: SPECIAL_ONLY
-Prefer: Ãrea especial
+Prefer: Área especial
 
 Avoid: PHYSICAL
-Prefer: FÃ­sico
+Prefer: Físico
 ```
 
 Developer-facing exception messages remain in English because they describe programming or data configuration errors rather than game events.
