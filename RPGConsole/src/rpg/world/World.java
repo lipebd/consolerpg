@@ -5,6 +5,7 @@ import java.util.Scanner;
 import java.util.Random;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import rpg.battle.Battle;
 import rpg.battle.BattleResult;
@@ -14,6 +15,11 @@ import rpg.enemies.EnemyCatalog;
 import rpg.world.scenarios.Scenario;
 import rpg.world.scenarios.ScenarioAction;
 import rpg.world.scenarios.CombatScenario;
+import rpg.world.encounters.EncounterCatalog;
+import rpg.world.encounters.EncounterGenerator;
+import rpg.world.exploration.ExplorationSettings;
+import rpg.world.exploration.ExplorationSession;
+import rpg.enemies.EnemyDefinition;
 import rpg.items.DropEntry;
 import rpg.items.Item;
 import rpg.items.ItemCatalog;
@@ -23,8 +29,8 @@ import rpg.ui.GameOverScreen;
 // Controls navigation and interaction with the game world.
 public class World {
 
-	private static final int ENCOUNTER_CHANCE = 50;
-	private final EnemyCatalog enemyCatalog;
+	private ExplorationSession explorationSession;
+	private final EncounterGenerator encounterGenerator;
 	private Random random;
 	private Player player;
 	private Scenario currentScenario;
@@ -34,20 +40,34 @@ public class World {
 	private ItemMenu itemMenu;
 
 	public World(
-	        Player player,
-	        Scenario initialScenario,
-	        Scanner scanner,
-	        EnemyCatalog enemyCatalog
-	) {
-	    this.player = player;
-	    this.currentScenario = initialScenario;
-	    this.scanner = scanner;
-	    this.enemyCatalog = enemyCatalog;
+			Player player,
+			Scenario initialScenario,
+			Scanner scanner,
+			EnemyCatalog enemyCatalog,
+			EncounterCatalog encounterCatalog
+			) {
+		this.player = player;
+		this.currentScenario = initialScenario;
+		this.scanner = scanner;
+		this.random = new Random();
+		this.encounterGenerator = new EncounterGenerator(
+				enemyCatalog,
+				encounterCatalog,
+				random
+				);
 
-	    this.running = true;
-	    this.random = new Random();
-	    this.shouldDisplayScenarioDescription = true;
-	    this.itemMenu = new ItemMenu(player, scanner);
+		this.running = true;
+		this.shouldDisplayScenarioDescription = true;
+		if (
+				initialScenario
+				instanceof CombatScenario combatScenario
+				) {
+			this.explorationSession =
+					new ExplorationSession(
+							combatScenario.getExplorationSettings()
+							);
+		}
+		this.itemMenu = new ItemMenu(player, scanner);
 	}
 
 	public void start() {
@@ -75,9 +95,9 @@ public class World {
 		System.out.println("\nO que deseja fazer?");
 
 		for (int index = 0; index < actions.size(); index++) {
-			System.out.println(
+			System.out.print(
 					"[" + (index + 1) + "] "
-							+ actions.get(index)
+							+ actions.get(index) + " | "
 					);
 		}
 
@@ -87,12 +107,12 @@ public class World {
 		String choice = scanner.nextLine();
 
 		if (choice.equals("0")) {
-		    System.out.println(
-		            "\nObrigado por testar a V1!"
-		    );
+			System.out.println(
+					"\nObrigado por testar a V1!"
+					);
 
-		    running = false;
-		    return;
+			running = false;
+			return;
 		}
 
 		try {
@@ -121,7 +141,7 @@ public class World {
 		case EXPLORE -> explore();
 
 		case VIEW_STATUS -> displayPlayerStatus();
-		
+
 		case INVENTORY -> itemMenu.open();
 
 		case TRAVEL -> System.out.println(
@@ -147,62 +167,146 @@ public class World {
 	}
 
 	private void explore() {
+		if (
+				!(currentScenario instanceof CombatScenario combatScenario)
+				) {
+			System.out.println(
+					"\nEste cenário não pode ser explorado."
+					);
+
+			return;
+		}
+
+		if (explorationSession == null) {
+			explorationSession = new ExplorationSession(combatScenario.getExplorationSettings());
+		}
+
+		ExplorationSettings settings = explorationSession.getSettings();
+
+		if (explorationSession.isComplete()) {
+			System.out.println("\nVocê já explorou toda esta região.");
+
+			return;
+		}
+
+		int position = explorationSession.advance();
+
+		boolean specialArea = explorationSession.determineSpecialArea(random);
+
 		System.out.println(
-				"\nVocê começa a explorar a região..."
+				"\n[EXPLORAÇÃO "
+						+ position + "/"
+						+ settings.getLength()
+						+ "]"
 				);
+
+		if (specialArea) {
+		    System.out.println(
+		            settings.getSpecialAreaMessage()
+		    );
+		} else {
+		    System.out.println(
+		            settings.getNormalAreaMessage()
+		    );
+		}
 
 		int encounterRoll = random.nextInt(100) + 1;
 
-		if (encounterRoll <= ENCOUNTER_CHANCE) {
-			startLobermoEncounter();
+		if (
+				encounterRoll
+				<= settings.getEncounterChance()
+				) {
+			startRandomEncounter(
+					position,
+					specialArea
+					);
 		} else {
 			System.out.println(
 					"Você explorou os arredores, "
 							+ "mas não encontrou nada."
 					);
 		}
+
+		if (
+				running
+				&& explorationSession.isComplete()
+				) {
+			System.out.println(
+					"\nVocê chegou ao fim da exploração "
+							+ "de " + currentScenario.getName() + "!"
+					);
+		}
 	}
 
-	private void startLobermoEncounter() {
-	    Enemy enemy = enemyCatalog
-	            .getById("lobermo")
-	            .createEnemy(
-	                    List.of(
-	                            new DropEntry(
-	                                    ItemCatalog.MERUMA,
-	                                    50,
-	                                    1,
-	                                    1
-	                            )
-	                    )
-	            );
+	private void startRandomEncounter(
+			int position,
+			boolean specialArea
+			) {
+		Optional<EnemyDefinition> selectedDefinition =
+				encounterGenerator.generate(
+						currentScenario.getId(),
+						position,
+						specialArea
+						);
 
-	    System.out.println(
-	            "\nUm " + enemy.getName() + " apareceu!"
-	    );
+		if (selectedDefinition.isEmpty()) {
+			System.out.println(
+					"Nenhum inimigo foi encontrado nesta região."
+					);
+			return;
+		}
 
-	    Battle battle = new Battle(
-	            player,
-	            enemy,
-	            scanner
-	    );
+		EnemyDefinition enemyDefinition =
+				selectedDefinition.get();
 
-	    BattleResult result = battle.start();
+		Enemy enemy =
+				createEnemyFromDefinition(enemyDefinition);
 
-	    switch (result) {
-	        case VICTORY -> {
-	            grantBattleRewards(enemy);
-	            shouldDisplayScenarioDescription = true;
-	        }
+		System.out.println(
+				"\nUm " + enemy.getName() + " apareceu!"
+				);
 
-	        case FLED ->
-	            shouldDisplayScenarioDescription = true;
+		Battle battle = new Battle(
+				player,
+				enemy,
+				scanner
+				);
 
-	        case DEFEAT -> {
-	            GameOverScreen.show(player);
-	            running = false;
-	        }
-	    }
+		BattleResult result = battle.start();
+
+		switch (result) {
+		case VICTORY -> {
+			grantBattleRewards(enemy);
+			shouldDisplayScenarioDescription = true;
+		}
+
+		case FLED ->
+		shouldDisplayScenarioDescription = true;
+
+		case DEFEAT -> {
+			GameOverScreen.show(player);
+			running = false;
+		}
+		}
+	}
+
+	private Enemy createEnemyFromDefinition(
+			EnemyDefinition enemyDefinition
+			) {
+		if (enemyDefinition.getId().equals("lobermo")) {
+			return enemyDefinition.createEnemy(
+					List.of(
+							new DropEntry(
+									ItemCatalog.MERUMA,
+									50,
+									1,
+									1
+									)
+							)
+					);
+		}
+
+		return enemyDefinition.createEnemy();
 	}
 
 	private void grantBattleRewards(Enemy defeatedEnemy) {
@@ -227,115 +331,107 @@ public class World {
 				player.gainExperience(experienceReward);
 
 		player.addGold(goldReward);
-		
+
 		Map<Item, Integer> collectedItems =
-		        collectEnemyDrops(defeatedEnemy);
+				collectEnemyDrops(defeatedEnemy);
 
 		displayBattleRewards(
-		        experienceReward,
-		        goldReward,
-		        levelsGained,
-		        collectedItems
-		);
+				experienceReward,
+				goldReward,
+				levelsGained,
+				collectedItems
+				);
 	}
 
 	private void displayBattleRewards(
-	        int experienceReward,
-	        int goldReward,
-	        int levelsGained,
-	        Map<Item, Integer> collectedItems
-	) {
-	    System.out.println("\n[RESULTADO DA BATALHA]");
+			int experienceReward,
+			int goldReward,
+			int levelsGained,
+			Map<Item, Integer> collectedItems
+			) {
+		System.out.println("\n[RESULTADO DA BATALHA]");
 
-	    System.out.println(
-	            "EXP recebida: +" + experienceReward
-	    );
+		System.out.println(
+				"EXP recebida: +" + experienceReward
+				);
 
-	    System.out.println(
-	            "Ouro recebido: +" + goldReward
-	    );
+		System.out.println(
+				"Ouro recebido: +" + goldReward
+				);
 
-	    if (levelsGained > 0) {
-	        int previousLevel =
-	                player.getLevel() - levelsGained;
+		if (levelsGained > 0) {
+			int previousLevel =
+					player.getLevel() - levelsGained;
 
-	        String levelWord =
-	                levelsGained == 1 ? "nível" : "níveis";
+			String levelWord =
+					levelsGained == 1 ? "nível" : "níveis";
 
-	        System.out.println(
-	                player.getName() + " subiu "
-	                + levelsGained + " " + levelWord + "! ["
-	                + previousLevel + " -> "
-	                + player.getLevel() + "]"
-	        );
-	    }
-	    
-	    System.out.println("\nItens encontrados:");
+			System.out.println(
+					player.getName() + " subiu "
+							+ levelsGained + " " + levelWord + "! ["
+							+ previousLevel + " -> "
+							+ player.getLevel() + "]"
+					);
+		}
 
-	    if (collectedItems.isEmpty()) {
-	        System.out.println("- Nenhum");
-	    } else {
-	        for (Map.Entry<Item, Integer> entry
-	                : collectedItems.entrySet()) {
+		System.out.println("\nItens encontrados:");
 
-	            Item item = entry.getKey();
-	            int quantity = entry.getValue();
+		if (collectedItems.isEmpty()) {
+			System.out.println("- Nenhum");
+		} else {
+			for (Map.Entry<Item, Integer> entry
+					: collectedItems.entrySet()) {
 
-	            System.out.println(
-	                    "- " + item.getName()
-	                    + " x" + quantity
-	            );
-	        }
-	    }
+				Item item = entry.getKey();
+				int quantity = entry.getValue();
 
-	    waitForContinue();
+				System.out.println(
+						"- " + item.getName()
+						+ " x" + quantity
+						);
+			}
+		}
+
+		waitForContinue();
 	}
-	
+
 	private void waitForContinue() {
-	    while (true) {
-	        System.out.println("\n[1] Continuar");
-	        System.out.print("> ");
-
-	        String choice = scanner.nextLine();
-
-	        if (choice.equals("1")) {
-	            return;
-	        }
-
-	        System.out.println("Opção inválida.");
-	    }
+		System.out.println("\nPressione ENTER para continuar...");
+		System.out.print("> ");
+		scanner.nextLine();
 	}
-	
+
+
 	private Map<Item, Integer> collectEnemyDrops(
-	        Enemy defeatedEnemy
-	) {
-	    Map<Item, Integer> collectedItems =
-	            new LinkedHashMap<>();
+			Enemy defeatedEnemy
+			) {
+		Map<Item, Integer> collectedItems =
+				new LinkedHashMap<>();
 
-	    for (DropEntry dropEntry
-	            : defeatedEnemy.getDropTable()) {
+		for (DropEntry dropEntry
+				: defeatedEnemy.getDropTable()) {
 
-	        int quantity = dropEntry.rollQuantity(random);
+			int quantity = dropEntry.rollQuantity(random);
 
-	        if (quantity > 0) {
-	            Item item = dropEntry.getItem();
+			if (quantity > 0) {
+				Item item = dropEntry.getItem();
 
-	            player.getInventory().addItem(
-	                    item,
-	                    quantity
-	            );
+				player.getInventory().addItem(
+						item,
+						quantity
+						);
 
-	            int currentQuantity =
-	                    collectedItems.getOrDefault(item, 0);
+				int currentQuantity =
+						collectedItems.getOrDefault(item, 0);
 
-	            collectedItems.put(
-	                    item,
-	                    currentQuantity + quantity
-	            );
-	        }
-	    }
+				collectedItems.put(
+						item,
+						currentQuantity + quantity
+						);
+			}
+		}
 
-	    return collectedItems;
+		return collectedItems;
 	}
 
 }
