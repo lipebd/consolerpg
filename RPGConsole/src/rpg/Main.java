@@ -19,6 +19,8 @@ import rpg.skills.Skill;
 import rpg.skills.DamageType;
 import rpg.enemies.EnemyCatalog;
 import rpg.enemies.EnemyLoader;
+import rpg.enemies.EnemyDropCatalog;
+import rpg.enemies.EnemyDropLoader;
 
 import java.util.Scanner;
 import java.io.IOException;
@@ -31,6 +33,7 @@ public class Main {
 
 		EnemyCatalog enemyCatalog;
 		EncounterCatalog encounterCatalog;
+		EnemyDropCatalog enemyDropCatalog;
 
 		Scanner scanner = new Scanner(System.in);
 
@@ -38,10 +41,16 @@ public class Main {
 			EnemyLoader enemyLoader = new EnemyLoader();
 
 			enemyCatalog = enemyLoader.load(Path.of("data", "enemies.txt"));
+			
+			EnemyDropLoader enemyDropLoader = new EnemyDropLoader();
+
+			enemyDropCatalog = enemyDropLoader.load(Path.of("data", "enemy_drops.txt"), enemyCatalog);
 
 			EncounterLoader encounterLoader = new EncounterLoader();
 
 			encounterCatalog = encounterLoader.load(Path.of("data", "encounters.txt"), enemyCatalog);
+			
+			
 		} catch (IOException | IllegalArgumentException exception) {
 			System.out.println("Não foi possível carregar os dados do jogo.");
 
@@ -96,8 +105,8 @@ public class Main {
 				30, // special area chance
 				1, // minimum enemies
 				3, // maximum enemies
-				"Você avança pelos túneis eletrificados " + "da gruta.",
-				"Você encontrou uma câmara incomum " + "entre as eletrorrochas!");
+				"Você avança pelos túneis eletrificados da gruta.",
+				"Você encontrou uma câmara incomum entre as eletrorrochas!");
 
 		DungeonSettings grutaDungeonSettings = new DungeonSettings("mestre_eletrogoblin", "relampagolem");
 
@@ -131,8 +140,16 @@ public class Main {
 	
 		travelCatalog.register("gruta_relamparrocha", "bree");
 
-		World world = new World(player, currentScenario, scanner, enemyCatalog, encounterCatalog, scenarioCatalog,
-				travelCatalog);
+		World world = new World(
+		        player,
+		        currentScenario,
+		        scanner,
+		        enemyCatalog,
+		        enemyDropCatalog,
+		        encounterCatalog,
+		        scenarioCatalog,
+		        travelCatalog
+		);
 
 		world.start();
 

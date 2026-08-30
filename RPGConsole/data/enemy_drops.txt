@@ -1,0 +1,3 @@
+# enemyId;itemId;dropChance;minQuantity;maxQuantity
+lobermo;meruma;50;1;1
+passavento;meruma;40;1;2

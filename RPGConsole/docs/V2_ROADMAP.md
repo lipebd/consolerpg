@@ -49,7 +49,7 @@ Tasks:
 - [x] Limit the merchant to one appearance per area session.
 - [x] Allow an exploration session without a merchant.
 - [x] Complete Verdes Ermos after five exploration actions.
-- [ ] Unlock travel after reaching the final position.
+- [x] Unlock travel after reaching the final position.
 - [ ] Create fixed exploration branching points.
 - [ ] Allow a branching point to load another scenario.
 - [ ] End the current exploration session when entering a branch.
