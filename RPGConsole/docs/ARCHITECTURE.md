@@ -4,7 +4,7 @@
 
 This document summarizes the current project structure, the responsibility of each package and the main data and runtime flows.
 
-The architecture is evolving incrementally. The current priority is to keep domain rules, console presentation, external data loading and game-flow coordination separated without adding abstractions before they are useful.
+The architecture evolves incrementally. The current goal is to keep domain rules, console presentation, external data loading and game-flow coordination separated without creating abstractions before they become useful.
 
 ## Main conventions
 
@@ -15,24 +15,26 @@ The architecture is evolving incrementally. The current priority is to keep doma
 - Runtime objects contain mutable state for one active game instance.
 - External references are validated during initialization.
 - Console input belongs to menus and screens rather than domain classes.
+- Inventory and gold belong to the party.
+- Character resources and progression belong to each playable character.
 
 ## Package overview
 
 | Package | Responsibility | Main types |
 |---|---|---|
 | `rpg` | Application entry point and dependency construction | `Main` |
-| `rpg.characters` | Character state, attributes and ranks | `GameCharacter`, `CharacterStats`, `Player`, `Enemy`, `EnemyRank` |
-| `rpg.battle` | Turn-based battle execution and coordination | `Battle`, `BattleResult`, `BattleCoordinator` |
-| `rpg.battle.rewards` | Reward calculation and result data | `BattleRewardService`, `BattleRewards` |
-| `rpg.skills` | Skill definitions and damage types | `Skill`, `DamageType` |
-| `rpg.items` | Items, inventory and individual drop rules | `Item`, `HealingItem`, `ItemCatalog`, `Inventory`, `DropEntry` |
+| `rpg.characters` | Character state, attributes, party ownership and enemy ranks | `GameCharacter`, `CharacterStats`, `PlayableCharacter`, `Party`, `Enemy`, `EnemyRank` |
+| `rpg.battle` | Battle execution, enemy groups, initiative and escape | `Battle`, `BattleResult`, `BattleCoordinator`, `EnemyBattleGroup`, `EnemyBattleSlot`, `BattleTurnOrder`, `BattleTurnOrderGenerator`, `BattleEscapeService` |
+| `rpg.battle.rewards` | Reward calculation and individual progression results | `BattleRewardService`, `BattleRewards`, `CharacterProgressionResult` |
+| `rpg.skills` | Skill definitions, damage, recovery and target types | `Skill`, `DamageType`, `RecoveryType`, `SkillTargetType` |
+| `rpg.items` | Items, shared inventory and individual drop rules | `Item`, `HealingItem`, `ItemCatalog`, `Inventory`, `DropEntry` |
 | `rpg.enemies` | Enemy definitions and external enemy/drop loading | `EnemyDefinition`, `EnemyCatalog`, `EnemyLoader`, `EnemyDropCatalog`, `EnemyDropLoader` |
 | `rpg.world` | Active world state and high-level coordination | `World` |
 | `rpg.world.scenarios` | Scenario hierarchy and scenario registry | `Scenario`, `CombatScenario`, `Field`, `Dungeon`, `City`, `DungeonSettings`, `ScenarioCatalog`, `ScenarioAction` |
-| `rpg.world.encounters` | Encounter availability and weighted selection | `EncounterEntry`, `EncounterCatalog`, `EncounterLoader`, `EncounterGenerator`, `EncounterAreaRestriction` |
+| `rpg.world.encounters` | Encounter availability and weighted group generation | `EncounterEntry`, `EncounterCatalog`, `EncounterLoader`, `EncounterGenerator`, `EncounterAreaRestriction` |
 | `rpg.world.exploration` | Exploration configuration, progress and event selection | `ExplorationSettings`, `ExplorationSession`, `ExplorationEventGenerator`, `ExplorationEventType` |
 | `rpg.world.travel` | Directed routes between scenarios | `TravelCatalog` |
-| `rpg.ui` | Console menus and screens | `TitleScreen`, `GameOverScreen`, `ConsoleUI`, `ItemMenu`, `TravelMenu`, `ScenarioActionMenu`, `EpicEncounterMenu`, `BattleRewardScreen` |
+| `rpg.ui` | Console menus, target selection and information screens | `TitleScreen`, `GameOverScreen`, `ItemMenu`, `TravelMenu`, `ScenarioActionMenu`, `EpicEncounterMenu`, `BattleRewardScreen`, `BattleTurnOrderScreen`, `PartyStatusMenu`, `CharacterStatusMenu` |
 
 ## Application initialization
 
@@ -44,34 +46,91 @@ Initialization includes:
 2. Loading enemy definitions.
 3. Loading enemy drop definitions.
 4. Loading encounter definitions.
-5. Creating scenarios and their exploration settings.
-6. Registering scenarios and travel routes.
-7. Creating the test player and initial skills.
-8. Creating `World` with the required catalogs and services.
-9. Starting the world loop.
+5. Creating the temporary playable characters and skills.
+6. Creating the party.
+7. Creating scenarios and exploration settings.
+8. Registering scenarios and travel routes.
+9. Creating `World` with the required catalogs and services.
+10. Starting the world loop.
 
 External data is loaded before gameplay. Invalid data prevents the game from starting with partially inconsistent catalogs.
+
+Playable characters, skills, scenarios and travel routes are still created in Java. Moving these definitions to external files is part of the V3 roadmap.
 
 ## Character model
 
 ```text
 GameCharacter
-├── Player
+├── PlayableCharacter
 └── Enemy
+
+Party
+└── one to four PlayableCharacter objects
 ```
 
 `CharacterStats` groups immutable initial values:
 
-- maximum HP, MP and SP;
-- attack and defense;
-- magic and resistance;
-- speed and luck.
+- Maximum HP, MP and SP.
+- Attack and defense.
+- Magic and resistance.
+- Speed and luck.
 
-`GameCharacter` copies these definitions and stores mutable current HP, MP and SP. It also implements shared behavior such as attacking, defending, spending resources, receiving damage and recovering HP.
+`GameCharacter` stores mutable current HP, MP and SP and implements behavior shared by allies and enemies, including:
 
-`Player` adds player-specific state such as level, EXP, gold, inventory and learned skills.
+- Attacking.
+- Defending.
+- Spending MP and SP.
+- Receiving damage.
+- Recovering HP.
+- Checking whether the character is alive.
+- Restoring all resources for a living character.
 
-`Enemy` adds rank, description and its runtime drop table.
+`PlayableCharacter` adds individual progression and player-controlled behavior:
+
+- Level.
+- EXP.
+- Learned skills.
+- Physical skill execution.
+
+`Party` stores:
+
+- One to four playable characters.
+- Shared inventory.
+- Shared gold.
+- Future global reward buffs.
+- Future party title.
+
+`Enemy` adds:
+
+- Enemy rank.
+- Description.
+- Runtime drop table.
+
+## Party ownership
+
+Shared state belongs to `Party`:
+
+- Inventory.
+- Gold.
+- Future global EXP multiplier.
+- Future global gold multiplier.
+- Future party title.
+
+Individual state belongs to `PlayableCharacter`:
+
+- HP.
+- MP.
+- SP.
+- Attributes.
+- Level.
+- EXP.
+- Skills.
+- Defensive state.
+- Future equipment.
+- Future individual EXP multiplier.
+- Future temporary buffs and debuffs.
+
+This separation allows party members to enter and leave the group without duplicating shared resources.
 
 ## Scenario model
 
@@ -83,17 +142,29 @@ Scenario
     └── Dungeon
 ```
 
-`Scenario` defines the stable ID, display name, description and available actions shared by all scenarios.
+`Scenario` defines:
 
-`CombatScenario` adds base EXP and gold rewards plus `ExplorationSettings`.
+- Stable ID.
+- Display name.
+- Description.
+- Available actions.
+
+`CombatScenario` adds:
+
+- Base EXP reward.
+- Base gold reward.
+- `ExplorationSettings`.
 
 `Field` represents open exploration areas.
 
-`Dungeon` adds `DungeonSettings`, including boss and optional epic enemy IDs.
+`Dungeon` adds `DungeonSettings`, including:
 
-`City` represents non-combat settlements. Bree currently exists as a basic destination and will later receive inn, shop and tavern functionality.
+- Boss enemy ID.
+- Optional epic enemy ID.
 
-`ScenarioCatalog` resolves stable scenario IDs to scenario objects.
+`City` represents non-combat settlements. Bree currently exists as a basic destination and will later receive INN, shop and tavern functionality.
+
+`ScenarioCatalog` resolves stable scenario IDs to runtime scenario objects.
 
 ## Definition and runtime separation
 
@@ -102,11 +173,13 @@ Enemy data is separated into two layers:
 | Layer | Example | Purpose |
 |---|---|---|
 | Definition | `EnemyDefinition` for `lobermo` | Reusable immutable template loaded once |
-| Runtime object | One `Enemy` Lobermo in a battle | Mutable HP, MP, SP and battle state |
+| Runtime object | One Lobermo inside a battle | Mutable HP, resources and battle state |
 
 The same `EnemyDefinition` can create many independent `Enemy` objects without sharing mutable battle state.
 
-The same principle will later apply to external item, scenario and class definitions.
+This distinction also permits repeated enemies in one battle. Two Lobermos created from the same definition have independent HP and defensive state.
+
+The same principle will later apply to external item, skill, scenario and playable-class definitions.
 
 ## Enemy data flow
 
@@ -122,7 +195,13 @@ EnemyDefinition
 Enemy runtime instance
 ```
 
-`EnemyCatalog` is the central registry used by encounters, bosses, epic encounters and drop validation.
+`EnemyCatalog` is the central enemy-definition registry used by:
+
+- Random encounters.
+- Dungeon bosses.
+- Optional epic encounters.
+- Drop-reference validation.
+- Runtime enemy creation.
 
 ## Encounter data flow
 
@@ -135,18 +214,36 @@ EncounterCatalog
         ↓
 EncounterGenerator
         ↓
-eligible EnemyDefinition
+List<EnemyDefinition>
+        ↓
+BattleCoordinator
+        ↓
+EnemyBattleGroup
 ```
 
 An `EncounterEntry` associates an enemy ID with:
 
-- scenario ID;
-- minimum and maximum exploration positions;
-- relative selection weight;
-- maximum copies in a future enemy group;
-- normal, special or unrestricted area availability.
+- Scenario ID.
+- Minimum exploration position.
+- Maximum exploration position.
+- Relative selection weight.
+- Maximum copies in one battle.
+- Normal, special or unrestricted area availability.
 
-The current generator returns one eligible enemy definition. The next version will generate a list while enforcing scenario group-size settings and `maxCopies`.
+Encounter generation also uses the minimum and maximum enemy counts configured by the current combat scenario.
+
+Selection weights are relative and do not need to total 100.
+
+The generator creates a list of eligible enemy definitions while respecting:
+
+- Scenario ID.
+- Exploration position.
+- Area type.
+- Relative weights.
+- Per-entry `maxCopies`.
+- Scenario minimum group size.
+- Scenario maximum group size.
+- Global enemy-group limit.
 
 ## Enemy drop data flow
 
@@ -159,16 +256,27 @@ EnemyDropCatalog
         ↓
 BattleCoordinator creates Enemy
         ↓
-Enemy drop table
+Enemy runtime drop table
         ↓
 BattleRewardService
         ↓
-Inventory + BattleRewards
+BattleRewards
+        ↓
+Party Inventory
 ```
 
-Each `DropEntry` is rolled independently. Equal items are grouped in a `Map<Item, Integer>` and displayed as one consolidated quantity.
+Each `DropEntry` is rolled independently.
 
-Item equality and hash codes use the stable item ID, allowing logically equal items to share the same map key.
+This allows one enemy to:
+
+- Drop nothing.
+- Drop one registered item.
+- Drop several registered items.
+- Drop a random quantity within each entry's range.
+
+Drops from every defeated enemy are combined in a `Map<Item, Integer>`.
+
+Item equality and hash codes use the stable item ID, allowing logically equal items to share the same map key and appear as one consolidated quantity.
 
 ## Exploration flow
 
@@ -186,15 +294,27 @@ World dispatches the event consequence
 
 `ExplorationSettings` defines:
 
-- exploration length;
-- battle, item, merchant and epic chances;
-- special-area chance;
-- minimum and maximum enemy-group size;
-- normal and special-area messages.
+- Exploration length.
+- Battle chance.
+- Item chance.
+- Merchant chance.
+- Epic encounter chance.
+- Special-area chance.
+- Minimum enemy-group size.
+- Maximum enemy-group size.
+- Normal-area message.
+- Special-area message.
 
-`ExplorationSession` stores mutable progress and ensures that merchant and epic events cannot be repeated beyond their configured session rules.
+`ExplorationSession` stores mutable progress and session-specific state.
 
-The last position of a dungeon bypasses random event generation and starts its forced boss encounter.
+It also ensures that:
+
+- A merchant cannot appear more than once per session.
+- An epic encounter cannot be offered more than once per dungeon session.
+- Exploration progress survives regular battles.
+- A failed final-boss attempt can return the session to the previous position.
+
+The final dungeon position bypasses random event generation and starts the configured boss encounter.
 
 ## Battle architecture
 
@@ -203,31 +323,37 @@ The battle system is divided into the following responsibilities:
 - `Battle`
   - Coordinates the battle lifecycle and character actions.
 - `BattleCoordinator`
-  - Creates runtime enemies and grants victory rewards.
+  - Creates runtime enemies, starts battles and grants victory rewards.
 - `EnemyBattleGroup`
   - Stores one to three enemy slots.
 - `EnemyBattleSlot`
-  - Stores one enemy and its unique battle display name.
+  - Associates one runtime enemy with a unique battle display name.
+- `BattleSide`
+  - Identifies whether a turn participant belongs to the party or enemy group.
 - `BattleTurnEntry`
-  - Represents one participant inside the round queue.
+  - Represents one participant action inside the round queue.
 - `BattleTurnOrderGenerator`
-  - Calculates action counts and initiative scores.
+  - Calculates action counts, initiative scores and tie-breakers.
 - `BattleTurnOrder`
-  - Tracks the current position and skips defeated entries.
+  - Tracks the current queue position and skips defeated entries.
 - `BattleTurnOrderScreen`
   - Displays the current and upcoming actions.
 - `BattleEscapeService`
   - Calculates the two-stage flee attempt.
+- `EscapeAttemptResult`
+  - Stores the result and relevant flee chances.
 - `AllyTargetMenu`
-  - Selects living, injured or defeated party members.
+  - Selects living, injured or defeated party members according to context.
 - `EnemyTargetMenu`
   - Selects a living enemy target.
 - `BattleRewardService`
-  - Calculates EXP, gold and consolidated drops.
+  - Calculates EXP, gold, progression and consolidated drops.
+- `BattleRewards`
+  - Stores the complete reward result.
+- `CharacterProgressionResult`
+  - Stores one ally's EXP, levels and resource-restoration result.
 - `BattleRewardScreen`
   - Displays party progression and collected rewards.
-- `CharacterProgressionResult`
-  - Stores the individual EXP and level result of one ally.
 
 Current battle flow:
 
@@ -242,84 +368,177 @@ Battle
         ↓
 BattleTurnOrderGenerator
         ↓
-BattleTurnOrder        
+BattleTurnOrder
         ↓
-character and enemy actions        
+ally and enemy actions
         ↓
 BattleResult
         ↓
 BattleRewardService
         ↓
+BattleRewards
+        ↓
 BattleRewardScreen
 ```
 
-## Party ownership
+## Enemy battle groups
 
-`Party` owns shared resources:
+`EnemyBattleGroup` contains one to three `EnemyBattleSlot` objects.
 
-- Inventory
-- Gold
-- Future global reward buffs
-- Future party title
+Each slot:
 
-`PlayableCharacter` owns individual state:
+- Owns one runtime enemy.
+- Provides its battle display name.
+- Reports whether its enemy remains alive.
 
-- HP
-- MP
-- SP
-- Attributes
-- Level
-- EXP
-- Skills
-- Defensive state
-- Future equipment
-- Future temporary effects
+When repeated enemies exist, their slot names are numbered.
+
+Example:
+
+```text
+Passavento 1
+Passavento 2
+Lobermo
+```
+
+Defeated slots remain visible but cannot act or be selected as valid targets.
+
+Changing the global maximum requires reviewing only the centralized group limit and interfaces designed around visible group size, rather than rewriting the battle hierarchy.
+
+## Battle initiative
+
+A battle round contains one unified queue for allies and enemies.
+
+`BattleTurnOrderGenerator`:
+
+1. Collects every living participant.
+2. Calculates the average effective Speed of the opposing side.
+3. Calculates how many actions each participant receives.
+4. Creates one entry for each action.
+5. Calculates each entry's initiative score.
+6. Sorts entries by initiative, Luck and random final tie-breaker.
+
+`BattleTurnOrder` keeps the queue snapshot for the current round and advances through living entries.
+
+A defeated participant's future entries remain in the snapshot but are skipped.
+
+A revived ally does not exist in the current queue snapshot and therefore acts only in the following round.
 
 ## Skill architecture
 
 `Skill` currently stores:
 
-- Damage data.
-- Recovery data.
-- Resource costs.
+- Required level.
+- Damage type.
+- Base damage.
+- Base healing.
+- MP cost.
+- SP cost.
 - Recovery type.
-- Recovery target type.
+- Target type.
 - Description.
 
 Recovery effect and target are stored separately.
 
-This prepares the project for a future list of independent skill effects,
-where one skill may cause damage, healing, buffs and debuffs using
-different targets.
+Examples:
+
+- Healing with `SELF`.
+- Healing with `SINGLE_ALLY`.
+- Healing with `ALL_ALLIES`.
+- Healing with `ALL_BUT_SELF`.
+- Revival with `SINGLE_ALLY`.
+- Revival with `ALL_ALLIES`.
+
+This prepares the project for a future collection of independent skill effects, where one skill may apply damage, healing, buffs and debuffs using different targets.
+
+## Reward architecture
+
+`BattleRewardService` calculates:
+
+- Total EXP.
+- Total gold.
+- Individual character progression.
+- Independent drop rolls.
+- Consolidated item quantities.
+
+EXP is granted individually to every party member.
+
+Gold and items are granted once to `Party`.
+
+`CharacterProgressionResult` stores:
+
+- Character reference.
+- EXP received.
+- Previous level.
+- Current level.
+- Whether HP, MP and SP were restored.
+
+A surviving character who gains at least one level restores all resources.
+
+A defeated character still receives EXP and may level up, but remains defeated and receives no resource restoration.
 
 ## Travel flow
 
-`TravelCatalog` stores directed source-to-destination relationships. A route must be registered separately for each permitted direction.
+`TravelCatalog` stores directed source-to-destination relationships.
 
-`World` decides whether travel is currently allowed. Combat scenarios require a completed exploration session, while cities may allow immediate travel.
+A route must be registered separately for each permitted direction.
 
-`TravelMenu` displays every registered destination and returns the selected `Scenario`. `World` then performs the actual scenario change and creates a new exploration session when required.
+`World` decides whether travel is currently allowed:
+
+- Completed combat scenarios permit travel.
+- Incomplete combat scenarios keep travel locked.
+- Cities may allow immediate travel.
+
+`TravelMenu` displays every registered destination and returns the selected `Scenario`.
+
+`World` then performs the scenario change and creates a new exploration session when required.
 
 ## UI boundaries
 
 The UI package contains console-specific behavior:
 
-- reading and validating menu input;
-- displaying title, status and result information;
-- asking for confirmations;
-- waiting for the player to continue.
+- Reading and validating menu input.
+- Displaying title, status and result information.
+- Selecting allies and enemies.
+- Asking for confirmations.
+- Waiting for the player to continue.
 
-`World` no longer stores a `Scanner`. It receives one during construction and passes it to the UI and battle objects that actually require console input.
+Important UI components include:
+
+- `ScenarioActionMenu`
+- `TravelMenu`
+- `ItemMenu`
+- `EpicEncounterMenu`
+- `EnemyTargetMenu`
+- `AllyTargetMenu`
+- `BattleTurnOrderScreen`
+- `BattleRewardScreen`
+- `PartyStatusMenu`
+- `CharacterStatusMenu`
+- `GameOverScreen`
+
+`PartyStatusMenu` displays a compact overview of one to four allies and shared gold.
+
+`CharacterStatusMenu` displays one character's detailed resources, attributes, progression and learned skills.
+
+`World` does not store a `Scanner`. Console input is handled by the components that require it.
 
 ## Current temporary boundaries
 
 The following implementations remain intentionally temporary:
 
-- the exploration item event directly grants Merumã;
-- the merchant has no merchandise;
-- items are defined as constants in `ItemCatalog`;
-- scenarios, exploration settings, dungeon settings and travel routes are constructed in Java;
-- Bree is not fully implemented;
-- defeat still opens `GameOverScreen` instead of rescuing the party in Bree.
+- The exploration item event directly grants Merumã.
+- The merchant has no merchandise.
+- Items are defined as constants in `ItemCatalog`.
+- Scenarios and their settings are constructed in Java.
+- Travel routes are registered in Java.
+- Playable characters and test skills are constructed in `Main`.
+- Temporary recovery and revive skills exist for V2 testing.
+- Playable classes are not represented as data.
+- Equipment, buffs and debuffs are not implemented.
+- Bree is not fully implemented.
+- Defeat opens `GameOverScreen` instead of rescuing the party in Bree.
+- Save and load are not implemented.
+- `Battle` remains large and may later be divided into more focused action services.
 
-These limitations are tracked in `V2_ROADMAP.md` and should be replaced incrementally rather than through one large rewrite.
+These limitations are tracked in `V2_ROADMAP.md` and should be replaced incrementally instead of through one large rewrite.

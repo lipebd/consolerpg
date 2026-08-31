@@ -109,15 +109,15 @@ public class Main {
 		Skill inspiracaoDoBardo = new Skill("Inspiração do Bardo", 1, DamageType.NONE, 0, 10, RecoveryType.HEAL,
 				SkillTargetType.ALL_ALLIES, 0, 10, "Inspira seus aliados, curando HP de todo o grupo.");
 
-		Skill chamadoDosEcos = new Skill("Chamado dos Ecos", 1, DamageType.NONE, 0, 10, RecoveryType.HEAL,
+		Skill chamadoDosEcos = new Skill("Chamado dos Ecos (TEMP)", 1, DamageType.NONE, 0, 10, RecoveryType.HEAL,
 				SkillTargetType.ALL_BUT_SELF, 0, 10,
-				"Entra em um transe altruísta, invocando forças obscuras para curar os aliados enquanto abre mão da sua reparação."
+				"Entra em um transe altruísta, invocando forças obscuras para normalizar e curar os aliados enquanto abre mão da sua própria cura."
 						+ "\nReforça a DEF e RES dos aliados em 2 pontos por 2 turnos.");
 
-		Skill reviveUm = new Skill("Revive um", 1, DamageType.NONE, 0, 100, RecoveryType.REVIVE,
+		Skill reviveUm = new Skill("Revive um (TEMP)", 1, DamageType.NONE, 0, 100, RecoveryType.REVIVE,
 				SkillTargetType.SINGLE_ALLY, 0, 15, "Skill de teste. Revive um aliado.");
 
-		Skill reviveTodos = new Skill("Revive todos", 1, DamageType.NONE, 0, 50, RecoveryType.REVIVE,
+		Skill reviveTodos = new Skill("Revive todos (TEMP)", 1, DamageType.NONE, 0, 50, RecoveryType.REVIVE,
 				SkillTargetType.ALL_ALLIES, 0, 15, "Skill de teste. Revive todos os aliados.");
 
 		flagelo.learnSkill(investida);

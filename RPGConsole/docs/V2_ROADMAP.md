@@ -2,7 +2,7 @@
 
 ## V2 objective
 
-Transform the V1 prototype into a small but extensible RPG with data-driven enemies and drops, linear exploration, multiple areas, enemy groups and support for parties.
+Transform the V1 prototype into a small but extensible RPG with data-driven enemies and drops, linear exploration, multiple areas, enemy groups, party combat, unified initiative and contextual battle actions.
 
 ## Phase 1 — Data-driven enemies and encounters
 
@@ -27,7 +27,7 @@ Transform the V1 prototype into a small but extensible RPG with data-driven enem
 
 ## Phase 2 — Linear exploration
 
-Exploration works like movement through spaces on a board. Each use of the Explore action advances the player by one position.
+Exploration works like movement through spaces on a board. Each use of the Explore action advances the party by one position.
 
 - [x] Create `ExplorationEventType`.
 - [x] Create `ExplorationSettings`.
@@ -44,12 +44,7 @@ Exploration works like movement through spaces on a board. Each use of the Explo
 - [x] Complete Verdes Ermos after its configured exploration length.
 - [x] Unlock travel after reaching the final position.
 
-~Deferred fixed branches:~ MOVED TO V3
-
-~- [ ] Create fixed exploration branching points.~
-~- [ ] Allow a branching point to load another scenario.~
-~- [ ] Make a missed branch unavailable after advancing past it.~
-~- [ ] End the current exploration session when entering a branch.~
+Fixed exploration branches were moved to V3.
 
 ## Phase 3 — Gruta de Relamparrocha and travel
 
@@ -63,7 +58,7 @@ Exploration works like movement through spaces on a board. Each use of the Explo
 - [x] Limit the epic encounter to one offer per session.
 - [x] Allow the player to accept or avoid the epic encounter.
 - [x] Force Mestre Eletrogoblin at the final dungeon position.
-- [x] Return the player to the previous position after fleeing the boss.
+- [x] Return the party to the previous position after fleeing the boss.
 - [x] Keep travel locked until the boss is defeated.
 - [x] Create `ScenarioCatalog` and `TravelCatalog`.
 - [x] Support multiple travel destinations.
@@ -84,7 +79,7 @@ Exploration works like movement through spaces on a board. Each use of the Explo
 - [x] Support multiple independent drops per enemy.
 - [x] Support minimum and maximum drop quantities.
 - [x] Consolidate equal item drops in battle results.
-- [x] Prepare reward calculation for a list of defeated enemies.
+- [x] Prepare reward calculation for lists of defeated enemies.
 
 ## Phase 5 — Party system
 
@@ -103,11 +98,20 @@ Exploration works like movement through spaces on a board. Each use of the Explo
 - [x] Add all-but-self healing.
 - [x] Add single-target revive.
 - [x] Add area revive.
+- [x] Prevent healing from targeting defeated allies.
+- [x] Restrict revive effects to defeated allies.
+- [x] Add revived allies to the following round.
 - [x] Grant complete EXP to every party member.
 - [x] Grant EXP to defeated party members.
+- [x] Grant gold and items once to the shared party resources.
 - [x] Display multiple level-up results.
-- [ ] Display the complete party outside battle.
-- [ ] Adapt the temporary defeat screen to the party.
+- [x] Restore all resources when a surviving character levels up.
+- [x] Keep defeated characters defeated after leveling up.
+- [x] Create the party status interface.
+- [x] Create individual character status and skill inspection.
+- [x] Display shared party gold in the status interface.
+- [x] Adapt the temporary Game Over screen to the party.
+- [x] Remove temporary leader references from `World`.
 
 ## Phase 6 — Multiple enemies
 
@@ -117,10 +121,13 @@ Exploration works like movement through spaces on a board. Each use of the Explo
 - [x] Add enemy target selection.
 - [x] Prevent defeated enemies from acting.
 - [x] Prevent defeated enemies from being targeted.
+- [x] Keep defeated enemies visible in battle status.
+- [x] Mark defeated enemies instead of displaying zero HP.
 - [x] Aggregate rewards from multiple enemies.
 - [x] Aggregate equal item drops.
 - [x] Add per-enemy maximum copy limits.
 - [x] Add per-scenario enemy count limits.
+- [x] Allow enemies to choose living party targets.
 
 ## Phase 7 — Battle initiative
 
@@ -137,6 +144,7 @@ Exploration works like movement through spaces on a board. Each use of the Explo
 - [x] Add revived allies only to the following round.
 - [x] Display the current participant.
 - [x] Display the next participant.
+- [x] Display enemy turns separately.
 - [x] Add the `Round` inspection action.
 - [x] Limit the detailed queue to five visible entries.
 
@@ -154,23 +162,25 @@ Exploration works like movement through spaces on a board. Each use of the Explo
 
 ## Phase 9 — V2 completion
 
-- [ ] Complete the party status interface.
-- [ ] Remove remaining temporary leader references.
-- [ ] Adapt the temporary Game Over screen.
-- [ ] Test solo battles.
-- [ ] Test full-party battles.
-- [ ] Test repeated enemies.
-- [ ] Test multiple actions per round.
-- [ ] Test defeated queue entries.
-- [ ] Test revives and the following round.
-- [ ] Test both escape checks.
-- [ ] Test failed escape attempts.
-- [ ] Test boss retreat.
-- [ ] Test rewards with living and defeated allies.
-- [ ] Test items inside and outside battle.
-- [ ] Test every exploration event.
-- [ ] Test scenario travel.
-- [ ] Update project documentation.
+- [x] Complete the party status interface.
+- [x] Remove remaining temporary leader references.
+- [x] Adapt the temporary Game Over screen.
+- [x] Test solo battles.
+- [x] Test full-party battles.
+- [x] Test repeated enemies.
+- [x] Test multiple actions per round.
+- [x] Test defeated queue entries.
+- [x] Test revives and the following round.
+- [x] Test both escape checks.
+- [x] Test failed escape attempts.
+- [x] Test boss retreat.
+- [x] Test rewards with living and defeated allies.
+- [x] Test surviving level-up resource restoration.
+- [x] Test defeated characters leveling without restoration.
+- [x] Test items inside and outside battle.
+- [x] Test exploration events.
+- [x] Test scenario travel.
+- [x] Update project documentation.
 - [ ] Create the V2 release build.
 - [ ] Create the V2 Git tag.
 
@@ -179,35 +189,61 @@ Exploration works like movement through spaces on a board. Each use of the Explo
 This phase must be implemented only after Bree is fully functional and defeat presents a meaningful risk.
 
 - [ ] Remove the Game Over flow.
-- [ ] Create a full HP, MP and SP restoration operation.
+- [ ] Create explicit resurrection and full restoration operations.
 - [ ] Display a defeat and rescue message.
 - [ ] End the current exploration session after defeat.
-- [ ] Return the player or party to Bree.
+- [ ] Return the party to Bree.
+- [ ] Restore the party through the rescue flow.
 - [ ] Preserve EXP, gold, items and character progression.
-- [ ] Support full-party defeat after the party system is implemented.
+- [ ] Trigger rescue after full-party defeat.
 
 ## V3 — Data-driven game content
 
+### Scenarios and exploration
+
 - [ ] Create `data/scenarios.txt`.
 - [ ] Create `ScenarioDefinition`.
-- [ ] Create `ScenarioCatalog` loading from external data.
+- [ ] Create external scenario loading.
 - [ ] Create `ScenarioLoader`.
 - [ ] Create a factory for `Field`, `Dungeon` and `City`.
 - [ ] Remove Bree from `Main`.
 - [ ] Remove Verdes Ermos from `Main`.
 - [ ] Remove Gruta Relamparrocha from `Main`.
+- [ ] Study the current-position-first exploration flow.
 - [ ] Create fixed exploration branching points.
 - [ ] Allow a branching point to load another scenario.
 - [ ] Make a missed branch unavailable after advancing past it.
 - [ ] End the current exploration session when entering a branch.
+- [ ] Decide whether special areas must always contain an event.
+- [ ] Add possible exploration checkpoints and camps.
+
+### Skills, items and equipment
+
 - [ ] Create `data/skills.txt`.
 - [ ] Load playable skills externally.
+- [ ] Remove temporary test skills from `Main`.
 - [ ] Create `data/items.txt`.
 - [ ] Load consumables, materials and equipment externally.
-- [ ] Implement fixed branching exploration points.
+- [ ] Implement equipment slots and attribute bonuses.
+- [ ] Implement resurrection items.
+- [ ] Implement global EXP and gold buffs.
+- [ ] Implement individual EXP multipliers.
+- [ ] Implement temporary individual buffs and debuffs.
+
+### Party and characters
+
 - [ ] Implement party titles.
 - [ ] Use the party title in collective narrative texts.
 - [ ] Persist the party title in save data.
 - [ ] Implement character creation.
 - [ ] Implement the seven playable classes.
+- [ ] Add class information to character status.
+- [ ] Add equipment inspection to character status.
+- [ ] Add character history and lore inspection.
+
+### Cities and persistence
+
+- [ ] Implement Bree services.
+- [ ] Implement INN restoration and resurrection.
+- [ ] Replace Game Over with defeat and rescue.
 - [ ] Implement save and load.
