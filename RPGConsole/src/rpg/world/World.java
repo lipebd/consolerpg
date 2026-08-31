@@ -8,7 +8,8 @@ import java.util.List;
 import rpg.battle.BattleCoordinator;
 import rpg.battle.BattleResult;
 import rpg.battle.rewards.BattleRewardService;
-import rpg.characters.Player;
+import rpg.characters.Party;
+import rpg.characters.PlayableCharacter;
 import rpg.enemies.EnemyCatalog;
 import rpg.enemies.EnemyDefinition;
 import rpg.enemies.EnemyDropCatalog;
@@ -37,6 +38,7 @@ import rpg.world.travel.TravelCatalog;
 // Controls navigation and interaction with the game world.
 public class World {
 
+	private Party party;
 	private final ScenarioActionMenu scenarioActionMenu;
 	private final BattleCoordinator battleCoordinator;
 	private final EpicEncounterMenu epicEncounterMenu;
@@ -45,22 +47,28 @@ public class World {
 	private ExplorationSession explorationSession;
 	private final EncounterGenerator encounterGenerator;
 	private Random random;
-	private Player player;
+	private PlayableCharacter player;
 	private Scenario currentScenario;
 	private boolean running;
 	private boolean shouldDisplayScenarioDescription;
 	private ItemMenu itemMenu;
 	private final TravelMenu travelMenu;
 
-	public World(Player player, Scenario initialScenario, Scanner scanner, EnemyCatalog enemyCatalog,
+	public World(Party party, Scenario initialScenario, Scanner scanner, EnemyCatalog enemyCatalog,
 			EnemyDropCatalog enemyDropCatalog, EncounterCatalog encounterCatalog, ScenarioCatalog scenarioCatalog,
 			TravelCatalog travelCatalog) {
-		this.player = player;
+		this.party = party;
+
+		/*
+		 * Temporary reference while World is being
+		 * migrated from one character to a Party.
+		 */
+		this.player = party.getLeader();
 		this.currentScenario = initialScenario;
 		this.random = new Random();
 		BattleRewardService rewardService = new BattleRewardService(random);
 		BattleRewardScreen rewardScreen = new BattleRewardScreen(scanner);
-		this.battleCoordinator = new BattleCoordinator(player, scanner, enemyDropCatalog, rewardService, rewardScreen);
+		this.battleCoordinator = new BattleCoordinator(party, scanner, enemyDropCatalog, rewardService, rewardScreen);
 		this.enemyCatalog = enemyCatalog;
 		this.encounterGenerator = new EncounterGenerator(enemyCatalog, encounterCatalog, random);
 		this.explorationEventGenerator = new ExplorationEventGenerator(random);
@@ -72,7 +80,7 @@ public class World {
 		if (initialScenario instanceof CombatScenario combatScenario) {
 			this.explorationSession = new ExplorationSession(combatScenario.getExplorationSettings());
 		}
-		this.itemMenu = new ItemMenu(player, scanner);
+		this.itemMenu = new ItemMenu(party, scanner);
 	}
 
 	public void start() {
@@ -208,7 +216,7 @@ public class World {
 	private void executeItemEvent() {
 		Item item = ItemCatalog.MERUMA;
 
-		player.getInventory().addItem(item, 1);
+		party.getInventory().addItem(item, 1);
 
 		System.out.println("Você encontrou " + item.getName() + " x1!");
 	}

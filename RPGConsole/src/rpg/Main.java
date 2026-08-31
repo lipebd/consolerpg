@@ -13,8 +13,9 @@ import rpg.world.scenarios.ScenarioCatalog;
 import rpg.world.encounters.EncounterLoader;
 import rpg.world.encounters.EncounterCatalog;
 import rpg.world.exploration.ExplorationSettings;
-import rpg.characters.Player;
+import rpg.characters.PlayableCharacter;
 import rpg.characters.CharacterStats;
+import rpg.characters.Party;
 import rpg.skills.Skill;
 import rpg.skills.DamageType;
 import rpg.enemies.EnemyCatalog;
@@ -41,7 +42,7 @@ public class Main {
 			EnemyLoader enemyLoader = new EnemyLoader();
 
 			enemyCatalog = enemyLoader.load(Path.of("data", "enemies.txt"));
-			
+
 			EnemyDropLoader enemyDropLoader = new EnemyDropLoader();
 
 			enemyDropCatalog = enemyDropLoader.load(Path.of("data", "enemy_drops.txt"), enemyCatalog);
@@ -49,8 +50,7 @@ public class Main {
 			EncounterLoader encounterLoader = new EncounterLoader();
 
 			encounterCatalog = encounterLoader.load(Path.of("data", "encounters.txt"), enemyCatalog);
-			
-			
+
 		} catch (IOException | IllegalArgumentException exception) {
 			System.out.println("Não foi possível carregar os dados do jogo.");
 
@@ -72,12 +72,14 @@ public class Main {
 				10 // LCK
 		);
 
-		Player player = new Player("Flagelo", flageloStats);
+		PlayableCharacter flagelo = new PlayableCharacter("Flagelo", flageloStats);
+
+		Party party = new Party(flagelo);
 
 		Skill investida = new Skill("Investida", 1, DamageType.PHYSICAL, 5, 0, 0, 10,
 				"Corre até o alvo e o atropela. " + "Causa dano físico moderado e pode causar dano a si mesmo.");
 
-		player.learnSkill(investida);
+		flagelo.learnSkill(investida);
 
 		ExplorationSettings verdesErmosSettings = new ExplorationSettings(5, // exploration length
 				70, // battle chance
@@ -135,21 +137,13 @@ public class Main {
 		travelCatalog.register("verdes_ermos", "gruta_relamparrocha");
 
 		travelCatalog.register("bree", "verdes_ermos");
-		
+
 		travelCatalog.register("gruta_relamparrocha", "verdes_ermos");
-	
+
 		travelCatalog.register("gruta_relamparrocha", "bree");
 
-		World world = new World(
-		        player,
-		        currentScenario,
-		        scanner,
-		        enemyCatalog,
-		        enemyDropCatalog,
-		        encounterCatalog,
-		        scenarioCatalog,
-		        travelCatalog
-		);
+		World world = new World(party, currentScenario, scanner, enemyCatalog, enemyDropCatalog, encounterCatalog,
+				scenarioCatalog, travelCatalog);
 
 		world.start();
 

@@ -1,6 +1,6 @@
 package rpg.ui;
 
-import rpg.characters.Player;
+import rpg.characters.PlayableCharacter;
 
 // Displays the game-over screen when the player is defeated.
 public final class GameOverScreen {
@@ -8,7 +8,7 @@ public final class GameOverScreen {
     private GameOverScreen() {
     }
 
-    public static void show(Player player) {
+    public static void show(PlayableCharacter player) {
         System.out.println(
                 "\n========================================"
         );

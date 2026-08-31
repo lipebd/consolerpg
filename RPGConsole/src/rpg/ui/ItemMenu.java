@@ -4,173 +4,140 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Objects;
 
-import rpg.characters.Player;
+import rpg.characters.Party;
+import rpg.characters.PlayableCharacter;
 import rpg.items.HealingItem;
 import rpg.items.Item;
 
 // Controls item selection and usage through the console.
 public class ItemMenu {
 
-    private final Player player;
-    private final Scanner scanner;
+	private final Party party;
+	private final PlayableCharacter targetCharacter;
+	private final Scanner scanner;
 
-    public ItemMenu(Player player, Scanner scanner) {
-        this.player = player;
-        this.scanner = scanner;
-    }
+	public ItemMenu(Party party, Scanner scanner) {
+		this.party = Objects.requireNonNull(party, "Party cannot be null.");
 
-    public boolean open() {
-        Map<Item, Integer> inventoryContents =
-                player.getInventory().getContents();
+		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
 
-        if (inventoryContents.isEmpty()) {
-            System.out.println("Seu inventário está vazio.");
-            return false;
-        }
+		/*
+		 * Temporary target while ally selection is not implemented.
+		 */
+		this.targetCharacter = party.getLeader();
+	}
 
-        List<Map.Entry<Item, Integer>> itemEntries =
-                new ArrayList<>(inventoryContents.entrySet());
+	public boolean open() {
+		Map<Item, Integer> inventoryContents = party.getInventory().getContents();
 
-        while (true) {
-            System.out.println("\nEscolha um item:");
+		if (inventoryContents.isEmpty()) {
+			System.out.println("Seu inventário está vazio.");
+			return false;
+		}
 
-            for (int index = 0;
-                    index < itemEntries.size();
-                    index++) {
+		List<Map.Entry<Item, Integer>> itemEntries = new ArrayList<>(inventoryContents.entrySet());
 
-                Map.Entry<Item, Integer> entry =
-                        itemEntries.get(index);
+		while (true) {
+			System.out.println("\nEscolha um item:");
 
-                Item item = entry.getKey();
-                int quantity = entry.getValue();
+			for (int index = 0; index < itemEntries.size(); index++) {
 
-                System.out.print(
-                        "[" + (index + 1) + "] "
-                        + item.getName()
-                        + " x" + quantity
-                );
+				Map.Entry<Item, Integer> entry = itemEntries.get(index);
 
-                if (item instanceof HealingItem healingItem) {
-                    System.out.print(
-                            " | Cura: "
-                            + healingItem.getHealingAmount()
-                            + " HP"
-                    );
-                }
+				Item item = entry.getKey();
+				int quantity = entry.getValue();
 
-                System.out.println();
-            }
+				System.out.print("[" + (index + 1) + "] " + item.getName() + " x" + quantity);
 
-            System.out.println("[0] Voltar");
-            System.out.print("> ");
+				if (item instanceof HealingItem healingItem) {
+					System.out.print(" | Cura: " + healingItem.getHealingAmount() + " HP");
+				}
 
-            String choice = scanner.nextLine();
+				System.out.println();
+			}
 
-            if (choice.equals("0")) {
-                return false;
-            }
+			System.out.println("[0] Voltar");
+			System.out.print("> ");
 
-            try {
-                int selectedIndex =
-                        Integer.parseInt(choice) - 1;
+			String choice = scanner.nextLine();
 
-                if (
-                        selectedIndex < 0
-                        || selectedIndex >= itemEntries.size()
-                ) {
-                    System.out.println("Item inválido.");
-                    continue;
-                }
+			if (choice.equals("0")) {
+				return false;
+			}
 
-                Item selectedItem =
-                        itemEntries.get(selectedIndex).getKey();
+			try {
+				int selectedIndex = Integer.parseInt(choice) - 1;
 
-                if (!confirmItemUse(selectedItem)) {
-                    continue;
-                }
+				if (selectedIndex < 0 || selectedIndex >= itemEntries.size()) {
+					System.out.println("Item inválido.");
+					continue;
+				}
 
-                if (selectedItem instanceof HealingItem healingItem) {
-                    if (
-                            player.getCurrentHp()
-                            == player.getMaxHp()
-                    ) {
-                        System.out.println(
-                                player.getName()
-                                + " já está com o HP cheio."
-                        );
+				Item selectedItem = itemEntries.get(selectedIndex).getKey();
 
-                        continue;
-                    }
+				if (!confirmItemUse(selectedItem)) {
+					continue;
+				}
 
-                    int recoveredHp =
-                            healingItem.use(player);
+				if (selectedItem instanceof HealingItem healingItem) {
+					if (targetCharacter.getCurrentHp() == targetCharacter.getMaxHp()) {
+						System.out.println(targetCharacter.getName() + " já está com o HP cheio.");
 
-                    if (recoveredHp <= 0) {
-                        System.out.println(
-                                "O item não produziu nenhum efeito."
-                        );
+						continue;
+					}
 
-                        continue;
-                    }
+					int recoveredHp = healingItem.use(targetCharacter);
 
-                    player.getInventory().removeItem(
-                            selectedItem,
-                            1
-                    );
+					if (recoveredHp <= 0) {
+						System.out.println("O item não produziu nenhum efeito.");
 
-                    displayHealing(recoveredHp);
+						continue;
+					}
 
-                    return true;
-                }
+					party.getInventory().removeItem(selectedItem, 1);
 
-                System.out.println(
-                        "Este item não pode ser usado agora."
-                );
+					displayHealing(recoveredHp);
 
-            } catch (NumberFormatException exception) {
-                System.out.println(
-                        "Digite o número de um item."
-                );
-            }
-        }
-    }
+					return true;
+				}
 
-    private boolean confirmItemUse(Item item) {
-        System.out.println(
-                "\n[" + item.getName().toUpperCase() + "]"
-        );
+				System.out.println("Este item não pode ser usado agora.");
 
-        System.out.println(item.getDescription());
+			} catch (NumberFormatException exception) {
+				System.out.println("Digite o número de um item.");
+			}
+		}
+	}
 
-        while (true) {
-            System.out.println("\n[1] Usar | [0] Voltar");
-            System.out.print("> ");
+	private boolean confirmItemUse(Item item) {
+		System.out.println("\n[" + item.getName().toUpperCase() + "]");
 
-            String confirmation = scanner.nextLine();
+		System.out.println(item.getDescription());
 
-            switch (confirmation) {
-                case "1" -> {
-                    return true;
-                }
+		while (true) {
+			System.out.println("\n[1] Usar | [0] Voltar");
+			System.out.print("> ");
 
-                case "0" -> {
-                    return false;
-                }
+			String confirmation = scanner.nextLine();
 
-                default -> System.out.println(
-                        "Opção inválida."
-                );
-            }
-        }
-    }
+			switch (confirmation) {
+			case "1" -> {
+				return true;
+			}
 
-    private void displayHealing(int recoveredHp) {
-        System.out.println(
-                player.getName() + " recuperou "
-                + recoveredHp + " de HP. HP atual: "
-                + player.getCurrentHp() + "/"
-                + player.getMaxHp() + "."
-        );
-    }
+			case "0" -> {
+				return false;
+			}
+
+			default -> System.out.println("Opção inválida.");
+			}
+		}
+	}
+
+	private void displayHealing(int recoveredHp) {
+		System.out.println(targetCharacter.getName() + " recuperou " + recoveredHp + " de HP. HP atual: "
+				+ targetCharacter.getCurrentHp() + "/" + targetCharacter.getMaxHp() + ".");
+	}
 }

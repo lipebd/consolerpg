@@ -5,7 +5,7 @@ import java.util.Objects;
 import java.util.Scanner;
 
 import rpg.battle.rewards.BattleRewards;
-import rpg.characters.Player;
+import rpg.characters.PlayableCharacter;
 import rpg.items.Item;
 
 // Displays the rewards obtained after a battle victory.
@@ -21,7 +21,7 @@ public final class BattleRewardScreen {
     }
 
     public void show(
-            Player player,
+            PlayableCharacter player,
             BattleRewards rewards
     ) {
         System.out.println("\n[RESULTADO DA BATALHA]");
@@ -43,7 +43,7 @@ public final class BattleRewardScreen {
     }
 
     private void displayLevelProgress(
-            Player player,
+            PlayableCharacter player,
             BattleRewards rewards
     ) {
         int levelsGained = rewards.getLevelsGained();

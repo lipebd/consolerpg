@@ -3,32 +3,39 @@ package rpg.battle;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Objects;
-
 import java.util.Optional;
+
+import rpg.characters.Party;
 import rpg.ui.EnemyTargetMenu;
 import rpg.characters.Enemy;
 import rpg.characters.GameCharacter;
-import rpg.characters.Player;
+import rpg.characters.PlayableCharacter;
 import rpg.skills.Skill;
 import rpg.ui.ItemMenu;
 
 // Controls a battle between a player and an enemy group.
 public class Battle {
 
+	private Party party;
 	private EnemyTargetMenu enemyTargetMenu;
 	private EnemyBattleGroup enemyGroup;
-	private Player player;
+	private PlayableCharacter player;
 	private Scanner scanner;
 	private boolean playerFled;
 	private ItemMenu itemMenu;
 
-	public Battle(Player player, EnemyBattleGroup enemyGroup, Scanner scanner) {
-		this.player = Objects.requireNonNull(player, "Player cannot be null.");
+	public Battle(Party party, EnemyBattleGroup enemyGroup, Scanner scanner) {
+		this.party = Objects.requireNonNull(party, "Party cannot be null.");
+
+		/*
+		 * Temporary active character while Battle is being migrated to multiple allies.
+		 */
+		this.player = party.getLeader();
 		this.enemyGroup = Objects.requireNonNull(enemyGroup, "Enemy battle group cannot be null.");
 		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
 		this.enemyTargetMenu = new EnemyTargetMenu(scanner);
 		this.playerFled = false;
-		this.itemMenu = new ItemMenu(player, scanner);
+		this.itemMenu = new ItemMenu(party, scanner);
 	}
 
 	public BattleResult start() {

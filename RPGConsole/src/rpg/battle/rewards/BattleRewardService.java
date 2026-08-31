@@ -7,7 +7,7 @@ import java.util.Random;
 import java.util.List;
 
 import rpg.characters.Enemy;
-import rpg.characters.Player;
+import rpg.characters.Party;
 import rpg.items.DropEntry;
 import rpg.items.Item;
 import rpg.world.scenarios.CombatScenario;
@@ -22,14 +22,14 @@ public final class BattleRewardService {
 	}
 
 	// sobrecarga pra tipos de parametros diferentes
-	public BattleRewards grantRewards(Player player, Enemy defeatedEnemy, CombatScenario combatScenario) {
+	public BattleRewards grantRewards(Party party, Enemy defeatedEnemy, CombatScenario combatScenario) {
 		Objects.requireNonNull(defeatedEnemy, "Defeated enemy cannot be null.");
 
-		return grantRewards(player, List.of(defeatedEnemy), combatScenario);
+		return grantRewards(party, List.of(defeatedEnemy), combatScenario);
 	}
 
-	public BattleRewards grantRewards(Player player, List<Enemy> defeatedEnemies, CombatScenario combatScenario) {
-		Objects.requireNonNull(player, "Player cannot be null.");
+	public BattleRewards grantRewards(Party party, List<Enemy> defeatedEnemies, CombatScenario combatScenario) {
+		Objects.requireNonNull(party, "Party cannot be null.");
 
 		Objects.requireNonNull(defeatedEnemies, "Defeated enemy list cannot be null.");
 
@@ -52,13 +52,17 @@ public final class BattleRewardService {
 			goldReward += (int) Math.round(combatScenario.getBaseGoldReward() * rankMultiplier);
 		}
 
-		int levelsGained = player.gainExperience(experienceReward);
+		/*
+		 * Temporary EXP recipient while reward distribution among party members is not
+		 * implemented.
+		 */
+		int levelsGained = party.getLeader().gainExperience(experienceReward);
 
-		player.addGold(goldReward);
+		party.addGold(goldReward);
 
 		Map<Item, Integer> collectedItems = collectEnemyDrops(defeatedEnemies);
 
-		addCollectedItemsToInventory(player, collectedItems);
+		addCollectedItemsToInventory(party, collectedItems);
 
 		return new BattleRewards(experienceReward, goldReward, levelsGained, collectedItems);
 	}
@@ -84,10 +88,10 @@ public final class BattleRewardService {
 		return collectedItems;
 	}
 
-	private void addCollectedItemsToInventory(Player player, Map<Item, Integer> collectedItems) {
+	private void addCollectedItemsToInventory(Party party, Map<Item, Integer> collectedItems) {
 		for (Map.Entry<Item, Integer> entry : collectedItems.entrySet()) {
 
-			player.getInventory().addItem(entry.getKey(), entry.getValue());
+			party.getInventory().addItem(entry.getKey(), entry.getValue());
 		}
 	}
 }
