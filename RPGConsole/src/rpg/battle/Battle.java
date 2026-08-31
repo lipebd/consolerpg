@@ -5,7 +5,9 @@ import java.util.Scanner;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Comparator;
+import java.util.Random;
 
+import rpg.ui.BattleTurnOrderScreen;
 import rpg.characters.Party;
 import rpg.ui.EnemyTargetMenu;
 import rpg.characters.Enemy;
@@ -21,6 +23,10 @@ import rpg.ui.ItemMenu;
 // Controls a battle between a party and an enemy group.
 public class Battle {
 
+	private BattleTurnOrderGenerator turnOrderGenerator;
+	private BattleTurnOrderScreen turnOrderScreen;
+	private BattleTurnOrder currentTurnOrder;
+	private int currentRoundNumber;
 	private AllyTargetMenu allyTargetMenu;
 	private PlayableCharacter fleeingCharacter;
 	private PlayableCharacter finishingCharacter;
@@ -32,46 +38,59 @@ public class Battle {
 	private boolean playerFled;
 	private ItemMenu itemMenu;
 
-	public Battle(Party party, EnemyBattleGroup enemyGroup, Scanner scanner) {
+	public Battle(Party party, EnemyBattleGroup enemyGroup, Scanner scanner, Random random) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
 		this.enemyGroup = Objects.requireNonNull(enemyGroup, "Enemy battle group cannot be null.");
 		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+		Objects.requireNonNull(random, "Random generator cannot be null.");
 		this.enemyTargetMenu = new EnemyTargetMenu(scanner);
 		this.playerFled = false;
 		this.itemMenu = new ItemMenu(party, scanner);
 		this.allyTargetMenu = new AllyTargetMenu(scanner);
+		this.turnOrderGenerator = new BattleTurnOrderGenerator(random);
+		this.turnOrderScreen = new BattleTurnOrderScreen();
 	}
 
 	public BattleResult start() {
-		int turn = 1;
+	    currentRoundNumber = 1;
 
-		displayBattleIntroduction();
+	    displayBattleIntroduction();
 
-		while (!party.isDefeated() && !enemyGroup.isDefeated() && !playerFled) {
-			System.out.println("\n--- Turno " + turn + " ---");
+	    while (
+	            !party.isDefeated()
+	            && !enemyGroup.isDefeated()
+	            && !playerFled
+	    ) {
+	        System.out.println(
+	                "\n--- Rodada "
+	                + currentRoundNumber + " ---"
+	        );
 
-			displayPartyStatus();
+	        displayPartyStatus();
+	        displayEnemyStatuses();
 
-			displayEnemyStatuses();
+	        List<BattleTurnEntry> turnEntries =
+	                turnOrderGenerator.generate(
+	                        party,
+	                        enemyGroup
+	                );
 
-			executePartyTurns();
+	        currentTurnOrder =
+	                new BattleTurnOrder(turnEntries);
 
-			if (playerFled || enemyGroup.isDefeated()) {
-				break;
-			}
+	        executeCurrentRound();
 
-			executeEnemyTurns();
+	        currentRoundNumber++;
+	    }
 
-			turn++;
-		}
+	    BattleResult result =
+	            determineBattleResult();
 
-		BattleResult result = determineBattleResult();
+	    displayBattleResult(result);
 
-		displayBattleResult(result);
-
-		return result;
+	    return result;
 	}
-
+	
 	// sobrecarga de métodos
 	private void displayDamage(GameCharacter target, int damage) {
 		displayDamage(target, target.getName(), damage);
@@ -164,6 +183,29 @@ public class Battle {
 		System.out.println("DEF: " + analyzedEnemy.getDefense());
 	}
 
+	private void displayCurrentTurn(
+	        BattleTurnEntry actingEntry
+	) {
+	    System.out.println(
+	            "\nVez de "
+	            + actingEntry.getDisplayName() + "!"
+	    );
+
+	    Optional<BattleTurnEntry> nextEntry =
+	            currentTurnOrder.getNextLivingEntry();
+
+	    if (nextEntry.isPresent()) {
+	        System.out.println(
+	                "A seguir: "
+	                + nextEntry.get().getDisplayName()
+	        );
+	    } else {
+	        System.out.println(
+	                "A seguir: próxima rodada"
+	        );
+	    }
+	}
+	
 	private void displayBattleIntroduction() {
 		System.out.println("\nO grupo foi atacado!");
 
@@ -201,34 +243,41 @@ public class Battle {
 		System.out.println(target.getName() + " recuperou " + recoveredHp + " de HP. HP atual: " + target.getCurrentHp()
 				+ "/" + target.getMaxHp() + ".");
 	}
+
+	private void executeEnemyTurn(
+        BattleTurnEntry actingEntry
+) {
+    Enemy attackingEnemy =
+            (Enemy) actingEntry.getCharacter();
+
+    PlayableCharacter target =
+            selectEnemyTarget();
+
+    int damage =
+            attackingEnemy.attack(target);
+
+    System.out.println(
+            "\n" + actingEntry.getDisplayName()
+            + " atacou " + target.getName() + "!"
+    );
+
+    displayDamage(target, damage);
+
+    if (!target.isAlive()) {
+        lastDefeatedCharacter = target;
+    }
+}
 	
-	private void executeEnemyTurns() {
-		for (EnemyBattleSlot slot : enemyGroup.getLivingSlots()) {
-			if (party.isDefeated()) {
-				return;
-			}
-
-			Enemy attackingEnemy = slot.getEnemy();
-
-			PlayableCharacter target = selectEnemyTarget();
-
-			int damage = attackingEnemy.attack(target);
-
-			System.out.println("\n" + slot.getDisplayName() + " atacou " + target.getName() + "!");
-
-			displayDamage(target, damage);
-
-			if (!target.isAlive()) {
-				lastDefeatedCharacter = target;
-			}
-		}
-	}
-
 	private void executeCharacterTurn(PlayableCharacter actingCharacter) {
 		boolean validAction = false;
 
 		while (!validAction) {
-			System.out.println("\n[1] Atacar | [2] Defender | [3] Especial | [4] Analisar | [5] Itens | [6] Fugir");
+			System.out.println(
+			        "\n[1] Atacar | [2] Defender "
+			        + "| [3] Especial | [4] Analisar "
+			        + "| [5] Itens | [6] Rodada "
+			        + "| [7] Fugir"
+			);
 			System.out.print("> ");
 
 			String choice = scanner.nextLine();
@@ -248,7 +297,9 @@ public class Battle {
 
 			case "5" -> validAction = itemMenu.open(actingCharacter);
 
-			case "6" -> {
+			case "6" -> turnOrderScreen.show(currentTurnOrder, currentRoundNumber);
+			
+			case "7" -> {
 				fleeingCharacter = actingCharacter;
 				playerFled = true;
 				validAction = true;
@@ -273,22 +324,14 @@ public class Battle {
 					+ actingCharacter.getCurrentMp() + "/" + actingCharacter.getMaxMp() + " | SP: "
 					+ actingCharacter.getCurrentSp() + "/" + actingCharacter.getMaxSp() + "\n");
 			for (int index = 0; index < skills.size(); index++) {
-			    Skill skill = skills.get(index);
+				Skill skill = skills.get(index);
 
-			    String typeDisplayName =
-			            getSkillTypeDisplayName(skill);
+				String typeDisplayName = getSkillTypeDisplayName(skill);
 
-			    String powerDescription =
-			            getSkillPowerDescription(skill);
+				String powerDescription = getSkillPowerDescription(skill);
 
-			    System.out.println(
-			            "[" + (index + 1) + "] "
-			            + skill.getName()
-			            + " [" + typeDisplayName + "]"
-			            + " | " + powerDescription
-			            + " | MP: " + skill.getMpCost()
-			            + " | SP: " + skill.getSpCost()
-			    );
+				System.out.println("[" + (index + 1) + "] " + skill.getName() + " [" + typeDisplayName + "]" + " | "
+						+ powerDescription + " | MP: " + skill.getMpCost() + " | SP: " + skill.getSpCost());
 			}
 
 			System.out.println("[0] Voltar");
@@ -357,6 +400,23 @@ public class Battle {
 		return true;
 	}
 
+	private void executeTurn(
+	        BattleTurnEntry actingEntry
+	) {
+	    switch (actingEntry.getSide()) {
+	        case PARTY -> {
+	            PlayableCharacter actingCharacter =
+	                    (PlayableCharacter)
+	                    actingEntry.getCharacter();
+
+	            executeCharacterTurn(actingCharacter);
+	        }
+
+	        case ENEMY ->
+	            executeEnemyTurn(actingEntry);
+	    }
+	}
+	
 	private void executeEnemyAnalysis() {
 		Optional<EnemyBattleSlot> selectedSlot = enemyTargetMenu.selectTarget(enemyGroup);
 
@@ -367,19 +427,30 @@ public class Battle {
 		displayEnemyAnalysis(selectedSlot.get());
 	}
 
-	private void executePartyTurns() {
-		for (PlayableCharacter actingCharacter : party.getLivingMembers()) {
+	private void executeCurrentRound() {
+	    while (
+	            !currentTurnOrder.isComplete()
+	            && !party.isDefeated()
+	            && !enemyGroup.isDefeated()
+	            && !playerFled
+	    ) {
+	        Optional<BattleTurnEntry> currentEntry =
+	                currentTurnOrder.getCurrentEntry();
 
-			if (playerFled || enemyGroup.isDefeated()) {
-				return;
-			}
+	        if (currentEntry.isEmpty()) {
+	            return;
+	        }
 
-			System.out.println("\nVez de " + actingCharacter.getName() + "!");
+	        BattleTurnEntry actingEntry =
+	                currentEntry.get();
 
-			executeCharacterTurn(actingCharacter);
-		}
+	        displayCurrentTurn(actingEntry);
+	        executeTurn(actingEntry);
+
+	        currentTurnOrder.advance();
+	    }
 	}
-
+	
 	private boolean executeSelectedSkill(PlayableCharacter actingCharacter, Skill skill) {
 		if (skill.getRecoveryType() != RecoveryType.NONE) {
 			return executeRecoverySkill(actingCharacter, skill);
@@ -492,7 +563,8 @@ public class Battle {
 
 		case ALL_BUT_SELF -> selectMultipleRecoveryTargets(actingCharacter, skill, false);
 
-		case NONE, SINGLE_ENEMY, ALL_ENEMIES, RANDOM_ALLY, RANDOM_ENEMY -> throw new IllegalArgumentException("Invalid recovery target type.");
+		case NONE, SINGLE_ENEMY, ALL_ENEMIES, RANDOM_ALLY, RANDOM_ENEMY ->
+			throw new IllegalArgumentException("Invalid recovery target type.");
 		};
 	}
 
@@ -556,29 +628,22 @@ public class Battle {
 		}
 	}
 
-	private String getSkillTypeDisplayName(
-	        Skill skill
-	) {
-	    if (skill.getRecoveryType() != RecoveryType.NONE) {
-	        return skill.getRecoveryType().getDisplayName();
-	    }
+	private String getSkillTypeDisplayName(Skill skill) {
+		if (skill.getRecoveryType() != RecoveryType.NONE) {
+			return skill.getRecoveryType().getDisplayName();
+		}
 
-	    return skill.getDamageType().toString();
+		return skill.getDamageType().toString();
 	}
-	
-	private String getSkillPowerDescription(
-	        Skill skill
-	) {
-	    return switch (skill.getRecoveryType()) {
-	        case HEAL ->
-	            "Cura: " + skill.getBaseHealing();
 
-	        case REVIVE ->
-	            "Poder: " + skill.getBaseHealing();
+	private String getSkillPowerDescription(Skill skill) {
+		return switch (skill.getRecoveryType()) {
+		case HEAL -> "Cura: " + skill.getBaseHealing();
 
-	        case NONE ->
-	            "Poder: " + skill.getBaseDamage();
-	    };
+		case REVIVE -> "Poder: " + skill.getBaseHealing();
+
+		case NONE -> "Poder: " + skill.getBaseDamage();
+		};
 	}
 
 	private String getBattleResultSubject(PlayableCharacter character) {

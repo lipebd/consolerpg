@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
 import java.util.ArrayList;
+import java.util.Random;
 
 import rpg.battle.rewards.BattleRewards;
 import rpg.battle.rewards.BattleRewardService;
@@ -18,6 +19,7 @@ import rpg.world.scenarios.CombatScenario;
 // Coordinates battle creation, execution and victory rewards.
 public final class BattleCoordinator {
 
+	private final Random random;
 	private final Party party;
 	private final Scanner scanner;
 	private final EnemyDropCatalog enemyDropCatalog;
@@ -25,12 +27,13 @@ public final class BattleCoordinator {
 	private final BattleRewardScreen rewardScreen;
 
 	public BattleCoordinator(Party party, Scanner scanner, EnemyDropCatalog enemyDropCatalog,
-			BattleRewardService rewardService, BattleRewardScreen rewardScreen) {
+			BattleRewardService rewardService, BattleRewardScreen rewardScreen, Random random) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
 		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
 		this.enemyDropCatalog = Objects.requireNonNull(enemyDropCatalog, "Enemy drop catalog cannot be null.");
 		this.rewardService = Objects.requireNonNull(rewardService, "Battle reward service cannot be null.");
 		this.rewardScreen = Objects.requireNonNull(rewardScreen, "Battle reward screen cannot be null.");
+		this.random = Objects.requireNonNull(random, "Random generator cannot be null.");
 	}
 
 	public BattleResult start(EnemyDefinition enemyDefinition, CombatScenario combatScenario) {
@@ -54,7 +57,7 @@ public final class BattleCoordinator {
 
 		EnemyBattleGroup enemyGroup = new EnemyBattleGroup(enemies);
 
-		Battle battle = new Battle(party, enemyGroup, scanner);
+		Battle battle = new Battle(party, enemyGroup, scanner, random);
 
 		BattleResult result = battle.start();
 

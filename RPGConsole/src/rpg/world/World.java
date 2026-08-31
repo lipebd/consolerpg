@@ -60,15 +60,16 @@ public class World {
 		this.party = party;
 
 		/*
-		 * Temporary reference while World is being
-		 * migrated from one character to a Party.
+		 * Temporary reference while World is being migrated from one character to a
+		 * Party.
 		 */
 		this.player = party.getLeader();
 		this.currentScenario = initialScenario;
 		this.random = new Random();
 		BattleRewardService rewardService = new BattleRewardService(random);
 		BattleRewardScreen rewardScreen = new BattleRewardScreen(scanner);
-		this.battleCoordinator = new BattleCoordinator(party, scanner, enemyDropCatalog, rewardService, rewardScreen);
+		this.battleCoordinator = new BattleCoordinator(party, scanner, enemyDropCatalog, rewardService, rewardScreen,
+				random);
 		this.enemyCatalog = enemyCatalog;
 		this.encounterGenerator = new EncounterGenerator(enemyCatalog, encounterCatalog, random);
 		this.explorationEventGenerator = new ExplorationEventGenerator(random);
