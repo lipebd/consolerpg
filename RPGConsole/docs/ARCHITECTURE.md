@@ -231,16 +231,27 @@ The battle system is divided into the following responsibilities:
 
 Current battle flow:
 
-`Enemy definitions`
-`-> BattleCoordinator`
-`-> EnemyBattleGroup`
-`-> Battle`
-`-> BattleTurnOrderGenerator`
-`-> BattleTurnOrder`
-`-> character and enemy actions`
-`-> BattleResult`
-`-> BattleRewardService`
-`-> BattleRewardScreen`
+```text
+Enemy definitions
+        ↓
+BattleCoordinator
+        ↓
+EnemyBattleGroup
+        ↓
+Battle
+        ↓
+BattleTurnOrderGenerator
+        ↓
+BattleTurnOrder        
+        ↓
+character and enemy actions        
+        ↓
+BattleResult
+        ↓
+BattleRewardService
+        ↓
+BattleRewardScreen
+```
 
 ## Party ownership
 
