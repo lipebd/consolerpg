@@ -37,14 +37,6 @@ public class PlayableCharacter extends GameCharacter {
 		return true;
 	}
 
-	public int getLevel() {
-		return level;
-	}
-
-	public List<Skill> getSkills() {
-		return List.copyOf(skills);
-	}
-	
 	public int usePhysicalSkill(Skill skill, GameCharacter target) {
 	    int damage = getAttack()
 	            + skill.getBaseDamage()
@@ -55,6 +47,38 @@ public class PlayableCharacter extends GameCharacter {
 	    }
 
 	    return target.takeDamage(damage);
+	}
+
+	public int useRecoverySkill(
+	        Skill skill,
+	        PlayableCharacter target
+	) {
+	    if (skill == null || target == null) {
+	        throw new IllegalArgumentException(
+	                "Skill and target cannot be null."
+	        );
+	    }
+
+	    return switch (skill.getRecoveryType()) {
+	        case HEAL ->
+	            target.recoverHp(skill.getBaseHealing());
+
+	        case REVIVE ->
+	            target.revive(skill.getBaseHealing());
+
+	        case NONE ->
+	            throw new IllegalArgumentException(
+	                    "The selected skill has no recovery effect."
+	            );
+	    };
+	}
+	
+	public List<Skill> getSkills() {
+		return List.copyOf(skills);
+	}
+
+	public int getLevel() {
+		return level;
 	}
 	
 	public int gainExperience(int amount) {

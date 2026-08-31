@@ -1,31 +1,33 @@
 package rpg;
 
-import rpg.ui.TitleScreen;
-import rpg.ui.ConsoleUI;
-import rpg.world.World;
-import rpg.world.scenarios.Field;
-import rpg.world.scenarios.Scenario;
-import rpg.world.scenarios.City;
-import rpg.world.travel.TravelCatalog;
-import rpg.world.scenarios.Dungeon;
-import rpg.world.scenarios.DungeonSettings;
-import rpg.world.scenarios.ScenarioCatalog;
-import rpg.world.encounters.EncounterLoader;
-import rpg.world.encounters.EncounterCatalog;
-import rpg.world.exploration.ExplorationSettings;
-import rpg.characters.PlayableCharacter;
-import rpg.characters.CharacterStats;
-import rpg.characters.Party;
-import rpg.skills.Skill;
-import rpg.skills.DamageType;
-import rpg.enemies.EnemyCatalog;
-import rpg.enemies.EnemyLoader;
-import rpg.enemies.EnemyDropCatalog;
-import rpg.enemies.EnemyDropLoader;
-
-import java.util.Scanner;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Scanner;
+
+import rpg.characters.CharacterStats;
+import rpg.characters.Party;
+import rpg.characters.PlayableCharacter;
+import rpg.enemies.EnemyCatalog;
+import rpg.enemies.EnemyDropCatalog;
+import rpg.enemies.EnemyDropLoader;
+import rpg.enemies.EnemyLoader;
+import rpg.skills.DamageType;
+import rpg.skills.RecoveryType;
+import rpg.skills.Skill;
+import rpg.skills.SkillTargetType;
+import rpg.ui.ConsoleUI;
+import rpg.ui.TitleScreen;
+import rpg.world.World;
+import rpg.world.encounters.EncounterCatalog;
+import rpg.world.encounters.EncounterLoader;
+import rpg.world.exploration.ExplorationSettings;
+import rpg.world.scenarios.City;
+import rpg.world.scenarios.Dungeon;
+import rpg.world.scenarios.DungeonSettings;
+import rpg.world.scenarios.Field;
+import rpg.world.scenarios.Scenario;
+import rpg.world.scenarios.ScenarioCatalog;
+import rpg.world.travel.TravelCatalog;
 
 // Starts the game and controls its initial execution.
 public class Main {
@@ -76,10 +78,55 @@ public class Main {
 
 		Party party = new Party(flagelo);
 
-		Skill investida = new Skill("Investida", 1, DamageType.PHYSICAL, 5, 0, 0, 10,
-				"Corre até o alvo e o atropela. " + "Causa dano físico moderado e pode causar dano a si mesmo.");
+		CharacterStats bardoStats = new CharacterStats(80, // HP
+				80, // MP
+				60, // SP
+				8, // ATK
+				8, // DEF
+				12, // MAG
+				10, // RES
+				15, // VEL
+				14 // LCK
+		);
+
+		PlayableCharacter bardo = new PlayableCharacter("Bardo", bardoStats);
+
+		party.addMember(bardo);
+
+		Skill investida = new Skill("Investida", 1, DamageType.PHYSICAL, 5, 0, RecoveryType.NONE, SkillTargetType.NONE,
+				0, 10,
+				"Corre até o alvo e o atropela." + "\nCausa dano físico moderado e pode causar dano a si mesmo.");
+
+		Skill perseveranca = new Skill("Perseverança", 1, DamageType.NONE, 0, 10, RecoveryType.HEAL,
+				SkillTargetType.SELF, 0, 10,
+				"Mesmo ferido, firma seus pés em batalha e avança sobre o inimigo causando dano físico."
+						+ "\nAo final do ataque, recupera uma pequena quantidade do próprio HP");
+
+		Skill palavraCurativa = new Skill("Palavra Curativa", 1, DamageType.NONE, 0, 35, RecoveryType.HEAL,
+				SkillTargetType.SINGLE_ALLY, 0, 10,
+				"Uma frase inspiradora, um grito de ajuda, ou apenas uma ordem, que restaura 35 de HP de um aliado.");
+
+		Skill inspiracaoDoBardo = new Skill("Inspiração do Bardo", 1, DamageType.NONE, 0, 10, RecoveryType.HEAL,
+				SkillTargetType.ALL_ALLIES, 0, 10, "Inspira seus aliados, curando HP de todo o grupo.");
+
+		Skill chamadoDosEcos = new Skill("Chamado dos Ecos", 1, DamageType.NONE, 0, 10, RecoveryType.HEAL,
+				SkillTargetType.ALL_BUT_SELF, 0, 10,
+				"Entra em um transe altruísta, invocando forças obscuras para curar os aliados enquanto abre mão da sua reparação."
+						+ "\nReforça a DEF e RES dos aliados em 2 pontos por 2 turnos.");
+
+		Skill reviveUm = new Skill("Revive um", 1, DamageType.NONE, 0, 100, RecoveryType.REVIVE,
+				SkillTargetType.SINGLE_ALLY, 0, 15, "Skill de teste. Revive um aliado.");
+
+		Skill reviveTodos = new Skill("Revive todos", 1, DamageType.NONE, 0, 50, RecoveryType.REVIVE,
+				SkillTargetType.ALL_ALLIES, 0, 15, "Skill de teste. Revive todos os aliados.");
 
 		flagelo.learnSkill(investida);
+		flagelo.learnSkill(perseveranca);
+		flagelo.learnSkill(chamadoDosEcos);
+		flagelo.learnSkill(reviveUm);
+		bardo.learnSkill(inspiracaoDoBardo);
+		bardo.learnSkill(palavraCurativa);
+		bardo.learnSkill(reviveTodos);
 
 		ExplorationSettings verdesErmosSettings = new ExplorationSettings(5, // exploration length
 				70, // battle chance

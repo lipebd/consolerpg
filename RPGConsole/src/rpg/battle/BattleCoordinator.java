@@ -87,7 +87,7 @@ public final class BattleCoordinator {
 	private void grantVictoryRewards(List<Enemy> defeatedEnemies, CombatScenario combatScenario) {
 		BattleRewards rewards = rewardService.grantRewards(party, defeatedEnemies, combatScenario);
 
-		rewardScreen.show(party.getLeader(), rewards);
+		rewardScreen.show(rewards);
 	}
 
 	private void displayEncounterMessage(List<Enemy> enemies) {

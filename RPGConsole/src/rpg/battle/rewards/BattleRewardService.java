@@ -5,7 +5,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.List;
+import java.util.ArrayList;
 
+import rpg.characters.PlayableCharacter;
 import rpg.characters.Enemy;
 import rpg.characters.Party;
 import rpg.items.DropEntry;
@@ -21,7 +23,7 @@ public final class BattleRewardService {
 		this.random = Objects.requireNonNull(random, "Random generator cannot be null.");
 	}
 
-	// sobrecarga pra tipos de parametros diferentes
+	// Overload for a battle against a single enemy.
 	public BattleRewards grantRewards(Party party, Enemy defeatedEnemy, CombatScenario combatScenario) {
 		Objects.requireNonNull(defeatedEnemy, "Defeated enemy cannot be null.");
 
@@ -52,11 +54,7 @@ public final class BattleRewardService {
 			goldReward += (int) Math.round(combatScenario.getBaseGoldReward() * rankMultiplier);
 		}
 
-		/*
-		 * Temporary EXP recipient while reward distribution among party members is not
-		 * implemented.
-		 */
-		int levelsGained = party.getLeader().gainExperience(experienceReward);
+		List<CharacterProgressionResult> progressionResults = grantExperienceToParty(party, experienceReward);
 
 		party.addGold(goldReward);
 
@@ -64,7 +62,7 @@ public final class BattleRewardService {
 
 		addCollectedItemsToInventory(party, collectedItems);
 
-		return new BattleRewards(experienceReward, goldReward, levelsGained, collectedItems);
+		return new BattleRewards(progressionResults, goldReward, collectedItems);
 	}
 
 	private Map<Item, Integer> collectEnemyDrops(List<Enemy> defeatedEnemies) {
@@ -93,5 +91,20 @@ public final class BattleRewardService {
 
 			party.getInventory().addItem(entry.getKey(), entry.getValue());
 		}
+	}
+
+	private List<CharacterProgressionResult> grantExperienceToParty(Party party, int experienceReward) {
+
+		List<CharacterProgressionResult> results = new ArrayList<>();
+
+		for (PlayableCharacter member : party.getMembers()) {
+			int previousLevel = member.getLevel();
+
+			member.gainExperience(experienceReward);
+
+			results.add(new CharacterProgressionResult(member, experienceReward, previousLevel, member.getLevel()));
+		}
+
+		return results;
 	}
 }

@@ -3,7 +3,9 @@ package rpg.ui;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Scanner;
+import java.util.List;
 
+import rpg.battle.rewards.CharacterProgressionResult;
 import rpg.battle.rewards.BattleRewards;
 import rpg.characters.PlayableCharacter;
 import rpg.items.Item;
@@ -11,92 +13,90 @@ import rpg.items.Item;
 // Displays the rewards obtained after a battle victory.
 public final class BattleRewardScreen {
 
-    private final Scanner scanner;
+	private final Scanner scanner;
 
-    public BattleRewardScreen(Scanner scanner) {
-        this.scanner = Objects.requireNonNull(
-                scanner,
-                "Scanner cannot be null."
-        );
-    }
+	public BattleRewardScreen(Scanner scanner) {
+		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+	}
 
-    public void show(
-            PlayableCharacter player,
-            BattleRewards rewards
-    ) {
-        System.out.println("\n[RESULTADO DA BATALHA]");
+	public void show(BattleRewards rewards) {
+		Objects.requireNonNull(rewards, "Battle rewards cannot be null.");
 
-        System.out.println(
-                "EXP recebida: +"
-                + rewards.getExperience()
-        );
+		System.out.println("\n[RESULTADO DA BATALHA]");
 
-        System.out.println(
-                "Ouro recebido: +"
-                + rewards.getGold()
-        );
+		displayExperienceRewards(rewards);
 
-        displayLevelProgress(player, rewards);
-        displayCollectedItems(rewards);
+		System.out.println("Ouro recebido: +" + rewards.getGold());
 
-        waitForContinue();
-    }
+		displayLevelProgress(rewards);
+		displayCollectedItems(rewards);
 
-    private void displayLevelProgress(
-            PlayableCharacter player,
-            BattleRewards rewards
-    ) {
-        int levelsGained = rewards.getLevelsGained();
+		waitForContinue();
+	}
 
-        if (levelsGained <= 0) {
-            return;
-        }
+	private void displayLevelProgress(BattleRewards rewards) {
+		for (CharacterProgressionResult result : rewards.getCharacterProgressionResults()) {
 
-        int previousLevel =
-                player.getLevel() - levelsGained;
+			int levelsGained = result.getLevelsGained();
 
-        String levelWord =
-                levelsGained == 1
-                ? "nível"
-                : "níveis";
+			if (levelsGained <= 0) {
+				continue;
+			}
 
-        System.out.println(
-                player.getName() + " subiu "
-                + levelsGained + " " + levelWord + "! ["
-                + previousLevel + " -> "
-                + player.getLevel() + "]"
-        );
-    }
+			String levelWord = levelsGained == 1 ? "nível" : "níveis";
 
-    private void displayCollectedItems(
-            BattleRewards rewards
-    ) {
-        Map<Item, Integer> collectedItems =
-                rewards.getCollectedItems();
+			System.out.println(result.getCharacter().getName() + " subiu " + levelsGained + " " + levelWord + "! ["
+					+ result.getPreviousLevel() + " -> " + result.getCurrentLevel() + "]");
+		}
+	}
 
-        System.out.println("\nItens encontrados:");
+	private void displayCollectedItems(BattleRewards rewards) {
+		Map<Item, Integer> collectedItems = rewards.getCollectedItems();
 
-        if (collectedItems.isEmpty()) {
-            System.out.println("- Nenhum");
-            return;
-        }
+		System.out.println("\nItens encontrados:");
 
-        for (Map.Entry<Item, Integer> entry
-                : collectedItems.entrySet()) {
+		if (collectedItems.isEmpty()) {
+			System.out.println("- Nenhum");
+			return;
+		}
 
-            System.out.println(
-                    "- " + entry.getKey().getName()
-                    + " x" + entry.getValue()
-            );
-        }
-    }
+		for (Map.Entry<Item, Integer> entry : collectedItems.entrySet()) {
 
-    private void waitForContinue() {
-        System.out.println(
-                "\nPressione ENTER para continuar..."
-        );
+			System.out.println("- " + entry.getKey().getName() + " x" + entry.getValue());
+		}
+	}
 
-        System.out.print("> ");
-        scanner.nextLine();
-    }
+	private void waitForContinue() {
+		System.out.println("\nPressione ENTER para continuar...");
+
+		System.out.print("> ");
+		scanner.nextLine();
+	}
+
+	private void displayExperienceRewards(BattleRewards rewards) {
+		List<CharacterProgressionResult> results = rewards.getCharacterProgressionResults();
+
+		if (results.size() == 1) {
+			System.out.println("EXP recebida: +" + results.get(0).getExperienceReceived());
+
+			return;
+		}
+
+		int firstExperience = results.get(0).getExperienceReceived();
+
+		boolean sameExperienceForEveryone = results.stream()
+				.allMatch(result -> result.getExperienceReceived() == firstExperience);
+
+		if (sameExperienceForEveryone) {
+			System.out.println("EXP recebida por aliado: +" + firstExperience);
+
+			return;
+		}
+
+		System.out.println("EXP recebida:");
+
+		for (CharacterProgressionResult result : results) {
+			System.out.println("- " + result.getCharacter().getName() + ": +" + result.getExperienceReceived());
+		}
+	}
 }

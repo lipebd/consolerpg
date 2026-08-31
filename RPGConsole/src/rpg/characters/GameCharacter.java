@@ -68,6 +68,9 @@ public abstract class GameCharacter {
     }
     
     public int recoverHp(int recoveryAmount) {
+    	if(!isAlive()) {
+    		return 0;
+    	}
     	int actualRecoveryAmount = recoveryAmount;
     	if (actualRecoveryAmount < 1) {
     		actualRecoveryAmount = 0;
@@ -78,6 +81,20 @@ public abstract class GameCharacter {
     	currentHp = currentHp + actualRecoveryAmount;
     	
     	return actualRecoveryAmount;
+    }
+    
+    public int revive(int recoveryAmount) {
+        if (isAlive() || recoveryAmount <= 0) {
+            return 0;
+        }
+
+        int actualRecoveryAmount =
+                Math.min(recoveryAmount, maxHp);
+
+        currentHp = actualRecoveryAmount;
+        defending = false;
+
+        return actualRecoveryAmount;
     }
     
     public boolean spendMp(int amount) {

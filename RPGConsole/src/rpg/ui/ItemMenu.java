@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Objects;
+import java.util.Optional;
 
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
@@ -15,7 +16,7 @@ import rpg.items.Item;
 public class ItemMenu {
 
 	private final Party party;
-	private final PlayableCharacter targetCharacter;
+	private final AllyTargetMenu allyTargetMenu;
 	private final Scanner scanner;
 
 	public ItemMenu(Party party, Scanner scanner) {
@@ -23,15 +24,26 @@ public class ItemMenu {
 
 		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
 
-		/*
-		 * Temporary target while ally selection is not implemented.
-		 */
-		this.targetCharacter = party.getLeader();
+		this.allyTargetMenu = new AllyTargetMenu(scanner);
 	}
 
 	public boolean open() {
+		return openMenu(null);
+	}
+
+	public boolean open(PlayableCharacter actingCharacter) {
+		Objects.requireNonNull(actingCharacter, "Acting character cannot be null.");
+
+		return openMenu(actingCharacter);
+	}
+
+	private boolean openMenu(PlayableCharacter actingCharacter) {
 		Map<Item, Integer> inventoryContents = party.getInventory().getContents();
 
+		System.out.println("\n[INVENTÁRIO]");
+		System.out.println("Ouro: " + party.getGold());
+
+		System.out.println("\nItens:");
 		if (inventoryContents.isEmpty()) {
 			System.out.println("Seu inventário está vazio.");
 			return false;
@@ -40,7 +52,6 @@ public class ItemMenu {
 		List<Map.Entry<Item, Integer>> itemEntries = new ArrayList<>(inventoryContents.entrySet());
 
 		while (true) {
-			System.out.println("\nEscolha um item:");
 
 			for (int index = 0; index < itemEntries.size(); index++) {
 
@@ -82,13 +93,21 @@ public class ItemMenu {
 				}
 
 				if (selectedItem instanceof HealingItem healingItem) {
-					if (targetCharacter.getCurrentHp() == targetCharacter.getMaxHp()) {
-						System.out.println(targetCharacter.getName() + " já está com o HP cheio.");
+					Optional<PlayableCharacter> selectedTarget = allyTargetMenu.selectInjuredTarget(party);;
+
+					if (selectedTarget.isEmpty()) {
+						continue;
+					}
+
+					PlayableCharacter target = selectedTarget.get();
+
+					if (target.getCurrentHp() == target.getMaxHp()) {
+						System.out.println(target.getName() + " já está com o HP cheio.");
 
 						continue;
 					}
 
-					int recoveredHp = healingItem.use(targetCharacter);
+					int recoveredHp = healingItem.use(target);
 
 					if (recoveredHp <= 0) {
 						System.out.println("O item não produziu nenhum efeito.");
@@ -98,7 +117,9 @@ public class ItemMenu {
 
 					party.getInventory().removeItem(selectedItem, 1);
 
-					displayHealing(recoveredHp);
+					displayItemUse(actingCharacter, target, selectedItem);
+
+					displayHealing(target, recoveredHp);
 
 					return true;
 				}
@@ -136,8 +157,19 @@ public class ItemMenu {
 		}
 	}
 
-	private void displayHealing(int recoveredHp) {
-		System.out.println(targetCharacter.getName() + " recuperou " + recoveredHp + " de HP. HP atual: "
-				+ targetCharacter.getCurrentHp() + "/" + targetCharacter.getMaxHp() + ".");
+	private void displayHealing(PlayableCharacter target, int recoveredHp) {
+		System.out.println(target.getName() + " recuperou " + recoveredHp + " de HP. HP atual: " + target.getCurrentHp()
+				+ "/" + target.getMaxHp() + ".");
+	}
+
+	private void displayItemUse(PlayableCharacter actingCharacter, PlayableCharacter target, Item item) {
+		if (actingCharacter == null || actingCharacter == target) {
+
+			System.out.println(target.getName() + " usou " + item.getName() + ".");
+
+			return;
+		}
+
+		System.out.println(actingCharacter.getName() + " usou " + item.getName() + " em " + target.getName() + ".");
 	}
 }
