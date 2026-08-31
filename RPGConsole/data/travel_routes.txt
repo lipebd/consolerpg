@@ -1,0 +1,7 @@
+# id;sourceScenarioId;destinationScenarioId;initiallyUnlocked;displayName;description
+bree_portao_sul;bree;verdes_ermos;true;Portão Sul;A estrada ao sul conduz aos Verdes Ermos.
+verdes_ermos_bree;verdes_ermos;bree;true;Retornar a Bree;Você segue pela estrada de volta a Bree.
+verdes_ermos_gruta_relamparrocha;verdes_ermos;gruta_relamparrocha;false;Entrar na Gruta Relamparrocha;Uma imensa formação rochosa marca a entrada da gruta.
+gruta_relamparrocha_verdes_ermos;gruta_relamparrocha;verdes_ermos;true;Sair para os Verdes Ermos;Você deixa os túneis eletrificados e retorna aos campos.
+gruta_relamparrocha_bree;gruta_relamparrocha;bree;true;Retornar a Bree;Você abandona a gruta e inicia o caminho de volta a Bree.
+bree_tunel_suspeito;bree;gruta_relamparrocha;true;Túnel Suspeito;Um túnel de procedência duvidosa parece conduzir diretamente à gruta.

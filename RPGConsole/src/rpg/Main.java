@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Scanner;
 
+import rpg.world.travel.TravelProgress;
+import rpg.world.travel.TravelRouteLoader;
 import rpg.characters.CharacterStats;
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
@@ -42,6 +44,8 @@ public class Main {
 		EnemyDropCatalog enemyDropCatalog;
 		ScenarioCatalog scenarioCatalog;
 		Scenario currentScenario;
+		TravelProgress travelProgress;
+		;
 
 		Scanner scanner = new Scanner(System.in);
 
@@ -83,7 +87,14 @@ public class Main {
 				scenarioCatalog.register(scenario);
 			}
 
-			currentScenario = scenarioCatalog.getById("verdes_ermos");
+			currentScenario = scenarioCatalog.getById("bree");
+
+			TravelRouteLoader travelRouteLoader = new TravelRouteLoader();
+
+			TravelCatalog travelCatalog = travelRouteLoader.load(Path.of("data", "travel_routes.txt"),
+					scenarioDefinitionCatalog);
+
+			travelProgress = new TravelProgress(travelCatalog);
 
 		} catch (IOException | IllegalArgumentException exception) {
 			System.out.println("Não foi possível carregar os dados do jogo.");
@@ -159,20 +170,8 @@ public class Main {
 		bardo.learnSkill(palavraCurativa);
 		bardo.learnSkill(reviveTodos);
 
-		TravelCatalog travelCatalog = new TravelCatalog();
-
-		travelCatalog.register("verdes_ermos", "bree");
-
-		travelCatalog.register("verdes_ermos", "gruta_relamparrocha");
-
-		travelCatalog.register("bree", "verdes_ermos");
-
-		travelCatalog.register("gruta_relamparrocha", "verdes_ermos");
-
-		travelCatalog.register("gruta_relamparrocha", "bree");
-
 		World world = new World(party, currentScenario, scanner, enemyCatalog, enemyDropCatalog, encounterCatalog,
-				scenarioCatalog, travelCatalog);
+				scenarioCatalog, travelProgress);
 
 		world.start();
 

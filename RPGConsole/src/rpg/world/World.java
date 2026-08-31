@@ -33,7 +33,7 @@ import rpg.world.scenarios.Dungeon;
 import rpg.world.scenarios.Scenario;
 import rpg.world.scenarios.ScenarioAction;
 import rpg.world.scenarios.ScenarioCatalog;
-import rpg.world.travel.TravelCatalog;
+import rpg.world.travel.TravelProgress;
 
 // Controls navigation and interaction with the game world.
 public class World {
@@ -56,7 +56,7 @@ public class World {
 
 	public World(Party party, Scenario initialScenario, Scanner scanner, EnemyCatalog enemyCatalog,
 			EnemyDropCatalog enemyDropCatalog, EncounterCatalog encounterCatalog, ScenarioCatalog scenarioCatalog,
-			TravelCatalog travelCatalog) {
+			TravelProgress travelProgress) {
 		this.party = party;
 		this.currentScenario = initialScenario;
 		this.random = new Random();
@@ -67,7 +67,7 @@ public class World {
 		this.enemyCatalog = enemyCatalog;
 		this.encounterGenerator = new EncounterGenerator(enemyCatalog, encounterCatalog, random);
 		this.explorationEventGenerator = new ExplorationEventGenerator(random);
-		this.travelMenu = new TravelMenu(scanner, scenarioCatalog, travelCatalog);
+		this.travelMenu = new TravelMenu(scanner, scenarioCatalog, travelProgress);
 		this.epicEncounterMenu = new EpicEncounterMenu(scanner);
 		this.scenarioActionMenu = new ScenarioActionMenu(scanner);
 		this.running = true;

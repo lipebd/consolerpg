@@ -78,24 +78,27 @@ The implementation must preserve stable IDs, strict startup validation and separ
 
 ## 2. External travel routes
 
-* [ ] Define the `travel_routes.txt` format.
-* [ ] Give each route a stable ID.
-* [ ] Store source and destination scenario IDs.
-* [ ] Store a player-facing route name.
-* [ ] Store route flavor text with literal `\n` support.
-* [ ] Create the travel-route definition.
-* [ ] Create the travel-route loader.
-* [ ] Create the travel-route catalog.
-* [ ] Reject duplicate route IDs.
-* [ ] Reject routes referencing unknown scenarios.
-* [ ] Reject routes whose source and destination are identical.
-* [ ] Load adjacent routes during startup.
-* [ ] Remove hardcoded travel registrations from `Main`.
-* [ ] Preserve free adjacent travel between scenarios.
-* [ ] Support multiple named exits from the same city.
-* [ ] Support scenario-specific exit menus.
-* [ ] Decide whether locked or unknown exits remain visible.
-* [ ] Test all routes between Bree, Verdes Ermos and Gruta Relamparrocha.
+* [x] Define the `travel_routes.txt` format.
+* [x] Give each route a stable ID.
+* [x] Store source and destination scenario IDs.
+* [x] Store a player-facing route name.
+* [x] Store route flavor text with literal `\n` support.
+* [x] Create the travel-route definition.
+* [x] Create the travel-route loader.
+* [x] Create the travel-route catalog.
+* [x] Reject duplicate route IDs.
+* [x] Reject routes referencing unknown scenarios.
+* [x] Reject routes whose source and destination are identical.
+* [x] Load adjacent routes during startup.
+* [x] Remove hardcoded travel registrations from `Main`.
+* [x] Preserve free adjacent travel between scenarios.
+- [x] Create mutable travel-route progress.
+- [x] Initialize route unlock state from external data.
+- [x] Hide locked routes until they are unlocked.
+- [x] Support scenario-specific exit menus.
+* [x] Support multiple named exits from the same city.
+- [x] Keep locked and unknown exits hidden until they become available.
+* [x] Test all routes between Bree, Verdes Ermos and Gruta Relamparrocha.
 
 ## 3. Current-position-first exploration
 
