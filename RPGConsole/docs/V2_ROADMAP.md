@@ -44,12 +44,12 @@ Exploration works like movement through spaces on a board. Each use of the Explo
 - [x] Complete Verdes Ermos after its configured exploration length.
 - [x] Unlock travel after reaching the final position.
 
-Deferred fixed branches:
+~Deferred fixed branches:~ MOVED TO V3
 
-- [ ] Create fixed exploration branching points.
-- [ ] Allow a branching point to load another scenario.
-- [ ] Make a missed branch unavailable after advancing past it.
-- [ ] End the current exploration session when entering a branch.
+~- [ ] Create fixed exploration branching points.~
+~- [ ] Allow a branching point to load another scenario.~
+~- [ ] Make a missed branch unavailable after advancing past it.~
+~- [ ] End the current exploration session when entering a branch.~
 
 ## Phase 3 — Gruta de Relamparrocha and travel
 
@@ -86,61 +86,90 @@ Deferred fixed branches:
 - [x] Consolidate equal item drops in battle results.
 - [x] Prepare reward calculation for a list of defeated enemies.
 
-## Phase 5 — World and battle-flow refactoring
+## Phase 5 — Party system
 
-- [x] Create `TravelMenu`.
-- [x] Create `ScenarioActionMenu`.
-- [x] Create `EpicEncounterMenu`.
-- [x] Create `BattleRewards`.
-- [x] Create `BattleRewardService`.
-- [x] Create `BattleRewardScreen`.
-- [x] Create `BattleCoordinator`.
-- [x] Remove direct console input from `World`.
-- [x] Remove reward calculation and display from `World`.
-- [x] Remove enemy construction from `World`.
-- [ ] Review the remaining exploration responsibilities in `World`.
-- [ ] Extract additional responsibilities only where a clear boundary exists.
+- [x] Rename `Player` to `PlayableCharacter`.
+- [x] Create `Party`.
+- [x] Support one to four party members.
+- [x] Move inventory ownership to `Party`.
+- [x] Move gold ownership to `Party`.
+- [x] Display all party members during battle.
+- [x] Give every living party member an action.
+- [x] Prevent defeated allies from acting.
+- [x] Allow allies to use items on each other.
+- [x] Add self-healing.
+- [x] Add single-ally healing.
+- [x] Add area healing.
+- [x] Add all-but-self healing.
+- [x] Add single-target revive.
+- [x] Add area revive.
+- [x] Grant complete EXP to every party member.
+- [x] Grant EXP to defeated party members.
+- [x] Display multiple level-up results.
+- [ ] Display the complete party outside battle.
+- [ ] Adapt the temporary defeat screen to the party.
 
-## Phase 6 — Enemy groups and multiple enemies
+## Phase 6 — Multiple enemies
 
-- [ ] Generate a random enemy-group size using scenario minimum and maximum values.
-- [ ] Select every group member using eligible weighted encounter entries.
-- [ ] Enforce `maxCopies` for each enemy definition.
-- [ ] Handle pools that cannot fill the requested group size.
-- [ ] Replace the single battle enemy with an enemy group.
-- [ ] Support up to three enemies.
-- [ ] Display enemies with selection numbers.
-- [ ] Implement target selection.
-- [ ] Prevent defeated enemies from acting.
-- [ ] Execute the turn of every living enemy.
-- [ ] End battle when all enemies are defeated.
-- [ ] Aggregate EXP, gold and drops from all defeated enemies.
-- [ ] Display consolidated battle rewards.
+- [x] Support one to three enemies.
+- [x] Add enemy battle slots.
+- [x] Number repeated enemies.
+- [x] Add enemy target selection.
+- [x] Prevent defeated enemies from acting.
+- [x] Prevent defeated enemies from being targeted.
+- [x] Aggregate rewards from multiple enemies.
+- [x] Aggregate equal item drops.
+- [x] Add per-enemy maximum copy limits.
+- [x] Add per-scenario enemy count limits.
 
-## Phase 7 — Party system
+## Phase 7 — Battle initiative
 
-- [ ] Create `Party`.
-- [ ] Support up to four allied characters.
-- [ ] Display party members in battle.
-- [ ] Implement ally selection for items and supportive skills.
-- [ ] Track defeated and active allies.
-- [ ] End in defeat only when all allies are defeated.
-- [ ] Distribute EXP among party members.
-- [ ] Display compact level-up results for multiple characters.
+- [x] Create a unified ally and enemy turn order.
+- [x] Order first actions by effective Speed.
+- [x] Use effective Luck as the first tie-breaker.
+- [x] Use a random final tie-breaker.
+- [x] Rebuild the queue every round.
+- [x] Allow multiple actions during one round.
+- [x] Compare Speed against the opposing average.
+- [x] Limit actions per participant.
+- [x] Distribute additional actions using initiative scores.
+- [x] Skip defeated queue entries.
+- [x] Add revived allies only to the following round.
+- [x] Display the current participant.
+- [x] Display the next participant.
+- [x] Add the `Round` inspection action.
+- [x] Limit the detailed queue to five visible entries.
 
-## Phase 8 — V2 completion
+## Phase 8 — Battle escape
 
-- [ ] Replace the hardcoded exploration item reward with area data.
-- [ ] Decide whether items will be externalized during V2 or postponed.
-- [ ] Validate all external data files.
-- [ ] Improve initialization error messages.
-- [ ] Test victory, defeat and fleeing.
-- [ ] Test optional epic and forced boss encounters.
-- [ ] Test item usage inside and outside battle.
-- [ ] Test level progression and excess EXP.
-- [ ] Test exploration and every area transition.
-- [ ] Test encounter weights, area restrictions and maximum copies.
-- [ ] Test parties and multiple enemies.
+- [x] Use the acting character for a flee attempt.
+- [x] Add the direct effective Luck check.
+- [x] Add the comparative attribute check.
+- [x] Compare against living enemy averages.
+- [x] Add minimum and maximum chances.
+- [x] Consume the action after a failed attempt.
+- [x] Remove the entire party after success.
+- [x] Preserve contextual escape messages.
+- [x] Return one dungeon position after fleeing from a boss.
+
+## Phase 9 — V2 completion
+
+- [ ] Complete the party status interface.
+- [ ] Remove remaining temporary leader references.
+- [ ] Adapt the temporary Game Over screen.
+- [ ] Test solo battles.
+- [ ] Test full-party battles.
+- [ ] Test repeated enemies.
+- [ ] Test multiple actions per round.
+- [ ] Test defeated queue entries.
+- [ ] Test revives and the following round.
+- [ ] Test both escape checks.
+- [ ] Test failed escape attempts.
+- [ ] Test boss retreat.
+- [ ] Test rewards with living and defeated allies.
+- [ ] Test items inside and outside battle.
+- [ ] Test every exploration event.
+- [ ] Test scenario travel.
 - [ ] Update project documentation.
 - [ ] Create the V2 release build.
 - [ ] Create the V2 Git tag.
@@ -157,13 +186,28 @@ This phase must be implemented only after Bree is fully functional and defeat pr
 - [ ] Preserve EXP, gold, items and character progression.
 - [ ] Support full-party defeat after the party system is implemented.
 
-## Outside the V2 scope
+## V3 — Data-driven game content
 
-Planned for V3:
-
-- Character creation.
-- Seven playable classes.
-- Class-specific progression.
-- Continued use of Flagelo as the primary test character.
-- Save and load system.
-- No class-changing system yet.
+- [ ] Create `data/scenarios.txt`.
+- [ ] Create `ScenarioDefinition`.
+- [ ] Create `ScenarioCatalog` loading from external data.
+- [ ] Create `ScenarioLoader`.
+- [ ] Create a factory for `Field`, `Dungeon` and `City`.
+- [ ] Remove Bree from `Main`.
+- [ ] Remove Verdes Ermos from `Main`.
+- [ ] Remove Gruta Relamparrocha from `Main`.
+- [ ] Create fixed exploration branching points.
+- [ ] Allow a branching point to load another scenario.
+- [ ] Make a missed branch unavailable after advancing past it.
+- [ ] End the current exploration session when entering a branch.
+- [ ] Create `data/skills.txt`.
+- [ ] Load playable skills externally.
+- [ ] Create `data/items.txt`.
+- [ ] Load consumables, materials and equipment externally.
+- [ ] Implement fixed branching exploration points.
+- [ ] Implement party titles.
+- [ ] Use the party title in collective narrative texts.
+- [ ] Persist the party title in save data.
+- [ ] Implement character creation.
+- [ ] Implement the seven playable classes.
+- [ ] Implement save and load.

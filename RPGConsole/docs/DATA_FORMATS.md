@@ -207,14 +207,68 @@ Implemented IDs:
 
 `ItemCatalog.getById()` resolves the IDs used by external drop data.
 
-## Planned data files
+## Planned V3 data files
 
-The following external formats are planned but have not been implemented:
+### Scenario definitions
 
-- `data/items.txt`
-- scenario definitions
-- exploration event item tables
-- travel routes
-- dungeon settings
+Planned file:
 
-Their final formats must be documented here when implemented.
+`data/scenarios.txt`
+
+This file will remove scenario instances and exploration settings from
+`Main`.
+
+It must support at least:
+
+- Stable scenario ID.
+- Scenario type.
+- Display name.
+- Description.
+- Base EXP reward.
+- Base gold reward.
+- Exploration length.
+- Exploration event chances.
+- Special area chance.
+- Minimum and maximum enemy counts.
+- Normal and special area messages.
+- Dungeon boss and epic enemy IDs when applicable.
+
+### Skill definitions
+
+Planned file:
+
+`data/skills.txt`
+
+Recovery effect and target must use separate fields.
+
+Planned fields include:
+
+- Stable skill ID.
+- Display name.
+- Required level.
+- Playable class ID.
+- Damage type.
+- Base damage.
+- Base healing.
+- Recovery type.
+- Recovery target type.
+- MP cost.
+- SP cost.
+- Description.
+
+### Item definitions
+
+Planned file:
+
+`data/items.txt`
+
+The item format must support different item categories:
+
+- Consumables.
+- Crafting materials.
+- Weapons.
+- Armor.
+- Accessories.
+
+The final format will be defined when equipment and item effects are
+implemented.

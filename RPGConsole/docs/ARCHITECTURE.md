@@ -196,30 +196,90 @@ World dispatches the event consequence
 
 The last position of a dungeon bypasses random event generation and starts its forced boss encounter.
 
-## Battle flow
+## Battle architecture
 
-```text
-World requests an encounter
-        ↓
-BattleCoordinator creates the Enemy with drops
-        ↓
-Battle executes turns and returns BattleResult
-        ↓
-BattleCoordinator grants victory rewards
-        ↓
-World applies world-state consequences
-```
+The battle system is divided into the following responsibilities:
 
-Responsibilities:
+- `Battle`
+  - Coordinates the battle lifecycle and character actions.
+- `BattleCoordinator`
+  - Creates runtime enemies and grants victory rewards.
+- `EnemyBattleGroup`
+  - Stores one to three enemy slots.
+- `EnemyBattleSlot`
+  - Stores one enemy and its unique battle display name.
+- `BattleTurnEntry`
+  - Represents one participant inside the round queue.
+- `BattleTurnOrderGenerator`
+  - Calculates action counts and initiative scores.
+- `BattleTurnOrder`
+  - Tracks the current position and skips defeated entries.
+- `BattleTurnOrderScreen`
+  - Displays the current and upcoming actions.
+- `BattleEscapeService`
+  - Calculates the two-stage flee attempt.
+- `AllyTargetMenu`
+  - Selects living, injured or defeated party members.
+- `EnemyTargetMenu`
+  - Selects a living enemy target.
+- `BattleRewardService`
+  - Calculates EXP, gold and consolidated drops.
+- `BattleRewardScreen`
+  - Displays party progression and collected rewards.
+- `CharacterProgressionResult`
+  - Stores the individual EXP and level result of one ally.
 
-- `Battle` controls turn order, actions, damage, items, skills, fleeing and the end condition.
-- `BattleCoordinator` creates battle participants, runs the battle and triggers victory rewards.
-- `BattleRewardService` calculates and grants EXP, gold and item drops.
-- `BattleRewards` stores the consolidated reward result.
-- `BattleRewardScreen` displays rewards and waits for the player to continue.
-- `World` handles consequences outside the battle, such as scenario redisplay, boss retreat and temporary Game Over behavior.
+Current battle flow:
 
-`BattleRewardService` supports both a single defeated enemy and `List<Enemy>`, preparing reward aggregation for enemy groups.
+`Enemy definitions`
+`-> BattleCoordinator`
+`-> EnemyBattleGroup`
+`-> Battle`
+`-> BattleTurnOrderGenerator`
+`-> BattleTurnOrder`
+`-> character and enemy actions`
+`-> BattleResult`
+`-> BattleRewardService`
+`-> BattleRewardScreen`
+
+## Party ownership
+
+`Party` owns shared resources:
+
+- Inventory
+- Gold
+- Future global reward buffs
+- Future party title
+
+`PlayableCharacter` owns individual state:
+
+- HP
+- MP
+- SP
+- Attributes
+- Level
+- EXP
+- Skills
+- Defensive state
+- Future equipment
+- Future temporary effects
+
+## Skill architecture
+
+`Skill` currently stores:
+
+- Damage data.
+- Recovery data.
+- Resource costs.
+- Recovery type.
+- Recovery target type.
+- Description.
+
+Recovery effect and target are stored separately.
+
+This prepares the project for a future list of independent skill effects,
+where one skill may cause damage, healing, buffs and debuffs using
+different targets.
 
 ## Travel flow
 

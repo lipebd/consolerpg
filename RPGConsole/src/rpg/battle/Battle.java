@@ -1,28 +1,27 @@
 package rpg.battle;
 
+import java.util.Comparator;
 import java.util.List;
-import java.util.Scanner;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Comparator;
 import java.util.Random;
+import java.util.Scanner;
 
-import rpg.ui.BattleTurnOrderScreen;
-import rpg.characters.Party;
-import rpg.ui.EnemyTargetMenu;
 import rpg.characters.Enemy;
 import rpg.characters.GameCharacter;
+import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
-import rpg.skills.DamageType;
 import rpg.skills.RecoveryType;
-import rpg.skills.SkillTargetType;
-import rpg.ui.AllyTargetMenu;
 import rpg.skills.Skill;
+import rpg.ui.AllyTargetMenu;
+import rpg.ui.BattleTurnOrderScreen;
+import rpg.ui.EnemyTargetMenu;
 import rpg.ui.ItemMenu;
 
 // Controls a battle between a party and an enemy group.
 public class Battle {
 
+	private BattleEscapeService escapeService;
 	private BattleTurnOrderGenerator turnOrderGenerator;
 	private BattleTurnOrderScreen turnOrderScreen;
 	private BattleTurnOrder currentTurnOrder;
@@ -35,7 +34,7 @@ public class Battle {
 	private EnemyTargetMenu enemyTargetMenu;
 	private EnemyBattleGroup enemyGroup;
 	private Scanner scanner;
-	private boolean playerFled;
+	private boolean partyFled;
 	private ItemMenu itemMenu;
 
 	public Battle(Party party, EnemyBattleGroup enemyGroup, Scanner scanner, Random random) {
@@ -44,11 +43,12 @@ public class Battle {
 		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
 		Objects.requireNonNull(random, "Random generator cannot be null.");
 		this.enemyTargetMenu = new EnemyTargetMenu(scanner);
-		this.playerFled = false;
+		this.partyFled = false;
 		this.itemMenu = new ItemMenu(party, scanner);
 		this.allyTargetMenu = new AllyTargetMenu(scanner);
 		this.turnOrderGenerator = new BattleTurnOrderGenerator(random);
 		this.turnOrderScreen = new BattleTurnOrderScreen();
+		this.escapeService = new BattleEscapeService(random);
 	}
 
 	public BattleResult start() {
@@ -59,7 +59,7 @@ public class Battle {
 	    while (
 	            !party.isDefeated()
 	            && !enemyGroup.isDefeated()
-	            && !playerFled
+	            && !partyFled
 	    ) {
 	        System.out.println(
 	                "\n--- Rodada "
@@ -300,9 +300,7 @@ public class Battle {
 			case "6" -> turnOrderScreen.show(currentTurnOrder, currentRoundNumber);
 			
 			case "7" -> {
-				fleeingCharacter = actingCharacter;
-				playerFled = true;
-				validAction = true;
+				executeEscapeAttempt(actingCharacter); validAction = true;
 			}
 
 			default -> System.out.println("Opção inválida.");
@@ -417,6 +415,42 @@ public class Battle {
 	    }
 	}
 	
+	private void executeEscapeAttempt(
+	        PlayableCharacter actingCharacter
+	) {
+	    EscapeAttemptResult result =
+	            escapeService.attemptEscape(
+	                    actingCharacter,
+	                    enemyGroup
+	            );
+
+	    switch (result) {
+	        case LUCK_SUCCESS -> {
+	            System.out.println(
+	                    "\nA sorte sorriu para "
+	                    + actingCharacter.getName() + "!"
+	            );
+
+	            completeEscape(actingCharacter);
+	        }
+
+	        case ATTRIBUTE_SUCCESS -> {
+	            System.out.println(
+	                    "\n" + actingCharacter.getName()
+	                    + " encontrou uma abertura para fugir!"
+	            );
+
+	            completeEscape(actingCharacter);
+	        }
+
+	        case FAILURE -> System.out.println(
+	                "\n" + actingCharacter.getName()
+	                + " tentou fugir, mas os inimigos "
+	                + "bloquearam o caminho!"
+	        );
+	    }
+	}
+	
 	private void executeEnemyAnalysis() {
 		Optional<EnemyBattleSlot> selectedSlot = enemyTargetMenu.selectTarget(enemyGroup);
 
@@ -432,7 +466,7 @@ public class Battle {
 	            !currentTurnOrder.isComplete()
 	            && !party.isDefeated()
 	            && !enemyGroup.isDefeated()
-	            && !playerFled
+	            && !partyFled
 	    ) {
 	        Optional<BattleTurnEntry> currentEntry =
 	                currentTurnOrder.getCurrentEntry();
@@ -532,7 +566,7 @@ public class Battle {
 	}
 
 	private BattleResult determineBattleResult() {
-		if (playerFled) {
+		if (partyFled) {
 			return BattleResult.FLED;
 		}
 
@@ -628,6 +662,13 @@ public class Battle {
 		}
 	}
 
+	private void completeEscape(
+	        PlayableCharacter actingCharacter
+	) {
+	    fleeingCharacter = actingCharacter;
+	    partyFled = true;
+	}
+	
 	private String getSkillTypeDisplayName(Skill skill) {
 		if (skill.getRecoveryType() != RecoveryType.NONE) {
 			return skill.getRecoveryType().getDisplayName();
