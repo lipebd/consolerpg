@@ -315,7 +315,6 @@ The UI package contains console-specific behavior:
 
 The following implementations remain intentionally temporary:
 
-- battle supports one player and one enemy;
 - the exploration item event directly grants Merumã;
 - the merchant has no merchandise;
 - items are defined as constants in `ItemCatalog`;

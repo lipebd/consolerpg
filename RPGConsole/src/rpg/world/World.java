@@ -1,15 +1,14 @@
 package rpg.world;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Scanner;
-import java.util.List;
 
 import rpg.battle.BattleCoordinator;
 import rpg.battle.BattleResult;
 import rpg.battle.rewards.BattleRewardService;
 import rpg.characters.Party;
-import rpg.characters.PlayableCharacter;
 import rpg.enemies.EnemyCatalog;
 import rpg.enemies.EnemyDefinition;
 import rpg.enemies.EnemyDropCatalog;
@@ -20,6 +19,7 @@ import rpg.ui.ConsoleUI;
 import rpg.ui.EpicEncounterMenu;
 import rpg.ui.GameOverScreen;
 import rpg.ui.ItemMenu;
+import rpg.ui.PartyStatusMenu;
 import rpg.ui.ScenarioActionMenu;
 import rpg.ui.TravelMenu;
 import rpg.world.encounters.EncounterCatalog;
@@ -38,6 +38,7 @@ import rpg.world.travel.TravelCatalog;
 // Controls navigation and interaction with the game world.
 public class World {
 
+	private final PartyStatusMenu partyStatusMenu;
 	private Party party;
 	private final ScenarioActionMenu scenarioActionMenu;
 	private final BattleCoordinator battleCoordinator;
@@ -47,7 +48,6 @@ public class World {
 	private ExplorationSession explorationSession;
 	private final EncounterGenerator encounterGenerator;
 	private Random random;
-	private PlayableCharacter player;
 	private Scenario currentScenario;
 	private boolean running;
 	private boolean shouldDisplayScenarioDescription;
@@ -58,12 +58,6 @@ public class World {
 			EnemyDropCatalog enemyDropCatalog, EncounterCatalog encounterCatalog, ScenarioCatalog scenarioCatalog,
 			TravelCatalog travelCatalog) {
 		this.party = party;
-
-		/*
-		 * Temporary reference while World is being migrated from one character to a
-		 * Party.
-		 */
-		this.player = party.getLeader();
 		this.currentScenario = initialScenario;
 		this.random = new Random();
 		BattleRewardService rewardService = new BattleRewardService(random);
@@ -82,6 +76,7 @@ public class World {
 			this.explorationSession = new ExplorationSession(combatScenario.getExplorationSettings());
 		}
 		this.itemMenu = new ItemMenu(party, scanner);
+		this.partyStatusMenu = new PartyStatusMenu(party, scanner);
 	}
 
 	public void start() {
@@ -117,20 +112,12 @@ public class World {
 		switch (action) {
 		case EXPLORE -> explore();
 
-		case VIEW_STATUS -> displayPlayerStatus();
+		case VIEW_STATUS -> partyStatusMenu.open();
 
 		case INVENTORY -> itemMenu.open();
 
 		case TRAVEL -> executeTravelMenu();
 		}
-	}
-
-	private void displayPlayerStatus() {
-		System.out.println("\n[" + player.getName().toUpperCase() + "]");
-
-		System.out.println("Nível: " + player.getLevel() + " | HP: " + player.getCurrentHp() + "/" + player.getMaxHp()
-				+ " | MP: " + player.getCurrentMp() + "/" + player.getMaxMp() + " | SP: " + player.getCurrentSp() + "/"
-				+ player.getMaxSp());
 	}
 
 	private void explore() {
@@ -268,7 +255,7 @@ public class World {
 		case VICTORY, FLED -> shouldDisplayScenarioDescription = true;
 
 		case DEFEAT -> {
-			GameOverScreen.show(player);
+			GameOverScreen.show(party);
 			running = false;
 		}
 		}

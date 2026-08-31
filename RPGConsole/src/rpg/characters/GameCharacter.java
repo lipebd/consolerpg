@@ -47,6 +47,18 @@ public abstract class GameCharacter {
         this.defending = false;
     }
     
+    public boolean restoreAllResources() {
+        if (!isAlive()) {
+            return false;
+        }
+
+        currentHp = getMaxHp();
+        currentMp = getMaxMp();
+        currentSp = getMaxSp();
+
+        return true;
+    }
+    
 	public int takeDamage(int damage) {
         int actualDamage = damage;
 

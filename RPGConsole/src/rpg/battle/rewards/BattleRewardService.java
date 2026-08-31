@@ -94,7 +94,6 @@ public final class BattleRewardService {
 	}
 
 	private List<CharacterProgressionResult> grantExperienceToParty(Party party, int experienceReward) {
-
 		List<CharacterProgressionResult> results = new ArrayList<>();
 
 		for (PlayableCharacter member : party.getMembers()) {
@@ -102,7 +101,16 @@ public final class BattleRewardService {
 
 			member.gainExperience(experienceReward);
 
-			results.add(new CharacterProgressionResult(member, experienceReward, previousLevel, member.getLevel()));
+			int currentLevel = member.getLevel();
+
+			boolean resourcesRestored = false;
+
+			if (currentLevel > previousLevel) {
+				resourcesRestored = member.restoreAllResources();
+			}
+
+			results.add(new CharacterProgressionResult(member, experienceReward, previousLevel, currentLevel,
+					resourcesRestored));
 		}
 
 		return results;

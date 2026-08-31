@@ -1,13 +1,12 @@
 package rpg.ui;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Scanner;
-import java.util.List;
 
-import rpg.battle.rewards.CharacterProgressionResult;
 import rpg.battle.rewards.BattleRewards;
-import rpg.characters.PlayableCharacter;
+import rpg.battle.rewards.CharacterProgressionResult;
 import rpg.items.Item;
 
 // Displays the rewards obtained after a battle victory.
@@ -22,7 +21,7 @@ public final class BattleRewardScreen {
 	public void show(BattleRewards rewards) {
 		Objects.requireNonNull(rewards, "Battle rewards cannot be null.");
 
-		System.out.println("\n[RESULTADO DA BATALHA]");
+		System.out.println("\n[RESULTADO DA BATALHA]\n");
 
 		displayExperienceRewards(rewards);
 
@@ -35,8 +34,17 @@ public final class BattleRewardScreen {
 	}
 
 	private void displayLevelProgress(BattleRewards rewards) {
-		for (CharacterProgressionResult result : rewards.getCharacterProgressionResults()) {
+		List<CharacterProgressionResult> results = rewards.getCharacterProgressionResults();
 
+		boolean hasLevelUp = results.stream().anyMatch(result -> result.getLevelsGained() > 0);
+
+		if (!hasLevelUp) {
+			return;
+		}
+
+		System.out.println("");
+
+		for (CharacterProgressionResult result : results) {
 			int levelsGained = result.getLevelsGained();
 
 			if (levelsGained <= 0) {
@@ -45,8 +53,14 @@ public final class BattleRewardScreen {
 
 			String levelWord = levelsGained == 1 ? "nível" : "níveis";
 
-			System.out.println(result.getCharacter().getName() + " subiu " + levelsGained + " " + levelWord + "! ["
-					+ result.getPreviousLevel() + " -> " + result.getCurrentLevel() + "]");
+			String message = "- " + result.getCharacter().getName() + " subiu " + levelsGained + " " + levelWord + "! ["
+					+ result.getPreviousLevel() + " -> " + result.getCurrentLevel() + "]";
+
+			if (result.wereResourcesRestored()) {
+				message += " | HP/MP/SP restaurados";
+			}
+
+			System.out.println(message);
 		}
 	}
 
