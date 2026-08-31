@@ -6,7 +6,7 @@ import java.util.Scanner;
 public final class TitleScreen {
 
     private static final String GAME_TITLE =
-            "RPG CONSOLE — V1";
+            "RPG CONSOLE — V2";
 
     private TitleScreen() {
     }
@@ -28,7 +28,6 @@ public final class TitleScreen {
         System.out.println("César Nardino");
         System.out.println("Felipe Bachtchen");
         System.out.println("Matheus Leandro");
-        System.out.println("Gepeto");
         System.out.println(
                 "\nPRESSIONE ENTER PARA INICIAR"
         );

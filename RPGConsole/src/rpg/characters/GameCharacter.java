@@ -12,38 +12,54 @@ public abstract class GameCharacter {
     private int maxSp;
     private int attack;
     private int defense;
-    private int healingPower;
+    private int magic;
+    private int resistance;
+    private int speed;
     private int luck;
+    
     private boolean defending;
     
     /**
      * Creates a character with full HP, MP and SP.
      *
-     * @param name         character's name
-     * @param maxHp        maximum health points
-     * @param maxMp        maximum mana points
-     * @param maxSp        maximum stamina points
-     * @param attack       base physical attack
-     * @param defense      base physical defense
-     * @param healingPower base healing power
-     * @param luck         base luck
+     * @param name  character's name
+     * @param stats character's initial attributes
      */
-    protected GameCharacter(String name, int maxHp, int maxMp, int maxSp, int attack, int defense, int healingPower, int luck) {
+    public GameCharacter(String name, CharacterStats stats) {
         this.name = name;
-        this.maxHp = maxHp;
+
+        this.maxHp = stats.getMaxHp();
         this.currentHp = maxHp;
-        this.maxMp = maxMp;
+
+        this.maxMp = stats.getMaxMp();
         this.currentMp = maxMp;
-        this.maxSp = maxSp;
+
+        this.maxSp = stats.getMaxSp();
         this.currentSp = maxSp;
-        this.attack = attack;
-        this.defense = defense;
-        this.healingPower = healingPower;
-        this.luck = luck;
+
+        this.attack = stats.getAttack();
+        this.defense = stats.getDefense();
+        this.magic = stats.getMagic();
+        this.resistance = stats.getResistance();
+        this.speed = stats.getSpeed();
+        this.luck = stats.getLuck();
+
         this.defending = false;
     }
     
-    public int takeDamage(int damage) {
+    public boolean restoreAllResources() {
+        if (!isAlive()) {
+            return false;
+        }
+
+        currentHp = getMaxHp();
+        currentMp = getMaxMp();
+        currentSp = getMaxSp();
+
+        return true;
+    }
+    
+	public int takeDamage(int damage) {
         int actualDamage = damage;
 
         if (defending) {
@@ -64,6 +80,9 @@ public abstract class GameCharacter {
     }
     
     public int recoverHp(int recoveryAmount) {
+    	if(!isAlive()) {
+    		return 0;
+    	}
     	int actualRecoveryAmount = recoveryAmount;
     	if (actualRecoveryAmount < 1) {
     		actualRecoveryAmount = 0;
@@ -74,6 +93,20 @@ public abstract class GameCharacter {
     	currentHp = currentHp + actualRecoveryAmount;
     	
     	return actualRecoveryAmount;
+    }
+    
+    public int revive(int recoveryAmount) {
+        if (isAlive() || recoveryAmount <= 0) {
+            return 0;
+        }
+
+        int actualRecoveryAmount =
+                Math.min(recoveryAmount, maxHp);
+
+        currentHp = actualRecoveryAmount;
+        defending = false;
+
+        return actualRecoveryAmount;
     }
     
     public boolean spendMp(int amount) {
@@ -105,16 +138,7 @@ public abstract class GameCharacter {
 
         return target.takeDamage(damage);
     }
-    
-    public int heal(GameCharacter target) {
-    	int recoveryAmount = healingPower * attack /100;
-    	
-    	if (recoveryAmount < 1) {
-    		recoveryAmount = 0;
-    	}
-    	
-    	return target.recoverHp(recoveryAmount);
-    }
+  
     
     public void defend() {
     	defending = true;
@@ -155,6 +179,18 @@ public abstract class GameCharacter {
     public int getDefense() {
         return defense;
     }
+    
+    public int getMagic() {
+		return magic;
+	}
+
+	public int getResistance() {
+		return resistance;
+	}
+
+	public int getSpeed() {
+		return speed;
+	}
     
     public int getLuck() {
     	return luck;

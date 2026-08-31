@@ -3,7 +3,7 @@ package rpg.items;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-// Stores the items owned by the player and their quantities.
+// Stores the items owned by the party and their quantities.
 public class Inventory {
 
     private final Map<Item, Integer> items;
