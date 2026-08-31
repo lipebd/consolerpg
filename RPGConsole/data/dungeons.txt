@@ -1,0 +1,2 @@
+# scenarioId;bossEnemyId;epicEnemyId
+gruta_relamparrocha;mestre_eletrogoblin;relampagolem

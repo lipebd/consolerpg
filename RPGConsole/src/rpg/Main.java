@@ -20,13 +20,16 @@ import rpg.ui.TitleScreen;
 import rpg.world.World;
 import rpg.world.encounters.EncounterCatalog;
 import rpg.world.encounters.EncounterLoader;
-import rpg.world.exploration.ExplorationSettings;
-import rpg.world.scenarios.City;
-import rpg.world.scenarios.Dungeon;
-import rpg.world.scenarios.DungeonSettings;
-import rpg.world.scenarios.Field;
+import rpg.world.scenarios.CombatScenarioDefinitionCatalog;
+import rpg.world.scenarios.CombatScenarioLoader;
+import rpg.world.scenarios.DungeonDefinitionCatalog;
+import rpg.world.scenarios.DungeonLoader;
 import rpg.world.scenarios.Scenario;
 import rpg.world.scenarios.ScenarioCatalog;
+import rpg.world.scenarios.ScenarioDefinition;
+import rpg.world.scenarios.ScenarioDefinitionCatalog;
+import rpg.world.scenarios.ScenarioFactory;
+import rpg.world.scenarios.ScenarioLoader;
 import rpg.world.travel.TravelCatalog;
 
 // Starts the game and controls its initial execution.
@@ -37,6 +40,8 @@ public class Main {
 		EnemyCatalog enemyCatalog;
 		EncounterCatalog encounterCatalog;
 		EnemyDropCatalog enemyDropCatalog;
+		ScenarioCatalog scenarioCatalog;
+		Scenario currentScenario;
 
 		Scanner scanner = new Scanner(System.in);
 
@@ -53,9 +58,35 @@ public class Main {
 
 			encounterCatalog = encounterLoader.load(Path.of("data", "encounters.txt"), enemyCatalog);
 
+			ScenarioLoader scenarioLoader = new ScenarioLoader();
+
+			ScenarioDefinitionCatalog scenarioDefinitionCatalog = scenarioLoader.load(Path.of("data", "scenarios.txt"));
+
+			CombatScenarioLoader combatScenarioLoader = new CombatScenarioLoader();
+
+			CombatScenarioDefinitionCatalog combatScenarioDefinitionCatalog = combatScenarioLoader
+					.load(Path.of("data", "combat_scenarios.txt"), scenarioDefinitionCatalog);
+
+			DungeonLoader dungeonLoader = new DungeonLoader();
+
+			DungeonDefinitionCatalog dungeonDefinitionCatalog = dungeonLoader.load(Path.of("data", "dungeons.txt"),
+					scenarioDefinitionCatalog, combatScenarioDefinitionCatalog, enemyCatalog);
+
+			scenarioCatalog = new ScenarioCatalog();
+
+			ScenarioFactory scenarioFactory = new ScenarioFactory();
+
+			for (ScenarioDefinition definition : scenarioDefinitionCatalog.getAll()) {
+				Scenario scenario = scenarioFactory.create(definition, combatScenarioDefinitionCatalog,
+						dungeonDefinitionCatalog);
+
+				scenarioCatalog.register(scenario);
+			}
+
+			currentScenario = scenarioCatalog.getById("verdes_ermos");
+
 		} catch (IOException | IllegalArgumentException exception) {
 			System.out.println("Não foi possível carregar os dados do jogo.");
-
 			System.out.println(exception.getMessage());
 			return;
 		}
@@ -127,55 +158,6 @@ public class Main {
 		bardo.learnSkill(inspiracaoDoBardo);
 		bardo.learnSkill(palavraCurativa);
 		bardo.learnSkill(reviveTodos);
-
-		ExplorationSettings verdesErmosSettings = new ExplorationSettings(5, // exploration length
-				70, // battle chance
-				15, // item chance
-				15, // merchant chance for open areas
-				0, // epic chance for dungeons
-				30, // special area chance
-				1, // minimum enemies
-				2, // maximum enemies
-				"Você avança pelos vastos campos verdes.", "Você encontrou uma área especial " + "de mini-floresta!");
-
-		Scenario currentScenario = new Field("verdes_ermos", "Verdes Ermos",
-				"Uma vasta região de campos e vegetação rasteira, pontuada por concentrações isoladas de árvores."
-						+ "\nEssas pequenas formações florestais escondem perigos e segredos, mas também atraem mercadores"
-						+ "\nque se arriscam em busca de ingredientes raros."
-						+ "\nAo fundo, uma imensa formação rochosa reflete os raios do sol, tingindo a zona com feixes azuis"
-						+ "\nque emanam das eletrorrochas.",
-				25, 5, verdesErmosSettings);
-
-		ExplorationSettings grutaSettings = new ExplorationSettings(11, // exploration length
-				70, // battle chance
-				20, // item chance
-				0, // merchant chance
-				10, // epic encounter chance
-				30, // special area chance
-				2, // minimum enemies
-				2, // maximum enemies
-				"Você avança pelos túneis eletrificados da gruta.",
-				"Você encontrou uma câmara incomum entre as eletrorrochas!");
-
-		DungeonSettings grutaDungeonSettings = new DungeonSettings("mestre_eletrogoblin", "relampagolem");
-
-		Scenario grutaRelamparrocha = new Dungeon("gruta_relamparrocha", "Gruta Relamparrocha",
-				"Coberta de rochas magnéticas, popularmente conhecidas como eletrorrochas."
-						+ "\nEla possui uma presença quase assustadora de estática no ar. Visitantes desavisados"
-						+ "\nacabam encurralados por goblins que usam eletricidade como recurso ofensivo."
-						+ "\nÉ possivel ouvir um barulho alto de batida vindo do fundo da caverna. ",
-				100, 100, grutaSettings, grutaDungeonSettings);
-
-		Scenario bree = new City("bree", "Bree", "Uma cidade movimentada, erguida no encontro de várias estradas."
-				+ "\nSeu mercado reúne comerciantes de diversas regiões,"
-				+ "\nenquanto a taverna é ponto de encontro de viajantes e aventureiros."
-				+ "\nÉ de Bree que aventureiros inconsequentes saem para arriscar suas vidas em busca de tesouros e glória.");
-
-		ScenarioCatalog scenarioCatalog = new ScenarioCatalog();
-
-		scenarioCatalog.register(bree);
-		scenarioCatalog.register(currentScenario);
-		scenarioCatalog.register(grutaRelamparrocha);
 
 		TravelCatalog travelCatalog = new TravelCatalog();
 

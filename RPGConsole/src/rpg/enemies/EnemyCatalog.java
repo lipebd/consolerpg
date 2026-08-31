@@ -14,10 +14,14 @@ public class EnemyCatalog {
     }
 
     public void register(EnemyDefinition enemyDefinition) {
-        enemiesById.put(
-                enemyDefinition.getId(),
-                enemyDefinition
-        );
+        String enemyId = enemyDefinition.getId();
+
+        if (enemiesById.containsKey(enemyId)) {
+            throw new IllegalArgumentException(
+                    "Enemy definition ID is already registered: " + enemyId);
+        }
+
+        enemiesById.put(enemyId, enemyDefinition);
     }
 
     public EnemyDefinition getById(String id) {

@@ -181,8 +181,8 @@ Fixed exploration branches were moved to V3.
 - [x] Test exploration events.
 - [x] Test scenario travel.
 - [x] Update project documentation.
-- [ ] Create the V2 release build.
-- [ ] Create the V2 Git tag.
+- [x] Create the V2 release build.
+- [x] Create the V2 Git tag.
 
 ## Future defeat and rescue flow
 
