@@ -23,7 +23,7 @@ public class Main {
 		
 //Ordem atual dos parâmetros: nome, HP, MP, SP, ataque, defesa, poder de cura, sorte
 		Player player =
-				new Player("Felipe", 120, 50, 110, 15, 14, 50, 10);
+				new Player("Flagelo", 120, 50, 110, 15, 14, 50, 10);
 		Skill investida = new Skill(
 		        "Investida",
 		        1,

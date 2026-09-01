@@ -14,6 +14,7 @@ import rpg.characters.EnemyRank;
 import rpg.world.scenarios.Scenario;
 import rpg.world.scenarios.ScenarioAction;
 import rpg.world.scenarios.CombatScenario;
+import rpg.world.scenarios.Bree;
 import rpg.items.DropEntry;
 import rpg.items.Item;
 import rpg.items.ItemCatalog;
@@ -24,14 +25,18 @@ import rpg.ui.GameOverScreen;
 public class World {
 
 	private static final int ENCOUNTER_CHANCE = 50;
+	private static final int EXPLORATIONS_REQUIRED = 5;
 
 	private Random random;
 	private Player player;
 	private Scenario currentScenario;
+	private Scenario startingScenario;
 	private Scanner scanner;
 	private boolean running;
 	private boolean shouldDisplayScenarioDescription;
 	private ItemMenu itemMenu;
+	private int explorationCount;
+	private boolean breeUnlocked;
 
 	public World(
 			Player player,
@@ -40,11 +45,14 @@ public class World {
 			) {
 		this.player = player;
 		this.currentScenario = initialScenario;
+		this.startingScenario = initialScenario;
 		this.scanner = scanner;
 		this.running = true;
 		this.random = new Random();
 		this.shouldDisplayScenarioDescription = true;
 		this.itemMenu = new ItemMenu(player, scanner);
+		this.explorationCount = 0;
+		this.breeUnlocked = false;
 	}
 
 	public void start() {
@@ -61,7 +69,7 @@ public class World {
 
 		if (shouldDisplayScenarioDescription) {
 			System.out.println(currentScenario.getDescription());
-			shouldDisplayScenarioDescription = false;
+			shouldDisplayScenarioDescription = true;
 		}
 	}
 
@@ -84,12 +92,12 @@ public class World {
 		String choice = scanner.nextLine();
 
 		if (choice.equals("0")) {
-		    System.out.println(
-		            "\nObrigado por testar a V1!"
-		    );
+			System.out.println(
+					"\nObrigado por testar a V1!"
+					);
 
-		    running = false;
-		    return;
+			running = false;
+			return;
 		}
 
 		try {
@@ -114,16 +122,66 @@ public class World {
 	}
 
 	private void executeScenarioAction(ScenarioAction action) {
+
 		switch (action) {
+
 		case EXPLORE -> explore();
 
 		case VIEW_STATUS -> displayPlayerStatus();
-		
+
 		case INVENTORY -> itemMenu.open();
 
-		case TRAVEL -> System.out.println(
-				"\nNão há outros destinos disponíveis."
+		case TRAVEL -> travel();
+
+		case ITEM_SHOP -> openItemShop();
+
+		case BLACKSMITH -> openBlacksmith();
+
+		case TAVERN -> openTavern();
+
+		case LEAVE_CITY -> leaveCity();
+		}
+	}
+	
+	private void openItemShop() {
+
+		System.out.println(
+				"\nA loja de itens ainda está em construção."
 				);
+
+		waitForContinue();
+	}
+	
+	private void openBlacksmith() {
+
+		System.out.println(
+				"\nO ferreiro ainda está em construção."
+				);
+
+		waitForContinue();
+	}
+	
+	private void openTavern() {
+
+		System.out.println(
+				"\nA taverna ainda está em construção."
+				);
+
+		waitForContinue();
+	}
+	
+	private void leaveCity() {
+
+		if (currentScenario instanceof Bree) {
+
+			System.out.println(
+					"\nVocê deixa Bree e retorna "
+					+ "aos Verdes Ermos."
+					);
+
+			currentScenario = startingScenario;
+
+			shouldDisplayScenarioDescription = true;
 		}
 	}
 
@@ -144,9 +202,16 @@ public class World {
 	}
 
 	private void explore() {
+		explorationCount++;
+
+		System.out.println("Explorações: " + explorationCount + "/" + EXPLORATIONS_REQUIRED);
 		System.out.println(
 				"\nVocê começa a explorar a região..."
 				);
+
+		if (explorationCount == EXPLORATIONS_REQUIRED && !breeUnlocked) {
+			unlockBree();
+		}
 
 		int encounterRoll = random.nextInt(100) + 1;
 
@@ -174,13 +239,13 @@ public class World {
 				0,
 				EnemyRank.COMMON,
 				List.of(
-				        new DropEntry(
-				                ItemCatalog.MERUMA,
-				                50,
-				                1,
-				                1
-				        )
-				),
+						new DropEntry(
+								ItemCatalog.MERUMA,
+								50,
+								1,
+								1
+								)
+						),
 				"Descrição do Lobermo."
 				);
 
@@ -202,8 +267,8 @@ public class World {
 		shouldDisplayScenarioDescription = true;
 
 		case DEFEAT -> {
-		    GameOverScreen.show(player);
-		    running = false;
+			GameOverScreen.show(player);
+			running = false;
 		}
 		}
 	}
@@ -230,115 +295,171 @@ public class World {
 				player.gainExperience(experienceReward);
 
 		player.addGold(goldReward);
-		
+
 		Map<Item, Integer> collectedItems =
-		        collectEnemyDrops(defeatedEnemy);
+				collectEnemyDrops(defeatedEnemy);
 
 		displayBattleRewards(
-		        experienceReward,
-		        goldReward,
-		        levelsGained,
-		        collectedItems
-		);
+				experienceReward,
+				goldReward,
+				levelsGained,
+				collectedItems
+				);
 	}
 
 	private void displayBattleRewards(
-	        int experienceReward,
-	        int goldReward,
-	        int levelsGained,
-	        Map<Item, Integer> collectedItems
-	) {
-	    System.out.println("\n[RESULTADO DA BATALHA]");
+			int experienceReward,
+			int goldReward,
+			int levelsGained,
+			Map<Item, Integer> collectedItems
+			) {
+		System.out.println("\n[RESULTADO DA BATALHA]");
 
-	    System.out.println(
-	            "EXP recebida: +" + experienceReward
-	    );
+		System.out.println(
+				"EXP recebida: +" + experienceReward
+				);
 
-	    System.out.println(
-	            "Ouro recebido: +" + goldReward
-	    );
+		System.out.println(
+				"Ouro recebido: +" + goldReward
+				);
 
-	    if (levelsGained > 0) {
-	        int previousLevel =
-	                player.getLevel() - levelsGained;
+		if (levelsGained > 0) {
+			int previousLevel =
+					player.getLevel() - levelsGained;
 
-	        String levelWord =
-	                levelsGained == 1 ? "nível" : "níveis";
+			String levelWord =
+					levelsGained == 1 ? "nível" : "níveis";
 
-	        System.out.println(
-	                player.getName() + " subiu "
-	                + levelsGained + " " + levelWord + "! ["
-	                + previousLevel + " -> "
-	                + player.getLevel() + "]"
-	        );
-	    }
-	    
-	    System.out.println("\nItens encontrados:");
+			System.out.println(
+					player.getName() + " subiu "
+							+ levelsGained + " " + levelWord + "! ["
+							+ previousLevel + " -> "
+							+ player.getLevel() + "]"
+					);
+		}
 
-	    if (collectedItems.isEmpty()) {
-	        System.out.println("- Nenhum");
-	    } else {
-	        for (Map.Entry<Item, Integer> entry
-	                : collectedItems.entrySet()) {
+		System.out.println("\nItens encontrados:");
 
-	            Item item = entry.getKey();
-	            int quantity = entry.getValue();
+		if (collectedItems.isEmpty()) {
+			System.out.println("- Nenhum");
+		} else {
+			for (Map.Entry<Item, Integer> entry
+					: collectedItems.entrySet()) {
 
-	            System.out.println(
-	                    "- " + item.getName()
-	                    + " x" + quantity
-	            );
-	        }
-	    }
+				Item item = entry.getKey();
+				int quantity = entry.getValue();
 
-	    waitForContinue();
+				System.out.println(
+						"- " + item.getName()
+						+ " x" + quantity
+						);
+			}
+		}
+
+		waitForContinue();
 	}
-	
+
 	private void waitForContinue() {
-	    while (true) {
-	        System.out.println("\n[1] Continuar");
-	        System.out.print("> ");
+		while (true) {
+			System.out.println("\n[1] Continuar");
+			System.out.print("> ");
 
-	        String choice = scanner.nextLine();
+			String choice = scanner.nextLine();
 
-	        if (choice.equals("1")) {
-	            return;
-	        }
+			if (choice.equals("1")) {
+				return;
+			}
 
-	        System.out.println("Opção inválida.");
-	    }
+			System.out.println("Opção inválida.");
+		}
 	}
-	
+
 	private Map<Item, Integer> collectEnemyDrops(
-	        Enemy defeatedEnemy
-	) {
-	    Map<Item, Integer> collectedItems =
-	            new LinkedHashMap<>();
+			Enemy defeatedEnemy
+			) {
+		Map<Item, Integer> collectedItems =
+				new LinkedHashMap<>();
 
-	    for (DropEntry dropEntry
-	            : defeatedEnemy.getDropTable()) {
+		for (DropEntry dropEntry
+				: defeatedEnemy.getDropTable()) {
 
-	        int quantity = dropEntry.rollQuantity(random);
+			int quantity = dropEntry.rollQuantity(random);
 
-	        if (quantity > 0) {
-	            Item item = dropEntry.getItem();
+			if (quantity > 0) {
+				Item item = dropEntry.getItem();
 
-	            player.getInventory().addItem(
-	                    item,
-	                    quantity
-	            );
+				player.getInventory().addItem(
+						item,
+						quantity
+						);
 
-	            int currentQuantity =
-	                    collectedItems.getOrDefault(item, 0);
+				int currentQuantity =
+						collectedItems.getOrDefault(item, 0);
 
-	            collectedItems.put(
-	                    item,
-	                    currentQuantity + quantity
-	            );
-	        }
-	    }
+				collectedItems.put(
+						item,
+						currentQuantity + quantity
+						);
+			}
+		}
 
-	    return collectedItems;
+		return collectedItems;
+	}
+
+	private void travel() {
+
+		if (!breeUnlocked) {
+			int remaining = EXPLORATIONS_REQUIRED - explorationCount;
+
+			System.out.println(
+					"\nVocê ainda não conhece nenhum caminho seguro para fora dos Verdes Ermos."
+					);
+
+			System.out.println(
+					"Explore a região mais "+ remaining	+ " vez(es) antes de viajar.");
+
+			waitForContinue();
+
+			return;
+		}
+
+		System.out.println("\n[DESTINOS DISPONÍVEIS]");
+		System.out.println("[1] Bree");
+		System.out.println("[0] Voltar");
+		System.out.print("> ");
+
+		String choice = scanner.nextLine();
+
+		if (choice.equals("1")) {
+
+			System.out.println(
+					"\nVocê segue pela estrada em direção à Bree..."
+					);
+
+			currentScenario = new Bree(
+					player,
+					scanner
+					);
+
+			shouldDisplayScenarioDescription = true;
+		}
+	}
+
+	private void unlockBree() {
+		breeUnlocked = true;
+
+		System.out.println(
+				"\n================================"
+				);
+
+		System.out.println(
+				"NOVO DESTINO DESCOBERTO!\nBREE\nVocê conhece suficientemente os arredores dos Verdes Ermos para encontrar um caminho até Bree!"
+				);
+
+
+		System.out.println(
+				"===================================================="
+				);
 	}
 
 }

@@ -1,21 +1,25 @@
 package rpg.world.scenarios;
 
-// Defines the actions available in game scenarios.
 public enum ScenarioAction {
 
-    EXPLORE("Explorar"),
-    INVENTORY("Itens"),
-    VIEW_STATUS("Ver status"),
-    TRAVEL("Viajar");
+	EXPLORE("Explorar"),
+	VIEW_STATUS("Ver status"),
+	INVENTORY("Inventário"),
+	TRAVEL("Viajar"),
 
-    private final String displayName;
+	ITEM_SHOP("Loja de Itens"),
+	BLACKSMITH("Ferreiro"),
+	TAVERN("Taverna"),
+	LEAVE_CITY("Sair da cidade");
 
-    ScenarioAction(String displayName) {
-        this.displayName = displayName;
-    }
+	private final String description;
 
-    @Override
-    public String toString() {
-        return displayName;
-    }
+	ScenarioAction(String description) {
+		this.description = description;
+	}
+
+	@Override
+	public String toString() {
+		return description;
+	}
 }

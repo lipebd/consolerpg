@@ -5,8 +5,8 @@ import java.util.List;
 // Represents the common structure shared by all game scenarios.
 public abstract class Scenario {
 
-    private final String name;
-    private final String description;
+    protected final String name;
+    protected final String description;
 
     protected Scenario(String name, String description) {
         this.name = name;
