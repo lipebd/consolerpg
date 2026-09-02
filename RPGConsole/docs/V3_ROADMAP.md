@@ -117,8 +117,8 @@ The implementation must preserve stable IDs, strict startup validation and separ
 * [x] Treat fleeing from a regular battle as resolving the current position.
 * [x] Keep the party at the final dungeon position after fleeing from the boss.
 * [x] Prevent the final position from advancing beyond the scenario length.
-* [ ] Revalidate normal and special area selection under the new flow.
-* [ ] Revalidate first-position and final-position restrictions.
+* [x] Revalidate normal and special area selection under the new flow.
+* [x] Revalidate first-position and final-position restrictions.
 * [x] Test exploration-session completion under the new model.
 
 ## 4. Fixed exploration branches
