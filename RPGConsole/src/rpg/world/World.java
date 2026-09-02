@@ -306,10 +306,15 @@ public class World {
 		}
 
 		if (explorationSession.isAtFinalPosition()) {
-			explorationSession.markComplete();
+			completeCurrentExploration();
 		} else {
 			explorationSession.advance();
 		}
+	}
+
+	private void completeCurrentExploration() {
+		explorationSession.markComplete();
+		travelProgress.unlockRoutesFrom(currentScenario.getId());
 	}
 
 	private BattleResult startEncounter(List<EnemyDefinition> enemyDefinitions) {
@@ -374,7 +379,7 @@ public class World {
 		BattleResult result = startEncounter(bossDefinitions);
 
 		if (result == BattleResult.VICTORY) {
-			explorationSession.markComplete();
+			completeCurrentExploration();
 
 		} else if (result == BattleResult.FLED) {
 			System.out.println("\nVocê permanece diante " + "do caminho bloqueado.");

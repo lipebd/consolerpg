@@ -28,3 +28,11 @@ minas_alem_tumulo;ossombracao;1;10;50;3;ANY
 minas_alem_tumulo;mecanossos;1;10;40;2;ANY
 minas_alem_tumulo;carrascobot;1;10;25;2;ANY
 minas_alem_tumulo;l1d3r;1;10;10;1;ANY
+ruinas_sanguemar;nada_nada;1;9;40;3;NORMAL_ONLY
+ruinas_sanguemar;marcego;1;9;30;2;NORMAL_ONLY
+ruinas_sanguemar;estrelume;2;9;35;2;ANY
+ruinas_sanguemar;cardumonstro;3;9;20;1;ANY
+ruinas_sanguemar;jorge;10;10;100;1;ANY
+mata_agouro;carcaca;1;10;50;3;ANY
+mata_agouro;lobermo_miasmatico;1;10;35;2;ANY
+mata_agouro;arauto_madeira_morta;1;10;10;1;ANY

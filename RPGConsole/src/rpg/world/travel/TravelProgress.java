@@ -35,6 +35,12 @@ public final class TravelProgress {
 		unlockedRouteIds.add(routeId);
 	}
 
+	public void unlockRoutesFrom(String sourceScenarioId) {
+		for (TravelRouteDefinition routeDefinition : travelCatalog.getRoutesFrom(sourceScenarioId)) {
+			unlock(routeDefinition.getId());
+		}
+	}
+
 	public boolean isUnlocked(String routeId) {
 		return unlockedRouteIds.contains(routeId);
 	}

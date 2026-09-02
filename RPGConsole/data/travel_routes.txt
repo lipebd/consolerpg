@@ -15,3 +15,10 @@ o_vao_rachadura;o_vao;gruta_relamparrocha;true;Atravessar a rachadura;Uma rachad
 praia_sanguemar_entrelugar;praia_sanguemar;entrelugar;true;Retornar a Entrelugar;Você deixa a praia e retorna à cidade de Entrelugar.
 minas_alem_tumulo_bree;minas_alem_tumulo;bree;true;Retornar a Bree;Você deixa as máquinas e os túneis para trás e inicia o caminho de volta a Bree.
 minas_alem_tumulo_entrelugar;minas_alem_tumulo;entrelugar;true;Retornar a Entrelugar;O portal subterrâneo conduz de volta à cidade de Entrelugar.
+deep_valley_portal_nao_magico;deep_valley;ruinas_sanguemar;true;Portal Não Mágico;A passagem submersa conduz às antigas Ruínas de Sanguemar.
+praia_sanguemar_ruinas_sanguemar;praia_sanguemar;ruinas_sanguemar;false;Descer às Ruínas;As condições da maré revelam uma passagem para as Ruínas de Sanguemar.
+ruinas_sanguemar_praia_sanguemar;ruinas_sanguemar;praia_sanguemar;true;Retornar à Praia;Você sobe em direção à faixa de areia da Praia de Sanguemar.
+ruinas_sanguemar_entrelugar;ruinas_sanguemar;entrelugar;true;Retornar a Entrelugar;Uma passagem pelas ruínas conduz de volta a Entrelugar.
+ruinas_sanguemar_deep_valley;ruinas_sanguemar;deep_valley;false;Atravessar o portal;O portal protegido pelos guardiões finalmente revela o caminho para Deep Valley.
+verdes_ermos_entrelugar;verdes_ermos;entrelugar;false;Seguir para Entrelugar;Uma bifurcação entre os campos revela um caminho incomum até Entrelugar.
+entrelugar_muro_destruido;entrelugar;verdes_ermos;true;Muro Destruído;Uma abertura no antigo muro da cidade conduz aos Verdes Ermos.
