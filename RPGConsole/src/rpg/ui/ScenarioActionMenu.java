@@ -5,7 +5,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Scanner;
 
-import rpg.world.scenarios.Scenario;
 import rpg.world.scenarios.ScenarioAction;
 
 // Displays the available actions for the current scenario.
@@ -17,10 +16,8 @@ public final class ScenarioActionMenu {
 		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
 	}
 
-	public Optional<ScenarioAction> selectAction(Scenario scenario) {
-		Objects.requireNonNull(scenario, "Scenario cannot be null.");
-
-		List<ScenarioAction> actions = scenario.getAvailableActions();
+	public Optional<ScenarioAction> selectAction(List<ScenarioAction> actions) {
+		Objects.requireNonNull(actions, "Scenario actions cannot be null.");
 
 		while (true) {
 			System.out.println("\nO que deseja fazer?");

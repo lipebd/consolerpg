@@ -57,7 +57,9 @@ public class EnemyLoader {
                 fields[11].trim().toUpperCase()
         );
 
-        String description = fields[12].trim();
+        String description = fields[12]
+                .trim()
+                .replace("\\n", System.lineSeparator());
 
         CharacterStats stats = new CharacterStats(
                 maxHp,

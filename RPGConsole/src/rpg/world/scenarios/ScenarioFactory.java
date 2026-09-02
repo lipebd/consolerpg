@@ -37,8 +37,8 @@ public final class ScenarioFactory {
 
 		DungeonDefinition dungeonDefinition = dungeonDefinitionCatalog.getByScenarioId(scenarioDefinition.getId());
 
-		DungeonSettings dungeonSettings = new DungeonSettings(dungeonDefinition.getBossEnemyId(),
-				dungeonDefinition.getEpicEnemyId());
+		DungeonSettings dungeonSettings = new DungeonSettings(dungeonDefinition.getBossEnemyIds(),
+				dungeonDefinition.getEpicEnemyIds());
 
 		return new Dungeon(scenarioDefinition.getId(), scenarioDefinition.getName(),
 				scenarioDefinition.getDescription(), combatDefinition.getBaseExperienceReward(),

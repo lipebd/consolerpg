@@ -1,2 +1,4 @@
 # scenarioId;bossEnemyId;epicEnemyId
-gruta_relamparrocha;mestre_eletrogoblin;relampagolem
+gruta_relamparrocha;mestre_eletrogoblin,defleto,refrata;relampagolem,colossangue,lamorstain
+minas_alem_tumulo;c3o;g3r3ntoss4uro
+mata_agouro;lich;lamorstain

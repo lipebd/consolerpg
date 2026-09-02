@@ -1,5 +1,6 @@
 package rpg.ui;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
 
@@ -17,14 +18,24 @@ public final class EpicEncounterMenu {
 	public boolean confirmEncounter(EnemyDefinition epicDefinition) {
 		Objects.requireNonNull(epicDefinition, "Epic enemy definition cannot be null.");
 
-		System.out.println("\n[ENCONTRO ÉPICO]");
+		return confirmEncounter(List.of(epicDefinition));
+	}
 
-		System.out.println("Você encontrou " + epicDefinition.getName() + "!");
+	public boolean confirmEncounter(List<EnemyDefinition> epicDefinitions) {
+		Objects.requireNonNull(epicDefinitions, "Epic enemy definitions cannot be null.");
 
-		System.out.println(epicDefinition.getDescription());
+		if (epicDefinitions.isEmpty()) {
+			throw new IllegalArgumentException("Epic enemy definitions cannot be empty.");
+		}
+
+		for (EnemyDefinition epicDefinition : epicDefinitions) {
+			Objects.requireNonNull(epicDefinition, "Epic enemy definition cannot be null.");
+		}
+
+		displayEncounter(epicDefinitions);
 
 		while (true) {
-			System.out.println("\n[1] Enfrentar | [0] Evitar confronto");
+			System.out.println("\n[1] Enfrentar | " + "[0] Evitar confronto");
 
 			System.out.print("> ");
 
@@ -41,6 +52,16 @@ public final class EpicEncounterMenu {
 
 			default -> System.out.println("Opção inválida.");
 			}
+		}
+	}
+
+	private void displayEncounter(List<EnemyDefinition> epicDefinitions) {
+		System.out.println("\n[ENCONTRO ÉPICO]");
+
+		for (EnemyDefinition epicDefinition : epicDefinitions) {
+			System.out.println("\n[" + epicDefinition.getName() + "]");
+
+			System.out.println(epicDefinition.getDescription());
 		}
 	}
 }

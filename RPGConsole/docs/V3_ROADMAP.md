@@ -33,6 +33,11 @@ The implementation must preserve stable IDs, strict startup validation and separ
 * Reward quantity is randomized between the configured minimum and maximum.
 * Shops and merchants may have different stocks according to their city or location.
 * The initial scenario ID may remain configured in `Main` until save data determines the current location.
+* World interfaces display the contextual header before narrative output.
+* Current state is displayed before the available actions.
+* Action results are grouped beneath their scenario context.
+* Menus are displayed after narrative and state information.
+* Internal execution order must not leak into the player-facing presentation.
 
 ---
 
@@ -102,16 +107,19 @@ The implementation must preserve stable IDs, strict startup validation and separ
 
 ## 3. Current-position-first exploration
 
-* [ ] Refactor exploration so the event belongs to the current position.
-* [ ] Display the current position before resolving its event.
-* [ ] Advance only after the current position has been resolved.
-* [ ] Preserve the current position after regular battles.
-* [ ] Preserve the current position after fleeing from regular battles.
-* [ ] Preserve dungeon boss rollback behavior after fleeing.
-* [ ] Prevent the final position from advancing beyond the scenario length.
+* [x] Replace `Explorar` with `Enfrentar o boss` at the final dungeon position.
+* [x] Keep the party at the final dungeon position after fleeing.
+* [x] Hide travel actions when the current position has no valid destination.
+* [x] Refactor exploration so the event belongs to the current position.
+* [x] Display the current position before resolving its event.
+* [x] Advance only after the current position has been resolved.
+* [x] Preserve exploration progress after regular battles.
+* [x] Treat fleeing from a regular battle as resolving the current position.
+* [x] Keep the party at the final dungeon position after fleeing from the boss.
+* [x] Prevent the final position from advancing beyond the scenario length.
 * [ ] Revalidate normal and special area selection under the new flow.
 * [ ] Revalidate first-position and final-position restrictions.
-* [ ] Test exploration-session completion under the new model.
+* [x] Test exploration-session completion under the new model.
 
 ## 4. Fixed exploration branches
 
@@ -206,6 +214,8 @@ The implementation must preserve stable IDs, strict startup validation and separ
 * [ ] Prevent payment when the party cannot afford the service.
 * [ ] Preserve free adjacent travel through Bree's exits.
 * [ ] Prepare city services for additional cities.
+* [ ] Display a `Back` action in the inventory even when it is empty.
+* [ ] Return to the current scenario only after the player selects `Back`.
 
 ## 9. Shops and merchants
 

@@ -1,6 +1,5 @@
 package rpg.world.scenarios;
 
-import java.util.List;
 
 // Represents a city with services and travel options.
 public class City extends Scenario {
@@ -14,15 +13,6 @@ public class City extends Scenario {
                 id,
                 name,
                 description
-        );
-    }
-
-    @Override
-    public List<ScenarioAction> getAvailableActions() {
-        return List.of(
-                ScenarioAction.INVENTORY,
-                ScenarioAction.VIEW_STATUS,
-                ScenarioAction.TRAVEL
         );
     }
 }

@@ -33,10 +33,6 @@ public final class ExplorationSettings {
 			throw new IllegalArgumentException("The total event chance cannot exceed 100.");
 		}
 
-		if (specialAreaChance < 0 || specialAreaChance > 100) {
-			throw new IllegalArgumentException("Special area chance must be between 0 and 100.");
-		}
-
 		if (minEnemies < 1) {
 			throw new IllegalArgumentException("Minimum enemy count must be at least one.");
 		}

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.Objects;
 
 import rpg.battle.BattleCoordinator;
 import rpg.battle.BattleResult;
@@ -51,8 +52,10 @@ public class World {
 	private Scenario currentScenario;
 	private boolean running;
 	private boolean shouldDisplayScenarioDescription;
+	private boolean scenarioNameAlreadyDisplayed;
 	private ItemMenu itemMenu;
 	private final TravelMenu travelMenu;
+	private final TravelProgress travelProgress;
 
 	public World(Party party, Scenario initialScenario, Scanner scanner, EnemyCatalog enemyCatalog,
 			EnemyDropCatalog enemyDropCatalog, EncounterCatalog encounterCatalog, ScenarioCatalog scenarioCatalog,
@@ -67,7 +70,8 @@ public class World {
 		this.enemyCatalog = enemyCatalog;
 		this.encounterGenerator = new EncounterGenerator(enemyCatalog, encounterCatalog, random);
 		this.explorationEventGenerator = new ExplorationEventGenerator(random);
-		this.travelMenu = new TravelMenu(scanner, scenarioCatalog, travelProgress);
+		this.travelProgress = Objects.requireNonNull(travelProgress, "Travel progress cannot be null.");
+		this.travelMenu = new TravelMenu(scanner, scenarioCatalog, this.travelProgress);
 		this.epicEncounterMenu = new EpicEncounterMenu(scanner);
 		this.scenarioActionMenu = new ScenarioActionMenu(scanner);
 		this.running = true;
@@ -77,6 +81,7 @@ public class World {
 		}
 		this.itemMenu = new ItemMenu(party, scanner);
 		this.partyStatusMenu = new PartyStatusMenu(party, scanner);
+		this.scenarioNameAlreadyDisplayed = false;
 	}
 
 	public void start() {
@@ -87,16 +92,42 @@ public class World {
 	}
 
 	private void displayCurrentScenario() {
-		System.out.println("\n[" + currentScenario.getName().toUpperCase() + "]");
+		if (!scenarioNameAlreadyDisplayed || shouldDisplayScenarioDescription) {
+			displayScenarioName();
+		}
+
+		scenarioNameAlreadyDisplayed = false;
 
 		if (shouldDisplayScenarioDescription) {
 			System.out.println(currentScenario.getDescription());
 			shouldDisplayScenarioDescription = false;
 		}
+
+		displayExplorationProgress();
+	}
+
+	private void displayExplorationProgress() {
+		if (!(currentScenario instanceof CombatScenario) || explorationSession == null) {
+			return;
+		}
+
+		if (explorationSession.isComplete()) {
+			System.out.println("\n[EXPLORAÇÃO CONCLUÍDA]");
+			return;
+		}
+
+		System.out.println("\n[EXPLORAÇÃO " + explorationSession.getCurrentPosition() + "/"
+				+ explorationSession.getSettings().getLength() + "]");
+
+		if (currentScenario instanceof Dungeon && explorationSession.isAtFinalPosition()) {
+			displayDungeonBossObstacle();
+		}
 	}
 
 	private void executeScenarioMenu() {
-		Optional<ScenarioAction> selectedAction = scenarioActionMenu.selectAction(currentScenario);
+		List<ScenarioAction> availableActions = getAvailableScenarioActions();
+
+		Optional<ScenarioAction> selectedAction = scenarioActionMenu.selectAction(availableActions);
 
 		if (selectedAction.isEmpty()) {
 			System.out.println("\nObrigado por testar a V2!");
@@ -108,9 +139,38 @@ public class World {
 		executeScenarioAction(selectedAction.get());
 	}
 
+	private List<ScenarioAction> getAvailableScenarioActions() {
+		boolean travelAvailable = travelProgress.hasUnlockedRoutesFrom(currentScenario.getId());
+
+		if (!(currentScenario instanceof CombatScenario)) {
+			if (travelAvailable) {
+				return List.of(ScenarioAction.INVENTORY, ScenarioAction.VIEW_STATUS, ScenarioAction.TRAVEL);
+			}
+
+			return List.of(ScenarioAction.INVENTORY, ScenarioAction.VIEW_STATUS);
+		}
+
+		if (explorationSession != null && explorationSession.isComplete()) {
+			if (travelAvailable) {
+				return List.of(ScenarioAction.TRAVEL, ScenarioAction.INVENTORY, ScenarioAction.VIEW_STATUS);
+			}
+
+			return List.of(ScenarioAction.INVENTORY, ScenarioAction.VIEW_STATUS);
+		}
+
+		if (currentScenario instanceof Dungeon && explorationSession != null
+				&& explorationSession.isAtFinalPosition()) {
+			return List.of(ScenarioAction.FACE_BOSS, ScenarioAction.INVENTORY, ScenarioAction.VIEW_STATUS);
+		}
+
+		return List.of(ScenarioAction.EXPLORE, ScenarioAction.INVENTORY, ScenarioAction.VIEW_STATUS);
+	}
+
 	private void executeScenarioAction(ScenarioAction action) {
 		switch (action) {
 		case EXPLORE -> explore();
+
+		case FACE_BOSS -> faceBoss();
 
 		case VIEW_STATUS -> partyStatusMenu.open();
 
@@ -118,6 +178,15 @@ public class World {
 
 		case TRAVEL -> executeTravelMenu();
 		}
+	}
+
+	private void faceBoss() {
+		if (!(currentScenario instanceof Dungeon dungeon) || explorationSession == null
+				|| !explorationSession.isAtFinalPosition() || explorationSession.isComplete()) {
+			throw new IllegalStateException("There is no dungeon boss available here.");
+		}
+
+		executeBossEncounter(dungeon);
 	}
 
 	private void explore() {
@@ -139,32 +208,22 @@ public class World {
 			return;
 		}
 
-		int position = explorationSession.advance();
+		if (currentScenario instanceof Dungeon && explorationSession.isAtFinalPosition()) {
+			throw new IllegalStateException("The final dungeon position must be resolved through the boss action.");
+		}
+
+		int position = explorationSession.getCurrentPosition();
 
 		boolean specialArea = explorationSession.determineSpecialArea(random);
 
-		System.out.println("\n[EXPLORAÇÃO " + position + "/" + settings.getLength() + "]");
+		displayCurrentExplorationArea(settings, specialArea);
 
-		if (specialArea) {
-			System.out.println(settings.getSpecialAreaMessage());
-		} else {
-			System.out.println(settings.getNormalAreaMessage());
-		}
+		resolveCurrentExplorationEvent(settings, position, specialArea);
 
-		boolean epicEncounterAvailable = currentScenario instanceof Dungeon
-				&& explorationSession.canOfferEpicEncounter();
-
-		if (currentScenario instanceof Dungeon dungeon && position == settings.getLength()) {
-			executeBossEncounter(dungeon);
-		} else {
-			ExplorationEventType eventType = explorationEventGenerator.generate(settings,
-					explorationSession.canEncounterMerchant(), epicEncounterAvailable);
-
-			executeExplorationEvent(eventType, position, specialArea);
-		}
+		advanceOrCompleteExploration();
 
 		if (running && explorationSession.isComplete()) {
-			System.out.println("\nVocê chegou ao fim da exploração " + "de " + currentScenario.getName() + "!");
+			System.out.println("\nVocê chegou ao fim da exploração de " + currentScenario.getName() + "!");
 		}
 	}
 
@@ -219,16 +278,14 @@ public class World {
 
 	private void executeEpicEncounter() {
 		if (!(currentScenario instanceof Dungeon dungeon)) {
-			throw new IllegalStateException("An epic encounter can only occur inside a dungeon.");
+			throw new IllegalStateException("An epic encounter can only occur " + "inside a dungeon.");
 		}
 
 		explorationSession.markEpicEncounterOffered();
 
-		String epicEnemyId = dungeon.getDungeonSettings().getEpicEnemyId();
+		List<EnemyDefinition> epicDefinitions = resolveEnemyDefinitions(dungeon.getDungeonSettings().getEpicEnemyIds());
 
-		EnemyDefinition epicDefinition = enemyCatalog.getById(epicEnemyId);
-
-		boolean accepted = epicEncounterMenu.confirmEncounter(epicDefinition);
+		boolean accepted = epicEncounterMenu.confirmEncounter(epicDefinitions);
 
 		if (!accepted) {
 			System.out.println("Você decidiu evitar o confronto.");
@@ -236,12 +293,23 @@ public class World {
 			return;
 		}
 
-		startEncounter(epicDefinition);
+		startEncounter(epicDefinitions);
 	}
 
-	// sobrecarga de métodos
-	private BattleResult startEncounter(EnemyDefinition enemyDefinition) {
-		return startEncounter(List.of(enemyDefinition));
+	private List<EnemyDefinition> resolveEnemyDefinitions(List<String> enemyIds) {
+		return enemyIds.stream().map(enemyCatalog::getById).toList();
+	}
+
+	private void advanceOrCompleteExploration() {
+		if (!running) {
+			return;
+		}
+
+		if (explorationSession.isAtFinalPosition()) {
+			explorationSession.markComplete();
+		} else {
+			explorationSession.advance();
+		}
 	}
 
 	private BattleResult startEncounter(List<EnemyDefinition> enemyDefinitions) {
@@ -293,21 +361,55 @@ public class World {
 	}
 
 	private void executeBossEncounter(Dungeon dungeon) {
-		String bossEnemyId = dungeon.getDungeonSettings().getBossEnemyId();
-
-		EnemyDefinition bossDefinition = enemyCatalog.getById(bossEnemyId);
+		List<EnemyDefinition> bossDefinitions = resolveEnemyDefinitions(dungeon.getDungeonSettings().getBossEnemyIds());
 
 		System.out.println("\n[BOSS]");
 
-		System.out.println(bossDefinition.getName() + " bloqueia o fim da masmorra!");
+		System.out.println("\nO caminho está bloqueado por:");
 
-		BattleResult result = startEncounter(bossDefinition);
-
-		if (result == BattleResult.FLED) {
-			explorationSession.returnToPreviousPosition();
-
-			System.out.println("\nVocê recuou para a área anterior.");
+		for (EnemyDefinition bossDefinition : bossDefinitions) {
+			System.out.println("- " + bossDefinition.getName());
 		}
+
+		BattleResult result = startEncounter(bossDefinitions);
+
+		if (result == BattleResult.VICTORY) {
+			explorationSession.markComplete();
+
+		} else if (result == BattleResult.FLED) {
+			System.out.println("\nVocê permanece diante " + "do caminho bloqueado.");
+		}
+	}
+
+	private void displayScenarioName() {
+		System.out.println("\n[" + currentScenario.getName().toUpperCase() + "]");
+	}
+
+	private void displayDungeonBossObstacle() {
+		String target = party.size() == 1 ? "você" : "o grupo";
+
+		System.out.println("\nUma criatura se coloca entre " + target + " e o caminho de volta.");
+	}
+
+	private void displayCurrentExplorationArea(ExplorationSettings settings, boolean specialArea) {
+		displayScenarioName();
+		scenarioNameAlreadyDisplayed = true;
+
+		System.out.println();
+
+		String areaMessage = specialArea ? settings.getSpecialAreaMessage() : settings.getNormalAreaMessage();
+
+		System.out.println(areaMessage);
+	}
+
+	private void resolveCurrentExplorationEvent(ExplorationSettings settings, int position, boolean specialArea) {
+		boolean epicEncounterAvailable = currentScenario instanceof Dungeon
+				&& explorationSession.canOfferEpicEncounter();
+
+		ExplorationEventType eventType = explorationEventGenerator.generate(settings,
+				explorationSession.canEncounterMerchant(), epicEncounterAvailable);
+
+		executeExplorationEvent(eventType, position, specialArea);
 	}
 
 }

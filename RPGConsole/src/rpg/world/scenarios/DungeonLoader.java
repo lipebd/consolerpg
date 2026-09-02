@@ -1,6 +1,6 @@
 package rpg.world.scenarios;
 
-
+import java.util.Arrays;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -60,23 +60,32 @@ public final class DungeonLoader {
 			throw new IllegalArgumentException("Dungeon is missing combat scenario data: " + scenarioId);
 		}
 
-		String bossEnemyId = fields[1].trim();
-		String epicEnemyId = fields[2].trim();
+		List<String> bossEnemyIds = parseEnemyIds(fields[1]);
 
-		EnemyDefinition bossDefinition = enemyCatalog.getById(bossEnemyId);
+		List<String> epicEnemyIds = parseEnemyIds(fields[2]);
 
-		if (bossDefinition.getRank() != EnemyRank.BOSS) {
-		    throw new IllegalArgumentException(
-		            "Dungeon boss enemy must have BOSS rank: " + bossEnemyId);
+		DungeonDefinition definition = new DungeonDefinition(scenarioId, bossEnemyIds, epicEnemyIds);
+
+		validateEnemyRanks(definition.getBossEnemyIds(), EnemyRank.BOSS, "boss", enemyCatalog);
+
+		validateEnemyRanks(definition.getEpicEnemyIds(), EnemyRank.EPIC, "epic", enemyCatalog);
+
+		return definition;
+	}
+
+	private List<String> parseEnemyIds(String field) {
+		return Arrays.stream(field.split(",", -1)).map(String::trim).toList();
+	}
+
+	private void validateEnemyRanks(List<String> enemyIds, EnemyRank expectedRank, String groupName,
+			EnemyCatalog enemyCatalog) {
+		for (String enemyId : enemyIds) {
+			EnemyDefinition enemyDefinition = enemyCatalog.getById(enemyId);
+
+			if (enemyDefinition.getRank() != expectedRank) {
+				throw new IllegalArgumentException(
+						"Dungeon " + groupName + " enemy must have " + expectedRank + " rank: " + enemyId);
+			}
 		}
-
-		EnemyDefinition epicDefinition = enemyCatalog.getById(epicEnemyId);
-
-		if (epicDefinition.getRank() != EnemyRank.EPIC) {
-		    throw new IllegalArgumentException(
-		            "Dungeon epic enemy must have EPIC rank: " + epicEnemyId);
-		}
-
-		return new DungeonDefinition(scenarioId, bossEnemyId, epicEnemyId);
 	}
 }

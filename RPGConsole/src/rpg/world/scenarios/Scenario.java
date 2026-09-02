@@ -1,7 +1,5 @@
 package rpg.world.scenarios;
 
-import java.util.List;
-
 // Represents the common structure shared by all game scenarios.
 public abstract class Scenario {
 
@@ -26,6 +24,4 @@ public abstract class Scenario {
     public String getDescription() {
         return description;
     }
-
-    public abstract List<ScenarioAction> getAvailableActions();
 }
