@@ -113,7 +113,7 @@ BattleCoordinator
 | `EnemyLoader` | Carregamento de dados | Lê `enemies.txt`, ignora comentários e linhas vazias, converte atributos e rank, interpreta quebras literais `\n` e cria `EnemyDefinition`. Registra cada definição em `EnemyCatalog`. |
 | `EnemyDefinition` | Definição imutável | Armazena o ID, nome, atributos, rank e descrição reutilizáveis de um tipo de inimigo. É consultada por encontros, bosses e épicos. O `BattleCoordinator` usa a definição para criar um novo `Enemy` mutável. |
 | `EnemyCatalog` | Catálogo | Registra `EnemyDefinition` por ID estável, rejeita IDs duplicados e permite recuperar a definição de um inimigo. É usado por loaders que validam referências, por `EncounterGenerator`, por dungeons e por `BattleCoordinator`. |
-| `EnemyDropLoader` | Carregamento de dados | Lê `enemy_drops.txt`, valida os IDs de inimigos e itens usando `EnemyCatalog` e `ItemCatalog`, cria `DropEntry` e registra as entradas em `EnemyDropCatalog`. |
+| `EnemyDropLoader` | Carregamento de dados | Lê `enemy_drops.txt`, valida os IDs de inimigos usando `EnemyCatalog`, resolve os itens completos no `ItemCatalog` recebido, cria `DropEntry` e registra as entradas em `EnemyDropCatalog`. |
 | `EnemyDropCatalog` | Catálogo de relações | Associa cada ID de inimigo à sua lista imutável de `DropEntry`. É consultado pelo `BattleCoordinator` quando cria os inimigos de execução que participarão da batalha. |
 
 ### Diferença essencial
@@ -131,12 +131,22 @@ Enemy           -> luta e perde HP durante uma batalha
 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
-| `Item` | Classe-base de domínio | Representa as propriedades comuns dos itens, incluindo ID e nome. Serve de base para categorias concretas, como `HealingItem`, e é o tipo armazenado pelo inventário e pelos drops. |
-| `HealingItem` | Item de cura | Especializa `Item` com o valor de recuperação de HP. É usado por `ItemMenu` e pela batalha para aplicar cura a um alvo válido. |
-| `ItemCatalog` | Catálogo temporário | Registra e localiza itens por ID. Atualmente também concentra itens definidos diretamente em Java, como Merumã. É usado pelo inventário, eventos de exploração e `EnemyDropLoader`. Futuramente receberá definições externas. |
-| `Inventory` | Estado mutável | Guarda as quantidades compartilhadas de itens da `Party`. Permite adicionar, remover e consultar itens. Recebe drops de `BattleRewardService` e é acessado por `ItemMenu`. |
+| `ItemCategory` | Enum de domínio | Define as categorias gerais de item reconhecidas pelo jogo. Permite organizar o inventário e indicar quais comportamentos especializados podem ser associados a cada definição. |
+| `ItemDefinition` | Definição imutável | Representa os dados comuns carregados de `items.txt`: ID, categoria, permissões independentes de troca entre jogadores e venda para NPC, nome e descrição. Não representa uma unidade possuída pela `Party` nem implementa comportamento de uso. |
+| `ItemDefinitionCatalog` | Catálogo de definições | Registra as definições básicas carregadas por `ItemLoader`, rejeita IDs duplicados e permite que loaders especializados e `ItemFactory` resolvam itens por ID durante a inicialização. |
+| `ItemLoader` | Carregamento de dados | Lê `items.txt`, interpreta os campos comuns, converte quebras literais `\n`, valida os dados e registra cada `ItemDefinition` em `ItemDefinitionCatalog`. |
+| `RecoveryItemTargetType` | Enum de alvo | Define se um item de recuperação afeta um único aliado (`SINGLE_ALLY`) ou todos os aliados elegíveis (`ALL_ALLIES`). |
+| `RecoveryItemDefinition` | Definição especializada imutável | Armazena os componentes de recuperação associados a um item: HP, MP, SP, HP de ressurreição, purificação e tipo de alvo. Exige pelo menos um componente efetivo. |
+| `RecoveryItemDefinitionCatalog` | Catálogo especializado | Registra as definições carregadas de `recovery_items.txt`, rejeita especializações duplicadas e permite que `ItemFactory` encontre o comportamento associado a cada definição básica. |
+| `RecoveryItemLoader` | Carregamento especializado | Lê `recovery_items.txt`, valida valores, alvos e referências em `ItemDefinitionCatalog`, exige a categoria `CONSUMABLE` e registra `RecoveryItemDefinition`. |
+| `ItemFactory` | Fábrica de execução | Combina cada `ItemDefinition` com sua eventual definição especializada. Cria `RecoveryItem` quando existe uma especialização de recuperação e `BasicItem` quando o item ainda não possui comportamento próprio. |
+| `Item` | Classe-base de domínio | Representa um item completo usado durante a execução, com ID, categoria, permissões comerciais, nome e descrição. É o tipo armazenado pelo inventário, pelos drops e por `ItemCatalog`. |
+| `BasicItem` | Item básico | Implementação concreta mínima de `Item` para categorias que ainda não possuem comportamento especializado. Pode ser armazenado, exibido e recebido como recompensa, mas não executa uma ação de uso. |
+| `RecoveryItem` | Item de recuperação | Especializa `Item` com efeitos combináveis de HP, MP, SP, ressurreição e futura purificação. Verifica alvos elegíveis, aplica ressurreição antes da recuperação comum de HP e devolve um `RecoveryItemUseResult`. |
+| `RecoveryItemUseResult` | Resultado imutável | Informa separadamente os efeitos realmente produzidos por um uso, evitando que menus precisem deduzir o resultado comparando estados anteriores e posteriores do personagem. |
+| `ItemCatalog` | Catálogo de execução | Registra os objetos `Item` completos criados por `ItemFactory`, rejeita IDs duplicados e permite resolvê-los por ID. É usado por drops, exploração e demais fluxos que precisam do item de execução, não das definições cruas. |
+| `Inventory` | Estado mutável | Guarda os itens pertencentes à `Party` e suas quantidades compartilhadas. Permite adicionar, remover, consultar e listar itens; não impõe peso nem limite de capacidade. |
 | `DropEntry` | Entrada de drop | Define uma possibilidade individual de recompensa: item, chance e quantidades mínima e máxima. É carregada por `EnemyDropLoader`, armazenada em `EnemyDropCatalog` e sorteada por `BattleRewardService`. |
-
 ---
 
 ## Pacote `rpg.skills`
@@ -205,7 +215,10 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 | `ScenarioActionMenu` | Menu | Recebe a lista de `ScenarioAction` atualmente permitida, exibe as ações numeradas e devolve a escolha. `World` monta a lista dinâmica de acordo com cenário, exploração, boss e rotas. |
 | `ScenarioBranchMenu` | Menu | Recebe as bifurcações disponíveis na posição atual, exibe seus nomes e descrições e devolve a `ScenarioBranchDefinition` escolhida. Não altera o cenário nem o estado da exploração. |
 | `TravelMenu` | Menu | Consulta as rotas desbloqueadas por meio de `TravelProgress`, exibe nomes e descrições das saídas e devolve a `TravelRouteDefinition` escolhida. Não resolve o destino nem aplica a posição de chegada; essas consequências pertencem a `World`. |
-| `ItemMenu` | Menu | Exibe o inventário compartilhado, permite escolher e usar itens e oferece retorno explícito mesmo quando o inventário está vazio. Recebe `Party` e usa menus de alvo quando necessário. |
+| `InventoryMenu` | Menu geral de inventário | Exibe ouro e categorias não vazias do inventário compartilhado. Dentro de cada categoria, apresenta uma lista paginada e ordenada de itens, abre seus detalhes e encaminha ações atualmente disponíveis, como o uso de `RecoveryItem`. |
+| `BattleItemMenu` | Menu de itens de batalha | Filtra diretamente os consumíveis utilizáveis em batalha, apresenta uma lista paginada e abre seus detalhes. Devolve sucesso apenas quando o uso produz algum efeito, permitindo que `Battle` decida se a ação do personagem foi consumida. |
+| `RecoveryItemUseMenu` | Fluxo de uso | Centraliza a seleção de alvos, a aplicação de efeitos individuais ou coletivos, a remoção do item somente após um resultado efetivo e a apresentação dos valores recuperados. É compartilhado por `InventoryMenu` e `BattleItemMenu`. |
+| `ItemMenuFormatter` | Formatador de interface | Centraliza a largura das colunas, o truncamento seguro de nomes longos e o resumo dos componentes de recuperação usados pelas telas de inventário. |
 | `PartyStatusMenu` | Menu de consulta | Exibe uma visão resumida dos membros da `Party` e do ouro compartilhado. Permite selecionar um integrante para abrir `CharacterStatusMenu`. |
 | `CharacterStatusMenu` | Tela de consulta | Mostra os detalhes de um `PlayableCharacter`: recursos, atributos, nível, EXP e habilidades. Recebe o personagem selecionado por `PartyStatusMenu`. |
 | `AllyTargetMenu` | Menu de alvo | Exibe aliados válidos conforme o contexto, como vivos, feridos ou derrotados, e devolve o `PlayableCharacter` escolhido. É usado por itens e habilidades de cura ou ressurreição. |

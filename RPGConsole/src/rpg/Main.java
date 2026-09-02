@@ -4,10 +4,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Scanner;
 
-import rpg.world.branches.ScenarioBranchCatalog;
-import rpg.world.branches.ScenarioBranchLoader;
-import rpg.world.travel.TravelProgress;
-import rpg.world.travel.TravelRouteLoader;
 import rpg.characters.CharacterStats;
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
@@ -15,6 +11,14 @@ import rpg.enemies.EnemyCatalog;
 import rpg.enemies.EnemyDropCatalog;
 import rpg.enemies.EnemyDropLoader;
 import rpg.enemies.EnemyLoader;
+import rpg.items.Item;
+import rpg.items.ItemCatalog;
+import rpg.items.ItemDefinition;
+import rpg.items.ItemDefinitionCatalog;
+import rpg.items.ItemFactory;
+import rpg.items.ItemLoader;
+import rpg.items.RecoveryItemDefinitionCatalog;
+import rpg.items.RecoveryItemLoader;
 import rpg.skills.DamageType;
 import rpg.skills.RecoveryType;
 import rpg.skills.Skill;
@@ -22,6 +26,8 @@ import rpg.skills.SkillTargetType;
 import rpg.ui.ConsoleUI;
 import rpg.ui.TitleScreen;
 import rpg.world.World;
+import rpg.world.branches.ScenarioBranchCatalog;
+import rpg.world.branches.ScenarioBranchLoader;
 import rpg.world.encounters.EncounterCatalog;
 import rpg.world.encounters.EncounterLoader;
 import rpg.world.scenarios.CombatScenarioDefinitionCatalog;
@@ -35,12 +41,17 @@ import rpg.world.scenarios.ScenarioDefinitionCatalog;
 import rpg.world.scenarios.ScenarioFactory;
 import rpg.world.scenarios.ScenarioLoader;
 import rpg.world.travel.TravelCatalog;
+import rpg.world.travel.TravelProgress;
+import rpg.world.travel.TravelRouteLoader;
 
 // Starts the game and controls its initial execution.
 public class Main {
 
 	public static void main(String[] args) {
 
+		ItemCatalog itemCatalog;
+		RecoveryItemDefinitionCatalog recoveryItemDefinitionCatalog;
+		ItemDefinitionCatalog itemDefinitionCatalog;
 		EnemyCatalog enemyCatalog;
 		EncounterCatalog encounterCatalog;
 		EnemyDropCatalog enemyDropCatalog;
@@ -56,9 +67,28 @@ public class Main {
 
 			enemyCatalog = enemyLoader.load(Path.of("data", "enemies.txt"));
 
+			ItemLoader itemLoader = new ItemLoader();
+
+			itemDefinitionCatalog = itemLoader.load(Path.of("data", "items.txt"));
+
+			RecoveryItemLoader recoveryItemLoader = new RecoveryItemLoader();
+
+			recoveryItemDefinitionCatalog = recoveryItemLoader.load(Path.of("data", "recovery_items.txt"),
+					itemDefinitionCatalog);
+
+			itemCatalog = new ItemCatalog();
+
+			ItemFactory itemFactory = new ItemFactory();
+
+			for (ItemDefinition definition : itemDefinitionCatalog.getAll()) {
+				Item item = itemFactory.create(definition, recoveryItemDefinitionCatalog);
+
+				itemCatalog.register(item);
+			}
+
 			EnemyDropLoader enemyDropLoader = new EnemyDropLoader();
 
-			enemyDropCatalog = enemyDropLoader.load(Path.of("data", "enemy_drops.txt"), enemyCatalog);
+			enemyDropCatalog = enemyDropLoader.load(Path.of("data", "enemy_drops.txt"), enemyCatalog, itemCatalog);
 
 			EncounterLoader encounterLoader = new EncounterLoader();
 
@@ -177,8 +207,8 @@ public class Main {
 		bardo.learnSkill(palavraCurativa);
 		bardo.learnSkill(reviveTodos);
 
-		World world = new World(party, currentScenario, scanner, enemyCatalog, enemyDropCatalog, encounterCatalog,
-				scenarioCatalog, scenarioBranchCatalog, travelProgress);
+		World world = new World(party, currentScenario, scanner, itemCatalog, enemyCatalog, enemyDropCatalog,
+				encounterCatalog, scenarioCatalog, scenarioBranchCatalog, travelProgress);
 
 		world.start();
 

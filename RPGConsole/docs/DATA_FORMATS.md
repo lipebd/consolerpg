@@ -171,7 +171,7 @@ Rules:
 - The same item cannot be registered twice for the same enemy.
 - Enemies without registered rows have an empty drop table.
 - The referenced enemy ID must exist in `EnemyCatalog`.
-- The referenced item ID must exist in `ItemCatalog`.
+- The referenced item ID must exist in the runtime `ItemCatalog` built from the external item definitions.
 - Drops of the same item from multiple defeated enemies are added together before the result screen is displayed.
 
 Example of independent rolls:
@@ -195,17 +195,99 @@ enemy_drops.txt
     -> Inventory and BattleRewards
 ```
 
+## Item definitions
+
+Base item data is loaded from:
+
+`data/items.txt`
+
+Header:
+
+```text
+# id;category;playerTradable;npcSellable;name;description
+```
+
+Example:
+
+```text
+meruma;CONSUMABLE;true;true;Merumã;Uma fruta que recupera 25 pontos de HP.
+```
+
+Rules:
+
+- Every item must have a unique and stable ID.
+- IDs must use lowercase letters, numbers and single underscores, following the stable content ID conventions.
+- `category` must correspond to a valid `ItemCategory`.
+- Player-to-player trading eligibility and NPC selling eligibility are stored independently.
+- Names and descriptions cannot be empty.
+- Literal `\n` sequences in descriptions are converted into line breaks.
+- `items.txt` stores only the properties shared by every item.
+- Category-specific behavior is loaded from specialized data files.
+- An item without specialized behavior is created as a `BasicItem`.
+
+Loading flow:
+
+```text
+items.txt
+    -> ItemLoader
+    -> ItemDefinitionCatalog
+```
+
+## Recovery item definitions
+
+Recovery item behavior is loaded from:
+
+`data/recovery_items.txt`
+
+Header:
+
+```text
+# itemId;targetType;hpRecovery;mpRecovery;spRecovery;reviveHpRecovery;purifiesStatusEffects
+```
+
+Example:
+
+```text
+meruma;SINGLE_ALLY;25;0;0;0;false
+```
+
+Rules:
+
+- `itemId` must reference an item defined in `items.txt`.
+- The referenced base item must use the `CONSUMABLE` category.
+- The same item cannot have more than one recovery definition.
+- Recovery values cannot be negative.
+- A recovery item must have at least one effective component.
+- An effective component is positive HP, MP, SP or revival recovery, or enabled purification.
+- `targetType` must be `SINGLE_ALLY` or `ALL_ALLIES`.
+- Revival is applied before ordinary HP recovery, allowing both components to affect a defeated ally.
+- Group effects are evaluated independently for every eligible party member.
+- The item is consumed only when at least one component affects at least one target.
+- Purification is represented in the data model, but its runtime effect will be connected after status effects are implemented.
+
+Definition composition and runtime flow:
+
+```text
+ItemDefinitionCatalog
+RecoveryItemDefinitionCatalog
+    -> ItemFactory
+    -> ItemCatalog
+    -> Inventory, drops and item menus
+```
+
+`ItemDefinition` contains the immutable properties shared by every item.
+
+`RecoveryItemDefinition` contains only the specialized recovery behavior.
+
+`ItemFactory` combines both definitions and creates the complete runtime object. Items without a recovery definition currently become `BasicItem`; matching specialized definitions become `RecoveryItem`.
+
+`ItemCatalog` stores the resulting runtime items and resolves the stable IDs referenced by enemy drops, exploration events and inventories.
+
 ## Current item IDs
 
-Items currently remain defined as constants in `ItemCatalog`.
-
-Implemented IDs:
-
-| ID | Name | Type | Effect |
-|---|---|---|---|
-| `meruma` | Merumã | `HealingItem` | Recovers 25 HP |
-
-`ItemCatalog.getById()` resolves the IDs used by external drop data.
+| ID | Name | Category | Runtime type | Effect |
+|---|---|---|---|---|
+| `meruma` | Merumã | `CONSUMABLE` | `RecoveryItem` | Recovers 25 HP from one ally |
 
 ## Planned V3 data files
 
@@ -255,20 +337,3 @@ Planned fields include:
 - MP cost.
 - SP cost.
 - Description.
-
-### Item definitions
-
-Planned file:
-
-`data/items.txt`
-
-The item format must support different item categories:
-
-- Consumables.
-- Crafting materials.
-- Weapons.
-- Armor.
-- Accessories.
-
-The final format will be defined when equipment and item effects are
-implemented.

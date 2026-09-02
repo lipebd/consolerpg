@@ -16,7 +16,7 @@ import rpg.skills.Skill;
 import rpg.ui.AllyTargetMenu;
 import rpg.ui.BattleTurnOrderScreen;
 import rpg.ui.EnemyTargetMenu;
-import rpg.ui.ItemMenu;
+import rpg.ui.BattleItemMenu;
 
 // Controls a battle between a party and an enemy group.
 public class Battle {
@@ -37,7 +37,7 @@ public class Battle {
 	private EnemyBattleGroup enemyGroup;
 	private Scanner scanner;
 	private boolean partyFled;
-	private ItemMenu itemMenu;
+	private final BattleItemMenu battleItemMenu;
 
 	public Battle(Party party, EnemyBattleGroup enemyGroup, Scanner scanner, Random random) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
@@ -46,7 +46,7 @@ public class Battle {
 		Objects.requireNonNull(random, "Random generator cannot be null.");
 		this.enemyTargetMenu = new EnemyTargetMenu(scanner);
 		this.partyFled = false;
-		this.itemMenu = new ItemMenu(party, scanner);
+		this.battleItemMenu = new BattleItemMenu(party, scanner);
 		this.allyTargetMenu = new AllyTargetMenu(scanner);
 		this.turnOrderGenerator = new BattleTurnOrderGenerator(random);
 		this.turnOrderScreen = new BattleTurnOrderScreen();
@@ -313,7 +313,7 @@ public class Battle {
 
 			case "4" -> executeEnemyAnalysis();
 
-			case "5" -> validAction = itemMenu.open(actingCharacter);
+			case "5" -> validAction = battleItemMenu.open(actingCharacter);
 
 			case "6" -> turnOrderScreen.show(currentTurnOrder, currentRoundNumber);
 

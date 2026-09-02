@@ -1,16 +1,11 @@
 package rpg.world;
 
 import java.util.List;
-
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Scanner;
-import java.util.Objects;
 
-import rpg.world.travel.TravelRouteDefinition;
-import rpg.ui.ScenarioBranchMenu;
-import rpg.world.branches.ScenarioBranchDefinition;
-import rpg.world.branches.ScenarioBranchCatalog;
 import rpg.battle.BattleCoordinator;
 import rpg.battle.BattleResult;
 import rpg.battle.rewards.BattleRewardService;
@@ -24,10 +19,13 @@ import rpg.ui.BattleRewardScreen;
 import rpg.ui.ConsoleUI;
 import rpg.ui.EpicEncounterMenu;
 import rpg.ui.GameOverScreen;
-import rpg.ui.ItemMenu;
+import rpg.ui.InventoryMenu;
 import rpg.ui.PartyStatusMenu;
 import rpg.ui.ScenarioActionMenu;
+import rpg.ui.ScenarioBranchMenu;
 import rpg.ui.TravelMenu;
+import rpg.world.branches.ScenarioBranchCatalog;
+import rpg.world.branches.ScenarioBranchDefinition;
 import rpg.world.encounters.EncounterCatalog;
 import rpg.world.encounters.EncounterGenerator;
 import rpg.world.exploration.ExplorationEventGenerator;
@@ -40,10 +38,12 @@ import rpg.world.scenarios.Scenario;
 import rpg.world.scenarios.ScenarioAction;
 import rpg.world.scenarios.ScenarioCatalog;
 import rpg.world.travel.TravelProgress;
+import rpg.world.travel.TravelRouteDefinition;
 
 // Controls navigation and interaction with the game world.
 public class World {
 
+	private final ItemCatalog itemCatalog;
 	private final ScenarioBranchMenu scenarioBranchMenu;
 	private final ScenarioCatalog scenarioCatalog;
 	private final PartyStatusMenu partyStatusMenu;
@@ -60,14 +60,15 @@ public class World {
 	private boolean running;
 	private boolean shouldDisplayScenarioDescription;
 	private boolean scenarioNameAlreadyDisplayed;
-	private ItemMenu itemMenu;
+	private InventoryMenu inventoryMenu;
 	private final TravelMenu travelMenu;
 	private final TravelProgress travelProgress;
 	private final ScenarioBranchCatalog scenarioBranchCatalog;
 
-	public World(Party party, Scenario initialScenario, Scanner scanner, EnemyCatalog enemyCatalog,
-			EnemyDropCatalog enemyDropCatalog, EncounterCatalog encounterCatalog, ScenarioCatalog scenarioCatalog,
-			ScenarioBranchCatalog scenarioBranchCatalog, TravelProgress travelProgress) {
+	public World(Party party, Scenario initialScenario, Scanner scanner, ItemCatalog itemCatalog,
+			EnemyCatalog enemyCatalog, EnemyDropCatalog enemyDropCatalog, EncounterCatalog encounterCatalog,
+			ScenarioCatalog scenarioCatalog, ScenarioBranchCatalog scenarioBranchCatalog,
+			TravelProgress travelProgress) {
 
 		Objects.requireNonNull(scanner, "Scanner cannot be null.");
 		Objects.requireNonNull(enemyDropCatalog, "Enemy drop catalog cannot be null.");
@@ -75,42 +76,29 @@ public class World {
 
 		// Core world state and shared data
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
-
 		this.currentScenario = Objects.requireNonNull(initialScenario, "Initial scenario cannot be null.");
-
 		this.enemyCatalog = Objects.requireNonNull(enemyCatalog, "Enemy catalog cannot be null.");
-
 		this.scenarioCatalog = Objects.requireNonNull(scenarioCatalog, "Scenario catalog cannot be null.");
-
 		this.scenarioBranchCatalog = Objects.requireNonNull(scenarioBranchCatalog,
 				"Scenario branch catalog cannot be null.");
-
 		this.travelProgress = Objects.requireNonNull(travelProgress, "Travel progress cannot be null.");
+		this.itemCatalog = Objects.requireNonNull(itemCatalog, "Item catalog cannot be null.");
 
 		// Shared random generator and gameplay services
 		this.random = new Random();
-
 		BattleRewardService rewardService = new BattleRewardService(random);
-
 		BattleRewardScreen rewardScreen = new BattleRewardScreen(scanner);
-
 		this.battleCoordinator = new BattleCoordinator(this.party, scanner, enemyDropCatalog, rewardService,
 				rewardScreen, random);
-
 		this.encounterGenerator = new EncounterGenerator(this.enemyCatalog, encounterCatalog, random);
-
 		this.explorationEventGenerator = new ExplorationEventGenerator(random);
 
 		// User interface
 		this.epicEncounterMenu = new EpicEncounterMenu(scanner);
 		this.scenarioActionMenu = new ScenarioActionMenu(scanner);
-
 		this.travelMenu = new TravelMenu(scanner, this.travelProgress);
-
 		this.scenarioBranchMenu = new ScenarioBranchMenu(scanner);
-
-		this.itemMenu = new ItemMenu(this.party, scanner);
-
+		this.inventoryMenu = new InventoryMenu(this.party, scanner);
 		this.partyStatusMenu = new PartyStatusMenu(this.party, scanner);
 
 		// Initial exploration state
@@ -229,7 +217,7 @@ public class World {
 
 		case VIEW_STATUS -> partyStatusMenu.open();
 
-		case INVENTORY -> itemMenu.open();
+		case INVENTORY -> inventoryMenu.open();
 
 		case TRAVEL -> executeTravelMenu();
 
@@ -339,7 +327,7 @@ public class World {
 	}
 
 	private void executeItemEvent() {
-		Item item = ItemCatalog.MERUMA;
+		Item item = itemCatalog.getById("meruma");
 
 		party.getInventory().addItem(item, 1);
 

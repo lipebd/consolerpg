@@ -12,7 +12,11 @@ import rpg.items.ItemCatalog;
 // Loads enemy item drops from an external text file.
 public final class EnemyDropLoader {
 
-	public EnemyDropCatalog load(Path filePath, EnemyCatalog enemyCatalog) throws IOException {
+	public EnemyDropCatalog load(
+            Path filePath,
+            EnemyCatalog enemyCatalog,
+            ItemCatalog itemCatalog)
+            throws IOException {
 		EnemyDropCatalog dropCatalog = new EnemyDropCatalog();
 
 		List<String> lines = Files.readAllLines(filePath);
@@ -25,7 +29,11 @@ public final class EnemyDropLoader {
 			}
 
 			try {
-				registerDrop(line, enemyCatalog, dropCatalog);
+				registerDrop(
+		                line,
+		                enemyCatalog,
+		                itemCatalog,
+		                dropCatalog);
 			} catch (IllegalArgumentException exception) {
 				throw new IllegalArgumentException("Invalid enemy drop at line " + (index + 1) + ": " + line,
 						exception);
@@ -35,7 +43,11 @@ public final class EnemyDropLoader {
 		return dropCatalog;
 	}
 
-	private void registerDrop(String line, EnemyCatalog enemyCatalog, EnemyDropCatalog dropCatalog) {
+	private void registerDrop(
+            String line,
+            EnemyCatalog enemyCatalog,
+            ItemCatalog itemCatalog,
+            EnemyDropCatalog dropCatalog) {
 		String[] fields = line.split(";", -1);
 
 		if (fields.length != 5) {
@@ -54,7 +66,7 @@ public final class EnemyDropLoader {
 		// Verifies that the referenced enemy exists.
 		enemyCatalog.getById(enemyId);
 
-		Item item = ItemCatalog.getById(itemId);
+		Item item = itemCatalog.getById(itemId);
 
 		DropEntry dropEntry = new DropEntry(item, dropChance, minimumQuantity, maximumQuantity);
 

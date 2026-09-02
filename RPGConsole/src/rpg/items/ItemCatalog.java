@@ -1,46 +1,47 @@
 package rpg.items;
 
-import java.util.Locale;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
-// Stores the shared definitions of all game items.
+// Stores and provides access to runtime game items.
 public final class ItemCatalog {
 
-    public static final HealingItem MERUMA =
-            new HealingItem(
-                    "meruma",
-                    "Merumã",
-                    "Uma fruta que recupera 25 pontos de HP.",
-                    25
-            );
+	private final Map<String, Item> itemsById;
 
-    private static final Map<String, Item> ITEMS_BY_ID =
-            Map.of(
-                    MERUMA.getId(),
-                    MERUMA
-            );
+	public ItemCatalog() {
+		itemsById = new LinkedHashMap<>();
+	}
 
-    private ItemCatalog() {
-    }
+	public void register(Item item) {
+		if (item == null) {
+			throw new IllegalArgumentException("Item cannot be null.");
+		}
 
-    public static Item getById(String itemId) {
-        if (itemId == null || itemId.isBlank()) {
-            throw new IllegalArgumentException(
-                    "Item ID cannot be empty."
-            );
-        }
+		String itemId = item.getId();
 
-        String normalizedId =
-                itemId.trim().toLowerCase(Locale.ROOT);
+		if (itemsById.containsKey(itemId)) {
+			throw new IllegalArgumentException("Item ID is already registered: " + itemId);
+		}
 
-        Item item = ITEMS_BY_ID.get(normalizedId);
+		itemsById.put(itemId, item);
+	}
 
-        if (item == null) {
-            throw new IllegalArgumentException(
-                    "Unknown item ID: " + itemId
-            );
-        }
+	public Item getById(String itemId) {
+		if (itemId == null || itemId.isBlank()) {
+			throw new IllegalArgumentException("Item ID cannot be empty.");
+		}
 
-        return item;
-    }
+		Item item = itemsById.get(itemId);
+
+		if (item == null) {
+			throw new IllegalArgumentException("Item not found: " + itemId);
+		}
+
+		return item;
+	}
+
+	public List<Item> getAll() {
+		return List.copyOf(itemsById.values());
+	}
 }

@@ -27,14 +27,14 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.battle` | Battle execution, enemy groups, initiative and escape | `Battle`, `BattleResult`, `BattleCoordinator`, `EnemyBattleGroup`, `EnemyBattleSlot`, `BattleTurnOrder`, `BattleTurnOrderGenerator`, `BattleEscapeService` |
 | `rpg.battle.rewards` | Reward calculation and individual progression results | `BattleRewardService`, `BattleRewards`, `CharacterProgressionResult` |
 | `rpg.skills` | Skill definitions, damage, recovery and target types | `Skill`, `DamageType`, `RecoveryType`, `SkillTargetType` |
-| `rpg.items` | Items, shared inventory and individual drop rules | `Item`, `HealingItem`, `ItemCatalog`, `Inventory`, `DropEntry` |
+| `rpg.items` | External item definitions, runtime item behavior, shared inventory and individual drop rules | `ItemDefinition`, `ItemDefinitionCatalog`, `ItemLoader`, `RecoveryItemDefinition`, `RecoveryItemLoader`, `ItemFactory`, `Item`, `BasicItem`, `RecoveryItem`, `ItemCatalog`, `Inventory`, `DropEntry` |
 | `rpg.enemies` | Enemy definitions and external enemy/drop loading | `EnemyDefinition`, `EnemyCatalog`, `EnemyLoader`, `EnemyDropCatalog`, `EnemyDropLoader` |
 | `rpg.world` | Active world state and high-level coordination | `World` |
 | `rpg.world.scenarios` | Scenario hierarchy and scenario registry | `Scenario`, `CombatScenario`, `Field`, `Dungeon`, `City`, `DungeonSettings`, `ScenarioCatalog`, `ScenarioAction` |
 | `rpg.world.encounters` | Encounter availability and weighted group generation | `EncounterEntry`, `EncounterCatalog`, `EncounterLoader`, `EncounterGenerator`, `EncounterAreaRestriction` |
 | `rpg.world.exploration` | Exploration configuration, progress and event selection | `ExplorationSettings`, `ExplorationSession`, `ExplorationEventGenerator`, `ExplorationEventType` |
 | `rpg.world.travel` | Directed routes between scenarios | `TravelCatalog` |
-| `rpg.ui` | Console menus, target selection and information screens | `TitleScreen`, `GameOverScreen`, `ItemMenu`, `TravelMenu`, `ScenarioActionMenu`, `EpicEncounterMenu`, `BattleRewardScreen`, `BattleTurnOrderScreen`, `PartyStatusMenu`, `CharacterStatusMenu` |
+| `rpg.ui` | Console menus, target selection and information screens | `TitleScreen`, `GameOverScreen`, `InventoryMenu`, `BattleItemMenu`, `RecoveryItemUseMenu`, `TravelMenu`, `ScenarioActionMenu`, `EpicEncounterMenu`, `BattleRewardScreen`, `BattleTurnOrderScreen`, `PartyStatusMenu`, `CharacterStatusMenu` |
 
 ## Application initialization
 
@@ -507,7 +507,9 @@ Important UI components include:
 
 - `ScenarioActionMenu`
 - `TravelMenu`
-- `ItemMenu`
+- `InventoryMenu`
+- `BattleItemMenu`
+- `RecoveryItemUseMenu`
 - `EpicEncounterMenu`
 - `EnemyTargetMenu`
 - `AllyTargetMenu`
@@ -516,6 +518,14 @@ Important UI components include:
 - `PartyStatusMenu`
 - `CharacterStatusMenu`
 - `GameOverScreen`
+
+`InventoryMenu` controls the general inventory flow outside battle. It displays non-empty item categories, paginates their contents and opens item details.
+
+`BattleItemMenu` is a separate battle-specific flow. It lists only items that can currently be used in battle and reports success only when an item produces an effect.
+
+`RecoveryItemUseMenu` contains the shared recovery-item execution flow, including target selection, effect application and conditional consumption. This prevents the general and battle menus from duplicating item-use rules.
+
+`ItemMenuFormatter` contains shared presentation rules such as deterministic column widths, name truncation and recovery-effect summaries. It does not decide item behavior.
 
 `PartyStatusMenu` displays a compact overview of one to four allies and shared gold.
 
@@ -527,13 +537,12 @@ Important UI components include:
 
 The following implementations remain intentionally temporary:
 
-- The exploration item event directly grants Merumã.
+- The exploration item event still resolves the fixed `meruma` ID from the runtime `ItemCatalog`. Scenario-specific item and gold selection will move to external exploration reward pools.
+- Only base item data and recovery-item behavior are currently externalized. Equipment and skill-scroll specialization will be defined when their corresponding systems exist.
+- Recovery-item purification is represented in external data and runtime definitions, but it cannot remove effects until the status-effect system is implemented.
 - The merchant has no merchandise.
-- Items are defined as constants in `ItemCatalog`.
-- Scenarios and their settings are constructed in Java.
-- Travel routes are registered in Java.
 - Playable characters and test skills are constructed in `Main`.
-- Temporary recovery and revive skills exist for V2 testing.
+- Temporary recovery and revive skills exist for testing.
 - Playable classes are not represented as data.
 - Equipment, buffs and debuffs are not implemented.
 - Bree is not fully implemented.
@@ -541,4 +550,4 @@ The following implementations remain intentionally temporary:
 - Save and load are not implemented.
 - `Battle` remains large and may later be divided into more focused action services.
 
-These limitations are tracked in `V2_ROADMAP.md` and should be replaced incrementally instead of through one large rewrite.
+These limitations are tracked in `V3_ROADMAP.md` and should be replaced incrementally instead of through one large rewrite.

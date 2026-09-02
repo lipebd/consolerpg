@@ -1,0 +1,2 @@
+# itemId;targetType;hpRecovery;mpRecovery;spRecovery;reviveHpRecovery;purifiesStatusEffects
+meruma;SINGLE_ALLY;25;0;0;0;false

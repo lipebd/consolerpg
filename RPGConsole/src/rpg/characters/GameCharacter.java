@@ -3,184 +3,206 @@ package rpg.characters;
 // Represents the basic attributes and behaviors shared by all game characters.
 public abstract class GameCharacter {
 
-    private String name;
-    private int currentHp;
-    private int currentMp;
-    private int currentSp;
-    private int maxHp;
-    private int maxMp;
-    private int maxSp;
-    private int attack;
-    private int defense;
-    private int magic;
-    private int resistance;
-    private int speed;
-    private int luck;
-    
-    private boolean defending;
-    
-    /**
-     * Creates a character with full HP, MP and SP.
-     *
-     * @param name  character's name
-     * @param stats character's initial attributes
-     */
-    public GameCharacter(String name, CharacterStats stats) {
-        this.name = name;
+	private String name;
+	private int currentHp;
+	private int currentMp;
+	private int currentSp;
+	private int maxHp;
+	private int maxMp;
+	private int maxSp;
+	private int attack;
+	private int defense;
+	private int magic;
+	private int resistance;
+	private int speed;
+	private int luck;
 
-        this.maxHp = stats.getMaxHp();
-        this.currentHp = maxHp;
+	private boolean defending;
 
-        this.maxMp = stats.getMaxMp();
-        this.currentMp = maxMp;
+	/**
+	 * Creates a character with full HP, MP and SP.
+	 *
+	 * @param name  character's name
+	 * @param stats character's initial attributes
+	 */
+	public GameCharacter(String name, CharacterStats stats) {
+		this.name = name;
 
-        this.maxSp = stats.getMaxSp();
-        this.currentSp = maxSp;
+		this.maxHp = stats.getMaxHp();
+		this.currentHp = maxHp;
 
-        this.attack = stats.getAttack();
-        this.defense = stats.getDefense();
-        this.magic = stats.getMagic();
-        this.resistance = stats.getResistance();
-        this.speed = stats.getSpeed();
-        this.luck = stats.getLuck();
+		this.maxMp = stats.getMaxMp();
+		this.currentMp = maxMp;
 
-        this.defending = false;
-    }
-    
-    public boolean restoreAllResources() {
-        if (!isAlive()) {
-            return false;
-        }
+		this.maxSp = stats.getMaxSp();
+		this.currentSp = maxSp;
 
-        currentHp = getMaxHp();
-        currentMp = getMaxMp();
-        currentSp = getMaxSp();
+		this.attack = stats.getAttack();
+		this.defense = stats.getDefense();
+		this.magic = stats.getMagic();
+		this.resistance = stats.getResistance();
+		this.speed = stats.getSpeed();
+		this.luck = stats.getLuck();
 
-        return true;
-    }
-    
+		this.defending = false;
+	}
+
+	public boolean restoreAllResources() {
+		if (!isAlive()) {
+			return false;
+		}
+
+		currentHp = getMaxHp();
+		currentMp = getMaxMp();
+		currentSp = getMaxSp();
+
+		return true;
+	}
+
 	public int takeDamage(int damage) {
-        int actualDamage = damage;
+		int actualDamage = damage;
 
-        if (defending) {
-        	actualDamage = actualDamage / 2;
-        	defending = false;
-        }
-        
-        if (actualDamage < 1) {
-        	actualDamage = 1;
-        }
-        if (actualDamage > currentHp) { // The max damage that can be taken is the current HP
-        	actualDamage = currentHp;
-        }
-        
-        currentHp = currentHp - actualDamage;
+		if (defending) {
+			actualDamage = actualDamage / 2;
+			defending = false;
+		}
 
-        return actualDamage;
-    }
-    
-    public int recoverHp(int recoveryAmount) {
-    	if(!isAlive()) {
-    		return 0;
-    	}
-    	int actualRecoveryAmount = recoveryAmount;
-    	if (actualRecoveryAmount < 1) {
-    		actualRecoveryAmount = 0;
-    		}
-    	if (actualRecoveryAmount > maxHp - currentHp) { // The max recovery amount needs to be the missing HP value
-    		actualRecoveryAmount = maxHp - currentHp;
-    	}
-    	currentHp = currentHp + actualRecoveryAmount;
-    	
-    	return actualRecoveryAmount;
-    }
-    
-    public int revive(int recoveryAmount) {
-        if (isAlive() || recoveryAmount <= 0) {
-            return 0;
-        }
+		if (actualDamage < 1) {
+			actualDamage = 1;
+		}
+		if (actualDamage > currentHp) { // The max damage that can be taken is the current HP
+			actualDamage = currentHp;
+		}
 
-        int actualRecoveryAmount =
-                Math.min(recoveryAmount, maxHp);
+		currentHp = currentHp - actualDamage;
 
-        currentHp = actualRecoveryAmount;
-        defending = false;
+		return actualDamage;
+	}
 
-        return actualRecoveryAmount;
-    }
-    
-    public boolean spendMp(int amount) {
-    	if (amount <= 0 || amount > currentMp) {
-    		return false;
-    	}
-    	currentMp = currentMp - amount;
-    	return true;
-    }
-    
-    public boolean spendSp(int amount) {
-    	if (amount <= 0 || amount > currentSp) {
-    		return false;
-    	}
-    	currentSp = currentSp - amount;
-    	return true;
-    }
-    
-    public boolean isAlive() {
-        return currentHp > 0;
-    }
-    
-    public int attack(GameCharacter target) {
-        int damage = attack - target.getDefense();
+	public int recoverHp(int recoveryAmount) {
+		if (!isAlive()) {
+			return 0;
+		}
+		int actualRecoveryAmount = recoveryAmount;
+		if (actualRecoveryAmount < 1) {
+			actualRecoveryAmount = 0;
+		}
+		if (actualRecoveryAmount > maxHp - currentHp) { // The max recovery amount needs to be the missing HP value
+			actualRecoveryAmount = maxHp - currentHp;
+		}
+		currentHp = currentHp + actualRecoveryAmount;
 
-        if (damage < 1) {
-            damage = 1;
-        }
+		return actualRecoveryAmount;
+	}
 
-        return target.takeDamage(damage);
-    }
-  
-    
-    public void defend() {
-    	defending = true;
-    }
-    
-    public String getName() {
-        return name;
-    }
+	public int recoverMp(int recoveryAmount) {
+		if (!isAlive() || recoveryAmount <= 0) {
+			return 0;
+		}
 
-    public int getCurrentHp() {
-        return currentHp;
-    }
+		int actualRecoveryAmount = Math.min(recoveryAmount, maxMp - currentMp);
 
-    public int getMaxHp() {
-        return maxHp;
-    }
-    
-    public int getCurrentMp() {
-    	return currentMp;
-    }
-    
-    public int getMaxMp() {
-    	return maxMp;
-    }
-    
-    public int getCurrentSp() {
-    	return currentSp;
-    }
-    
-    public int getMaxSp() {
-    	return maxSp;
-    }
+		currentMp += actualRecoveryAmount;
 
-    public int getAttack() {
-        return attack;
-    }
+		return actualRecoveryAmount;
+	}
 
-    public int getDefense() {
-        return defense;
-    }
-    
-    public int getMagic() {
+	public int recoverSp(int recoveryAmount) {
+		if (!isAlive() || recoveryAmount <= 0) {
+			return 0;
+		}
+
+		int actualRecoveryAmount = Math.min(recoveryAmount, maxSp - currentSp);
+
+		currentSp += actualRecoveryAmount;
+
+		return actualRecoveryAmount;
+	}
+
+	public int revive(int recoveryAmount) {
+		if (isAlive() || recoveryAmount <= 0) {
+			return 0;
+		}
+
+		int actualRecoveryAmount = Math.min(recoveryAmount, maxHp);
+
+		currentHp = actualRecoveryAmount;
+		defending = false;
+
+		return actualRecoveryAmount;
+	}
+
+	public boolean spendMp(int amount) {
+		if (amount <= 0 || amount > currentMp) {
+			return false;
+		}
+		currentMp = currentMp - amount;
+		return true;
+	}
+
+	public boolean spendSp(int amount) {
+		if (amount <= 0 || amount > currentSp) {
+			return false;
+		}
+		currentSp = currentSp - amount;
+		return true;
+	}
+
+	public boolean isAlive() {
+		return currentHp > 0;
+	}
+
+	public int attack(GameCharacter target) {
+		int damage = attack - target.getDefense();
+
+		if (damage < 1) {
+			damage = 1;
+		}
+
+		return target.takeDamage(damage);
+	}
+
+	public void defend() {
+		defending = true;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public int getCurrentHp() {
+		return currentHp;
+	}
+
+	public int getMaxHp() {
+		return maxHp;
+	}
+
+	public int getCurrentMp() {
+		return currentMp;
+	}
+
+	public int getMaxMp() {
+		return maxMp;
+	}
+
+	public int getCurrentSp() {
+		return currentSp;
+	}
+
+	public int getMaxSp() {
+		return maxSp;
+	}
+
+	public int getAttack() {
+		return attack;
+	}
+
+	public int getDefense() {
+		return defense;
+	}
+
+	public int getMagic() {
 		return magic;
 	}
 
@@ -191,8 +213,8 @@ public abstract class GameCharacter {
 	public int getSpeed() {
 		return speed;
 	}
-    
-    public int getLuck() {
-    	return luck;
-    }
+
+	public int getLuck() {
+		return luck;
+	}
 }

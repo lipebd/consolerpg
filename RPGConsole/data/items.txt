@@ -1,0 +1,2 @@
+# id;category;playerTradable;npcSellable;name;description
+meruma;CONSUMABLE;true;true;Merumã;Uma fruta que recupera 25 pontos de HP.

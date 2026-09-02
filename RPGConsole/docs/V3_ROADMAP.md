@@ -151,19 +151,47 @@ The implementation must preserve stable IDs, strict startup validation and separ
 
 ## 5. External item data
 
-* [ ] Define `items.txt`.
-* [ ] Create stable item IDs.
-* [ ] Define the initial item categories.
-* [ ] Create immutable item definitions.
-* [ ] Create the item loader.
-* [ ] Create the item catalog.
-* [ ] Validate duplicate IDs and invalid item data.
-* [ ] Support literal `\n` in long item descriptions.
-* [ ] Externalize current healing and revival items.
-* [ ] Externalize materials and future equipment items.
-* [ ] Replace hardcoded item creation with catalog resolution.
-* [ ] Preserve shared party inventory.
-* [ ] Test item quantities and inventory stacking.
+* [x] Define `items.txt`.
+* [x] Create stable item IDs.
+* [x] Define the initial item categories.
+* [x] Create immutable item definitions.
+* [x] Create the item loader.
+* [x] Create the item catalog.
+* [x] Validate duplicate IDs and invalid item data.
+* [x] Support literal `\n` in long item descriptions.
+* [x] Externalize the current healing item and support data-driven revival components.
+* [x] Support external basic items such as materials and future equipment definitions.
+* [x] Replace hardcoded item creation with catalog resolution.
+* [x] Preserve shared party inventory.
+* [x] Test item quantities and inventory stacking.
+* [x] Include `SKILL_SCROLL` in the initial item categories.
+* [x] Keep player trading eligibility separate from NPC selling eligibility.
+* [x] Define composable specialized item data.
+* [x] Define `recovery_items.txt`.
+* [x] Support combined HP, MP, SP, revival effects.
+* [x] Reject recovery items without any effective component.
+* [x] Consume a recovery item only when at least one component succeeds.
+* [x] Store `SINGLE_ALLY` or `ALL_ALLIES` target scope for recovery items.
+* [x] Apply group-item effects independently to every eligible party member.
+* [x] Consume a group item only when at least one party member is affected.
+* [x] Refactor the inventory screen after completing the external item migration.
+* [x] Separate the general inventory from the battle item menu.
+* [x] Show only battle-usable consumables during battle.
+* [x] Prevent unavailable item use from consuming the battle turn.
+* [x] Organize the general inventory by non-empty item categories.
+* [x] Keep category counts hidden from the category menu.
+* [x] Sort items deterministically inside each category.
+* [x] Add pagination to item lists.
+* [x] Use fixed-width item and quantity columns.
+* [x] Truncate long item names without leaving whitespace before the ellipsis.
+* [x] Display full item names in the details screen.
+* [x] Open every selected item through a details screen.
+* [x] Display descriptions and relevant item data only in the details screen.
+* [x] Use contextual actions according to the runtime item type.
+* [x] Keep prices and commercial information out of the regular inventory.
+* [x] Preserve unlimited shared inventory capacity.
+* [x] Revalidate item use inside and outside battle.
+
 
 ## 6. Exploration reward pools
 
@@ -286,6 +314,12 @@ The implementation must preserve stable IDs, strict startup validation and separ
 * [ ] Add global EXP and gold reward modifiers.
 * [ ] Add individual character EXP modifiers.
 * [ ] Test healing, revival and effect skills after externalization.
+* [ ] Define external skill-scroll links to skill and class IDs.
+* [ ] Validate skill-scroll references against skill and class catalogs.
+* [ ] Allow a compatible character to learn an unknown skill from a scroll.
+* [ ] Consume a skill scroll only after successful learning.
+* [ ] Reject duplicate or class-incompatible skill learning without consuming the item.
+* [ ] Connect recovery-item purification to active negative effects.
 
 ## 12. Playable classes
 

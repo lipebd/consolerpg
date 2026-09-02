@@ -5,10 +5,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Scanner;
 
+import rpg.items.RecoveryItem;
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
 
-// Controls the selection of a living party member.
+//Controls party-member selection according to the current target context.
 public final class AllyTargetMenu {
 
 	private final Scanner scanner;
@@ -28,6 +29,16 @@ public final class AllyTargetMenu {
 
 		return selectTarget(party.getDefeatedMembers(), "Escolha um aliado para reviver:",
 				"Não há aliados derrotados para reviver.");
+	}
+
+	public Optional<PlayableCharacter> selectRecoveryTarget(Party party, RecoveryItem recoveryItem) {
+		Objects.requireNonNull(party, "Party cannot be null.");
+
+		Objects.requireNonNull(recoveryItem, "Recovery item cannot be null.");
+
+		List<PlayableCharacter> availableMembers = party.getMembers().stream().filter(recoveryItem::canAffect).toList();
+
+		return selectTarget(availableMembers, "Escolha um aliado:", "Nenhum aliado pode ser afetado por este item.");
 	}
 
 	private Optional<PlayableCharacter> selectTarget(List<PlayableCharacter> availableMembers, String prompt,
@@ -81,29 +92,13 @@ public final class AllyTargetMenu {
 			}
 		}
 	}
-	
-	public Optional<PlayableCharacter> selectInjuredTarget(
-	        Party party
-	) {
-	    Objects.requireNonNull(
-	            party,
-	            "Party cannot be null."
-	    );
 
-	    List<PlayableCharacter> injuredMembers =
-	            party.getLivingMembers()
-	                    .stream()
-	                    .filter(
-	                            member ->
-	                                    member.getCurrentHp()
-	                                    < member.getMaxHp()
-	                    )
-	                    .toList();
+	public Optional<PlayableCharacter> selectInjuredTarget(Party party) {
+		Objects.requireNonNull(party, "Party cannot be null.");
 
-	    return selectTarget(
-	            injuredMembers,
-	            "Escolha um aliado para curar:",
-	            "Nenhum aliado precisa de cura."
-	    );
+		List<PlayableCharacter> injuredMembers = party.getLivingMembers().stream()
+				.filter(member -> member.getCurrentHp() < member.getMaxHp()).toList();
+
+		return selectTarget(injuredMembers, "Escolha um aliado para curar:", "Nenhum aliado precisa de cura.");
 	}
 }

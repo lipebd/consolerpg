@@ -282,23 +282,81 @@ Revive effects:
 
 `ALL_BUT_SELF` affects every valid party member except the acting character.
 
-## Shared item usage
+## Shared inventory and item usage
 
 Inventory and gold belong to the party.
 
-Items can be used:
+The inventory:
 
-- Inside battle.
-- Outside battle.
-- By one ally on another ally.
+- Is shared by every playable character.
+- Stores one runtime `Item` entry with its owned quantity.
+- Stacks equal items using their stable IDs.
+- Has no weight mechanic.
+- Has no capacity limit.
+- Does not require inventory expansions or external storage.
+- Keeps item prices hidden outside shop, merchant and trading contexts.
 
-Using an item during battle consumes the acting character's action only when the item produces a valid effect.
+## General inventory
 
-Healing items:
+Outside battle, `InventoryMenu` organizes owned items by category.
 
-- Select only living and injured allies.
-- Cannot revive defeated allies.
-- Are consumed only after producing an effect.
+The general inventory:
+
+- Displays only categories containing at least one owned item.
+- Does not display item counts in the category-selection screen.
+- Sorts items deterministically by name.
+- Displays at most eight item rows per page.
+- Preserves a fixed list height on partially filled pages.
+- Truncates long names only in the list view.
+- Displays the complete name and description in the details view.
+- Provides contextual actions according to the runtime item type.
+
+Current and planned detail actions include:
+
+- `RecoveryItem` — use.
+- Equipment — equip or remove after equipment behavior is implemented.
+- Materials, quest items and key items — return without a use action.
+- Skill scrolls — learn after skill-scroll behavior is implemented.
+
+## Battle inventory
+
+Battle item selection is separate from the general inventory.
+
+During battle:
+
+- Only consumables currently usable in battle are listed.
+- Equipment, materials, quest items, key items and unrelated categories cannot be browsed.
+- Selecting an item first opens its details.
+- Cancelling returns to the battle item list.
+- A failed or ineffective item attempt does not consume the acting character's turn.
+- A successful item use consumes the acting character's action.
+- The item is removed only after producing at least one effect.
+
+## Recovery items
+
+A recovery item may combine:
+
+- HP recovery.
+- MP recovery.
+- SP recovery.
+- Revival.
+- Status-effect purification.
+
+A recovery item definition must contain at least one effective component.
+
+Recovery effects follow these rules:
+
+- `SINGLE_ALLY` allows one eligible party member to be selected.
+- `ALL_ALLIES` evaluates every eligible party member independently.
+- Revival is applied before ordinary HP recovery.
+- A combined revival and HP recovery item may therefore revive a defeated ally and then restore additional HP.
+- Ordinary HP, MP and SP recovery affect only living characters.
+- A component that cannot change the target produces no effect.
+- A group item is consumed only when at least one party member is affected.
+- An individual item is consumed only when its selected target is affected.
+- The result records the effects actually produced instead of inferring them from the item definition.
+
+Purification is already represented by item data but remains inactive until status effects are implemented.
 
 ## Battle rewards
 
