@@ -13,11 +13,20 @@ public final class ExplorationSession {
 	private int currentPosition;
 
 	public ExplorationSession(ExplorationSettings settings) {
-		this.merchantEncountered = false;
+		this(settings, 1);
+	}
+
+	public ExplorationSession(ExplorationSettings settings, int startingPosition) {
 		this.settings = Objects.requireNonNull(settings, "Exploration settings cannot be null.");
 
-		this.currentPosition = 1;
+		if (startingPosition < 1 || startingPosition > settings.getLength()) {
+			throw new IllegalArgumentException("Exploration starting position must be between 1 and "
+					+ settings.getLength() + ": " + startingPosition);
+		}
+
+		this.currentPosition = startingPosition;
 		this.complete = false;
+		this.merchantEncountered = false;
 		this.epicEncounterOffered = false;
 	}
 

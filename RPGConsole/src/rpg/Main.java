@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Scanner;
 
+import rpg.world.branches.ScenarioBranchCatalog;
+import rpg.world.branches.ScenarioBranchLoader;
 import rpg.world.travel.TravelProgress;
 import rpg.world.travel.TravelRouteLoader;
 import rpg.characters.CharacterStats;
@@ -43,9 +45,9 @@ public class Main {
 		EncounterCatalog encounterCatalog;
 		EnemyDropCatalog enemyDropCatalog;
 		ScenarioCatalog scenarioCatalog;
+		ScenarioBranchCatalog scenarioBranchCatalog;
 		Scenario currentScenario;
 		TravelProgress travelProgress;
-		;
 
 		Scanner scanner = new Scanner(System.in);
 
@@ -76,6 +78,11 @@ public class Main {
 			DungeonDefinitionCatalog dungeonDefinitionCatalog = dungeonLoader.load(Path.of("data", "dungeons.txt"),
 					scenarioDefinitionCatalog, combatScenarioDefinitionCatalog, enemyCatalog);
 
+			ScenarioBranchLoader scenarioBranchLoader = new ScenarioBranchLoader();
+
+			scenarioBranchCatalog = scenarioBranchLoader.load(Path.of("data", "scenario_branches.txt"),
+					scenarioDefinitionCatalog, combatScenarioDefinitionCatalog);
+
 			scenarioCatalog = new ScenarioCatalog();
 
 			ScenarioFactory scenarioFactory = new ScenarioFactory();
@@ -92,7 +99,7 @@ public class Main {
 			TravelRouteLoader travelRouteLoader = new TravelRouteLoader();
 
 			TravelCatalog travelCatalog = travelRouteLoader.load(Path.of("data", "travel_routes.txt"),
-					scenarioDefinitionCatalog);
+					scenarioDefinitionCatalog, combatScenarioDefinitionCatalog);
 
 			travelProgress = new TravelProgress(travelCatalog);
 
@@ -171,7 +178,7 @@ public class Main {
 		bardo.learnSkill(reviveTodos);
 
 		World world = new World(party, currentScenario, scanner, enemyCatalog, enemyDropCatalog, encounterCatalog,
-				scenarioCatalog, travelProgress);
+				scenarioCatalog, scenarioBranchCatalog, travelProgress);
 
 		world.start();
 

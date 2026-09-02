@@ -1,11 +1,16 @@
 package rpg.world;
 
 import java.util.List;
+
 import java.util.Optional;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.Objects;
 
+import rpg.world.travel.TravelRouteDefinition;
+import rpg.ui.ScenarioBranchMenu;
+import rpg.world.branches.ScenarioBranchDefinition;
+import rpg.world.branches.ScenarioBranchCatalog;
 import rpg.battle.BattleCoordinator;
 import rpg.battle.BattleResult;
 import rpg.battle.rewards.BattleRewardService;
@@ -39,6 +44,8 @@ import rpg.world.travel.TravelProgress;
 // Controls navigation and interaction with the game world.
 public class World {
 
+	private final ScenarioBranchMenu scenarioBranchMenu;
+	private final ScenarioCatalog scenarioCatalog;
 	private final PartyStatusMenu partyStatusMenu;
 	private Party party;
 	private final ScenarioActionMenu scenarioActionMenu;
@@ -56,31 +63,66 @@ public class World {
 	private ItemMenu itemMenu;
 	private final TravelMenu travelMenu;
 	private final TravelProgress travelProgress;
+	private final ScenarioBranchCatalog scenarioBranchCatalog;
 
 	public World(Party party, Scenario initialScenario, Scanner scanner, EnemyCatalog enemyCatalog,
 			EnemyDropCatalog enemyDropCatalog, EncounterCatalog encounterCatalog, ScenarioCatalog scenarioCatalog,
-			TravelProgress travelProgress) {
-		this.party = party;
-		this.currentScenario = initialScenario;
-		this.random = new Random();
-		BattleRewardService rewardService = new BattleRewardService(random);
-		BattleRewardScreen rewardScreen = new BattleRewardScreen(scanner);
-		this.battleCoordinator = new BattleCoordinator(party, scanner, enemyDropCatalog, rewardService, rewardScreen,
-				random);
-		this.enemyCatalog = enemyCatalog;
-		this.encounterGenerator = new EncounterGenerator(enemyCatalog, encounterCatalog, random);
-		this.explorationEventGenerator = new ExplorationEventGenerator(random);
+			ScenarioBranchCatalog scenarioBranchCatalog, TravelProgress travelProgress) {
+
+		Objects.requireNonNull(scanner, "Scanner cannot be null.");
+		Objects.requireNonNull(enemyDropCatalog, "Enemy drop catalog cannot be null.");
+		Objects.requireNonNull(encounterCatalog, "Encounter catalog cannot be null.");
+
+		// Core world state and shared data
+		this.party = Objects.requireNonNull(party, "Party cannot be null.");
+
+		this.currentScenario = Objects.requireNonNull(initialScenario, "Initial scenario cannot be null.");
+
+		this.enemyCatalog = Objects.requireNonNull(enemyCatalog, "Enemy catalog cannot be null.");
+
+		this.scenarioCatalog = Objects.requireNonNull(scenarioCatalog, "Scenario catalog cannot be null.");
+
+		this.scenarioBranchCatalog = Objects.requireNonNull(scenarioBranchCatalog,
+				"Scenario branch catalog cannot be null.");
+
 		this.travelProgress = Objects.requireNonNull(travelProgress, "Travel progress cannot be null.");
-		this.travelMenu = new TravelMenu(scanner, scenarioCatalog, this.travelProgress);
+
+		// Shared random generator and gameplay services
+		this.random = new Random();
+
+		BattleRewardService rewardService = new BattleRewardService(random);
+
+		BattleRewardScreen rewardScreen = new BattleRewardScreen(scanner);
+
+		this.battleCoordinator = new BattleCoordinator(this.party, scanner, enemyDropCatalog, rewardService,
+				rewardScreen, random);
+
+		this.encounterGenerator = new EncounterGenerator(this.enemyCatalog, encounterCatalog, random);
+
+		this.explorationEventGenerator = new ExplorationEventGenerator(random);
+
+		// User interface
 		this.epicEncounterMenu = new EpicEncounterMenu(scanner);
 		this.scenarioActionMenu = new ScenarioActionMenu(scanner);
+
+		this.travelMenu = new TravelMenu(scanner, this.travelProgress);
+
+		this.scenarioBranchMenu = new ScenarioBranchMenu(scanner);
+
+		this.itemMenu = new ItemMenu(this.party, scanner);
+
+		this.partyStatusMenu = new PartyStatusMenu(this.party, scanner);
+
+		// Initial exploration state
+		if (this.currentScenario instanceof CombatScenario combatScenario) {
+			this.explorationSession = new ExplorationSession(combatScenario.getExplorationSettings());
+		} else {
+			this.explorationSession = null;
+		}
+
+		// Runtime flags
 		this.running = true;
 		this.shouldDisplayScenarioDescription = true;
-		if (initialScenario instanceof CombatScenario combatScenario) {
-			this.explorationSession = new ExplorationSession(combatScenario.getExplorationSettings());
-		}
-		this.itemMenu = new ItemMenu(party, scanner);
-		this.partyStatusMenu = new PartyStatusMenu(party, scanner);
 		this.scenarioNameAlreadyDisplayed = false;
 	}
 
@@ -144,7 +186,7 @@ public class World {
 
 		if (!(currentScenario instanceof CombatScenario)) {
 			if (travelAvailable) {
-				return List.of(ScenarioAction.INVENTORY, ScenarioAction.VIEW_STATUS, ScenarioAction.TRAVEL);
+				return List.of(ScenarioAction.TRAVEL, ScenarioAction.INVENTORY, ScenarioAction.VIEW_STATUS);
 			}
 
 			return List.of(ScenarioAction.INVENTORY, ScenarioAction.VIEW_STATUS);
@@ -163,7 +205,20 @@ public class World {
 			return List.of(ScenarioAction.FACE_BOSS, ScenarioAction.INVENTORY, ScenarioAction.VIEW_STATUS);
 		}
 
+		if (hasAvailableScenarioBranch()) {
+			return List.of(ScenarioAction.EXPLORE, ScenarioAction.FOLLOW_BRANCH, ScenarioAction.INVENTORY,
+					ScenarioAction.VIEW_STATUS);
+		}
+
 		return List.of(ScenarioAction.EXPLORE, ScenarioAction.INVENTORY, ScenarioAction.VIEW_STATUS);
+	}
+
+	private boolean hasAvailableScenarioBranch() {
+		if (explorationSession == null || explorationSession.isComplete()) {
+			return false;
+		}
+
+		return scenarioBranchCatalog.hasBranchesAt(currentScenario.getId(), explorationSession.getCurrentPosition());
 	}
 
 	private void executeScenarioAction(ScenarioAction action) {
@@ -177,7 +232,30 @@ public class World {
 		case INVENTORY -> itemMenu.open();
 
 		case TRAVEL -> executeTravelMenu();
+
+		case FOLLOW_BRANCH -> executeScenarioBranchMenu();
 		}
+	}
+
+	private void executeScenarioBranchMenu() {
+		if (!hasAvailableScenarioBranch()) {
+			System.out.println("\nNão há outro caminho disponível nesta posição.");
+
+			return;
+		}
+
+		List<ScenarioBranchDefinition> availableBranches = scenarioBranchCatalog.getBranchesAt(currentScenario.getId(),
+				explorationSession.getCurrentPosition());
+
+		Optional<ScenarioBranchDefinition> selectedBranch = scenarioBranchMenu.open(availableBranches);
+
+		if (selectedBranch.isEmpty()) {
+			return;
+		}
+
+		Scenario destination = scenarioCatalog.getById(selectedBranch.get().getDestinationScenarioId());
+
+		changeScenario(destination);
 	}
 
 	private void faceBoss() {
@@ -344,18 +422,35 @@ public class World {
 			return;
 		}
 
-		Optional<Scenario> selectedScenario = travelMenu.open(currentScenario);
+		Optional<TravelRouteDefinition> selectedRoute = travelMenu.open(currentScenario.getId());
 
-		if (selectedScenario.isPresent()) {
-			changeScenario(selectedScenario.get());
+		if (selectedRoute.isEmpty()) {
+			return;
 		}
+
+		TravelRouteDefinition route = selectedRoute.get();
+
+		Scenario destination = scenarioCatalog.getById(route.getDestinationScenarioId());
+
+		if (destination instanceof CombatScenario) {
+			int startingPosition = route.getDestinationExplorationPosition()
+					.orElseThrow(() -> new IllegalStateException(
+							"Travel route to combat scenario " + "has no destination position: " + route.getId()));
+
+			changeScenario(destination, startingPosition);
+
+			return;
+		}
+
+		changeScenario(destination);
 	}
 
-	private void changeScenario(Scenario destination) {
+	private void changeScenario(Scenario destination, int startingPosition) {
 		currentScenario = destination;
 
 		if (destination instanceof CombatScenario combatScenario) {
-			explorationSession = new ExplorationSession(combatScenario.getExplorationSettings());
+			explorationSession = new ExplorationSession(combatScenario.getExplorationSettings(), startingPosition);
+
 		} else {
 			explorationSession = null;
 		}
@@ -363,6 +458,10 @@ public class World {
 		shouldDisplayScenarioDescription = true;
 
 		ConsoleUI.clearScreen();
+	}
+
+	private void changeScenario(Scenario destination) {
+		changeScenario(destination, 1);
 	}
 
 	private void executeBossEncounter(Dungeon dungeon) {

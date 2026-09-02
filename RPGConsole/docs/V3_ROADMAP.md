@@ -123,28 +123,31 @@ The implementation must preserve stable IDs, strict startup validation and separ
 
 ## 4. Fixed exploration branches
 
-* [ ] Define `scenario_branches.txt`.
-* [ ] Give every branch a stable ID.
-* [ ] Store the source scenario ID.
-* [ ] Store the exact exploration position.
-* [ ] Store the destination scenario ID.
-* [ ] Store a player-facing action name.
-* [ ] Store branch flavor text with literal `\n` support.
-* [ ] Create the branch definition.
-* [ ] Create the branch loader.
-* [ ] Create the branch catalog.
-* [ ] Reject branches referencing unknown scenarios.
-* [ ] Reject positions outside the source scenario.
-* [ ] Display the travel action only at a position containing a valid branch.
-* [ ] Hide or disable `[4] Viajar` when no destination is available.
-* [ ] Allow the party to enter the branch destination before exploring past it.
-* [ ] End the current exploration session after entering another scenario.
-* [ ] Mark the destination as discovered.
-* [ ] Invalidate the missed branch after the party advances.
-* [ ] Add the fixed Verdes Ermos branch leading to Setegalhos.
-* [ ] Test entering Setegalhos.
-* [ ] Test ignoring the branch and continuing through Verdes Ermos.
-* [ ] Test returning to the branch in a new exploration session.
+* [x] Define `scenario_branches.txt`.
+* [x] Give every branch a stable ID.
+* [x] Store the source scenario ID.
+* [x] Store the exact exploration position.
+* [x] Store the destination scenario ID.
+* [x] Store a player-facing action name.
+* [x] Store branch flavor text with literal `\n` support.
+* [x] Create the branch definition.
+* [x] Create the branch loader.
+* [x] Create the branch catalog.
+* [x] Reject branches referencing unknown scenarios.
+* [x] Reject positions outside the source scenario.
+* [x] Display `Seguir outro caminho` only at a position containing a valid branch.
+* [x] Hide the branch action when no destination is available.
+* [x] Allow the party to enter the branch destination before exploring past it.
+* [x] End the current exploration session after entering another scenario.
+* [x] Invalidate the missed branch after the party advances.
+* [x] Add the fixed Verdes Ermos branch leading to Setegalhos.
+* [x] Test entering Setegalhos.
+* [x] Test ignoring the branch and continuing through Verdes Ermos.
+* [x] Test returning to the branch in a new exploration session.
+* [x] Store destination exploration positions in external travel routes.
+* [x] Validate destination positions against combat-scenario exploration length.
+* [x] Add the Setegalhos route entering Verdes Ermos after the branch.
+* [x] Test entering Verdes Ermos at position 4.
 
 ## 5. External item data
 
@@ -241,7 +244,7 @@ The implementation must preserve stable IDs, strict startup validation and separ
 
 * [ ] Create runtime world-progression state.
 * [ ] Record discovered scenario IDs.
-* [ ] Mark scenarios as discovered when first entered.
+* [ ] Mark scenarios as discovered when first entered, including destinations reached through exploration branches.
 * [ ] Define city transport data and destination costs.
 * [ ] Assign a fixed transport cost to each destination city.
 * [ ] Keep early-game destinations cheaper than late-game destinations.
@@ -255,6 +258,14 @@ The implementation must preserve stable IDs, strict startup validation and separ
 * [ ] Preserve free adjacent travel to fields and dungeons.
 * [ ] Prepare discovered-scenario state for save data.
 * [ ] Test transport between Bree and another discovered city.
+* [ ] Keep scenario discovery separate from route availability and access requirements.
+* [ ] Create stable world-progress flags for quests, story events and permanent unlocks.
+* [ ] Define reusable access requirements for routes, branches, portals and services.
+* [ ] Evaluate access requirements against party level, inventory, completed quests and world flags.
+* [ ] Support multiple simultaneous requirements for the same access point.
+* [ ] Decide whether unmet requirements hide an action or display it as blocked with a player-facing reason.
+* [ ] Replace blanket route unlocking with explicit progress triggers where required.
+* [ ] Prepare world flags, completed quests and route unlocks for save data.
 
 ## 11. External skills and combat effects
 

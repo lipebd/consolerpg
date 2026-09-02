@@ -200,8 +200,11 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 | `ConsoleUI` | Utilitário de interface | Centraliza operações gerais do console, como limpeza da tela ou pausa para continuação. É reutilizada por telas e fluxos que precisam do mesmo comportamento visual. |
 | `TitleScreen` | Tela | Exibe a apresentação inicial do jogo e controla a entrada necessária para começar. É chamada durante a inicialização antes de `World`. |
 | `GameOverScreen` | Tela | Exibe a derrota definitiva temporária e informações finais da `Party`. É acionada por `World` quando `BattleResult` indica derrota. |
+| `ScenarioCatalog` | Catálogo de execução | Registra os objetos `Scenario` já criados e permite resolvê-los por ID durante o jogo. É usado por `World` para resolver destinos selecionados em rotas e bifurcações. Não guarda definições cruas dos arquivos. |
+| `ScenarioAction` | Enum de interface e fluxo | Define as ações que `World` pode oferecer, como explorar, seguir outro caminho, enfrentar o boss, abrir itens, ver status e viajar. `ScenarioActionMenu` exibe a lista; `World` executa a escolha. |
 | `ScenarioActionMenu` | Menu | Recebe a lista de `ScenarioAction` atualmente permitida, exibe as ações numeradas e devolve a escolha. `World` monta a lista dinâmica de acordo com cenário, exploração, boss e rotas. |
-| `TravelMenu` | Menu | Consulta as rotas desbloqueadas por meio de `TravelProgress`, exibe nomes e descrições das saídas e devolve o cenário de destino resolvido por `ScenarioCatalog`. Não decide quando viajar é permitido. |
+| `ScenarioBranchMenu` | Menu | Recebe as bifurcações disponíveis na posição atual, exibe seus nomes e descrições e devolve a `ScenarioBranchDefinition` escolhida. Não altera o cenário nem o estado da exploração. |
+| `TravelMenu` | Menu | Consulta as rotas desbloqueadas por meio de `TravelProgress`, exibe nomes e descrições das saídas e devolve a `TravelRouteDefinition` escolhida. Não resolve o destino nem aplica a posição de chegada; essas consequências pertencem a `World`. |
 | `ItemMenu` | Menu | Exibe o inventário compartilhado, permite escolher e usar itens e oferece retorno explícito mesmo quando o inventário está vazio. Recebe `Party` e usa menus de alvo quando necessário. |
 | `PartyStatusMenu` | Menu de consulta | Exibe uma visão resumida dos membros da `Party` e do ouro compartilhado. Permite selecionar um integrante para abrir `CharacterStatusMenu`. |
 | `CharacterStatusMenu` | Tela de consulta | Mostra os detalhes de um `PlayableCharacter`: recursos, atributos, nível, EXP e habilidades. Recebe o personagem selecionado por `PartyStatusMenu`. |
@@ -329,12 +332,35 @@ todos os catálogos de definição
 
 ---
 
+## Pacote `rpg.world.branches`
+
+| Classe | Categoria | Finalidade e relações principais |
+|---|---|---|
+| `ScenarioBranchLoader` | Carregamento de dados | Lê `scenario_branches.txt`, interpreta ID, cenário de origem, posição, destino, nome e descrição, converte quebras literais `\n` e valida as referências. Exige uma origem explorável, rejeita posições fora da exploração e impede bifurcações na posição final de masmorras. |
+| `ScenarioBranchDefinition` | Definição imutável | Representa uma saída disponível numa posição específica: ID estável, cenário de origem, posição, cenário de destino, nome apresentado ao jogador e texto descritivo. O destino pode ser cidade, campo ou masmorra. |
+| `ScenarioBranchCatalog` | Catálogo | Registra bifurcações por ID e por combinação de cenário de origem e posição. Permite múltiplos destinos na mesma posição e rejeita IDs ou destinos duplicados no mesmo ponto. |
+
+### Fluxo da bifurcação
+
+```text
+scenario_branches.txt
+    -> ScenarioBranchLoader
+    -> ScenarioBranchDefinition
+    -> ScenarioBranchCatalog
+    -> World
+    -> ScenarioBranchMenu
+    -> World altera o cenário
+```
+`ScenarioBranchMenu` apenas devolve a definição escolhida. `World` resolve o cenário de destino, encerra a sessão anterior e cria uma nova sessão quando necessário.
+
+---
+
 ## Pacote `rpg.world.travel`
 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
-| `TravelRouteLoader` | Carregamento de dados | Lê `travel_routes.txt`, interpreta ID, origem, destino, estado inicial, nome e descrição, converte quebras literais `\n`, valida as referências em `ScenarioDefinitionCatalog` e registra `TravelRouteDefinition`. |
-| `TravelRouteDefinition` | Definição imutável | Representa uma rota direcionada carregada do arquivo: ID, cenário de origem, cenário de destino, desbloqueio inicial e textos apresentados ao jogador. Não guarda o desbloqueio mutável da campanha. |
+| `TravelRouteLoader` | Carregamento de dados | Lê `travel_routes.txt`, interpreta ID, origem, destino, estado inicial, nome, descrição e posição de chegada, converte quebras literais `\n` e valida as referências. Exige posição vazia para cidades e uma posição válida para campos e masmorras. |
+| `TravelRouteDefinition` | Definição imutável | Representa uma rota direcionada carregada do arquivo: ID, origem, destino, desbloqueio inicial, textos e posição opcional de chegada na exploração. Não guarda o desbloqueio mutável da campanha. |
 | `TravelCatalog` | Catálogo | Registra as definições de rota, rejeita IDs duplicados e fornece as rotas que partem de um cenário. É consultado por `TravelProgress` e pelo fluxo de viagem. Cada direção precisa de uma definição própria. |
 | `TravelProgress` | Estado mutável | Mantém quais rotas estão desbloqueadas na execução atual. Inicializa o estado usando `initiallyUnlocked`, filtra as rotas disponíveis e permite que `World` consulte ou libere saídas conforme o progresso. |
 
@@ -344,8 +370,8 @@ todos os catálogos de definição
 TravelRouteDefinition = dados fixos da rota
 TravelCatalog         = todas as rotas cadastradas
 TravelProgress        = quais rotas o jogador desbloqueou
-TravelMenu            = quais rotas disponíveis o jogador escolhe
-World                 = quando a ação de viajar pode aparecer
+TravelMenu            = qual definição de rota disponível o jogador escolhe
+World                 = resolve o destino e aplica sua posição de chegada
 ```
 
 ---

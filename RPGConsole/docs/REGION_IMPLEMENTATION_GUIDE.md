@@ -179,37 +179,80 @@ Regras importantes:
 - Um líder garantido pode ocupar sozinho a penúltima posição quando essa for a intenção do cenário.
 - Chefes e épicos configurados em `dungeons.txt` não devem ser adicionados como encontros comuns.
 
-## 8. Crie as rotas de viagem
+## 8. Crie as rotas e bifurcações
+
+### Rotas externas
 
 Arquivo: `data/travel_routes.txt`
 
 ```text
-# id;sourceScenarioId;destinationScenarioId;initiallyUnlocked;displayName;description
+# id;sourceScenarioId;destinationScenarioId;initiallyUnlocked;displayName;description;destinationExplorationPosition
+```
+
+Exemplos:
+
+```text
+praia_sanguemar_ruinas_sanguemar;praia_sanguemar;ruinas_sanguemar;false;Descer às Ruínas;As condições da maré revelam uma passagem para as Ruínas de Sanguemar.;1
+ruinas_sanguemar_praia_sanguemar;ruinas_sanguemar;praia_sanguemar;true;Retornar à Praia;Você sobe em direção à faixa de areia da Praia de Sanguemar.;1
+praia_sanguemar_entrelugar;praia_sanguemar;entrelugar;true;Retornar a Entrelugar;Você deixa a praia e retorna à cidade de Entrelugar.;
+```
+
+Regras importantes:
+
+- O ID da rota deve ser único e estável.
+- Origem e destino precisam existir em `scenarios.txt`.
+- As rotas são direcionais. Uma viagem de ida não cria automaticamente a viagem de volta.
+- Crie outra linha quando o caminho puder ser percorrido nos dois sentidos.
+- Use `true` quando a rota estiver disponível desde o início.
+- Use `false` quando ela depender do progresso do jogo.
+- A última coluna deve ficar vazia quando o destino for uma cidade.
+- Quando o destino for um campo ou uma masmorra, informe uma posição válida entre `1` e o tamanho da exploração.
+- Use a posição `1` para entradas convencionais.
+- Uma rota inversa pode entrar depois de uma bifurcação para impedir que o grupo repita imediatamente a mesma escolha.
+- Rotas que partem de campos e masmorras continuam sujeitas às ações liberadas pelo estado da exploração.
+- Quebras de linha nos textos devem ser representadas por `\n`.
+
+Exemplo de retorno após uma bifurcação:
+
+```text
+setegalhos_estrada_leste;setegalhos;verdes_ermos;true;Estrada Leste;A estrada leste deixa o povoado para trás e retorna aos Verdes Ermos.;4
+```
+
+Não cadastre uma rota para uma região que ainda não exista em `scenarios.txt`. O carregamento será interrompido com uma mensagem semelhante a:
+
+```text
+Scenario definition not found: id_da_regiao
+```
+
+### Bifurcações durante a exploração
+
+Arquivo: `data/scenario_branches.txt`
+
+```text
+# id;sourceScenarioId;position;destinationScenarioId;displayName;description
 ```
 
 Exemplo:
 
 ```text
-praia_sanguemar_ruinas_sanguemar;praia_sanguemar;ruinas_sanguemar;false;Descer às Ruínas;As condições da maré revelam uma passagem para as Ruínas de Sanguemar.
-ruinas_sanguemar_praia_sanguemar;ruinas_sanguemar;praia_sanguemar;true;Retornar à Praia;Você sobe em direção à faixa de areia da Praia de Sanguemar.
+verdes_ermos_bifurcacao_setegalhos;verdes_ermos;3;setegalhos;Seguir para Setegalhos;Você encontra uma bifurcação entre os campos.\nUma estrada parcialmente escondida pela vegetação conduz ao Povoado de Setegalhos.
 ```
 
 Regras importantes:
 
-- O ID da rota também deve ser único e estável.
-- Origem e destino precisam existir em `scenarios.txt`.
-- As rotas são direcionais. Uma viagem de ida não cria automaticamente a viagem de volta.
-- Crie outra linha quando o caminho puder ser percorrido nos dois sentidos.
-- Use `true` quando a rota estiver disponível desde o início.
-- Use `false` quando ela depender do desbloqueio realizado pelo progresso do jogo.
-- Rotas que partem de campos e masmorras continuam sujeitas às ações liberadas pelo estado da exploração.
-- Bifurcações no meio da exploração ainda exigem suporte próprio. Não tente representá-las apenas com uma rota comum enquanto essa mecânica não estiver implementada.
-
-Não cadastre antecipadamente uma rota para uma região que ainda não exista em `scenarios.txt`. O carregamento será interrompido com uma mensagem semelhante a:
-
-```text
-Scenario definition not found: id_da_regiao
-```
+- O ID da bifurcação deve ser único e estável.
+- A origem deve ser um campo ou uma masmorra.
+- A posição precisa existir dentro da exploração do cenário de origem.
+- A última posição de uma masmorra é reservada para o boss e não pode conter uma bifurcação.
+- O destino pode ser uma cidade, um campo ou uma masmorra.
+- Mais de um destino pode ser oferecido na mesma posição.
+- A ação `Seguir outro caminho` aparece somente na posição exata da bifurcação.
+- Avançar sem escolher a bifurcação remove a opção durante o restante daquela sessão.
+- A bifurcação reaparece quando uma nova sessão de exploração começa.
+- Entrar no destino encerra a sessão de exploração anterior.
+- O destino começa normalmente na posição `1`.
+- Quando o caminho inverso precisar retornar a outra posição, configure essa chegada em `travel_routes.txt`.
+- Quebras de linha nos textos devem ser representadas por `\n`.
 
 ## 9. Configure drops, se necessário
 

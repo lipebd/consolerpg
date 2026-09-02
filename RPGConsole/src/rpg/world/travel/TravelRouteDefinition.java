@@ -1,8 +1,11 @@
 package rpg.world.travel;
 
+import java.util.OptionalInt;
+
 // Stores the immutable data of a travel route.
 public final class TravelRouteDefinition {
 
+	private final OptionalInt destinationExplorationPosition;
 	private final String id;
 	private final String sourceScenarioId;
 	private final String destinationScenarioId;
@@ -12,6 +15,19 @@ public final class TravelRouteDefinition {
 
 	public TravelRouteDefinition(String id, String sourceScenarioId, String destinationScenarioId,
 			boolean initiallyUnlocked, String displayName, String description) {
+		this(id, sourceScenarioId, destinationScenarioId, initiallyUnlocked, displayName, description,
+				OptionalInt.empty());
+	}
+
+	public TravelRouteDefinition(String id, String sourceScenarioId, String destinationScenarioId,
+			boolean initiallyUnlocked, String displayName, String description, int destinationExplorationPosition) {
+		this(id, sourceScenarioId, destinationScenarioId, initiallyUnlocked, displayName, description,
+				OptionalInt.of(destinationExplorationPosition));
+	}
+
+	private TravelRouteDefinition(String id, String sourceScenarioId, String destinationScenarioId,
+			boolean initiallyUnlocked, String displayName, String description,
+			OptionalInt destinationExplorationPosition) {
 		if (id == null || id.isBlank()) {
 			throw new IllegalArgumentException("Travel route ID cannot be empty.");
 		}
@@ -36,16 +52,25 @@ public final class TravelRouteDefinition {
 			throw new IllegalArgumentException("Travel route description cannot be empty.");
 		}
 
+		if (destinationExplorationPosition.isPresent() && destinationExplorationPosition.getAsInt() < 1) {
+			throw new IllegalArgumentException("Travel destination exploration position " + "must be greater than 0.");
+		}
+
 		this.id = id;
 		this.sourceScenarioId = sourceScenarioId;
 		this.destinationScenarioId = destinationScenarioId;
 		this.initiallyUnlocked = initiallyUnlocked;
 		this.displayName = displayName;
 		this.description = description;
+		this.destinationExplorationPosition = destinationExplorationPosition;
 	}
 
 	public String getId() {
 		return id;
+	}
+
+	public OptionalInt getDestinationExplorationPosition() {
+		return destinationExplorationPosition;
 	}
 
 	public String getSourceScenarioId() {
