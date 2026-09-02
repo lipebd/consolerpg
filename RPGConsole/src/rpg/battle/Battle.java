@@ -21,6 +21,8 @@ import rpg.ui.ItemMenu;
 // Controls a battle between a party and an enemy group.
 public class Battle {
 
+	private static final int MINIMUM_STATUS_NAME_WIDTH = 8;
+
 	private BattleEscapeService escapeService;
 	private BattleTurnOrderGenerator turnOrderGenerator;
 	private BattleTurnOrderScreen turnOrderScreen;
@@ -52,45 +54,38 @@ public class Battle {
 	}
 
 	public BattleResult start() {
-	    currentRoundNumber = 1;
+		currentRoundNumber = 1;
 
-	    displayBattleIntroduction();
+		displayBattleIntroduction();
 
-	    while (
-	            !party.isDefeated()
-	            && !enemyGroup.isDefeated()
-	            && !partyFled
-	    ) {
-	        System.out.println(
-	                "\n--- Rodada "
-	                + currentRoundNumber + " ---"
-	        );
+		while (!party.isDefeated() && !enemyGroup.isDefeated() && !partyFled) {
+			System.out.println("\n[BATALHA — RODADA " + currentRoundNumber + "]");
 
-	        displayPartyStatus();
-	        displayEnemyStatuses();
+			int statusNameColumnWidth = calculateStatusNameColumnWidth();
+			int hpValueColumnWidth = calculateHpValueColumnWidth();
+			int mpValueColumnWidth = calculateMpValueColumnWidth();
+			int spValueColumnWidth = calculateSpValueColumnWidth();
 
-	        List<BattleTurnEntry> turnEntries =
-	                turnOrderGenerator.generate(
-	                        party,
-	                        enemyGroup
-	                );
+			displayEnemyStatuses(statusNameColumnWidth, hpValueColumnWidth);
 
-	        currentTurnOrder =
-	                new BattleTurnOrder(turnEntries);
+			displayPartyStatus(statusNameColumnWidth, hpValueColumnWidth, mpValueColumnWidth, spValueColumnWidth);
 
-	        executeCurrentRound();
+			List<BattleTurnEntry> turnEntries = turnOrderGenerator.generate(party, enemyGroup);
 
-	        currentRoundNumber++;
-	    }
+			currentTurnOrder = new BattleTurnOrder(turnEntries);
 
-	    BattleResult result =
-	            determineBattleResult();
+			executeCurrentRound();
 
-	    displayBattleResult(result);
+			currentRoundNumber++;
+		}
 
-	    return result;
+		BattleResult result = determineBattleResult();
+
+		displayBattleResult(result);
+
+		return result;
 	}
-	
+
 	// sobrecarga de métodos
 	private void displayDamage(GameCharacter target, int damage) {
 		displayDamage(target, target.getName(), damage);
@@ -101,36 +96,82 @@ public class Battle {
 				+ target.getMaxHp() + ".");
 	}
 
-	private void displayPartyStatus() {
-		for (PlayableCharacter member : party.getMembers()) {
-			System.out.print("[" + member.getName().toUpperCase() + "]");
+	private int calculateStatusNameColumnWidth() {
+		int longestPartyName = party.getMembers().stream().mapToInt(member -> member.getName().length()).max()
+				.orElse(0);
 
-			if (!member.isAlive()) {
-				System.out.println(" | DERROTADO");
-				continue;
-			}
+		int longestEnemyName = enemyGroup.getSlots().stream().mapToInt(slot -> slot.getDisplayName().length()).max()
+				.orElse(0);
 
-			System.out.println(
-					" | HP: " + member.getCurrentHp() + "/" + member.getMaxHp() + " | MP: " + member.getCurrentMp()
-							+ "/" + member.getMaxMp() + " | SP: " + member.getCurrentSp() + "/" + member.getMaxSp());
+		return Math.max(MINIMUM_STATUS_NAME_WIDTH, Math.max(longestPartyName, longestEnemyName));
+	}
+
+	private String formatResourceValue(int currentValue, int maximumValue) {
+		return currentValue + "/" + maximumValue;
+	}
+
+	private int calculateHpValueColumnWidth() {
+		int longestPartyValue = party.getMembers().stream()
+				.mapToInt(member -> formatResourceValue(member.getCurrentHp(), member.getMaxHp()).length()).max()
+				.orElse(0);
+
+		int longestEnemyValue = enemyGroup.getSlots().stream().map(EnemyBattleSlot::getEnemy)
+				.mapToInt(enemy -> formatResourceValue(enemy.getCurrentHp(), enemy.getMaxHp()).length()).max()
+				.orElse(0);
+
+		return Math.max(longestPartyValue, longestEnemyValue);
+	}
+
+	private int calculateMpValueColumnWidth() {
+		return party.getMembers().stream()
+				.mapToInt(member -> formatResourceValue(member.getCurrentMp(), member.getMaxMp()).length()).max()
+				.orElse(0);
+	}
+
+	private int calculateSpValueColumnWidth() {
+		return party.getMembers().stream()
+				.mapToInt(member -> formatResourceValue(member.getCurrentSp(), member.getMaxSp()).length()).max()
+				.orElse(0);
+	}
+
+	private void displayEnemyStatuses(int nameColumnWidth, int hpValueColumnWidth) {
+		System.out.println("\n[INIMIGOS]");
+
+		String rowFormat = "%-4s %-" + nameColumnWidth + "s HP %" + hpValueColumnWidth + "s%s%n";
+
+		List<EnemyBattleSlot> slots = enemyGroup.getSlots();
+
+		for (int index = 0; index < slots.size(); index++) {
+			EnemyBattleSlot slot = slots.get(index);
+			Enemy enemy = slot.getEnemy();
+
+			String slotLabel = "[E" + (index + 1) + "]";
+			String condition = slot.isAlive() ? "" : "  DERROTADO";
+
+			System.out.printf(rowFormat, slotLabel, slot.getDisplayName(),
+					formatResourceValue(enemy.getCurrentHp(), enemy.getMaxHp()), condition);
 		}
 	}
 
-	private void displayEnemyStatuses() {
-		for (EnemyBattleSlot slot : enemyGroup.getSlots()) {
+	private void displayPartyStatus(int nameColumnWidth, int hpValueColumnWidth, int mpValueColumnWidth,
+			int spValueColumnWidth) {
+		System.out.println("\n[GRUPO]");
 
-			String displayName = slot.getDisplayName().toUpperCase();
+		String rowFormat = "%-4s %-" + nameColumnWidth + "s HP %" + hpValueColumnWidth + "s  MP %" + mpValueColumnWidth
+				+ "s  SP %" + spValueColumnWidth + "s%s%n";
 
-			if (!slot.isAlive()) {
-				System.out.println("[" + displayName + "]" + " | DERROTADO");
+		List<PlayableCharacter> members = party.getMembers();
 
-				continue;
-			}
+		for (int index = 0; index < members.size(); index++) {
+			PlayableCharacter member = members.get(index);
 
-			Enemy slotEnemy = slot.getEnemy();
+			String slotLabel = "[A" + (index + 1) + "]";
+			String condition = member.isAlive() ? "" : "  DERROTADO";
 
-			System.out.println(
-					"[" + displayName + "]" + " | HP: " + slotEnemy.getCurrentHp() + "/" + slotEnemy.getMaxHp());
+			System.out.printf(rowFormat, slotLabel, member.getName(),
+					formatResourceValue(member.getCurrentHp(), member.getMaxHp()),
+					formatResourceValue(member.getCurrentMp(), member.getMaxMp()),
+					formatResourceValue(member.getCurrentSp(), member.getMaxSp()), condition);
 		}
 	}
 
@@ -183,29 +224,18 @@ public class Battle {
 		System.out.println("DEF: " + analyzedEnemy.getDefense());
 	}
 
-	private void displayCurrentTurn(
-	        BattleTurnEntry actingEntry
-	) {
-	    System.out.println(
-	            "\nVez de "
-	            + actingEntry.getDisplayName() + "!"
-	    );
+	private void displayCurrentTurn(BattleTurnEntry actingEntry) {
+		System.out.println("\nVez de " + actingEntry.getDisplayName() + "!");
 
-	    Optional<BattleTurnEntry> nextEntry =
-	            currentTurnOrder.getNextLivingEntry();
+		Optional<BattleTurnEntry> nextEntry = currentTurnOrder.getNextLivingEntry();
 
-	    if (nextEntry.isPresent()) {
-	        System.out.println(
-	                "A seguir: "
-	                + nextEntry.get().getDisplayName()
-	        );
-	    } else {
-	        System.out.println(
-	                "A seguir: próxima rodada"
-	        );
-	    }
+		if (nextEntry.isPresent()) {
+			System.out.println("A seguir: " + nextEntry.get().getDisplayName());
+		} else {
+			System.out.println("A seguir: próxima rodada");
+		}
 	}
-	
+
 	private void displayBattleIntroduction() {
 		System.out.println("\nO grupo foi atacado!");
 
@@ -244,40 +274,28 @@ public class Battle {
 				+ "/" + target.getMaxHp() + ".");
 	}
 
-	private void executeEnemyTurn(
-        BattleTurnEntry actingEntry
-) {
-    Enemy attackingEnemy =
-            (Enemy) actingEntry.getCharacter();
+	private void executeEnemyTurn(BattleTurnEntry actingEntry) {
+		Enemy attackingEnemy = (Enemy) actingEntry.getCharacter();
 
-    PlayableCharacter target =
-            selectEnemyTarget();
+		PlayableCharacter target = selectEnemyTarget();
 
-    int damage =
-            attackingEnemy.attack(target);
+		int damage = attackingEnemy.attack(target);
 
-    System.out.println(
-            "\n" + actingEntry.getDisplayName()
-            + " atacou " + target.getName() + "!"
-    );
+		System.out.println("\n" + actingEntry.getDisplayName() + " atacou " + target.getName() + "!");
 
-    displayDamage(target, damage);
+		displayDamage(target, damage);
 
-    if (!target.isAlive()) {
-        lastDefeatedCharacter = target;
-    }
-}
-	
+		if (!target.isAlive()) {
+			lastDefeatedCharacter = target;
+		}
+	}
+
 	private void executeCharacterTurn(PlayableCharacter actingCharacter) {
 		boolean validAction = false;
 
 		while (!validAction) {
-			System.out.println(
-			        "\n[1] Atacar | [2] Defender "
-			        + "| [3] Especial | [4] Analisar "
-			        + "| [5] Itens | [6] Rodada "
-			        + "| [7] Fugir"
-			);
+			System.out.println("\n[1] Atacar | [2] Defender " + "| [3] Especial | [4] Analisar "
+					+ "| [5] Itens | [6] Rodada " + "| [7] Fugir");
 			System.out.print("> ");
 
 			String choice = scanner.nextLine();
@@ -298,9 +316,10 @@ public class Battle {
 			case "5" -> validAction = itemMenu.open(actingCharacter);
 
 			case "6" -> turnOrderScreen.show(currentTurnOrder, currentRoundNumber);
-			
+
 			case "7" -> {
-				executeEscapeAttempt(actingCharacter); validAction = true;
+				executeEscapeAttempt(actingCharacter);
+				validAction = true;
 			}
 
 			default -> System.out.println("Opção inválida.");
@@ -398,59 +417,39 @@ public class Battle {
 		return true;
 	}
 
-	private void executeTurn(
-	        BattleTurnEntry actingEntry
-	) {
-	    switch (actingEntry.getSide()) {
-	        case PARTY -> {
-	            PlayableCharacter actingCharacter =
-	                    (PlayableCharacter)
-	                    actingEntry.getCharacter();
+	private void executeTurn(BattleTurnEntry actingEntry) {
+		switch (actingEntry.getSide()) {
+		case PARTY -> {
+			PlayableCharacter actingCharacter = (PlayableCharacter) actingEntry.getCharacter();
 
-	            executeCharacterTurn(actingCharacter);
-	        }
+			executeCharacterTurn(actingCharacter);
+		}
 
-	        case ENEMY ->
-	            executeEnemyTurn(actingEntry);
-	    }
+		case ENEMY -> executeEnemyTurn(actingEntry);
+		}
 	}
-	
-	private void executeEscapeAttempt(
-	        PlayableCharacter actingCharacter
-	) {
-	    EscapeAttemptResult result =
-	            escapeService.attemptEscape(
-	                    actingCharacter,
-	                    enemyGroup
-	            );
 
-	    switch (result) {
-	        case LUCK_SUCCESS -> {
-	            System.out.println(
-	                    "\nA sorte sorriu para "
-	                    + actingCharacter.getName() + "!"
-	            );
+	private void executeEscapeAttempt(PlayableCharacter actingCharacter) {
+		EscapeAttemptResult result = escapeService.attemptEscape(actingCharacter, enemyGroup);
 
-	            completeEscape(actingCharacter);
-	        }
+		switch (result) {
+		case LUCK_SUCCESS -> {
+			System.out.println("\nA sorte sorriu para " + actingCharacter.getName() + "!");
 
-	        case ATTRIBUTE_SUCCESS -> {
-	            System.out.println(
-	                    "\n" + actingCharacter.getName()
-	                    + " encontrou uma abertura para fugir!"
-	            );
+			completeEscape(actingCharacter);
+		}
 
-	            completeEscape(actingCharacter);
-	        }
+		case ATTRIBUTE_SUCCESS -> {
+			System.out.println("\n" + actingCharacter.getName() + " encontrou uma abertura para fugir!");
 
-	        case FAILURE -> System.out.println(
-	                "\n" + actingCharacter.getName()
-	                + " tentou fugir, mas os inimigos "
-	                + "bloquearam o caminho!"
-	        );
-	    }
+			completeEscape(actingCharacter);
+		}
+
+		case FAILURE -> System.out.println(
+				"\n" + actingCharacter.getName() + " tentou fugir, mas os inimigos " + "bloquearam o caminho!");
+		}
 	}
-	
+
 	private void executeEnemyAnalysis() {
 		Optional<EnemyBattleSlot> selectedSlot = enemyTargetMenu.selectTarget(enemyGroup);
 
@@ -462,29 +461,22 @@ public class Battle {
 	}
 
 	private void executeCurrentRound() {
-	    while (
-	            !currentTurnOrder.isComplete()
-	            && !party.isDefeated()
-	            && !enemyGroup.isDefeated()
-	            && !partyFled
-	    ) {
-	        Optional<BattleTurnEntry> currentEntry =
-	                currentTurnOrder.getCurrentEntry();
+		while (!currentTurnOrder.isComplete() && !party.isDefeated() && !enemyGroup.isDefeated() && !partyFled) {
+			Optional<BattleTurnEntry> currentEntry = currentTurnOrder.getCurrentEntry();
 
-	        if (currentEntry.isEmpty()) {
-	            return;
-	        }
+			if (currentEntry.isEmpty()) {
+				return;
+			}
 
-	        BattleTurnEntry actingEntry =
-	                currentEntry.get();
+			BattleTurnEntry actingEntry = currentEntry.get();
 
-	        displayCurrentTurn(actingEntry);
-	        executeTurn(actingEntry);
+			displayCurrentTurn(actingEntry);
+			executeTurn(actingEntry);
 
-	        currentTurnOrder.advance();
-	    }
+			currentTurnOrder.advance();
+		}
 	}
-	
+
 	private boolean executeSelectedSkill(PlayableCharacter actingCharacter, Skill skill) {
 		if (skill.getRecoveryType() != RecoveryType.NONE) {
 			return executeRecoverySkill(actingCharacter, skill);
@@ -662,13 +654,11 @@ public class Battle {
 		}
 	}
 
-	private void completeEscape(
-	        PlayableCharacter actingCharacter
-	) {
-	    fleeingCharacter = actingCharacter;
-	    partyFled = true;
+	private void completeEscape(PlayableCharacter actingCharacter) {
+		fleeingCharacter = actingCharacter;
+		partyFled = true;
 	}
-	
+
 	private String getSkillTypeDisplayName(Skill skill) {
 		if (skill.getRecoveryType() != RecoveryType.NONE) {
 			return skill.getRecoveryType().getDisplayName();
