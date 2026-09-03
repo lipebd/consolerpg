@@ -262,18 +262,50 @@ The implementation must preserve stable IDs, strict startup validation and separ
 
 ## 8. City structure and Bree services
 
-* [ ] Create a dedicated city menu.
-* [ ] Add city locations.
-* [ ] Separate city locations from city exits.
-* [ ] Add custom city exits and gates.
-* [ ] Add flavor text for each exit.
-* [ ] Implement Bree's initial locations.
-* [ ] Implement the Bree INN.
-* [ ] Restore surviving and defeated party members through the INN flow.
-* [ ] Define the INN price rules.
-* [ ] Prevent payment when the party cannot afford the service.
-* [ ] Preserve free adjacent travel through Bree's exits.
-* [ ] Prepare city services for additional cities.
+* [ ] Rename `ScenarioActionMenu` to `CombatScenarioMenu`.
+* [ ] Rename `ScenarioAction` to `CombatScenarioAction`.
+* [ ] Keep the renamed combat-scenario menu exclusive to fields and dungeons.
+* [ ] Create a dedicated `CityMenu`.
+* [ ] Provide separate city actions for visiting a location and leaving through an adjacent exit.
+* [ ] Keep inventory and party status accessible from the city menu.
+* [ ] Keep continuous numeric selection across city-menu action groups.
+* [ ] Omit unavailable city actions instead of displaying non-functional placeholders.
+* [ ] Keep the future city fast-travel action absent until city transport is implemented.
+* [ ] Add a dedicated menu for selecting functional city locations.
+* [ ] Display location names in the selection menu and details only after entering a location.
+* [ ] Keep unimplemented shops, taverns and other services out of the city-location menu.
+* [ ] Treat city locations as a navigation concept instead of creating a generic service hierarchy.
+* [ ] Define `inns.txt`.
+* [ ] Store a stable INN ID.
+* [ ] Associate each INN with a city scenario ID.
+* [ ] Store each INN's name, description and fixed party price.
+* [ ] Support literal `\n` in INN descriptions.
+* [ ] Create immutable INN definitions.
+* [ ] Create the INN loader and catalog.
+* [ ] Validate referenced scenario IDs and require the `CITY` scenario type.
+* [ ] Reject empty IDs, names and descriptions.
+* [ ] Reject invalid prices and duplicate INN IDs.
+* [ ] Allow at most one INN definition per city.
+* [ ] Configure Bree's INN with a provisional price of 25 gold.
+* [ ] Keep INN prices externally configurable for future balancing.
+* [ ] Keep the INN accessible when the party cannot afford a stay.
+* [ ] Prevent resting when every party member is already fully restored.
+* [ ] Prevent resting when the party cannot afford the configured price.
+* [ ] Request confirmation before charging the party.
+* [ ] Preserve party gold when resting is unnecessary, unaffordable or cancelled.
+* [ ] Deduct gold only after every requirement and confirmation succeeds.
+* [ ] Revive defeated party members before restoring their resources.
+* [ ] Fully restore HP, MP and SP for every party member.
+* [ ] Preserve the current behavior of `GameCharacter.restoreAllResources()` outside the INN.
+* [ ] Display immersive messages for unnecessary, unaffordable and successful stays.
+* [ ] Keep the player inside the INN after resting until an explicit back command.
+* [ ] Reuse unlocked `TravelRouteDefinition` entries as city exits.
+* [ ] Use route display names for gates, roads, portals and other creative exit labels.
+* [ ] Preserve each route description as the exit's flavor and destination text.
+* [ ] Keep adjacent travel through city exits free.
+* [ ] Keep city exits separate from future paid city transport.
+* [ ] Preserve iterative navigation across city, location, INN and exit menus.
+* [ ] Test city navigation, INN loading, payment, restoration and free adjacent exits.
 
 ## 9. Shops and merchants
 
@@ -299,6 +331,7 @@ The implementation must preserve stable IDs, strict startup validation and separ
 
 ## 10. Scenario discovery and city transport
 
+* [ ] Add a separate city fast-travel action only when paid city transport is implemented.
 * [ ] Create runtime world-progression state.
 * [ ] Record discovered scenario IDs.
 * [ ] Mark scenarios as discovered when first entered, including destinations reached through exploration branches.
