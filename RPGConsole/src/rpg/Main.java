@@ -26,6 +26,7 @@ import rpg.skills.SkillTargetType;
 import rpg.ui.ConsoleUI;
 import rpg.ui.TitleScreen;
 import rpg.world.World;
+import rpg.world.WorldProgress;
 import rpg.world.branches.ScenarioBranchCatalog;
 import rpg.world.branches.ScenarioBranchLoader;
 import rpg.world.encounters.EncounterCatalog;
@@ -65,7 +66,7 @@ public class Main {
 		ScenarioBranchCatalog scenarioBranchCatalog;
 		Scenario currentScenario;
 		TravelProgress travelProgress;
-
+		WorldProgress worldProgress;
 		Scanner scanner = new Scanner(System.in);
 
 		try {
@@ -112,6 +113,7 @@ public class Main {
 				scenarioCatalog.register(scenario);
 			}
 			currentScenario = scenarioCatalog.getById("bree");
+			worldProgress = new WorldProgress(scenarioCatalog);
 			TravelRouteLoader travelRouteLoader = new TravelRouteLoader();
 			TravelCatalog travelCatalog = travelRouteLoader.load(Path.of("data", "travel_routes.txt"),
 					scenarioDefinitionCatalog, combatScenarioDefinitionCatalog);
@@ -201,6 +203,7 @@ public class Main {
 				encounterCatalog,
 				explorationRewardCatalog,
 				scenarioCatalog,
+				worldProgress,
 				innCatalog,
 				scenarioBranchCatalog,
 				travelProgress

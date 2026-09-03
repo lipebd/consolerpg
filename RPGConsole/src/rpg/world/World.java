@@ -63,6 +63,9 @@ public class World {
 	private final ItemCatalog itemCatalog;
 	private final ScenarioBranchMenu scenarioBranchMenu;
 	private final ScenarioCatalog scenarioCatalog;
+	private final ScenarioBranchCatalog scenarioBranchCatalog;
+	private final WorldProgress worldProgress;
+	private final TravelProgress travelProgress;
 	private final PartyStatusMenu partyStatusMenu;
 	private Party party;
 	private final CombatScenarioMenu combatScenarioMenu;
@@ -79,8 +82,8 @@ public class World {
 	private boolean scenarioNameAlreadyDisplayed;
 	private InventoryMenu inventoryMenu;
 	private final RouteMenu routeMenu;
-	private final TravelProgress travelProgress;
-	private final ScenarioBranchCatalog scenarioBranchCatalog;
+
+
 
 	public World(
 			Party party,
@@ -92,6 +95,7 @@ public class World {
 			EncounterCatalog encounterCatalog,
 			ExplorationRewardCatalog explorationRewardCatalog,
 			ScenarioCatalog scenarioCatalog,
+			WorldProgress worldProgress,
 			InnCatalog innCatalog,
 			ScenarioBranchCatalog scenarioBranchCatalog,
 			TravelProgress travelProgress
@@ -106,10 +110,8 @@ public class World {
 		this.currentScenario = Objects.requireNonNull(initialScenario, "Initial scenario cannot be null.");
 		this.enemyCatalog = Objects.requireNonNull(enemyCatalog, "Enemy catalog cannot be null.");
 		this.scenarioCatalog = Objects.requireNonNull(scenarioCatalog, "Scenario catalog cannot be null.");
-		this.scenarioBranchCatalog = Objects.requireNonNull(
-				scenarioBranchCatalog,
-				"Scenario branch catalog cannot be null."
-		);
+		this.worldProgress = Objects.requireNonNull(worldProgress, "World progress cannot be null.");
+		this.scenarioBranchCatalog = Objects.requireNonNull(scenarioBranchCatalog,"Scenario branch catalog cannot be null.");
 		this.travelProgress = Objects.requireNonNull(travelProgress, "Travel progress cannot be null.");
 		this.itemCatalog = Objects.requireNonNull(itemCatalog, "Item catalog cannot be null.");
 		this.innCatalog = Objects.requireNonNull(innCatalog, "Inn catalog cannot be null.");
@@ -567,6 +569,8 @@ public class World {
 
 	private void changeScenario(Scenario destination, int startingPosition) {
 		currentScenario = destination;
+		
+		worldProgress.discover(destination.getId());
 
 		if (destination instanceof CombatScenario combatScenario) {
 			explorationSession = new ExplorationSession(combatScenario.getExplorationSettings(), startingPosition);
