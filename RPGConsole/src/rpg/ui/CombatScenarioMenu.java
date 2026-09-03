@@ -5,25 +5,25 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Scanner;
 
-import rpg.world.scenarios.ScenarioAction;
+import rpg.world.scenarios.CombatScenarioAction;
 
-// Displays the available actions for the current scenario.
-public final class ScenarioActionMenu {
+// Displays the available actions for the current combat scenario.
+public final class CombatScenarioMenu {
 
 	private final Scanner scanner;
 
-	public ScenarioActionMenu(Scanner scanner) {
+	public CombatScenarioMenu(Scanner scanner) {
 		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
 	}
 
-	public Optional<ScenarioAction> selectAction(List<ScenarioAction> actions) {
-		Objects.requireNonNull(actions, "Scenario actions cannot be null.");
+	public Optional<CombatScenarioAction> selectAction(List<CombatScenarioAction> actions) {
+		Objects.requireNonNull(actions, "Combat scenario actions cannot be null.");
 
 		while (true) {
 			System.out.println("\nO que deseja fazer?");
 
 			for (int index = 0; index < actions.size(); index++) {
-				ScenarioAction action = actions.get(index);
+				CombatScenarioAction action = actions.get(index);
 
 				if (index > 0 && startsNewActionGroup(action)) {
 					System.out.println();
@@ -58,8 +58,8 @@ public final class ScenarioActionMenu {
 		}
 	}
 
-	private boolean startsNewActionGroup(ScenarioAction action) {
-		return action == ScenarioAction.TRAVEL || action == ScenarioAction.INVENTORY;
+	private boolean startsNewActionGroup(CombatScenarioAction action) {
+		return action == CombatScenarioAction.TRAVEL || action == CombatScenarioAction.INVENTORY;
 	}
 
 }

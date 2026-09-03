@@ -7,8 +7,6 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Scanner;
 
-import rpg.world.rewards.ExplorationRewardCatalog;
-import rpg.world.rewards.ExplorationRewardGenerator;
 import rpg.battle.BattleCoordinator;
 import rpg.battle.BattleResult;
 import rpg.battle.rewards.BattleRewardService;
@@ -19,12 +17,12 @@ import rpg.enemies.EnemyDropCatalog;
 import rpg.items.Item;
 import rpg.items.ItemCatalog;
 import rpg.ui.BattleRewardScreen;
+import rpg.ui.CombatScenarioMenu;
 import rpg.ui.ConsoleUI;
 import rpg.ui.EpicEncounterMenu;
 import rpg.ui.GameOverScreen;
 import rpg.ui.InventoryMenu;
 import rpg.ui.PartyStatusMenu;
-import rpg.ui.ScenarioActionMenu;
 import rpg.ui.ScenarioBranchMenu;
 import rpg.ui.TravelMenu;
 import rpg.world.branches.ScenarioBranchCatalog;
@@ -35,14 +33,16 @@ import rpg.world.exploration.ExplorationEventGenerator;
 import rpg.world.exploration.ExplorationEventType;
 import rpg.world.exploration.ExplorationSession;
 import rpg.world.exploration.ExplorationSettings;
+import rpg.world.rewards.ExplorationReward;
+import rpg.world.rewards.ExplorationRewardCatalog;
+import rpg.world.rewards.ExplorationRewardGenerator;
 import rpg.world.scenarios.CombatScenario;
+import rpg.world.scenarios.CombatScenarioAction;
 import rpg.world.scenarios.Dungeon;
 import rpg.world.scenarios.Scenario;
-import rpg.world.scenarios.ScenarioAction;
 import rpg.world.scenarios.ScenarioCatalog;
 import rpg.world.travel.TravelProgress;
 import rpg.world.travel.TravelRouteDefinition;
-import rpg.world.rewards.ExplorationReward;
 
 // Controls navigation and interaction with the game world.
 public class World {
@@ -53,7 +53,7 @@ public class World {
 	private final ScenarioCatalog scenarioCatalog;
 	private final PartyStatusMenu partyStatusMenu;
 	private Party party;
-	private final ScenarioActionMenu scenarioActionMenu;
+	private final CombatScenarioMenu combatScenarioMenu;
 	private final BattleCoordinator battleCoordinator;
 	private final EpicEncounterMenu epicEncounterMenu;
 	private final EnemyCatalog enemyCatalog;
@@ -101,7 +101,7 @@ public class World {
 
 		// User interface
 		this.epicEncounterMenu = new EpicEncounterMenu(scanner);
-		this.scenarioActionMenu = new ScenarioActionMenu(scanner);
+		this.combatScenarioMenu = new CombatScenarioMenu(scanner);
 		this.travelMenu = new TravelMenu(scanner, this.travelProgress);
 		this.scenarioBranchMenu = new ScenarioBranchMenu(scanner);
 		this.inventoryMenu = new InventoryMenu(this.party, scanner);
@@ -161,9 +161,9 @@ public class World {
 	}
 
 	private void executeScenarioMenu() {
-		List<ScenarioAction> availableActions = getAvailableScenarioActions();
+		List<CombatScenarioAction> availableActions = getAvailableScenarioActions();
 
-		Optional<ScenarioAction> selectedAction = scenarioActionMenu.selectAction(availableActions);
+		Optional<CombatScenarioAction> selectedAction = combatScenarioMenu.selectAction(availableActions);
 
 		if (selectedAction.isEmpty()) {
 			System.out.println("\nObrigado por testar a V2!");
@@ -175,8 +175,8 @@ public class World {
 		executeScenarioAction(selectedAction.get());
 	}
 
-	private List<ScenarioAction> getAvailableScenarioActions() {
-		List<ScenarioAction> availableActions = new ArrayList<>();
+	private List<CombatScenarioAction> getAvailableScenarioActions() {
+		List<CombatScenarioAction> availableActions = new ArrayList<>();
 
 		boolean combatScenarioInProgress = currentScenario instanceof CombatScenario
 				&& (explorationSession == null || !explorationSession.isComplete());
@@ -184,22 +184,22 @@ public class World {
 		if (combatScenarioInProgress) {
 			if (currentScenario instanceof Dungeon && explorationSession != null
 					&& explorationSession.isAtFinalPosition()) {
-				availableActions.add(ScenarioAction.FACE_BOSS);
+				availableActions.add(CombatScenarioAction.FACE_BOSS);
 
 			} else {
-				availableActions.add(ScenarioAction.EXPLORE);
+				availableActions.add(CombatScenarioAction.EXPLORE);
 
 				if (hasAvailableScenarioBranch()) {
-					availableActions.add(ScenarioAction.FOLLOW_BRANCH);
+					availableActions.add(CombatScenarioAction.FOLLOW_BRANCH);
 				}
 			}
 
 		} else if (travelProgress.hasUnlockedRoutesFrom(currentScenario.getId())) {
-			availableActions.add(ScenarioAction.TRAVEL);
+			availableActions.add(CombatScenarioAction.TRAVEL);
 		}
 
-		availableActions.add(ScenarioAction.INVENTORY);
-		availableActions.add(ScenarioAction.VIEW_STATUS);
+		availableActions.add(CombatScenarioAction.INVENTORY);
+		availableActions.add(CombatScenarioAction.VIEW_STATUS);
 
 		return List.copyOf(availableActions);
 	}
@@ -212,7 +212,7 @@ public class World {
 		return scenarioBranchCatalog.hasBranchesAt(currentScenario.getId(), explorationSession.getCurrentPosition());
 	}
 
-	private void executeScenarioAction(ScenarioAction action) {
+	private void executeScenarioAction(CombatScenarioAction action) {
 		switch (action) {
 		case EXPLORE -> explore();
 
