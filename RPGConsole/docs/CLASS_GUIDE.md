@@ -210,9 +210,10 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 | `ConsoleUI` | Utilitário de interface | Centraliza operações gerais do console, como limpeza da tela ou pausa para continuação. É reutilizada por telas e fluxos que precisam do mesmo comportamento visual. |
 | `TitleScreen` | Tela | Exibe a apresentação inicial do jogo e controla a entrada necessária para começar. É chamada durante a inicialização antes de `World`. |
 | `GameOverScreen` | Tela | Exibe a derrota definitiva temporária e informações finais da `Party`. É acionada por `World` quando `BattleResult` indica derrota. |
-| `ScenarioCatalog` | Catálogo de execução | Registra os objetos `Scenario` já criados e permite resolvê-los por ID durante o jogo. É usado por `World` para resolver destinos selecionados em rotas e bifurcações. Não guarda definições cruas dos arquivos. |
-| `ScenarioAction` | Enum de interface e fluxo | Define as ações que `World` pode oferecer, como explorar, seguir outro caminho, enfrentar o boss, abrir o inventário, ver status e viajar. `ScenarioActionMenu` exibe a lista; `World` executa a escolha. |
-| `ScenarioActionMenu` | Menu | Recebe a lista de `ScenarioAction` atualmente permitida, mantém a numeração contínua, separa visualmente ações de cenário, deslocamento e recursos do grupo e devolve a escolha. `World` monta essa lista incrementalmente de acordo com cenário, exploração, boss, bifurcações e rotas. |
+| `CombatScenarioMenu` | Menu de cenário de combate | Recebe as ações de `CombatScenarioAction` permitidas no campo ou dungeon atual, mantém numeração contínua, separa grupos visualmente e devolve a escolha. Não é usado por cidades. |
+| `CityMenu` | Menu de cidade | Recebe o nome da cidade e as ações de `CityAction` atualmente disponíveis. Omite ações sem destino funcional, preserva numeração contínua e separa navegação dos recursos do grupo. |
+| `CityLocationMenu` | Menu de navegação urbana | Exibe apenas os nomes dos locais funcionais da cidade e devolve a posição selecionada. Não conhece nem executa as regras internas dos serviços. |
+| `InnMenu` | Menu de serviço urbano | Exibe os dados de `InnDefinition`, controla confirmação e pagamento da estadia e restaura a `Party`. Mantém o jogador no INN até um retorno explícito e apresenta o resultado das ações dentro da tela atual. |
 | `ScenarioBranchMenu` | Menu | Recebe as bifurcações disponíveis na posição atual, exibe seus nomes e descrições e devolve a `ScenarioBranchDefinition` escolhida. Não altera o cenário nem o estado da exploração. |
 | `TravelMenu` | Menu | Consulta as rotas desbloqueadas por meio de `TravelProgress`, exibe nomes e descrições das saídas e devolve a `TravelRouteDefinition` escolhida. Não resolve o destino nem aplica a posição de chegada; essas consequências pertencem a `World`. |
 | `InventoryMenu` | Menu geral de inventário | Exibe ouro e todas as categorias do inventário compartilhado em ordem determinística. Categorias vazias permanecem selecionáveis e exibem sua mensagem somente depois da seleção. Categorias preenchidas apresentam uma lista paginada e ordenada de itens, detalhes e ações contextuais, como o uso de `RecoveryItem`. |
@@ -302,12 +303,12 @@ ExplorationReward          = o resultado concreto do sorteio
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
 | `Scenario` | Classe-base de execução | Define os dados comuns dos cenários usados durante o jogo: ID, nome e descrição. É herdada por `City` e `CombatScenario` e registrada em `ScenarioCatalog`. |
-| `City` | Cenário de execução | Representa uma cidade sem sessão de exploração. Pode disponibilizar viagem imediatamente e futuramente concentrará serviços urbanos. É criada por `ScenarioFactory`. |
+| `CombatScenarioAction` | Enum de interface e fluxo | Define ações exclusivas de campos e dungeons, como explorar, seguir uma bifurcação, enfrentar o boss, viajar, abrir o inventário e ver status. |
+| `CityAction` | Enum de interface e fluxo | Define as ações urbanas atualmente suportadas: visitar um local, sair por uma rota adjacente, abrir o inventário e ver status. |
 | `CombatScenario` | Classe-base de execução | Estende `Scenario` com recompensas-base e `ExplorationSettings`. É herdada por `Field` e `Dungeon` e fornece os dados necessários para encontros e recompensas. |
 | `Field` | Cenário de execução | Representa um campo explorável com eventos aleatórios e conclusão após resolver sua posição final. É criado por `ScenarioFactory` a partir das definições comuns e de combate. |
 | `Dungeon` | Cenário de execução | Representa uma masmorra explorável. Além dos dados de `CombatScenario`, possui `DungeonSettings` com grupos obrigatórios de bosses e épicos opcionais. Sua posição final é resolvida por uma batalha de boss. |
 | `DungeonSettings` | Configuração de execução | Guarda as listas de um a três IDs de bosses e de um a três IDs épicos usadas pelo objeto `Dungeon`. Recebe os dados de `DungeonDefinition` durante a criação do cenário. |
-| `ScenarioAction` | Enum de interface e fluxo | Define as ações que `World` pode oferecer, como explorar, seguir outro caminho, enfrentar o boss, abrir o inventário, ver status e viajar. `ScenarioActionMenu` exibe a lista; `World` executa a escolha. |
 | `ScenarioType` | Enum de dados | Define os tipos válidos dos cenários externos: cidade, campo e dungeon. É lido por `ScenarioLoader` e usado por validações e `ScenarioFactory`. |
 
 ### Definições comuns
@@ -385,6 +386,33 @@ scenario_branches.txt
     -> World altera o cenário
 ```
 `ScenarioBranchMenu` apenas devolve a definição escolhida. `World` resolve o cenário de destino, encerra a sessão anterior e cria uma nova sessão quando necessário.
+
+---
+
+## Pacote `rpg.world.inns`
+
+Este pacote representa os dados fixos dos INNs urbanos. Ele não controla entrada do jogador nem altera diretamente a `Party`; essas responsabilidades pertencem a `World` e `InnMenu`.
+
+| Classe | Categoria | Finalidade e relações principais |
+|---|---|---|
+| `InnLoader` | Carregamento de dados | Lê `inns.txt`, interpreta quebras literais `\n`, valida os cinco campos, resolve o cenário associado e exige o tipo `CITY`. Produz definições registradas em `InnCatalog`. |
+| `InnDefinition` | Definição imutável | Armazena ID estável, ID do cenário urbano, nome, descrição e preço fixo da estadia para todo o grupo. Rejeita textos vazios e preços menores ou iguais a zero. |
+| `InnCatalog` | Catálogo de definições | Registra INNs por ID estável e por ID da cidade. Rejeita IDs duplicados e permite no máximo um INN por cenário urbano. |
+
+### Fluxo do INN
+
+```text
+inns.txt
+    -> InnLoader
+    -> InnDefinition
+    -> InnCatalog
+    -> World
+    -> CityLocationMenu
+    -> InnMenu
+    -> Party
+```
+
+`InnCatalog` informa a `World` se a cidade atual possui um INN funcional. `CityLocationMenu` cuida apenas da navegação pelo nome do local. Depois da seleção, `InnMenu` apresenta seus detalhes e executa confirmação, pagamento, ressurreição e restauração.
 
 ---
 

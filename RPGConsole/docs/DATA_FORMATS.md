@@ -356,32 +356,183 @@ RecoveryItemDefinitionCatalog
 |---|---|---|---|---|
 | `meruma` | Merumã | `CONSUMABLE` | `RecoveryItem` | Recovers 25 HP from one ally |
 
-## Planned V3 data files
+## Scenario definitions
 
-### Scenario definitions
-
-Planned file:
+File:
 
 `data/scenarios.txt`
 
-This file will remove scenario instances and exploration settings from
-`Main`.
+Each active scenario line contains exactly 4 fields:
 
-It must support at least:
+```text
+# id;type;name;description
+```
 
-- Stable scenario ID.
-- Scenario type.
-- Display name.
-- Description.
-- Base EXP reward.
-- Base gold reward.
-- Exploration length.
-- Exploration event chances.
-- Special area chance.
-- Minimum and maximum enemy counts.
-- Normal and special area messages.
-- Dungeon boss and epic enemy IDs when applicable.
+Example:
 
+```text
+bree;CITY;Bree;Uma cidade movimentada, erguida no encontro de várias estradas.
+```
+
+Rules:
+
+- `id` is the stable scenario ID.
+- `type` must be `CITY`, `FIELD` or `DUNGEON`.
+- IDs, names and descriptions cannot be empty.
+- Scenario IDs must be unique.
+- Descriptions support literal `\n`.
+- `ScenarioLoader` produces immutable `ScenarioDefinition` entries.
+- Runtime `City`, `Field` and `Dungeon` objects are later created by `ScenarioFactory`.
+
+## Combat scenario definitions
+
+File:
+
+`data/combat_scenarios.txt`
+
+Each active combat-scenario line contains exactly 13 fields:
+
+```text
+# scenarioId;baseExperienceReward;baseGoldReward;explorationLength;battleChance;rewardChance;merchantChance;epicEncounterChance;specialAreaChance;minEnemies;maxEnemies;normalAreaMessage;specialAreaMessage
+```
+
+Rules:
+
+- `scenarioId` must reference an existing `FIELD` or `DUNGEON`.
+- Cities cannot have combat-scenario data.
+- Each combat scenario can have only one definition.
+- Numeric fields must contain valid integers.
+- Exploration lengths, chances and enemy-count limits are validated by `ExplorationSettings`.
+- Only dungeons may define a positive `epicEncounterChance`.
+- Normal and special area messages cannot be empty.
+- Area messages support literal `\n`.
+- Base EXP and gold rewards belong to the combat scenario rather than the common scenario definition.
+
+## Dungeon definitions
+
+File:
+
+`data/dungeons.txt`
+
+Each active dungeon line contains exactly 3 fields:
+
+```text
+# scenarioId;bossEnemyIds;epicEnemyIds
+```
+
+Example:
+
+```text
+gruta_relamparrocha;mestre_eletrogoblin;relampagolem
+```
+
+Rules:
+
+- `scenarioId` must reference an existing `DUNGEON`.
+- The dungeon must also have combat-scenario data.
+- Enemy groups use comma-separated stable enemy IDs.
+- Referenced enemies must exist.
+- Boss entries must reference enemies with the `BOSS` rank.
+- Epic entries must reference enemies with the `EPIC` rank.
+- Group sizes, empty IDs and repeated IDs are validated by `DungeonDefinition`.
+- Each dungeon can have only one dungeon definition.
+
+## Travel route definitions
+
+File:
+
+`data/travel_routes.txt`
+
+Each active travel-route line contains exactly 7 fields:
+
+```text
+# id;sourceScenarioId;destinationScenarioId;initiallyUnlocked;displayName;description;destinationExplorationPosition
+```
+
+Examples:
+
+```text
+bree_portao_sul;bree;verdes_ermos;true;Portão Sul;A estrada ao sul conduz aos Verdes Ermos.;1
+verdes_ermos_bree;verdes_ermos;bree;true;Retornar a Bree;Você segue pela estrada de volta a Bree.;
+```
+
+Rules:
+
+- Route IDs must be unique.
+- Source and destination IDs must reference existing scenarios.
+- A route cannot lead back to its own source.
+- `initiallyUnlocked` must be `true` or `false`.
+- Display names and descriptions cannot be empty.
+- Descriptions support literal `\n`.
+- Routes from the same source cannot repeat a destination.
+- `destinationExplorationPosition` must be empty when the destination is a city.
+- It is required when the destination is a combat scenario.
+- Combat-scenario destination positions must fall within that scenario's exploration length.
+- Route display names and descriptions also represent city-exit labels and flavor text.
+- Adjacent travel through these routes is free.
+
+## Scenario branch definitions
+
+File:
+
+`data/scenario_branches.txt`
+
+Each active branch line contains exactly 6 fields:
+
+```text
+# id;sourceScenarioId;position;destinationScenarioId;displayName;description
+```
+
+Example:
+
+```text
+verdes_ermos_bifurcacao_setegalhos;verdes_ermos;3;setegalhos;Seguir para Setegalhos;Você encontra uma bifurcação entre os campos.\nUma estrada parcialmente escondida pela vegetação conduz ao Povoado de Setegalhos.
+```
+
+Rules:
+
+- Branch IDs must be unique.
+- Source and destination IDs must reference existing scenarios.
+- The source must be a combat scenario.
+- `position` must be a valid integer within the source exploration length.
+- A branch cannot occupy the final position of a dungeon.
+- The same destination cannot be repeated at the same source position.
+- Display names and descriptions cannot be empty.
+- Descriptions support literal `\n`.
+- Branches represent fixed alternatives discovered during exploration.
+
+## INN definitions
+
+File:
+
+`data/inns.txt`
+
+Each active INN line contains exactly 5 fields:
+
+```text
+# id;scenarioId;name;description;price
+```
+
+Example:
+
+```text
+bree_inn;bree;INN de Bree;Uma estalagem simples e acolhedora.\nSeus quartos oferecem o descanso necessário antes da próxima jornada.;25
+```
+
+Rules:
+
+- `id` is the stable INN ID.
+- `scenarioId` must reference an existing `CITY`.
+- IDs, names and descriptions cannot be empty.
+- INN IDs must be unique.
+- Descriptions support literal `\n`.
+- `price` must be a valid integer greater than zero.
+- At most one INN may be registered for each city.
+- The price applies to the whole party and is independent of party size.
+- Prices remain externally configurable for future balancing.
+- `InnLoader` produces immutable `InnDefinition` entries registered in `InnCatalog`.
+
+## Planned V3 data files
 ### Skill definitions
 
 Planned file:

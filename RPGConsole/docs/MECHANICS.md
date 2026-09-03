@@ -415,25 +415,41 @@ This preserves the importance of:
 
 Characters who survive without leveling preserve their current HP, MP and SP.
 
-## Enemy rewards
+## City INNs
 
-Each combat scenario defines:
+An INN is a functional city location configured through `data/inns.txt`.
 
-- Base experience reward.
-- Base gold reward.
+Each INN defines:
 
-Each defeated enemy applies its rank multiplier to those base values.
+- A stable ID.
+- Its city scenario ID.
+- Its display name and description.
+- A fixed price for the whole party.
 
-Current enemy ranks include:
+The price does not change according to party size.
 
-- Common.
-- Veteran.
-- Leader.
-- Boss.
-- Epic.
-- Legendary.
+The player may enter an INN even when the party cannot afford a stay. This keeps the location accessible and allows the service to explain why resting is unavailable.
 
-Rewards from multiple defeated enemies are added together.
+A stay is prevented when:
+
+- Every party member is already alive with maximum HP, MP and SP.
+- The party does not have enough gold.
+- The player cancels the confirmation.
+
+No gold or character resources change in any of these cases.
+
+After all requirements succeed, the player must confirm the stay. The configured price is then deducted once from the shared party gold.
+
+Restoration occurs in this order:
+
+1. Every defeated party member is revived.
+2. Every party member has HP, MP and SP fully restored.
+
+The INN flow does not change the general behavior of `GameCharacter.restoreAllResources()`, which still refuses to restore defeated characters. The INN explicitly revives them before calling that method.
+
+After a successful stay, the player remains inside the INN. Feedback from successful, unnecessary and unaffordable attempts is displayed inside the current INN screen, between the party's gold information and the available actions.
+
+City locations and city exits remain separate navigation paths. Adjacent exits reuse unlocked `TravelRouteDefinition` entries, preserve their display names and descriptions, and do not charge the party. Paid transport remains a future system.
 
 ## Party status
 

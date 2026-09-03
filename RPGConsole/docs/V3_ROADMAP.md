@@ -262,50 +262,50 @@ The implementation must preserve stable IDs, strict startup validation and separ
 
 ## 8. City structure and Bree services
 
-* [ ] Rename `ScenarioActionMenu` to `CombatScenarioMenu`.
-* [ ] Rename `ScenarioAction` to `CombatScenarioAction`.
-* [ ] Keep the renamed combat-scenario menu exclusive to fields and dungeons.
-* [ ] Create a dedicated `CityMenu`.
-* [ ] Provide separate city actions for visiting a location and leaving through an adjacent exit.
-* [ ] Keep inventory and party status accessible from the city menu.
-* [ ] Keep continuous numeric selection across city-menu action groups.
-* [ ] Omit unavailable city actions instead of displaying non-functional placeholders.
-* [ ] Keep the future city fast-travel action absent until city transport is implemented.
-* [ ] Add a dedicated menu for selecting functional city locations.
-* [ ] Display location names in the selection menu and details only after entering a location.
-* [ ] Keep unimplemented shops, taverns and other services out of the city-location menu.
-* [ ] Treat city locations as a navigation concept instead of creating a generic service hierarchy.
-* [ ] Define `inns.txt`.
-* [ ] Store a stable INN ID.
-* [ ] Associate each INN with a city scenario ID.
-* [ ] Store each INN's name, description and fixed party price.
-* [ ] Support literal `\n` in INN descriptions.
-* [ ] Create immutable INN definitions.
-* [ ] Create the INN loader and catalog.
-* [ ] Validate referenced scenario IDs and require the `CITY` scenario type.
-* [ ] Reject empty IDs, names and descriptions.
-* [ ] Reject invalid prices and duplicate INN IDs.
-* [ ] Allow at most one INN definition per city.
-* [ ] Configure Bree's INN with a provisional price of 25 gold.
-* [ ] Keep INN prices externally configurable for future balancing.
-* [ ] Keep the INN accessible when the party cannot afford a stay.
-* [ ] Prevent resting when every party member is already fully restored.
-* [ ] Prevent resting when the party cannot afford the configured price.
-* [ ] Request confirmation before charging the party.
-* [ ] Preserve party gold when resting is unnecessary, unaffordable or cancelled.
-* [ ] Deduct gold only after every requirement and confirmation succeeds.
-* [ ] Revive defeated party members before restoring their resources.
-* [ ] Fully restore HP, MP and SP for every party member.
-* [ ] Preserve the current behavior of `GameCharacter.restoreAllResources()` outside the INN.
-* [ ] Display immersive messages for unnecessary, unaffordable and successful stays.
-* [ ] Keep the player inside the INN after resting until an explicit back command.
-* [ ] Reuse unlocked `TravelRouteDefinition` entries as city exits.
-* [ ] Use route display names for gates, roads, portals and other creative exit labels.
-* [ ] Preserve each route description as the exit's flavor and destination text.
-* [ ] Keep adjacent travel through city exits free.
-* [ ] Keep city exits separate from future paid city transport.
-* [ ] Preserve iterative navigation across city, location, INN and exit menus.
-* [ ] Test city navigation, INN loading, payment, restoration and free adjacent exits.
+* [x] Rename `ScenarioActionMenu` to `CombatScenarioMenu`.
+* [x] Rename `ScenarioAction` to `CombatScenarioAction`.
+* [x] Keep the renamed combat-scenario menu exclusive to fields and dungeons.
+* [x] Create a dedicated `CityMenu`.
+* [x] Provide separate city actions for visiting a location and leaving through an adjacent exit.
+* [x] Keep inventory and party status accessible from the city menu.
+* [x] Keep continuous numeric selection across city-menu action groups.
+* [x] Omit unavailable city actions instead of displaying non-functional placeholders.
+* [x] Keep the future city fast-travel action absent until city transport is implemented.
+* [x] Add a dedicated menu for selecting functional city locations.
+* [x] Display location names in the selection menu and details only after entering a location.
+* [x] Keep unimplemented shops, taverns and other services out of the city-location menu.
+* [x] Treat city locations as a navigation concept instead of creating a generic service hierarchy.
+* [x] Define `inns.txt`.
+* [x] Store a stable INN ID.
+* [x] Associate each INN with a city scenario ID.
+* [x] Store each INN's name, description and fixed party price.
+* [x] Support literal `\n` in INN descriptions.
+* [x] Create immutable INN definitions.
+* [x] Create the INN loader and catalog.
+* [x] Validate referenced scenario IDs and require the `CITY` scenario type.
+* [x] Reject empty IDs, names and descriptions.
+* [x] Reject invalid prices and duplicate INN IDs.
+* [x] Allow at most one INN definition per city.
+* [x] Configure Bree's INN with a provisional price of 25 gold.
+* [x] Keep INN prices externally configurable for future balancing.
+* [x] Keep the INN accessible when the party cannot afford a stay.
+* [x] Prevent resting when every party member is already fully restored.
+* [x] Prevent resting when the party cannot afford the configured price.
+* [x] Request confirmation before charging the party.
+* [x] Preserve party gold when resting is unnecessary, unaffordable or cancelled.
+* [x] Deduct gold only after every requirement and confirmation succeeds.
+* [x] Revive defeated party members before restoring their resources.
+* [x] Fully restore HP, MP and SP for every party member.
+* [x] Preserve the current behavior of `GameCharacter.restoreAllResources()` outside the INN.
+* [x] Display immersive messages for unnecessary, unaffordable and successful stays.
+* [x] Keep the player inside the INN after resting until an explicit back command.
+* [x] Reuse unlocked `TravelRouteDefinition` entries as city exits.
+* [x] Use route display names for gates, roads, portals and other creative exit labels.
+* [x] Preserve each route description as the exit's flavor and destination text.
+* [x] Keep adjacent travel through city exits free.
+* [x] Keep city exits separate from future paid city transport.
+* [x] Preserve iterative navigation across city, location, INN and exit menus.
+* [x] Test city navigation, INN loading, payment, restoration and free adjacent exits.
 
 ## 9. Shops and merchants
 

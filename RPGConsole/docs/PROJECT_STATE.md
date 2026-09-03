@@ -224,7 +224,10 @@ Current rules:
 
 Responsibilities previously concentrated in `World` were extracted into dedicated components, including:
 
-- `ScenarioActionMenu`
+- `CombatScenarioMenu`
+- `CityMenu`
+- `CityLocationMenu`
+- `InnMenu`
 - `TravelMenu`
 - `EpicEncounterMenu`
 - `BattleCoordinator`
@@ -243,9 +246,40 @@ Responsibilities previously concentrated in `World` were extracted into dedicate
 
 `World` coordinates scenario state, exploration events and the consequences of battle results. It no longer directly controls console input.
 
-`World` builds available scenario actions incrementally according to the current world state. `ScenarioActionMenu` keeps their numbering continuous, omits unavailable actions and uses whitespace to separate scenario, travel and party-resource actions without adding extra submenu layers.
+`World` dispatches fields and dungeons to `CombatScenarioMenu` and cities to `CityMenu`. Each action list is built incrementally from the current scenario state. Both menus preserve continuous numbering, omit unavailable actions and use whitespace to separate action groups without adding unnecessary submenu layers.
 
-World, travel, branch, inventory and status menus use iterative navigation and explicit back commands.
+World, combat-scenario, city, city-location, INN, travel, branch, inventory and status menus use iterative navigation and explicit back commands.
+
+## City structure and Bree services
+
+Cities now use a dedicated action flow instead of the combat-scenario menu.
+
+The city menu currently supports:
+
+- Visiting a functional city location.
+- Leaving through an unlocked adjacent route.
+- Opening the shared inventory.
+- Viewing party status.
+- Explicitly ending the game.
+
+Unavailable actions are omitted. Paid city transport remains absent until its own roadmap section is implemented.
+
+City locations are treated as a navigation concept rather than a generic service hierarchy. `CityLocationMenu` displays only functional location names, while each selected service owns its details and interaction flow.
+
+Bree currently provides one externally configured INN loaded from `data/inns.txt`. `InnDefinition`, `InnLoader` and `InnCatalog` preserve stable IDs, validate city references and allow at most one INN per city.
+
+The Bree INN:
+
+- Charges a provisional fixed price of 25 gold for the whole party.
+- Remains accessible when the party cannot afford a stay.
+- Prevents unnecessary, unaffordable and cancelled payments.
+- Requests confirmation before charging.
+- Revives defeated members before restoring resources.
+- Fully restores HP, MP and SP for the entire party.
+- Keeps the player inside the INN after resting.
+- Displays action feedback inside the current INN screen.
+
+City exits reuse unlocked `TravelRouteDefinition` entries. Their names and descriptions act as creative exit labels and flavor text, and adjacent travel remains free.
 
 ## External item system
 
@@ -383,15 +417,17 @@ Recovery power is not a character attribute. Recovery values belong to skills or
 - Temporary healing and revival skills exist for testing.
 - Playable classes are not represented as data yet.
 - Buffs and debuffs are not implemented.
-- Bree does not yet provide its complete INN, shop and tavern functionality.
-- Defeated allies require revival and remain unavailable between battles.
+- Bree provides its INN, but shop and tavern functionality remain unavailable.
+- Defeated allies remain unavailable until revived by a skill, item or city INN.
 - Full-party defeat still uses the temporary Game Over flow.
 
 ## Current next step
 
-Begin V3 roadmap section 8: city structure and Bree services.
+V3 roadmap section 8, city structure and Bree services, is complete.
 
-The first planned goal is to create a dedicated city menu and separate city locations from adjacent exits before implementing Bree's initial services.
+Section 9, shops and merchants, remains on hold while its initial implementation is developed separately. That implementation must be reviewed before the section begins.
+
+The next planned world-progression section is section 10: scenario discovery and paid city transport.
 
 ## Important conventions
 
