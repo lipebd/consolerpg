@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import rpg.enemies.EnemyCatalog;
+import rpg.world.exploration.ExplorationAreaRestriction;
 
 // Loads encounter entries from an external text file.
 public final class EncounterLoader {
@@ -65,8 +66,8 @@ public final class EncounterLoader {
         int maxCopies =
                 Integer.parseInt(fields[5].trim());
         
-        EncounterAreaRestriction areaRestriction =
-                EncounterAreaRestriction.valueOf(
+        ExplorationAreaRestriction areaRestriction =
+                ExplorationAreaRestriction.valueOf(
                         fields[6].trim().toUpperCase()
                 );
 
@@ -86,6 +87,6 @@ public final class EncounterLoader {
         encounterCatalog.register(
                 scenarioId,
                 encounterEntry
-        );
-    }
+		);
+	}
 }

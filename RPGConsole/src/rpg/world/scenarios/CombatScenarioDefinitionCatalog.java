@@ -1,6 +1,7 @@
 package rpg.world.scenarios;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 // Stores combat scenario definitions by scenario ID.
@@ -34,5 +35,11 @@ public final class CombatScenarioDefinitionCatalog {
 
 	public boolean containsScenarioId(String scenarioId) {
 		return definitionsByScenarioId.containsKey(scenarioId);
+	}
+	
+	public List<CombatScenarioDefinition> getAll() {
+	    return List.copyOf(
+	            definitionsByScenarioId.values()
+	    );
 	}
 }

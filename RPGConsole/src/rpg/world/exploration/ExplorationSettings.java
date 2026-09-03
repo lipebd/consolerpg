@@ -5,7 +5,7 @@ public final class ExplorationSettings {
 
 	private final int length;
 	private final int battleChance;
-	private final int itemChance;
+	private final int rewardChance;
 	private final int merchantChance;
 	private final int epicEncounterChance;
 	private final int specialAreaChance;
@@ -14,7 +14,7 @@ public final class ExplorationSettings {
 	private final String normalAreaMessage;
 	private final String specialAreaMessage;
 
-	public ExplorationSettings(int length, int battleChance, int itemChance, int merchantChance,
+	public ExplorationSettings(int length, int battleChance, int rewardChance, int merchantChance,
 			int epicEncounterChance, int specialAreaChance, int minEnemies, int maxEnemies, String normalAreaMessage,
 			String specialAreaMessage) {
 		if (length < 1) {
@@ -22,12 +22,12 @@ public final class ExplorationSettings {
 		}
 
 		validateChance(battleChance, "Battle");
-		validateChance(itemChance, "Item");
+		validateChance(rewardChance, "Reward");
 		validateChance(merchantChance, "Merchant");
 		validateChance(specialAreaChance, "Special area");
 		validateChance(epicEncounterChance, "Epic encounter");
 
-		int totalEventChance = battleChance + itemChance + merchantChance + epicEncounterChance;
+		int totalEventChance = battleChance + rewardChance + merchantChance + epicEncounterChance;
 
 		if (totalEventChance > 100) {
 			throw new IllegalArgumentException("The total event chance cannot exceed 100.");
@@ -51,7 +51,7 @@ public final class ExplorationSettings {
 
 		this.length = length;
 		this.battleChance = battleChance;
-		this.itemChance = itemChance;
+		this.rewardChance = rewardChance;
 		this.merchantChance = merchantChance;
 		this.epicEncounterChance = epicEncounterChance;
 		this.specialAreaChance = specialAreaChance;
@@ -75,8 +75,8 @@ public final class ExplorationSettings {
 		return battleChance;
 	}
 
-	public int getItemChance() {
-		return itemChance;
+	public int getRewardChance() {
+		return rewardChance;
 	}
 
 	public int getMerchantChance() {

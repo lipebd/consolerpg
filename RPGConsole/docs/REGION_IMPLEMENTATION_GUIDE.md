@@ -84,7 +84,7 @@ Esta etapa vale apenas para `FIELD` e `DUNGEON`.
 Arquivo: `data/combat_scenarios.txt`
 
 ```text
-# scenarioId;baseExperienceReward;baseGoldReward;explorationLength;battleChance;itemChance;merchantChance;epicEncounterChance;specialAreaChance;minEnemies;maxEnemies;normalAreaMessage;specialAreaMessage
+# scenarioId;baseExperienceReward;baseGoldReward;explorationLength;battleChance;rewardChance;merchantChance;epicEncounterChance;specialAreaChance;minEnemies;maxEnemies;normalAreaMessage;specialAreaMessage
 ```
 
 Exemplo:
@@ -99,7 +99,7 @@ Significado dos campos principais:
 |---|---|
 | `explorationLength` | Quantidade total de posições da exploração |
 | `battleChance` | Chance de ocorrer uma batalha comum |
-| `itemChance` | Chance de ocorrer um evento de item |
+| `rewardChance` | Chance de ocorrer um evento de recompensa |
 | `merchantChance` | Chance de ocorrer um encontro com mercador |
 | `epicEncounterChance` | Chance de oferecer o encontro épico da masmorra |
 | `specialAreaChance` | Chance de a posição usar a área especial |
@@ -110,7 +110,7 @@ Significado dos campos principais:
 Regras importantes:
 
 - Cada chance individual deve estar entre 0 e 100.
-- A soma de `battleChance`, `itemChance`, `merchantChance` e `epicEncounterChance` não pode ultrapassar 100.
+- A soma de `battleChance`, `rewardChance`, `merchantChance` e `epicEncounterChance` não pode ultrapassar 100.
 - `specialAreaChance` é independente dessa soma.
 - `minEnemies` deve ser pelo menos 1.
 - `maxEnemies` não pode ser menor que `minEnemies` nem maior que o limite suportado pela batalha, atualmente 3.

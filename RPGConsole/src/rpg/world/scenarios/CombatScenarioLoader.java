@@ -58,7 +58,7 @@ public final class CombatScenarioLoader {
 
 		int battleChance = parseInteger(fields[4], "battle chance");
 
-		int itemChance = parseInteger(fields[5], "item chance");
+		int rewardChance = parseInteger(fields[5], "reward chance");
 
 		int merchantChance = parseInteger(fields[6], "merchant chance");
 
@@ -78,7 +78,7 @@ public final class CombatScenarioLoader {
 
 		String specialAreaMessage = fields[12].trim().replace("\\n", "\n");
 
-		ExplorationSettings explorationSettings = new ExplorationSettings(explorationLength, battleChance, itemChance,
+		ExplorationSettings explorationSettings = new ExplorationSettings(explorationLength, battleChance, rewardChance,
 				merchantChance, epicEncounterChance, specialAreaChance, minEnemies, maxEnemies, normalAreaMessage,
 				specialAreaMessage);
 

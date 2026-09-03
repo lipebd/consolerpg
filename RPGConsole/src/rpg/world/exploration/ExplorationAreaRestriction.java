@@ -1,7 +1,7 @@
-package rpg.world.encounters;
+package rpg.world.exploration;
 
-// Defines where an encounter entry is allowed to appear.
-public enum EncounterAreaRestriction {
+// Defines which exploration areas allow an entry to appear.
+public enum ExplorationAreaRestriction {
 
     NORMAL_ONLY,
     SPECIAL_ONLY,

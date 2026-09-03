@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Scanner;
 
+import rpg.world.rewards.ExplorationRewardCatalog;
+import rpg.world.rewards.ExplorationRewardLoader;
 import rpg.characters.CharacterStats;
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
@@ -49,6 +51,7 @@ public class Main {
 
 	public static void main(String[] args) {
 
+		ExplorationRewardCatalog explorationRewardCatalog;
 		ItemCatalog itemCatalog;
 		RecoveryItemDefinitionCatalog recoveryItemDefinitionCatalog;
 		ItemDefinitionCatalog itemDefinitionCatalog;
@@ -64,73 +67,47 @@ public class Main {
 
 		try {
 			EnemyLoader enemyLoader = new EnemyLoader();
-
 			enemyCatalog = enemyLoader.load(Path.of("data", "enemies.txt"));
-
 			ItemLoader itemLoader = new ItemLoader();
-
 			itemDefinitionCatalog = itemLoader.load(Path.of("data", "items.txt"));
-
 			RecoveryItemLoader recoveryItemLoader = new RecoveryItemLoader();
-
 			recoveryItemDefinitionCatalog = recoveryItemLoader.load(Path.of("data", "recovery_items.txt"),
 					itemDefinitionCatalog);
-
 			itemCatalog = new ItemCatalog();
-
 			ItemFactory itemFactory = new ItemFactory();
-
 			for (ItemDefinition definition : itemDefinitionCatalog.getAll()) {
 				Item item = itemFactory.create(definition, recoveryItemDefinitionCatalog);
-
 				itemCatalog.register(item);
 			}
-
 			EnemyDropLoader enemyDropLoader = new EnemyDropLoader();
-
 			enemyDropCatalog = enemyDropLoader.load(Path.of("data", "enemy_drops.txt"), enemyCatalog, itemCatalog);
-
 			EncounterLoader encounterLoader = new EncounterLoader();
-
 			encounterCatalog = encounterLoader.load(Path.of("data", "encounters.txt"), enemyCatalog);
-
 			ScenarioLoader scenarioLoader = new ScenarioLoader();
-
 			ScenarioDefinitionCatalog scenarioDefinitionCatalog = scenarioLoader.load(Path.of("data", "scenarios.txt"));
-
 			CombatScenarioLoader combatScenarioLoader = new CombatScenarioLoader();
-
 			CombatScenarioDefinitionCatalog combatScenarioDefinitionCatalog = combatScenarioLoader
 					.load(Path.of("data", "combat_scenarios.txt"), scenarioDefinitionCatalog);
-
+			ExplorationRewardLoader explorationRewardLoader = new ExplorationRewardLoader();
+			explorationRewardCatalog = explorationRewardLoader.load(Path.of("data", "exploration_rewards.txt"),
+					combatScenarioDefinitionCatalog, itemCatalog);
 			DungeonLoader dungeonLoader = new DungeonLoader();
-
 			DungeonDefinitionCatalog dungeonDefinitionCatalog = dungeonLoader.load(Path.of("data", "dungeons.txt"),
 					scenarioDefinitionCatalog, combatScenarioDefinitionCatalog, enemyCatalog);
-
 			ScenarioBranchLoader scenarioBranchLoader = new ScenarioBranchLoader();
-
 			scenarioBranchCatalog = scenarioBranchLoader.load(Path.of("data", "scenario_branches.txt"),
 					scenarioDefinitionCatalog, combatScenarioDefinitionCatalog);
-
 			scenarioCatalog = new ScenarioCatalog();
-
 			ScenarioFactory scenarioFactory = new ScenarioFactory();
-
 			for (ScenarioDefinition definition : scenarioDefinitionCatalog.getAll()) {
 				Scenario scenario = scenarioFactory.create(definition, combatScenarioDefinitionCatalog,
 						dungeonDefinitionCatalog);
-
 				scenarioCatalog.register(scenario);
 			}
-
 			currentScenario = scenarioCatalog.getById("bree");
-
 			TravelRouteLoader travelRouteLoader = new TravelRouteLoader();
-
 			TravelCatalog travelCatalog = travelRouteLoader.load(Path.of("data", "travel_routes.txt"),
 					scenarioDefinitionCatalog, combatScenarioDefinitionCatalog);
-
 			travelProgress = new TravelProgress(travelCatalog);
 
 		} catch (IOException | IllegalArgumentException exception) {
@@ -207,8 +184,19 @@ public class Main {
 		bardo.learnSkill(palavraCurativa);
 		bardo.learnSkill(reviveTodos);
 
-		World world = new World(party, currentScenario, scanner, itemCatalog, enemyCatalog, enemyDropCatalog,
-				encounterCatalog, scenarioCatalog, scenarioBranchCatalog, travelProgress);
+		World world = new World(
+		        party,
+		        currentScenario,
+		        scanner,
+		        itemCatalog,
+		        enemyCatalog,
+		        enemyDropCatalog,
+		        encounterCatalog,
+		        explorationRewardCatalog,
+		        scenarioCatalog,
+		        scenarioBranchCatalog,
+		        travelProgress
+		);
 
 		world.start();
 

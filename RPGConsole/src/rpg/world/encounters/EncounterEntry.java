@@ -2,6 +2,8 @@ package rpg.world.encounters;
 
 import java.util.Objects;
 
+import rpg.world.exploration.ExplorationAreaRestriction;
+
 // Associates an enemy with its valid exploration range and area restriction.
 public final class EncounterEntry {
 
@@ -10,7 +12,7 @@ public final class EncounterEntry {
     private final int maxPosition;
     private final int weight;
     private final int maxCopies;
-    private final EncounterAreaRestriction areaRestriction;
+    private final ExplorationAreaRestriction areaRestriction;
 
     public EncounterEntry(
             String enemyId,
@@ -18,7 +20,7 @@ public final class EncounterEntry {
             int maxPosition,
             int weight,
             int maxCopies,
-            EncounterAreaRestriction areaRestriction
+            ExplorationAreaRestriction areaRestriction
     ) {
         if (enemyId == null || enemyId.isBlank()) {
             throw new IllegalArgumentException(
@@ -93,7 +95,7 @@ public final class EncounterEntry {
         return maxCopies;
     }
 
-    public EncounterAreaRestriction getAreaRestriction() {
+    public ExplorationAreaRestriction getAreaRestriction() {
         return areaRestriction;
     }
 }

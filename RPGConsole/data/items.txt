@@ -1,2 +1,3 @@
 # id;category;playerTradable;npcSellable;name;description
 meruma;CONSUMABLE;true;true;Merumã;Uma fruta que recupera 25 pontos de HP.
+pelo_lupino;SKILL_SCROLL;true;true;[PERGAMINHO] Chaos Aeternum - Metamorfo;Um tufo espesso de pelo obtido de um Lobermo.

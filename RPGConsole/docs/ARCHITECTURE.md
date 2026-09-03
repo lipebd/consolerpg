@@ -537,7 +537,7 @@ Important UI components include:
 
 The following implementations remain intentionally temporary:
 
-- The exploration item event still resolves the fixed `meruma` ID from the runtime `ItemCatalog`. Scenario-specific item and gold selection will move to external exploration reward pools.
+- The exploration `REWARD` event still resolves the fixed `meruma` ID from the runtime `ItemCatalog`. Scenario-specific item and gold selection will move to external exploration reward pools.
 - Only base item data and recovery-item behavior are currently externalized. Equipment and skill-scroll specialization will be defined when their corresponding systems exist.
 - Recovery-item purification is represented in external data and runtime definitions, but it cannot remove effects until the status-effect system is implemented.
 - The merchant has no merchandise.

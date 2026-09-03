@@ -6,6 +6,8 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Scanner;
 
+import rpg.world.rewards.ExplorationRewardCatalog;
+import rpg.world.rewards.ExplorationRewardGenerator;
 import rpg.battle.BattleCoordinator;
 import rpg.battle.BattleResult;
 import rpg.battle.rewards.BattleRewardService;
@@ -39,10 +41,12 @@ import rpg.world.scenarios.ScenarioAction;
 import rpg.world.scenarios.ScenarioCatalog;
 import rpg.world.travel.TravelProgress;
 import rpg.world.travel.TravelRouteDefinition;
+import rpg.world.rewards.ExplorationReward;
 
 // Controls navigation and interaction with the game world.
 public class World {
 
+	private final ExplorationRewardGenerator explorationRewardGenerator;
 	private final ItemCatalog itemCatalog;
 	private final ScenarioBranchMenu scenarioBranchMenu;
 	private final ScenarioCatalog scenarioCatalog;
@@ -67,8 +71,8 @@ public class World {
 
 	public World(Party party, Scenario initialScenario, Scanner scanner, ItemCatalog itemCatalog,
 			EnemyCatalog enemyCatalog, EnemyDropCatalog enemyDropCatalog, EncounterCatalog encounterCatalog,
-			ScenarioCatalog scenarioCatalog, ScenarioBranchCatalog scenarioBranchCatalog,
-			TravelProgress travelProgress) {
+			ExplorationRewardCatalog explorationRewardCatalog, ScenarioCatalog scenarioCatalog,
+			ScenarioBranchCatalog scenarioBranchCatalog, TravelProgress travelProgress) {
 
 		Objects.requireNonNull(scanner, "Scanner cannot be null.");
 		Objects.requireNonNull(enemyDropCatalog, "Enemy drop catalog cannot be null.");
@@ -91,6 +95,7 @@ public class World {
 		this.battleCoordinator = new BattleCoordinator(this.party, scanner, enemyDropCatalog, rewardService,
 				rewardScreen, random);
 		this.encounterGenerator = new EncounterGenerator(this.enemyCatalog, encounterCatalog, random);
+		this.explorationRewardGenerator = new ExplorationRewardGenerator(explorationRewardCatalog, random);
 		this.explorationEventGenerator = new ExplorationEventGenerator(random);
 
 		// User interface
@@ -316,7 +321,7 @@ public class World {
 		switch (eventType) {
 		case BATTLE -> startRandomEncounter(position, specialArea);
 
-		case ITEM -> executeItemEvent();
+		case REWARD -> executeRewardEvent(specialArea);
 
 		case MERCHANT -> executeMerchantEvent();
 
@@ -326,12 +331,24 @@ public class World {
 		}
 	}
 
-	private void executeItemEvent() {
-		Item item = itemCatalog.getById("meruma");
+	private void executeRewardEvent(boolean specialArea) {
+		ExplorationReward reward = explorationRewardGenerator.generate(currentScenario.getId(), specialArea);
 
-		party.getInventory().addItem(item, 1);
+		switch (reward.getType()) {
+		case ITEM -> {
+			Item item = itemCatalog.getById(reward.getRewardId());
 
-		System.out.println("Você encontrou " + item.getName() + " x1!");
+			party.getInventory().addItem(item, reward.getQuantity());
+
+			System.out.println("Você encontrou " + item.getName() + " x" + reward.getQuantity() + "!");
+		}
+
+		case GOLD -> {
+			party.addGold(reward.getQuantity());
+
+			System.out.println("Você encontrou " + reward.getQuantity() + " de ouro!");
+		}
+		}
 	}
 
 	private void executeMerchantEvent() {

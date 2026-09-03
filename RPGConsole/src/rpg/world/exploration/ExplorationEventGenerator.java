@@ -30,10 +30,10 @@ public final class ExplorationEventGenerator {
         }
 
         accumulatedChance +=
-                settings.getItemChance();
+                settings.getRewardChance();
 
         if (roll <= accumulatedChance) {
-            return ExplorationEventType.ITEM;
+            return ExplorationEventType.REWARD;
         }
 
         accumulatedChance +=
@@ -44,7 +44,7 @@ public final class ExplorationEventGenerator {
                 return ExplorationEventType.MERCHANT;
             }
 
-            return ExplorationEventType.ITEM;
+            return ExplorationEventType.NOTHING;
         }
         
         accumulatedChance +=

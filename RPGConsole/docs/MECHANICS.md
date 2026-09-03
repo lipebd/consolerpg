@@ -521,9 +521,11 @@ Current exploration events include:
 
 - Nothing.
 - Battle.
-- Item.
+- Reward.
 - Merchant.
 - Epic encounter.
+
+A reward can be either gold or item.
 
 The total configured event chance cannot exceed 100%.
 

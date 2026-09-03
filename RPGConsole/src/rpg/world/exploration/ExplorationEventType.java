@@ -5,7 +5,7 @@ public enum ExplorationEventType {
 
     NOTHING,
     BATTLE,
-    ITEM,
+    REWARD,
     MERCHANT,
     EPIC_ENCOUNTER
 }

@@ -334,7 +334,7 @@ Recovery power is not a character attribute. Recovery values belong to skills or
 
 ## Current limitations and temporary implementations
 
-- The exploration `ITEM` event still resolves the fixed `meruma` ID from `ItemCatalog`.
+- The exploration `REWARD` event still resolves the fixed `meruma` ID from `ItemCatalog`.
 - Scenario-specific item and gold rewards are not yet loaded from external reward pools.
 - The merchant event has no merchandise or transaction system.
 - Equipment behavior and specialized equipment data are not implemented.

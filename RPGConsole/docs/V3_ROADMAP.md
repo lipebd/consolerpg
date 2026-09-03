@@ -195,8 +195,9 @@ The implementation must preserve stable IDs, strict startup validation and separ
 
 ## 6. Exploration reward pools
 
-* [ ] Rename or generalize the current `ITEM` exploration event to `REWARD`.
-* [ ] Generalize encounter area restrictions for reuse by reward pools.
+* [x] Convert unavailable merchant rolls to `NOTHING`.
+* [x] Rename or generalize the current `ITEM` exploration event to `REWARD`.
+* [x] Generalize encounter area restrictions for reuse by reward pools.
 * [ ] Define `exploration_rewards.txt`.
 * [ ] Store the scenario ID.
 * [ ] Store the normal, special or unrestricted area restriction.
@@ -217,9 +218,26 @@ The implementation must preserve stable IDs, strict startup validation and separ
 * [ ] Create distinct normal and special-area pools for Gruta Relamparrocha.
 * [ ] Test item and gold rewards independently.
 * [ ] Test pools whose weights do not total 100.
+* [x] Rename `itemChance` to `rewardChance` across settings, loaders and external scenario data.
+* [ ] Rename `EncounterAreaRestriction` to `ExplorationAreaRestriction`.
+* [ ] Move the generalized area restriction to the exploration package.
+* [ ] Include `ANY` entries in both normal and special eligible pools.
+* [ ] Treat reward pools as repeatable and exclude unique, narrative and quest rewards.
+* [ ] Reject only completely identical reward entries.
+* [ ] Allow the same item in multiple entries when another field differs.
+* [ ] Reject zero-weight entries and use comments to disable rewards temporarily.
+* [ ] Reject a missing normal pool when reward events are possible.
+* [ ] Reject a missing special pool when special reward events are possible.
+* [ ] Keep reward selection independent from battle-drop rolls.
+* [ ] Preserve independent rolls for every enemy drop entry.
+* [ ] Add `pelo_lupino` as a basic material item for pool validation.
+* [ ] Test `ANY` entries combined with area-specific entries.
+* [ ] Test exact duplicate rejection.
+* [ ] Test missing-pool validation.
 
 ## 7. World and scenario menus
 
+* [ ] Review the inventory category menu so every item category remains visible and empty-category messages appear only after the category is selected.
 * [ ] Refactor field and dungeon menus into logical groups.
 * [ ] Add the `[X] Status` shortcut outside battle.
 * [ ] Keep party status accessible from every world scenario.
@@ -402,10 +420,17 @@ The implementation must preserve stable IDs, strict startup validation and separ
 * [ ] Add New Game and Continue options to the title screen.
 * [ ] Prevent partial state changes when loading fails.
 * [ ] Test save and load after restarting the application.
+* [ ] Define the maximum owned gold quantity.
+* [ ] Define the maximum owned quantity of each item.
+* [ ] Keep total inventory capacity unlimited while enforcing numeric quantity limits.
+* [ ] Decide whether gains exceeding a limit are rejected, capped or partially granted.
+* [ ] Prevent integer overflow during gold and inventory quantity changes.
+* [ ] Validate saved gold and item quantities before restoring state.
+* [ ] Reject negative or out-of-range resource quantities in save data.
 
 ## 17. Exploration decisions still under study
 
-* [ ] Decide whether special areas may generate the `Nothing` event.
+* [x] Keep special areas eligible for the `Nothing` event.
 * [ ] Decide whether some special areas guarantee a specific event.
 * [ ] Evaluate exploration checkpoints.
 * [ ] Evaluate camps and temporary recovery.
@@ -437,6 +462,7 @@ The implementation must preserve stable IDs, strict startup validation and separ
 * [ ] Test save and load.
 * [ ] Run a complete new-game playthrough.
 * [ ] Test the portable build outside the repository.
+* [ ] Test gold and per-item quantity boundaries, overflow attempts and invalid save values.
 
 ## 19. Documentation and V3 release
 
