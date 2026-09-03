@@ -1,5 +1,6 @@
 package rpg.world;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -175,35 +176,32 @@ public class World {
 	}
 
 	private List<ScenarioAction> getAvailableScenarioActions() {
-		boolean travelAvailable = travelProgress.hasUnlockedRoutesFrom(currentScenario.getId());
+		List<ScenarioAction> availableActions = new ArrayList<>();
 
-		if (!(currentScenario instanceof CombatScenario)) {
-			if (travelAvailable) {
-				return List.of(ScenarioAction.TRAVEL, ScenarioAction.INVENTORY, ScenarioAction.VIEW_STATUS);
+		boolean combatScenarioInProgress = currentScenario instanceof CombatScenario
+				&& (explorationSession == null || !explorationSession.isComplete());
+
+		if (combatScenarioInProgress) {
+			if (currentScenario instanceof Dungeon && explorationSession != null
+					&& explorationSession.isAtFinalPosition()) {
+				availableActions.add(ScenarioAction.FACE_BOSS);
+
+			} else {
+				availableActions.add(ScenarioAction.EXPLORE);
+
+				if (hasAvailableScenarioBranch()) {
+					availableActions.add(ScenarioAction.FOLLOW_BRANCH);
+				}
 			}
 
-			return List.of(ScenarioAction.INVENTORY, ScenarioAction.VIEW_STATUS);
+		} else if (travelProgress.hasUnlockedRoutesFrom(currentScenario.getId())) {
+			availableActions.add(ScenarioAction.TRAVEL);
 		}
 
-		if (explorationSession != null && explorationSession.isComplete()) {
-			if (travelAvailable) {
-				return List.of(ScenarioAction.TRAVEL, ScenarioAction.INVENTORY, ScenarioAction.VIEW_STATUS);
-			}
+		availableActions.add(ScenarioAction.INVENTORY);
+		availableActions.add(ScenarioAction.VIEW_STATUS);
 
-			return List.of(ScenarioAction.INVENTORY, ScenarioAction.VIEW_STATUS);
-		}
-
-		if (currentScenario instanceof Dungeon && explorationSession != null
-				&& explorationSession.isAtFinalPosition()) {
-			return List.of(ScenarioAction.FACE_BOSS, ScenarioAction.INVENTORY, ScenarioAction.VIEW_STATUS);
-		}
-
-		if (hasAvailableScenarioBranch()) {
-			return List.of(ScenarioAction.EXPLORE, ScenarioAction.FOLLOW_BRANCH, ScenarioAction.INVENTORY,
-					ScenarioAction.VIEW_STATUS);
-		}
-
-		return List.of(ScenarioAction.EXPLORE, ScenarioAction.INVENTORY, ScenarioAction.VIEW_STATUS);
+		return List.copyOf(availableActions);
 	}
 
 	private boolean hasAvailableScenarioBranch() {

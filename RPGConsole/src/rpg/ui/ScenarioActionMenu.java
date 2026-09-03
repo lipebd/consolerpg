@@ -23,10 +23,16 @@ public final class ScenarioActionMenu {
 			System.out.println("\nO que deseja fazer?");
 
 			for (int index = 0; index < actions.size(); index++) {
+				ScenarioAction action = actions.get(index);
 
-				System.out.print("[" + (index + 1) + "] " + actions.get(index) + " | ");
+				if (index > 0 && startsNewActionGroup(action)) {
+					System.out.println();
+				}
+
+				System.out.println("[" + (index + 1) + "] " + action);
 			}
 
+			System.out.println();
 			System.out.println("[0] Encerrar jogo");
 			System.out.print("> ");
 
@@ -51,4 +57,9 @@ public final class ScenarioActionMenu {
 			}
 		}
 	}
+
+	private boolean startsNewActionGroup(ScenarioAction action) {
+		return action == ScenarioAction.TRAVEL || action == ScenarioAction.INVENTORY;
+	}
+
 }
