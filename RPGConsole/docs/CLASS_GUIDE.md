@@ -241,7 +241,6 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
-| `EncounterAreaRestriction` | Enum de domínio | Define se uma entrada pode aparecer somente em área normal, somente em área especial ou em qualquer uma. É carregada de `encounters.txt` e aplicada por `EncounterGenerator`. |
 | `EncounterEntry` | Definição de disponibilidade | Representa uma linha de `encounters.txt`: cenário, inimigo, intervalo de posições, peso, limite de cópias e restrição de área. Não representa uma batalha já criada. |
 | `EncounterLoader` | Carregamento de dados | Lê `encounters.txt`, converte os campos, valida referências por meio de `EnemyCatalog` e registra `EncounterEntry` em `EncounterCatalog`. |
 | `EncounterCatalog` | Catálogo | Agrupa e fornece as entradas cadastradas para cada cenário. É consultado por `EncounterGenerator` durante uma batalha aleatória. |
@@ -263,8 +262,9 @@ EncounterGenerator = quem sorteia o grupo concreto
 |---|---|---|
 | `ExplorationSettings` | Configuração imutável | Agrupa comprimento da exploração, chances de eventos, chance de área especial, limites do grupo inimigo e mensagens de área. É carregada por `CombatScenarioLoader`, armazenada em `CombatScenarioDefinition` e usada pelo cenário de execução e por `ExplorationSession`. |
 | `ExplorationSession` | Estado mutável | Guarda a posição atual, conclusão da exploração e ocorrências únicas da sessão, como mercador e épico já oferecidos. Começa na posição 1, impede avanço além do final e separa chegar à última posição de concluir o cenário. |
-| `ExplorationEventType` | Enum de domínio | Define os resultados possíveis de uma exploração, como batalha, item, mercador, encontro épico ou nada. É produzido por `ExplorationEventGenerator` e interpretado por `World`. |
+| `ExplorationEventType` | Enum de domínio | Define os resultados possíveis de uma exploração, como batalha, recompensa, mercador, encontro épico ou nada. É produzido por `ExplorationEventGenerator` e interpretado por `World`. |
 | `ExplorationEventGenerator` | Gerador aleatório | Recebe `ExplorationSettings` e o estado de disponibilidade de eventos únicos, realiza o sorteio ponderado e devolve um `ExplorationEventType`. Não executa a consequência do evento; essa responsabilidade pertence a `World`. |
+| `ExplorationAreaRestriction` | Enum de domínio compartilhado | Define se uma entrada é elegível somente em área normal, somente em área especial ou em ambas. É reutilizada por encontros e recompensas de exploração. |
 
 ### Diferença essencial
 
@@ -274,6 +274,26 @@ ExplorationSession  = progresso atual do jogador nessas regras
 ```
 
 ---
+
+## Pacote `rpg.world.rewards`
+
+| Classe | Categoria | Finalidade e relações principais |
+|---|---|---|
+| `ExplorationRewardType` | Enum de domínio | Define os tipos de recompensa de exploração atualmente suportados: item e ouro. |
+| `ExplorationRewardEntry` | Definição de pool | Representa uma linha de `exploration_rewards.txt`, contendo tipo, ID opcional, intervalo de quantidade, peso relativo e restrição de área. |
+| `ExplorationRewardLoader` | Carregamento de dados | Lê `exploration_rewards.txt`, valida cenários, itens, campos, duplicatas e pools obrigatórios e registra as entradas no catálogo. |
+| `ExplorationRewardCatalog` | Catálogo | Agrupa entradas por cenário e fornece aquelas permitidas para a área normal ou especial atual. |
+| `ExplorationRewardGenerator` | Gerador aleatório | Seleciona exatamente uma entrada elegível por peso relativo e sorteia sua quantidade dentro do intervalo configurado. |
+| `ExplorationReward` | Resultado de execução | Representa a recompensa concreta já selecionada, pronta para ser aplicada por `World` ao inventário ou ao ouro do grupo. |
+
+### Diferença essencial
+
+```text
+ExplorationRewardEntry     = uma possibilidade configurada no pool
+ExplorationRewardCatalog   = onde as possibilidades estão registradas
+ExplorationRewardGenerator = quem seleciona uma entrada e sua quantidade
+ExplorationReward          = o resultado concreto do sorteio
+```
 
 ## Pacote `rpg.world.scenarios`
 
@@ -400,7 +420,8 @@ World                 = resolve o destino e aplica sua posição de chegada
 | Sorteio de inimigos | `EncounterGenerator` | `EncounterCatalog` → filtros/pesos → definições |
 | Execução da luta | `Battle` | ordem de turnos → ações → `BattleResult` |
 | Preparação da luta | `BattleCoordinator` | definições → grupo → `Battle` → recompensas |
-| Recompensas | `BattleRewardService` | inimigos derrotados → `BattleRewards` |
+| Recompensas de batalha | `BattleRewardService` | inimigos derrotados → `BattleRewards` |
+| Recompensas de exploração | `ExplorationRewardGenerator` | `ExplorationRewardCatalog` → filtros/pesos → `ExplorationReward` → `Party` |
 | Posição no mapa | `ExplorationSession` | posição atual → resolução → avanço/conclusão |
 | Chances da exploração | `ExplorationSettings` | carregadas de `combat_scenarios.txt` |
 | Criação dos mapas | `ScenarioFactory` | catálogos de definição → cenários de execução |

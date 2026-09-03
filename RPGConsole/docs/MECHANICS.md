@@ -502,18 +502,20 @@ Intermediate exploration positions may become special areas according to the sce
 Special areas:
 
 - Display a scenario-specific message.
-- Use their own encounter restrictions.
-- May contain enemies unavailable in normal areas.
+- Filter encounters and exploration rewards according to their area restrictions.
+- May contain enemies and rewards unavailable in normal areas.
 
-Encounter restrictions are:
+Area restrictions are:
 
-- `NORMAL_ONLY`
-- `SPECIAL_ONLY`
-- `ANY`
+- `NORMAL_ONLY`: eligible only in normal areas.
+- `SPECIAL_ONLY`: eligible only in special areas.
+- `ANY`: eligible in both area types.
+
+`ANY` entries complement the entries restricted to the current area instead of forming a separate pool.
 
 The first and final positions are not randomly converted into special areas.
 
-Special areas may currently produce the `Nothing` event. Changing this rule remains a V3 design decision.
+Special areas may produce the `Nothing` event normally.
 
 ## Exploration events
 
@@ -525,13 +527,11 @@ Current exploration events include:
 - Merchant.
 - Epic encounter.
 
-A reward can be either gold or item.
-
 The total configured event chance cannot exceed 100%.
 
 Any remaining percentage represents the `Nothing` event.
 
-A merchant may appear at most once during one exploration session.
+A merchant may appear at most once during one exploration session. If another roll falls within the merchant range after that encounter, it becomes `Nothing`.
 
 An epic encounter:
 
@@ -539,6 +539,37 @@ An epic encounter:
 - May be offered at most once per exploration session.
 - Is optional.
 - Allows the party to avoid the confrontation.
+
+A later epic-encounter roll becomes `Nothing` after the encounter has already been offered.
+
+## Exploration rewards
+
+The scenario's `rewardChance` determines whether an exploration reward event occurs. It does not determine which reward is granted.
+
+When a reward event occurs:
+
+1. Entries are filtered by scenario and current area type.
+2. `ANY` entries are combined with entries specific to that area.
+3. Exactly one eligible entry is selected using its relative weight.
+4. Its quantity is randomized inclusively between the configured minimum and maximum.
+5. The selected item or gold is added directly to the party's shared resources.
+
+Reward weights:
+
+- Are relative selection weights.
+- Do not represent percentages.
+- Do not need to total 100.
+- Exist only within the eligible pool for the current scenario and area.
+
+Item rewards reference runtime items by their stable IDs and are added to the shared inventory.
+
+Gold rewards do not use a reward ID and are added directly to party gold.
+
+Exploration rewards are repeatable. Unique, narrative and quest rewards are not part of these pools.
+
+A scenario with zero `rewardChance` does not require reward entries. When rewards are possible, every normal or special area type that may occur must have at least one eligible entry.
+
+Exploration reward selection is independent from battle rewards. Every enemy drop entry continues to perform its own independent roll after battle.
 
 ## Dungeon bosses
 

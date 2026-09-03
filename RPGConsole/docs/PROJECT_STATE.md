@@ -80,7 +80,7 @@ enemies.txt
 - Exploration advances through numbered positions.
 - Each combat scenario defines its exploration length and event chances.
 - Scenario-specific messages for normal and special areas.
-- Supported random events: nothing, battle, item, merchant and optional epic encounter.
+- Supported random events: nothing, battle, reward, merchant and optional epic encounter.
 - Merchant limited to one appearance per exploration session.
 - Epic encounter limited to one offer per dungeon session.
 - Exploration progress survives battles.
@@ -290,6 +290,40 @@ Revival is applied before ordinary HP recovery. Items are removed only when at l
 
 Purification data is loaded and preserved, but the corresponding runtime effect depends on the future status-effect system.
 
+## External exploration reward pools
+
+Exploration reward entries are loaded from `data/exploration_rewards.txt`.
+
+The current flow is:
+
+```text
+exploration_rewards.txt
+    -> ExplorationRewardLoader
+    -> ExplorationRewardCatalog
+    -> ExplorationRewardGenerator
+    -> ExplorationReward
+    -> Party Inventory or gold
+```
+
+The system currently supports:
+
+- Item rewards resolved through stable IDs in `ItemCatalog`.
+- Gold rewards without reward IDs.
+- Inclusive minimum and maximum quantity ranges.
+- Relative weighted selection.
+- Normal-only, special-only and unrestricted area entries.
+- Exactly one selected entry per reward event.
+- Repeatable rewards.
+- Independent selection from enemy battle drops.
+
+`ExplorationRewardLoader` validates combat-scenario references, item references, reward-type requirements, quantities, weights, exact duplicates and required area pools during application initialization.
+
+`ExplorationAreaRestriction` is shared by encounter and reward entries.
+
+Verdes Ermos currently combines area-specific Merumã entries with unrestricted Pelo Lupino and gold entries. `pelo_lupino` is a basic material item used to validate rewards from a category different from consumables.
+
+Combat scenarios with zero `rewardChance`, such as Gruta de Relamparrocha, do not require reward entries.
+
 ## Inventory interface
 
 The general inventory and battle item selection use separate menus.
@@ -334,8 +368,6 @@ Recovery power is not a character attribute. Recovery values belong to skills or
 
 ## Current limitations and temporary implementations
 
-- The exploration `REWARD` event still resolves the fixed `meruma` ID from `ItemCatalog`.
-- Scenario-specific item and gold rewards are not yet loaded from external reward pools.
 - The merchant event has no merchandise or transaction system.
 - Equipment behavior and specialized equipment data are not implemented.
 - Skill-scroll behavior and specialized skill-scroll data are not implemented.
@@ -350,14 +382,9 @@ Recovery power is not a character attribute. Recovery values belong to skills or
 
 ## Current next step
 
-Complete V2 release preparation:
+Begin V3 roadmap section 7: world and scenario menus.
 
-1. Update project documentation.
-2. Generate and test the V2 release build.
-3. Create the V2 Git tag.
-4. Open the V3 development branch.
-
-The first V3 implementation goal is external scenario loading, removing Bree, Verdes Ermos and Gruta de Relamparrocha construction from `Main`.
+The first planned review is to keep every item category visible in the general inventory and display an empty-category message only after the player selects that category.
 
 ## Important conventions
 

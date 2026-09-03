@@ -91,7 +91,7 @@ Each valid encounter line contains exactly 7 fields:
 | 4 | Maximum position | `int` | `5` |
 | 5 | Selection weight | `int` | `50` |
 | 6 | Maximum copies | `int` | `2` |
-| 7 | Area restriction | `EncounterAreaRestriction` | `ANY` |
+| 7 | Area restriction | `ExplorationAreaRestriction` | `ANY` |
 
 Header:
 
@@ -119,7 +119,6 @@ Rules:
 - Weights are compared only among entries eligible for the current scenario, position and area type.
 - Eligible weights do not need to total 100.
 - `maxCopies` limits how many copies of the enemy may join one generated enemy group.
-- The current single-enemy battle does not use `maxCopies` yet; it is stored for the upcoming group generator.
 - The referenced enemy ID must exist in `EnemyCatalog`.
 
 Loading flow:
@@ -130,6 +129,74 @@ encounters.txt
     -> EncounterCatalog
     -> EncounterGenerator
     -> EnemyDefinition
+```
+
+## Exploration reward definitions
+
+File:
+
+`data/exploration_rewards.txt`
+
+Each valid exploration reward line contains exactly 7 fields:
+
+| Position | Field | Java type | Example |
+|---:|---|---|---|
+| 1 | Scenario ID | `String` | `verdes_ermos` |
+| 2 | Reward type | `ExplorationRewardType` | `ITEM` |
+| 3 | Reward ID | `String` | `meruma` |
+| 4 | Minimum quantity | `int` | `1` |
+| 5 | Maximum quantity | `int` | `2` |
+| 6 | Weight | `int` | `60` |
+| 7 | Area restriction | `ExplorationAreaRestriction` | `NORMAL_ONLY` |
+
+Header:
+
+```text
+# scenarioId;rewardType;rewardId;minQuantity;maxQuantity;weight;areaRestriction
+```
+
+Examples:
+
+```text
+verdes_ermos;ITEM;meruma;1;2;60;NORMAL_ONLY
+verdes_ermos;ITEM;pelo_lupino;1;3;25;ANY
+verdes_ermos;GOLD;;5;15;15;ANY
+```
+
+Rules:
+
+- Blank lines and lines beginning with `#` are ignored.
+- Every active definition must contain exactly 7 fields.
+- `scenarioId` must reference an existing combat scenario.
+- `rewardType` must be `ITEM` or `GOLD`.
+- `ITEM` rewards require a non-empty `rewardId` referencing an item in the runtime `ItemCatalog`.
+- `GOLD` rewards require an empty `rewardId`.
+- `minQuantity` must be at least 1.
+- `maxQuantity` cannot be lower than `minQuantity`.
+- `weight` must be greater than zero.
+- Weights are relative and do not need to total 100.
+- `areaRestriction` must be `NORMAL_ONLY`, `SPECIAL_ONLY` or `ANY`.
+- `ANY` entries are eligible in both normal and special areas and complement area-specific entries.
+- Exactly one eligible entry is selected for each exploration reward event.
+- The granted quantity is selected inclusively between `minQuantity` and `maxQuantity`.
+- Entries are grouped by scenario and filtered according to the current area type.
+- Completely identical entries are rejected.
+- The same item may appear in multiple entries when at least one other field differs.
+- Rewards are repeatable and do not represent unique, narrative or quest rewards.
+- A scenario with a positive `rewardChance` must have at least one eligible entry for every area type that can occur.
+- A scenario with zero `rewardChance` does not require a reward pool.
+- Temporarily disabled entries should be commented out instead of receiving zero weight.
+- Exploration reward selection remains independent from enemy battle-drop rolls.
+
+Loading and selection flow:
+
+```text
+exploration_rewards.txt
+    -> ExplorationRewardLoader
+    -> ExplorationRewardCatalog
+    -> ExplorationRewardGenerator
+    -> ExplorationReward
+    -> shared Inventory or party gold
 ```
 
 ## Enemy drop definitions

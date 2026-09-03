@@ -198,42 +198,42 @@ The implementation must preserve stable IDs, strict startup validation and separ
 * [x] Convert unavailable merchant rolls to `NOTHING`.
 * [x] Rename or generalize the current `ITEM` exploration event to `REWARD`.
 * [x] Generalize encounter area restrictions for reuse by reward pools.
-* [ ] Define `exploration_rewards.txt`.
-* [ ] Store the scenario ID.
-* [ ] Store the normal, special or unrestricted area restriction.
-* [ ] Support `ITEM` reward entries.
-* [ ] Support `GOLD` reward entries.
-* [ ] Store relative selection weights.
-* [ ] Store minimum and maximum quantities.
-* [ ] Require an item ID for item rewards.
-* [ ] Reject an item ID for gold rewards.
-* [ ] Validate referenced item IDs.
-* [ ] Reject invalid quantities and weights.
-* [ ] Build independent pools for each scenario and area type.
-* [ ] Select exactly one weighted entry per reward event.
-* [ ] Randomize its quantity within the configured range.
-* [ ] Add item rewards directly to shared inventory.
-* [ ] Add gold rewards directly to shared party gold.
-* [ ] Create distinct normal and special-area pools for Verdes Ermos.
-* [ ] Create distinct normal and special-area pools for Gruta Relamparrocha.
-* [ ] Test item and gold rewards independently.
-* [ ] Test pools whose weights do not total 100.
+* [x] Define `exploration_rewards.txt`.
+* [x] Store the scenario ID.
+* [x] Store the normal, special or unrestricted area restriction.
+* [x] Support `ITEM` reward entries.
+* [x] Support `GOLD` reward entries.
+* [x] Store relative selection weights.
+* [x] Store minimum and maximum quantities.
+* [x] Require an item ID for item rewards.
+* [x] Reject an item ID for gold rewards.
+* [x] Validate referenced item IDs.
+* [x] Reject invalid quantities and weights.
+* [x] Build independent pools for each scenario and area type.
+* [x] Select exactly one weighted entry per reward event.
+* [x] Randomize its quantity within the configured range.
+* [x] Add item rewards directly to shared inventory.
+* [x] Add gold rewards directly to shared party gold.
+* [x] Create distinct normal and special-area pools for Verdes Ermos.
+* [x] Require no reward pool when a scenario has zero reward chance.
+* [x] Test item and gold rewards independently.
+* [x] Test pools whose weights do not total 100.
 * [x] Rename `itemChance` to `rewardChance` across settings, loaders and external scenario data.
-* [ ] Rename `EncounterAreaRestriction` to `ExplorationAreaRestriction`.
-* [ ] Move the generalized area restriction to the exploration package.
-* [ ] Include `ANY` entries in both normal and special eligible pools.
-* [ ] Treat reward pools as repeatable and exclude unique, narrative and quest rewards.
-* [ ] Reject only completely identical reward entries.
-* [ ] Allow the same item in multiple entries when another field differs.
-* [ ] Reject zero-weight entries and use comments to disable rewards temporarily.
-* [ ] Reject a missing normal pool when reward events are possible.
-* [ ] Reject a missing special pool when special reward events are possible.
-* [ ] Keep reward selection independent from battle-drop rolls.
-* [ ] Preserve independent rolls for every enemy drop entry.
-* [ ] Add `pelo_lupino` as a basic material item for pool validation.
-* [ ] Test `ANY` entries combined with area-specific entries.
-* [ ] Test exact duplicate rejection.
-* [ ] Test missing-pool validation.
+* [x] Rename `EncounterAreaRestriction` to `ExplorationAreaRestriction`.
+* [x] Move the generalized area restriction to the exploration package.
+* [x] Include `ANY` entries in both normal and special eligible pools.
+* [x] Treat reward pools as repeatable and exclude unique, narrative and quest rewards.
+* [x] Reject only completely identical reward entries.
+* [x] Allow the same item in multiple entries when another field differs.
+* [x] Reject zero-weight entries and use comments to disable rewards temporarily.
+* [x] Reject a missing normal pool when reward events are possible.
+* [x] Reject a missing special pool when special reward events are possible.
+* [x] Keep reward selection independent from battle-drop rolls.
+* [x] Preserve independent rolls for every enemy drop entry.
+* [x] Add `pelo_lupino` as a basic material item for pool validation.
+* [x] Test `ANY` entries combined with area-specific entries.
+* [x] Test exact duplicate rejection.
+* [x] Test missing-pool validation.
 
 ## 7. World and scenario menus
 

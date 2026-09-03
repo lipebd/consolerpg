@@ -31,8 +31,9 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.enemies` | Enemy definitions and external enemy/drop loading | `EnemyDefinition`, `EnemyCatalog`, `EnemyLoader`, `EnemyDropCatalog`, `EnemyDropLoader` |
 | `rpg.world` | Active world state and high-level coordination | `World` |
 | `rpg.world.scenarios` | Scenario hierarchy and scenario registry | `Scenario`, `CombatScenario`, `Field`, `Dungeon`, `City`, `DungeonSettings`, `ScenarioCatalog`, `ScenarioAction` |
-| `rpg.world.encounters` | Encounter availability and weighted group generation | `EncounterEntry`, `EncounterCatalog`, `EncounterLoader`, `EncounterGenerator`, `EncounterAreaRestriction` |
-| `rpg.world.exploration` | Exploration configuration, progress and event selection | `ExplorationSettings`, `ExplorationSession`, `ExplorationEventGenerator`, `ExplorationEventType` |
+| `rpg.world.encounters` | Encounter availability and weighted group generation | `EncounterEntry`, `EncounterCatalog`, `EncounterLoader`, `EncounterGenerator` |
+| `rpg.world.exploration` | Exploration configuration, progress and event selection | `ExplorationSettings`, `ExplorationSession`, `ExplorationEventGenerator`, `ExplorationEventType`, `ExplorationAreaRestriction` |
+| `rpg.world.rewards` | External exploration reward pools, validation and weighted selection | `ExplorationRewardEntry`, `ExplorationRewardCatalog`, `ExplorationRewardLoader`, `ExplorationRewardGenerator`, `ExplorationReward`, `ExplorationRewardType` |
 | `rpg.world.travel` | Directed routes between scenarios | `TravelCatalog` |
 | `rpg.ui` | Console menus, target selection and information screens | `TitleScreen`, `GameOverScreen`, `InventoryMenu`, `BattleItemMenu`, `RecoveryItemUseMenu`, `TravelMenu`, `ScenarioActionMenu`, `EpicEncounterMenu`, `BattleRewardScreen`, `BattleTurnOrderScreen`, `PartyStatusMenu`, `CharacterStatusMenu` |
 
@@ -292,11 +293,13 @@ ExplorationEventGenerator selects event
 World dispatches the event consequence
 ```
 
+A merchant roll becomes `NOTHING` after the session has already encountered its merchant.
+
 `ExplorationSettings` defines:
 
 - Exploration length.
 - Battle chance.
-- Item chance.
+- Reward chance.
 - Merchant chance.
 - Epic encounter chance.
 - Special-area chance.
@@ -315,6 +318,42 @@ It also ensures that:
 - A failed final-boss attempt can return the session to the previous position.
 
 The final dungeon position bypasses random event generation and starts the configured boss encounter.
+
+## Exploration reward architecture
+
+Exploration rewards use a separate data flow from battle rewards:
+
+```text
+data/exploration_rewards.txt
+        ↓
+ExplorationRewardLoader
+        ↓
+ExplorationRewardCatalog
+        ↓
+ExplorationRewardGenerator
+        ↓
+ExplorationReward
+        ↓
+World grants an Item or gold to Party
+```
+
+`ExplorationRewardEntry` stores one immutable pool entry containing:
+
+- Reward type.
+- Optional item ID.
+- Minimum and maximum quantity.
+- Relative selection weight.
+- Area restriction.
+
+`ExplorationRewardLoader` validates scenario references, item references, entry fields, exact duplicates and the availability of every required normal or special-area pool.
+
+`ExplorationRewardCatalog` groups entries by scenario ID and returns those eligible for the current area type. `ANY` entries remain eligible in both normal and special areas.
+
+`ExplorationRewardGenerator` selects exactly one eligible entry according to relative weights and generates an inclusive random quantity within its configured range.
+
+`ExplorationReward` represents the selected runtime result. `World` resolves item IDs through `ItemCatalog`, adds item quantities to the shared `Inventory`, and adds gold directly to `Party`.
+
+Exploration rewards are repeatable and remain independent from the individual drop rolls performed after battles.
 
 ## Battle architecture
 
@@ -451,7 +490,7 @@ Examples:
 
 This prepares the project for a future collection of independent skill effects, where one skill may apply damage, healing, buffs and debuffs using different targets.
 
-## Reward architecture
+## Battle reward architecture
 
 `BattleRewardService` calculates:
 
@@ -537,7 +576,6 @@ Important UI components include:
 
 The following implementations remain intentionally temporary:
 
-- The exploration `REWARD` event still resolves the fixed `meruma` ID from the runtime `ItemCatalog`. Scenario-specific item and gold selection will move to external exploration reward pools.
 - Only base item data and recovery-item behavior are currently externalized. Equipment and skill-scroll specialization will be defined when their corresponding systems exist.
 - Recovery-item purification is represented in external data and runtime definitions, but it cannot remove effects until the status-effect system is implemented.
 - The merchant has no merchandise.

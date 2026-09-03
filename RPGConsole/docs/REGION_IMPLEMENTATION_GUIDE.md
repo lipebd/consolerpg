@@ -116,7 +116,51 @@ Regras importantes:
 - `maxEnemies` não pode ser menor que `minEnemies` nem maior que o limite suportado pela batalha, atualmente 3.
 - Cidades não recebem uma linha neste arquivo.
 
-## 6. Configure os chefes da masmorra
+## 6. Configure o pool de recompensas
+
+Esta etapa vale para `FIELD` e `DUNGEON` quando `rewardChance` for maior que zero.
+
+Arquivo: `data/exploration_rewards.txt`
+
+```text
+# scenarioId;rewardType;rewardId;minQuantity;maxQuantity;weight;areaRestriction
+```
+
+Exemplos:
+
+```text
+verdes_ermos;ITEM;meruma;1;2;60;NORMAL_ONLY
+verdes_ermos;ITEM;pelo_lupino;1;3;25;ANY
+verdes_ermos;GOLD;;5;15;15;ANY
+```
+
+Tipos de recompensa:
+
+- `ITEM`: exige um `rewardId` existente em `items.txt`.
+- `GOLD`: exige que `rewardId` permaneça vazio.
+
+Restrições de área:
+
+- `NORMAL_ONLY`: somente na área normal.
+- `SPECIAL_ONLY`: somente na área especial.
+- `ANY`: nas duas áreas.
+
+Regras importantes:
+
+- `minQuantity` deve ser pelo menos 1.
+- `maxQuantity` não pode ser menor que `minQuantity`.
+- `weight` deve ser maior que zero.
+- Os pesos são relativos e não precisam somar 100.
+- Exatamente uma entrada elegível é selecionada em cada evento de recompensa.
+- Entradas `ANY` complementam as entradas específicas da área atual.
+- Se `rewardChance` for zero, a região não precisa possuir entradas.
+- Se recompensas forem possíveis, toda área normal ou especial que possa ocorrer precisa possuir ao menos uma entrada elegível.
+- Entradas completamente idênticas não são permitidas.
+- O mesmo item pode aparecer em várias entradas quando algum outro campo for diferente.
+- Para desativar temporariamente uma recompensa, comente a linha em vez de definir peso zero.
+- Estes pools são repetíveis e não devem ser usados para recompensas únicas, narrativas ou de quests.
+
+## 7. Configure os chefes da masmorra
 
 Esta etapa vale apenas para `DUNGEON`.
 
@@ -144,7 +188,7 @@ Regras:
 
 Na última posição de uma masmorra, a exploração não gera um encontro aleatório: o jogador deve usar a ação de enfrentar o boss. A exploração só é concluída após a vitória.
 
-## 7. Monte a tabela de encontros
+## 8. Monte a tabela de encontros
 
 Esta etapa vale apenas para `FIELD` e `DUNGEON`.
 
@@ -179,7 +223,7 @@ Regras importantes:
 - Um líder garantido pode ocupar sozinho a penúltima posição quando essa for a intenção do cenário.
 - Chefes e épicos configurados em `dungeons.txt` não devem ser adicionados como encontros comuns.
 
-## 8. Crie as rotas e bifurcações
+## 9. Crie as rotas e bifurcações
 
 ### Rotas externas
 
@@ -254,7 +298,7 @@ Regras importantes:
 - Quando o caminho inverso precisar retornar a outra posição, configure essa chegada em `travel_routes.txt`.
 - Quebras de linha nos textos devem ser representadas por `\n`.
 
-## 9. Configure drops, se necessário
+## 10. Configure drops, se necessário
 
 Arquivo opcional: `data/enemy_drops.txt`
 
@@ -270,23 +314,24 @@ lobermo;meruma;50;1;1
 
 O inimigo e o item referenciados precisam existir em seus respectivos catálogos.
 
-## 10. Ordem recomendada de implementação
+## 11. Ordem recomendada de implementação
 
 Para evitar referências quebradas, siga esta ordem:
 
 1. Defina o ID e o tipo da região.
-2. Cadastre os inimigos novos em `enemies.txt`.
+2. Cadastre novos inimigos e itens, quando necessários, em seus arquivos correspondentes.
 3. Cadastre a região em `scenarios.txt`.
 4. Se for uma região de combate, adicione `combat_scenarios.txt`.
-5. Se for uma masmorra, adicione `dungeons.txt`.
-6. Adicione os encontros em `encounters.txt`.
-7. Adicione drops opcionais em `enemy_drops.txt`.
-8. Por último, conecte a região em `travel_routes.txt`.
-9. Inicialize o jogo e realize o teste manual.
+5. Se `rewardChance` for maior que zero, adicione as entradas necessárias em `exploration_rewards.txt`.
+6. Se for uma masmorra, adicione `dungeons.txt`.
+7. Adicione os encontros em `encounters.txt`.
+8. Adicione drops opcionais em `enemy_drops.txt`.
+9. Por último, conecte a região em `travel_routes.txt` e `scenario_branches.txt`, quando aplicável.
+10. Inicialize o jogo e realize o teste manual.
 
 Se precisar interromper o trabalho antes de concluir todas as etapas, não inicialize o jogo enquanto houver arquivos que referenciem dados ainda inexistentes.
 
-## 11. Checklist antes do commit
+## 12. Checklist antes do commit
 
 ### Todas as regiões
 
@@ -303,7 +348,11 @@ Se precisar interromper o trabalho antes de concluir todas as etapas, não inici
 - [ ] Todas as posições dos encontros são válidas.
 - [ ] Todos os inimigos dos encontros existem em `enemies.txt`.
 - [ ] Há candidatos suficientes para formar os grupos configurados.
-- [ ] As restrições `NORMAL_ONLY`, `SPECIAL_ONLY` e `ANY` correspondem às áreas corretas.
+- [ ] As restrições `NORMAL_ONLY`, `SPECIAL_ONLY` e `ANY` correspondem às áreas corretas nos encontros e pools de recompensa.
+- [ ] Se `rewardChance` for maior que zero, todas as áreas possíveis possuem ao menos uma recompensa elegível.
+- [ ] Todos os IDs de recompensas `ITEM` existem em `items.txt`.
+- [ ] Recompensas `GOLD` mantêm o campo `rewardId` vazio.
+- [ ] Quantidades e pesos das recompensas são maiores que zero e seus intervalos são válidos.
 
 ### Masmorras
 
@@ -324,8 +373,9 @@ Se precisar interromper o trabalho antes de concluir todas as etapas, não inici
 - [ ] Em masmorras, fugir do boss mantém o jogador na posição final.
 - [ ] Vencer o boss conclui a exploração e libera a viagem esperada.
 - [ ] `git diff --check` não aponta whitespace errors.
+- [ ] Recompensas de item e ouro respeitam cenário, área, peso e intervalo de quantidade.
 
-## 12. Diagnóstico rápido
+## 13. Diagnóstico rápido
 
 Para localizar todas as referências de uma região:
 
