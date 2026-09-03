@@ -329,33 +329,63 @@ The implementation must preserve stable IDs, strict startup validation and separ
 * [ ] Preserve the one-merchant-per-exploration-session rule.
 * [ ] Test fixed city shops and exploration merchants separately.
 
-## 10. Scenario discovery and city transport
+## 10. Scenario discovery and paid city travel
 
-* [ ] Add a separate city fast-travel action only when paid city transport is implemented.
-* [ ] Create runtime world-progression state.
+* [ ] Rename `TravelMenu` to `RouteMenu`.
+* [ ] Rename the existing `CombatScenarioAction.TRAVEL` action to `FOLLOW_ROUTE`.
+* [ ] Display the free adjacent-route action as `Seguir caminho`.
+* [ ] Rename route-menu fields and methods to remove travel ambiguity.
+* [ ] Keep `RouteMenu` exclusive to unlocked adjacent `TravelRouteDefinition` entries.
+* [ ] Add `CITY_TRANSPORT` as a separate city and combat-scenario action.
+* [ ] Display the paid city-travel action as `Viajar`.
+* [ ] Keep paid city travel separate from adjacent routes and route unlocking.
+* [ ] Create runtime `WorldProgress` state.
 * [ ] Record discovered scenario IDs.
-* [ ] Mark scenarios as discovered when first entered, including destinations reached through exploration branches.
-* [ ] Define city transport data and destination costs.
-* [ ] Assign a fixed transport cost to each destination city.
-* [ ] Keep early-game destinations cheaper than late-game destinations.
-* [ ] List only discovered destination cities.
-* [ ] Exclude the current city from its own destination list.
-* [ ] Keep city transport separate from adjacent exits.
-* [ ] Require payment for every city-to-city transport.
-* [ ] Prevent transport when the party cannot afford it.
-* [ ] Deduct gold only after a valid destination is selected.
-* [ ] Move the party directly to the destination city.
-* [ ] Preserve free adjacent travel to fields and dungeons.
-* [ ] Prepare discovered-scenario state for save data.
-* [ ] Test transport between Bree and another discovered city.
+* [ ] Mark the initial scenario as discovered.
+* [ ] Mark every scenario as discovered when first entered.
+* [ ] Cover destinations entered through routes, branches and paid travel.
 * [ ] Keep scenario discovery separate from route availability and access requirements.
-* [ ] Create stable world-progress flags for quests, story events and permanent unlocks.
-* [ ] Define reusable access requirements for routes, branches, portals and services.
-* [ ] Evaluate access requirements against party level, inventory, completed quests and world flags.
-* [ ] Support multiple simultaneous requirements for the same access point.
-* [ ] Decide whether unmet requirements hide an action or display it as blocked with a player-facing reason.
-* [ ] Replace blanket route unlocking with explicit progress triggers where required.
-* [ ] Prepare world flags, completed quests and route unlocks for save data.
+* [ ] Expose discovered IDs without exposing mutable internal state.
+* [ ] Prepare discovered-scenario state for future save data.
+* [ ] Define `city_transport.txt`.
+* [ ] Store the destination city scenario ID, fixed price and custom travel description.
+* [ ] Support literal `\n` in travel descriptions.
+* [ ] Create immutable city-transport definitions.
+* [ ] Create the city-transport loader and catalog.
+* [ ] Require every transport destination to reference an existing `CITY`.
+* [ ] Reject empty required fields, invalid prices and duplicate destination cities.
+* [ ] Configure Bree, Setegalhos, O Vão, Entrelugar, Deep Valley and Mist Suburb as transport destinations.
+* [ ] Use provisional destination prices of 25C, 50C, 75C, 100C, 125C and 150C.
+* [ ] Keep early-game destinations cheaper than late-game destinations.
+* [ ] Keep Reino de Altaneve out of runtime data until its scenario definition is approved.
+* [ ] Add a dedicated `CityTransportMenu`.
+* [ ] List only discovered and configured destination cities.
+* [ ] Exclude the current city when travel begins from a city.
+* [ ] Keep discovered destinations visible when the party cannot afford them.
+* [ ] Number only selectable discovered destinations.
+* [ ] Display unnumbered `--` slots for cities that remain undiscovered.
+* [ ] Derive the number of destination slots from registered `CITY` scenarios instead of a hardcoded total.
+* [ ] Display discovered destinations before empty slots.
+* [ ] Show prices and available party currency using the `C` symbol.
+* [ ] Use `C` as the numeric currency symbol throughout the current interface.
+* [ ] Keep the word `ouro` available for narrative text.
+* [ ] Omit the `Viajar` action when no valid destination city is available.
+* [ ] Allow paid city travel from cities, fields and dungeons.
+* [ ] Allow paid travel before a combat scenario's exploration is complete.
+* [ ] Keep paid travel unavailable during battles.
+* [ ] Request confirmation before charging the party.
+* [ ] Preserve party gold when travel is unaffordable or cancelled.
+* [ ] Deduct gold only after a valid destination and confirmation succeed.
+* [ ] Move the party directly to the selected destination city.
+* [ ] Display the destination's custom narrative travel description.
+* [ ] Discard an incomplete exploration session when paid travel leaves its scenario.
+* [ ] Preserve EXP, gold, items, bestiary analysis, discoveries, unlocks and all other permanent progress already obtained.
+* [ ] Create a fresh exploration session from the route-defined entry position when the abandoned scenario is entered again.
+* [ ] Preserve free adjacent travel to fields and dungeons.
+* [ ] Preserve iterative navigation across route and city-transport menus.
+* [ ] Test discovery through routes and exploration branches.
+* [ ] Test paid travel from a city and from an incomplete combat scenario.
+* [ ] Test destination filtering, empty slots, payment, cancellation, insufficient funds and permanent-progress preservation.
 
 ## 11. External skills and combat effects
 
@@ -481,12 +511,22 @@ The implementation must preserve stable IDs, strict startup validation and separ
 
 * [x] Keep special areas eligible for the `Nothing` event.
 * [ ] Decide whether some special areas guarantee a specific event.
+* [x] Preserve permanent gains when leaving a scenario while discarding its current exploration session.
 * [ ] Evaluate exploration checkpoints.
 * [ ] Evaluate camps and temporary recovery.
-* [ ] Decide which exploration state must survive leaving a scenario.
 * [ ] Decide how completed dungeons behave when revisited.
-* [ ] Decide whether optional epic encounters can return after being declined or defeated.
-* [ ] Evaluate replacing direct world utility actions with a consolidated menu after map, quest book, bestiary, party, journal and save-exit flows are implemented.
+
+### World flags and access requirements
+
+> **Deferred:** Implement after quests and the relevant progression systems provide real state to evaluate. Do not create placeholder requirement abstractions before then.
+
+* [ ] Create stable world-progress flags for quests, story events and permanent unlocks.
+* [ ] Define reusable access requirements for routes, branches, portals and services.
+* [ ] Evaluate access requirements against party level, inventory, completed quests and world flags.
+* [ ] Support multiple simultaneous requirements for the same access point.
+* [ ] Decide whether unmet requirements hide an action or display it as blocked with a player-facing reason.
+* [ ] Replace blanket route unlocking with explicit progress triggers where required.
+* [ ] Prepare world flags, completed quests and route unlocks for save data.
 
 ## 18. Validation and regression tests
 
