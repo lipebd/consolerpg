@@ -77,13 +77,21 @@ public final class CharacterStatusMenu {
 			}
 		}
 
-		waitForContinue();
+		waitForBack();
 	}
 
-	private void waitForContinue() {
-		System.out.println("\nPressione ENTER para voltar...");
+	private void waitForBack() {
+		while (true) {
+			System.out.println("\n[0] Voltar");
+			System.out.print("> ");
 
-		System.out.print("> ");
-		scanner.nextLine();
+			String choice = scanner.nextLine();
+
+			if (choice.equals("0")) {
+				return;
+			}
+
+			System.out.println("Opção inválida.");
+		}
 	}
 }
