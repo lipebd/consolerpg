@@ -1,0 +1,2 @@
+# id;scenarioId;name;description;price
+bree_inn;bree;INN de Bree;Uma estalagem simples e acolhedora, frequentada por viajantes que atravessam Bree.\nSeus quartos oferecem o descanso necessário antes da próxima jornada.;25

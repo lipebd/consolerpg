@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Scanner;
 
-import rpg.world.rewards.ExplorationRewardCatalog;
-import rpg.world.rewards.ExplorationRewardLoader;
 import rpg.characters.CharacterStats;
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
@@ -32,6 +30,10 @@ import rpg.world.branches.ScenarioBranchCatalog;
 import rpg.world.branches.ScenarioBranchLoader;
 import rpg.world.encounters.EncounterCatalog;
 import rpg.world.encounters.EncounterLoader;
+import rpg.world.inns.InnCatalog;
+import rpg.world.inns.InnLoader;
+import rpg.world.rewards.ExplorationRewardCatalog;
+import rpg.world.rewards.ExplorationRewardLoader;
 import rpg.world.scenarios.CombatScenarioDefinitionCatalog;
 import rpg.world.scenarios.CombatScenarioLoader;
 import rpg.world.scenarios.DungeonDefinitionCatalog;
@@ -51,6 +53,7 @@ public class Main {
 
 	public static void main(String[] args) {
 
+		InnCatalog innCatalog;
 		ExplorationRewardCatalog explorationRewardCatalog;
 		ItemCatalog itemCatalog;
 		RecoveryItemDefinitionCatalog recoveryItemDefinitionCatalog;
@@ -85,6 +88,10 @@ public class Main {
 			encounterCatalog = encounterLoader.load(Path.of("data", "encounters.txt"), enemyCatalog);
 			ScenarioLoader scenarioLoader = new ScenarioLoader();
 			ScenarioDefinitionCatalog scenarioDefinitionCatalog = scenarioLoader.load(Path.of("data", "scenarios.txt"));
+			InnLoader innLoader = new InnLoader();
+			innCatalog = innLoader.load(
+					Path.of("data", "inns.txt"),
+					scenarioDefinitionCatalog);
 			CombatScenarioLoader combatScenarioLoader = new CombatScenarioLoader();
 			CombatScenarioDefinitionCatalog combatScenarioDefinitionCatalog = combatScenarioLoader
 					.load(Path.of("data", "combat_scenarios.txt"), scenarioDefinitionCatalog);
@@ -185,17 +192,18 @@ public class Main {
 		bardo.learnSkill(reviveTodos);
 
 		World world = new World(
-		        party,
-		        currentScenario,
-		        scanner,
-		        itemCatalog,
-		        enemyCatalog,
-		        enemyDropCatalog,
-		        encounterCatalog,
-		        explorationRewardCatalog,
-		        scenarioCatalog,
-		        scenarioBranchCatalog,
-		        travelProgress
+				party,
+				currentScenario,
+				scanner,
+				itemCatalog,
+				enemyCatalog,
+				enemyDropCatalog,
+				encounterCatalog,
+				explorationRewardCatalog,
+				scenarioCatalog,
+				innCatalog,
+				scenarioBranchCatalog,
+				travelProgress
 		);
 
 		world.start();
