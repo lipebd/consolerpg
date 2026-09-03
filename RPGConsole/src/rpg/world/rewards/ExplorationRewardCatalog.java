@@ -29,7 +29,7 @@ public final class ExplorationRewardCatalog {
 				.anyMatch(existingEntry -> hasSameConfiguration(existingEntry, rewardEntry));
 
 		if (duplicateEntry) {
-			throw new IllegalArgumentException("Duplicate exploration reward entry " + "for scenario: " + scenarioId);
+			throw new IllegalArgumentException("Duplicate exploration reward entry for scenario: " + scenarioId);
 		}
 
 		scenarioEntries.add(rewardEntry);

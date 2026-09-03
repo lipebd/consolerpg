@@ -300,7 +300,7 @@ public class World {
 
 	private void startRandomEncounter(int position, boolean specialArea) {
 		if (!(currentScenario instanceof CombatScenario combatScenario)) {
-			throw new IllegalStateException("A random encounter can only occur " + "inside a combat scenario.");
+			throw new IllegalStateException("A random encounter can only occur inside a combat scenario.");
 		}
 
 		ExplorationSettings settings = combatScenario.getExplorationSettings();
@@ -327,7 +327,7 @@ public class World {
 
 		case EPIC_ENCOUNTER -> executeEpicEncounter();
 
-		case NOTHING -> System.out.println("Você explorou os arredores, " + "mas não encontrou nada.");
+		case NOTHING -> System.out.println("Você explorou os arredores, mas não encontrou nada.");
 		}
 	}
 
@@ -361,7 +361,7 @@ public class World {
 
 	private void executeEpicEncounter() {
 		if (!(currentScenario instanceof Dungeon dungeon)) {
-			throw new IllegalStateException("An epic encounter can only occur " + "inside a dungeon.");
+			throw new IllegalStateException("An epic encounter can only occur inside a dungeon.");
 		}
 
 		explorationSession.markEpicEncounterOffered();
@@ -402,7 +402,7 @@ public class World {
 
 	private BattleResult startEncounter(List<EnemyDefinition> enemyDefinitions) {
 		if (!(currentScenario instanceof CombatScenario combatScenario)) {
-			throw new IllegalStateException("A battle can only start " + "inside a combat scenario.");
+			throw new IllegalStateException("A battle can only start inside a combat scenario.");
 		}
 
 		BattleResult result = battleCoordinator.start(enemyDefinitions, combatScenario);
@@ -440,7 +440,7 @@ public class World {
 		if (destination instanceof CombatScenario) {
 			int startingPosition = route.getDestinationExplorationPosition()
 					.orElseThrow(() -> new IllegalStateException(
-							"Travel route to combat scenario " + "has no destination position: " + route.getId()));
+							"Travel route to combat scenario has no destination position: " + route.getId()));
 
 			changeScenario(destination, startingPosition);
 
@@ -486,7 +486,7 @@ public class World {
 			completeCurrentExploration();
 
 		} else if (result == BattleResult.FLED) {
-			System.out.println("\nVocê permanece diante " + "do caminho bloqueado.");
+			System.out.println("\nVocê permanece diante do caminho bloqueado.");
 		}
 	}
 

@@ -151,7 +151,7 @@ public class Main {
 
 		Skill investida = new Skill("Investida", 1, DamageType.PHYSICAL, 5, 0, RecoveryType.NONE, SkillTargetType.NONE,
 				0, 10,
-				"Corre até o alvo e o atropela." + "\nCausa dano físico moderado e pode causar dano a si mesmo.");
+				"Corre até o alvo e o atropela.\nCausa dano físico moderado e pode causar dano a si mesmo.");
 
 		Skill perseveranca = new Skill("Perseverança", 1, DamageType.NONE, 0, 10, RecoveryType.HEAL,
 				SkillTargetType.SELF, 0, 10,

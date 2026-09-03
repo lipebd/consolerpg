@@ -13,7 +13,7 @@ public final class ExplorationReward {
 		Objects.requireNonNull(sourceEntry, "Source reward entry cannot be null.");
 
 		if (quantity < sourceEntry.getMinQuantity() || quantity > sourceEntry.getMaxQuantity()) {
-			throw new IllegalArgumentException("Generated reward quantity is outside " + "the configured range.");
+			throw new IllegalArgumentException("Generated reward quantity is outside the configured range.");
 		}
 
 		this.type = sourceEntry.getType();

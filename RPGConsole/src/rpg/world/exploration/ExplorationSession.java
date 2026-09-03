@@ -68,7 +68,7 @@ public final class ExplorationSession {
 		}
 
 		if (!isAtFinalPosition()) {
-			throw new IllegalStateException("Exploration can only be completed " + "at the final position.");
+			throw new IllegalStateException("Exploration can only be completed at the final position.");
 		}
 
 		complete = true;
@@ -81,7 +81,7 @@ public final class ExplorationSession {
 	public void markMerchantEncountered() {
 		if (merchantEncountered) {
 			throw new IllegalStateException(
-					"The merchant was already encountered " + "during this exploration session.");
+					"The merchant was already encountered during this exploration session.");
 		}
 
 		merchantEncountered = true;
@@ -94,7 +94,7 @@ public final class ExplorationSession {
 	public void markEpicEncounterOffered() {
 		if (epicEncounterOffered) {
 			throw new IllegalStateException(
-					"The epic encounter was already offered " + "during this exploration session.");
+					"The epic encounter was already offered during this exploration session.");
 		}
 
 		epicEncounterOffered = true;

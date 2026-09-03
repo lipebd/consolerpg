@@ -35,7 +35,7 @@ public final class EpicEncounterMenu {
 		displayEncounter(epicDefinitions);
 
 		while (true) {
-			System.out.println("\n[1] Enfrentar | " + "[0] Evitar confronto");
+			System.out.println("\n[1] Enfrentar | [0] Evitar confronto");
 
 			System.out.print("> ");
 

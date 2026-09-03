@@ -34,7 +34,7 @@ public final class ExplorationRewardEntry {
 
 		if (maxQuantity < minQuantity) {
 			throw new IllegalArgumentException(
-					"Maximum reward quantity cannot be lower " + "than the minimum quantity.");
+					"Maximum reward quantity cannot be lower than the minimum quantity.");
 		}
 
 		if (weight <= 0) {

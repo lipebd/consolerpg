@@ -89,12 +89,12 @@ public final class ExplorationRewardLoader {
 
 			if (normalAreaPossible && rewardCatalog.getAvailableEntries(scenarioId, false).isEmpty()) {
 				throw new IllegalArgumentException(
-						"Exploration reward pool is empty " + "for normal areas of scenario: " + scenarioId);
+						"Exploration reward pool is empty for normal areas of scenario: " + scenarioId);
 			}
 
 			if (specialAreaPossible && rewardCatalog.getAvailableEntries(scenarioId, true).isEmpty()) {
 				throw new IllegalArgumentException(
-						"Exploration reward pool is empty " + "for special areas of scenario: " + scenarioId);
+						"Exploration reward pool is empty for special areas of scenario: " + scenarioId);
 			}
 		}
 	}

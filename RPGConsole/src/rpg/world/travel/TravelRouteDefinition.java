@@ -53,7 +53,7 @@ public final class TravelRouteDefinition {
 		}
 
 		if (destinationExplorationPosition.isPresent() && destinationExplorationPosition.getAsInt() < 1) {
-			throw new IllegalArgumentException("Travel destination exploration position " + "must be greater than 0.");
+			throw new IllegalArgumentException("Travel destination exploration position must be greater than 0.");
 		}
 
 		this.id = id;

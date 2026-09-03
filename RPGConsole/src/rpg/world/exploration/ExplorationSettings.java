@@ -38,7 +38,7 @@ public final class ExplorationSettings {
 		}
 
 		if (maxEnemies < minEnemies) {
-			throw new IllegalArgumentException("Maximum enemy count cannot be lower " + "than the minimum.");
+			throw new IllegalArgumentException("Maximum enemy count cannot be lower than the minimum.");
 		}
 
 		if (normalAreaMessage == null || normalAreaMessage.isBlank()) {

@@ -89,7 +89,7 @@ public final class TravelRouteLoader {
 
 		if (destinationExplorationPosition < 1 || destinationExplorationPosition > explorationLength) {
 			throw new IllegalArgumentException(
-					"Travel destination exploration position " + "must be between 1 and " + explorationLength + ": "
+					"Travel destination exploration position must be between 1 and " + explorationLength + ": "
 							+ destinationScenarioId + ", position " + destinationExplorationPosition);
 		}
 

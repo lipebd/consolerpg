@@ -255,7 +255,7 @@ public class Battle {
 		}
 
 		if (excludesSelf) {
-			System.out.println("Não há outros aliados disponíveis " + "para receber esta cura.");
+			System.out.println("Não há outros aliados disponíveis para receber esta cura.");
 
 			return;
 		}
@@ -294,8 +294,8 @@ public class Battle {
 		boolean validAction = false;
 
 		while (!validAction) {
-			System.out.println("\n[1] Atacar | [2] Defender " + "| [3] Especial | [4] Analisar "
-					+ "| [5] Itens | [6] Rodada " + "| [7] Fugir");
+			System.out.println("\n[1] Atacar | [2] Defender | [3] Especial | [4] Analisar "
+					+ "| [5] Itens | [6] Rodada | [7] Fugir");
 			System.out.print("> ");
 
 			String choice = scanner.nextLine();
@@ -347,7 +347,7 @@ public class Battle {
 
 				String powerDescription = getSkillPowerDescription(skill);
 
-				System.out.println("[" + (index + 1) + "] " + skill.getName() + " [" + typeDisplayName + "]" + " | "
+				System.out.println("[" + (index + 1) + "] " + skill.getName() + " [" + typeDisplayName + "] | "
 						+ powerDescription + " | MP: " + skill.getMpCost() + " | SP: " + skill.getSpCost());
 			}
 
@@ -446,7 +446,7 @@ public class Battle {
 		}
 
 		case FAILURE -> System.out.println(
-				"\n" + actingCharacter.getName() + " tentou fugir, mas os inimigos " + "bloquearam o caminho!");
+				"\n" + actingCharacter.getName() + " tentou fugir, mas os inimigos bloquearam o caminho!");
 		}
 	}
 

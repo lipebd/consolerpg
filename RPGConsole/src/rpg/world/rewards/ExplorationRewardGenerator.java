@@ -20,7 +20,7 @@ public final class ExplorationRewardGenerator {
 		List<ExplorationRewardEntry> availableEntries = rewardCatalog.getAvailableEntries(scenarioId, specialArea);
 
 		if (availableEntries.isEmpty()) {
-			throw new IllegalStateException("No exploration rewards are available " + "for scenario: " + scenarioId);
+			throw new IllegalStateException("No exploration rewards are available for scenario: " + scenarioId);
 		}
 
 		ExplorationRewardEntry selectedEntry = selectWeightedEntry(availableEntries);
