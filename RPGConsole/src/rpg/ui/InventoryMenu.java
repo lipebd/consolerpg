@@ -1,6 +1,5 @@
 package rpg.ui;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -31,22 +30,13 @@ public final class InventoryMenu {
 	}
 
 	public boolean open() {
-		while (true) {
-			Map<Item, Integer> inventoryContents = party.getInventory().getContents();
+		List<ItemCategory> categories = List.of(ItemCategory.values());
 
+		while (true) {
 			System.out.println("\n[INVENTÁRIO]");
 			System.out.println("Ouro: " + party.getGold());
 
-			if (inventoryContents.isEmpty()) {
-				System.out.println();
-				System.out.println("Seu inventário está vazio.");
-
-				return false;
-			}
-
-			List<ItemCategory> availableCategories = getAvailableCategories(inventoryContents);
-
-			displayCategoryMenu(availableCategories);
+			displayCategoryMenu(categories);
 
 			String choice = scanner.nextLine().trim();
 
@@ -57,13 +47,12 @@ public final class InventoryMenu {
 			try {
 				int selectedIndex = Integer.parseInt(choice) - 1;
 
-				if (selectedIndex < 0 || selectedIndex >= availableCategories.size()) {
+				if (selectedIndex < 0 || selectedIndex >= categories.size()) {
 					System.out.println("Categoria inválida.");
-
 					continue;
 				}
 
-				ItemCategory selectedCategory = availableCategories.get(selectedIndex);
+				ItemCategory selectedCategory = categories.get(selectedIndex);
 
 				boolean itemUsed = openCategory(selectedCategory);
 
@@ -75,21 +64,6 @@ public final class InventoryMenu {
 				System.out.println("Digite o número de uma categoria.");
 			}
 		}
-	}
-
-	private List<ItemCategory> getAvailableCategories(Map<Item, Integer> inventoryContents) {
-		List<ItemCategory> categories = new ArrayList<>();
-
-		for (ItemCategory category : ItemCategory.values()) {
-			boolean categoryPresent = inventoryContents.keySet().stream()
-					.anyMatch(item -> item.getCategory() == category);
-
-			if (categoryPresent) {
-				categories.add(category);
-			}
-		}
-
-		return categories;
 	}
 
 	private void displayCategoryMenu(List<ItemCategory> categories) {
@@ -110,7 +84,12 @@ public final class InventoryMenu {
 				.sorted(Comparator.comparing((Map.Entry<Item, Integer> entry) -> entry.getKey().getName(),
 						String.CASE_INSENSITIVE_ORDER).thenComparing(entry -> entry.getKey().getId()))
 				.toList();
-
+		
+		if (entries.isEmpty()) {
+			openEmptyCategory(category);
+			return false;
+			
+		}
 		int currentPage = 0;
 		int totalPages = (entries.size() + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE;
 
@@ -162,6 +141,28 @@ public final class InventoryMenu {
 		}
 	}
 
+	private void openEmptyCategory(ItemCategory category) {
+		while (true) {
+			System.out.println();
+			System.out.println("[" + getCategoryDisplayName(category).toUpperCase(Locale.ROOT) + "]");
+
+			System.out.println();
+			System.out.println("Você não possui itens nesta categoria.");
+
+			System.out.println();
+			System.out.println("[0] Voltar às categorias");
+			System.out.print("> ");
+
+			String choice = scanner.nextLine().trim();
+
+			if (choice.equals("0")) {
+				return;
+			}
+
+			System.out.println("Opção inválida.");
+		}
+	}
+
 	private void displayItemPage(ItemCategory category, List<Map.Entry<Item, Integer>> entries, int firstIndex,
 			int lastIndex, int currentPage, int totalPages) {
 		System.out.println();
@@ -198,7 +199,7 @@ public final class InventoryMenu {
 			System.out.println("[P] Próxima página");
 		}
 		System.out.println();
-		System.out.println("[0] Menu de categorias");
+		System.out.println("[0] Voltar às categorias");
 		System.out.print("> ");
 	}
 
