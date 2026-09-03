@@ -1,10 +1,10 @@
 # scenarioId;rewardType;rewardId;minQuantity;maxQuantity;weight;areaRestriction
 
 # Verdes Ermos
-# verdes_ermos;ITEM;meruma;1;2;60;NORMAL_ONLY
-#verdes_ermos;ITEM;meruma;1;2;30;SPECIAL_ONLY
+verdes_ermos;ITEM;meruma;1;2;60;NORMAL_ONLY
+verdes_ermos;ITEM;meruma;1;2;30;SPECIAL_ONLY
 verdes_ermos;ITEM;pelo_lupino;1;3;25;ANY
-# verdes_ermos;GOLD;;5;15;15;ANY
+verdes_ermos;GOLD;;5;15;15;ANY
 
 # Praia de Sanguemar
 praia_sanguemar;ITEM;meruma;1;2;65;ANY
