@@ -7,7 +7,7 @@ public enum CombatScenarioAction {
 	FACE_BOSS("Enfrentar o boss"),
 	INVENTORY("Inventário"),
 	VIEW_STATUS("Ver status"),
-	TRAVEL("Viajar"),
+	FOLLOW_ROUTE("Viajar"),
 	FOLLOW_BRANCH("Seguir outro caminho");
 
 	private final String displayName;

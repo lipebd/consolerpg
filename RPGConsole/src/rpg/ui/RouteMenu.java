@@ -8,12 +8,12 @@ import rpg.world.travel.TravelProgress;
 import rpg.world.travel.TravelRouteDefinition;
 
 // Displays unlocked travel routes and returns the selected scenario.
-public final class TravelMenu {
+public final class RouteMenu {
 
 	private final Scanner scanner;
 	private final TravelProgress travelProgress;
 
-	public TravelMenu(
+	public RouteMenu(
             Scanner scanner,
             TravelProgress travelProgress) {
     this.scanner = scanner;

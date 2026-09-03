@@ -59,7 +59,7 @@ public final class CombatScenarioMenu {
 	}
 
 	private boolean startsNewActionGroup(CombatScenarioAction action) {
-		return action == CombatScenarioAction.TRAVEL || action == CombatScenarioAction.INVENTORY;
+		return action == CombatScenarioAction.FOLLOW_ROUTE || action == CombatScenarioAction.INVENTORY;
 	}
 
 }

@@ -28,7 +28,7 @@ import rpg.ui.InnMenu;
 import rpg.ui.InventoryMenu;
 import rpg.ui.PartyStatusMenu;
 import rpg.ui.ScenarioBranchMenu;
-import rpg.ui.TravelMenu;
+import rpg.ui.RouteMenu;
 import rpg.world.branches.ScenarioBranchCatalog;
 import rpg.world.branches.ScenarioBranchDefinition;
 import rpg.world.encounters.EncounterCatalog;
@@ -78,7 +78,7 @@ public class World {
 	private boolean shouldDisplayScenarioDescription;
 	private boolean scenarioNameAlreadyDisplayed;
 	private InventoryMenu inventoryMenu;
-	private final TravelMenu travelMenu;
+	private final RouteMenu routeMenu;
 	private final TravelProgress travelProgress;
 	private final ScenarioBranchCatalog scenarioBranchCatalog;
 
@@ -129,7 +129,7 @@ public class World {
 		// User interface
 		this.epicEncounterMenu = new EpicEncounterMenu(scanner);
 		this.combatScenarioMenu = new CombatScenarioMenu(scanner);
-		this.travelMenu = new TravelMenu(scanner, this.travelProgress);
+		this.routeMenu = new RouteMenu(scanner, this.travelProgress);
 		this.scenarioBranchMenu = new ScenarioBranchMenu(scanner);
 		this.inventoryMenu = new InventoryMenu(this.party, scanner);
 		this.partyStatusMenu = new PartyStatusMenu(this.party, scanner);
@@ -245,7 +245,7 @@ public class World {
 		switch (action) {
 		case VISIT_LOCATION -> executeCityLocationMenu(city);
 
-		case LEAVE_CITY -> executeTravelMenu();
+		case LEAVE_CITY -> executeRouteMenu();
 
 		case INVENTORY -> inventoryMenu.open();
 
@@ -305,7 +305,7 @@ public class World {
 			}
 
 		} else if (travelProgress.hasUnlockedRoutesFrom(currentScenario.getId())) {
-			availableActions.add(CombatScenarioAction.TRAVEL);
+			availableActions.add(CombatScenarioAction.FOLLOW_ROUTE);
 		}
 
 		availableActions.add(CombatScenarioAction.INVENTORY);
@@ -332,7 +332,7 @@ public class World {
 
 		case INVENTORY -> inventoryMenu.open();
 
-		case TRAVEL -> executeTravelMenu();
+		case FOLLOW_ROUTE -> executeRouteMenu();
 
 		case FOLLOW_BRANCH -> executeScenarioBranchMenu();
 		}
@@ -531,7 +531,7 @@ public class World {
 		return result;
 	}
 
-	private void executeTravelMenu() {
+	private void executeRouteMenu() {
 		if (currentScenario instanceof CombatScenario
 				&& (explorationSession == null || !explorationSession.isComplete())) {
 			System.out.println("\nVocê precisa concluir a exploração antes de viajar.");
@@ -539,7 +539,7 @@ public class World {
 			return;
 		}
 
-		Optional<TravelRouteDefinition> selectedRoute = travelMenu.open(currentScenario.getId());
+		Optional<TravelRouteDefinition> selectedRoute = routeMenu.open(currentScenario.getId());
 
 		if (selectedRoute.isEmpty()) {
 			return;
