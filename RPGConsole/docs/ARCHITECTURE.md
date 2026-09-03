@@ -558,7 +558,9 @@ Important UI components include:
 - `CharacterStatusMenu`
 - `GameOverScreen`
 
-`InventoryMenu` controls the general inventory flow outside battle. It displays non-empty item categories, paginates their contents and opens item details.
+`World` builds the available scenario actions incrementally according to the current scenario, exploration state, available branches and unlocked routes. `ScenarioActionMenu` preserves continuous numbering, omits unavailable actions and separates scenario, travel and party-resource actions with whitespace.
+
+`InventoryMenu` controls the general inventory flow outside battle. It displays every item category in deterministic enum order, keeps empty categories selectable, reports an empty category only after it is selected, paginates non-empty contents and opens item details. Empty inventory screens remain open until the player explicitly returns or closes the inventory.
 
 `BattleItemMenu` is a separate battle-specific flow. It lists only items that can currently be used in battle and reports success only when an item produces an effect.
 

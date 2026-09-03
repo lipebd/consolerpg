@@ -178,7 +178,7 @@ The implementation must preserve stable IDs, strict startup validation and separ
 * [x] Separate the general inventory from the battle item menu.
 * [x] Show only battle-usable consumables during battle.
 * [x] Prevent unavailable item use from consuming the battle turn.
-* [x] Organize the general inventory by non-empty item categories.
+* [x] Organize the general inventory by item categories.
 * [x] Keep category counts hidden from the category menu.
 * [x] Sort items deterministically inside each category.
 * [x] Add pagination to item lists.
@@ -237,29 +237,28 @@ The implementation must preserve stable IDs, strict startup validation and separ
 
 ## 7. World and scenario menus
 
-* [ ] Rename the world action label from `Itens` to `Inventário`.
-* [ ] Keep every inventory category visible in deterministic enum order.
-* [ ] Keep empty inventory categories selectable.
-* [ ] Display an empty-category message only after the category is selected.
-* [ ] Keep the inventory open when the entire inventory is empty.
-* [ ] Require an explicit back or close command before leaving every inventory level.
-* [ ] Preserve item sorting, pagination, details and contextual item actions.
-* [ ] Rename the world action label from `Items` to `Inventory`.
-* [ ] Refactor field and dungeon actions into logical visual groups.
-* [ ] Separate scenario actions, travel actions and party-resource actions visually.
-* [ ] Keep continuous numeric action selection across displayed groups.
-* [ ] Omit group headings when their groups contain no available actions.
+* [x] Rename the world action label from `Itens` to `Inventário`.
+* [x] Keep every inventory category visible in deterministic enum order.
+* [x] Keep empty inventory categories selectable.
+* [x] Display an empty-category message only after the category is selected.
+* [x] Keep the inventory open when the entire inventory is empty.
+* [x] Require explicit back or close commands throughout empty-inventory navigation.
+* [x] Preserve item sorting, pagination, details and contextual item actions.
+* [x] Refactor world scenario actions into logical visual groups.
+* [x] Separate scenario actions, travel actions and party-resource actions visually.
+* [x] Keep continuous numeric action selection across displayed groups.
+* [x] Separate logical action groups with spacing instead of additional player-facing headings.
 * [x] Add the `[X] Status` shortcut outside battle.
 * [x] Keep party status accessible from every world scenario.
 * [x] Add inventory access outside battle.
-* [ ] Keep the grouped world menu extensible for future equipment access without adding a placeholder action.
+* [x] Keep the grouped world menu extensible for future equipment access without adding a placeholder action.
 * [x] Display travel only when an unlocked route exists from the current scenario.
 * [x] Keep exploration branches separate from travel actions.
-* [ ] Build available world actions incrementally instead of duplicating complete action lists for each state.
+* [x] Build available world actions incrementally instead of duplicating complete action lists for each state.
 * [x] Keep unavailable actions hidden instead of displaying non-functional placeholders.
-* [ ] Preserve consistent back and exit commands across menu levels.
-* [ ] Keep menu navigation iterative and avoid recursive menu calls.
-* [ ] Test representative world states and inventory navigation paths.
+* [x] Preserve consistent back and exit commands across menu levels.
+* [x] Keep menu navigation iterative and avoid recursive menu calls.
+* [x] Test representative world states and inventory navigation paths.
 
 ## 8. City structure and Bree services
 
@@ -336,6 +335,7 @@ The implementation must preserve stable IDs, strict startup validation and separ
 * [ ] Support literal `\n` in skill descriptions.
 * [ ] Externalize current playable skills.
 * [ ] Replace hardcoded skill creation in `Main`.
+* [ ] Redesign the learned-skills screen to display complete targeting, resource-cost and effect information.
 * [ ] Implement temporary buffs.
 * [ ] Implement temporary debuffs.
 * [ ] Implement effect duration.
@@ -395,6 +395,10 @@ The implementation must preserve stable IDs, strict startup validation and separ
 * [ ] Display character history and lore.
 * [ ] Prepare character and party identity for save data.
 * [ ] Preserve temporary development-party shortcuts when needed for testing.
+* [ ] Define the maximum character-name length.
+* [ ] Reject character names exceeding the supported length.
+* [ ] Align party and individual status layouts using the supported name length.
+* [ ] Display complete character names without truncation.
 
 ## 15. Full-party defeat and rescue
 
@@ -449,6 +453,7 @@ The implementation must preserve stable IDs, strict startup validation and separ
 * [ ] Decide which exploration state must survive leaving a scenario.
 * [ ] Decide how completed dungeons behave when revisited.
 * [ ] Decide whether optional epic encounters can return after being declined or defeated.
+* [ ] Evaluate replacing direct world utility actions with a consolidated menu after map, quest book, bestiary, party, journal and save-exit flows are implemented.
 
 ## 18. Validation and regression tests
 
@@ -472,6 +477,7 @@ The implementation must preserve stable IDs, strict startup validation and separ
 * [ ] Test character creation.
 * [ ] Test full-party rescue.
 * [ ] Test save and load.
+* [ ] Audit every external-data loader that accepts player-facing text for literal `\n` conversion.
 * [ ] Run a complete new-game playthrough.
 * [ ] Test the portable build outside the repository.
 * [ ] Test gold and per-item quantity boundaries, overflow attempts and invalid save values.

@@ -302,7 +302,10 @@ Outside battle, `InventoryMenu` organizes owned items by category.
 
 The general inventory:
 
-- Displays only categories containing at least one owned item.
+- Displays every item category in deterministic enum order.
+- Keeps empty categories selectable.
+- Reports that a category is empty only after the player selects it.
+- Keeps the inventory and empty-category screens open until the player explicitly returns or closes them.
 - Does not display item counts in the category-selection screen.
 - Sorts items deterministically by name.
 - Displays at most eight item rows per page.

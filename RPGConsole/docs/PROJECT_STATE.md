@@ -243,6 +243,10 @@ Responsibilities previously concentrated in `World` were extracted into dedicate
 
 `World` coordinates scenario state, exploration events and the consequences of battle results. It no longer directly controls console input.
 
+`World` builds available scenario actions incrementally according to the current world state. `ScenarioActionMenu` keeps their numbering continuous, omits unavailable actions and uses whitespace to separate scenario, travel and party-resource actions without adding extra submenu layers.
+
+World, travel, branch, inventory and status menus use iterative navigation and explicit back commands.
+
 ## External item system
 
 Base item definitions are loaded from `data/items.txt`.
@@ -331,7 +335,10 @@ The general inventory and battle item selection use separate menus.
 `InventoryMenu`:
 
 - Displays shared party gold.
-- Displays only non-empty item categories.
+- Displays every item category in deterministic enum order.
+- Keeps empty categories selectable.
+- Reports an empty category only after it is selected.
+- Keeps empty inventory navigation open until an explicit back or close command.
 - Uses deterministic item ordering.
 - Paginates lists with eight item rows per page.
 - Keeps list height stable on partially filled pages.
@@ -382,9 +389,9 @@ Recovery power is not a character attribute. Recovery values belong to skills or
 
 ## Current next step
 
-Begin V3 roadmap section 7: world and scenario menus.
+Begin V3 roadmap section 8: city structure and Bree services.
 
-The first planned review is to keep every item category visible in the general inventory and display an empty-category message only after the player selects that category.
+The first planned goal is to create a dedicated city menu and separate city locations from adjacent exits before implementing Bree's initial services.
 
 ## Important conventions
 
