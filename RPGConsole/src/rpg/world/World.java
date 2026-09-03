@@ -17,6 +17,7 @@ import rpg.enemies.EnemyDropCatalog;
 import rpg.items.Item;
 import rpg.items.ItemCatalog;
 import rpg.ui.BattleRewardScreen;
+import rpg.ui.CityMenu;
 import rpg.ui.CombatScenarioMenu;
 import rpg.ui.ConsoleUI;
 import rpg.ui.EpicEncounterMenu;
@@ -36,6 +37,8 @@ import rpg.world.exploration.ExplorationSettings;
 import rpg.world.rewards.ExplorationReward;
 import rpg.world.rewards.ExplorationRewardCatalog;
 import rpg.world.rewards.ExplorationRewardGenerator;
+import rpg.world.scenarios.City;
+import rpg.world.scenarios.CityAction;
 import rpg.world.scenarios.CombatScenario;
 import rpg.world.scenarios.CombatScenarioAction;
 import rpg.world.scenarios.Dungeon;
@@ -47,6 +50,7 @@ import rpg.world.travel.TravelRouteDefinition;
 // Controls navigation and interaction with the game world.
 public class World {
 
+	private final CityMenu cityMenu;
 	private final ExplorationRewardGenerator explorationRewardGenerator;
 	private final ItemCatalog itemCatalog;
 	private final ScenarioBranchMenu scenarioBranchMenu;
@@ -106,6 +110,7 @@ public class World {
 		this.scenarioBranchMenu = new ScenarioBranchMenu(scanner);
 		this.inventoryMenu = new InventoryMenu(this.party, scanner);
 		this.partyStatusMenu = new PartyStatusMenu(this.party, scanner);
+		this.cityMenu = new CityMenu(scanner);
 
 		// Initial exploration state
 		if (this.currentScenario instanceof CombatScenario combatScenario) {
@@ -123,7 +128,7 @@ public class World {
 	public void start() {
 		while (running) {
 			displayCurrentScenario();
-			executeScenarioMenu();
+			executeCurrentScenarioMenu();
 		}
 	}
 
@@ -160,22 +165,76 @@ public class World {
 		}
 	}
 
-	private void executeScenarioMenu() {
-		List<CombatScenarioAction> availableActions = getAvailableScenarioActions();
+	private void executeCurrentScenarioMenu() {
+		if (currentScenario instanceof City city) {
+			executeCityMenu(city);
+			return;
+		}
+
+		if (currentScenario instanceof CombatScenario) {
+			executeCombatScenarioMenu();
+			return;
+		}
+
+		throw new IllegalStateException(
+				"Unsupported scenario type: " + currentScenario.getClass().getName());
+	}
+
+	private void executeCityMenu(City city) {
+		List<CityAction> availableActions = getAvailableCityActions(city);
+
+		Optional<CityAction> selectedAction = cityMenu.selectAction(
+				city.getName(),
+				availableActions);
+
+		if (selectedAction.isEmpty()) {
+			exitGame();
+			return;
+		}
+
+		executeCityAction(selectedAction.get());
+	}
+
+	private List<CityAction> getAvailableCityActions(City city) {
+		List<CityAction> availableActions = new ArrayList<>();
+
+		if (travelProgress.hasUnlockedRoutesFrom(city.getId())) {
+			availableActions.add(CityAction.LEAVE_CITY);
+		}
+
+		availableActions.add(CityAction.INVENTORY);
+		availableActions.add(CityAction.VIEW_STATUS);
+
+		return List.copyOf(availableActions);
+	}
+
+	private void executeCityAction(CityAction action) {
+		switch (action) {
+		case VISIT_LOCATION ->
+			throw new IllegalStateException("No city location menu is currently available.");
+
+		case LEAVE_CITY -> executeTravelMenu();
+
+		case INVENTORY -> inventoryMenu.open();
+
+		case VIEW_STATUS -> partyStatusMenu.open();
+		}
+	}
+
+	private void executeCombatScenarioMenu() {
+		List<CombatScenarioAction> availableActions = getAvailableCombatScenarioActions();
 
 		Optional<CombatScenarioAction> selectedAction = combatScenarioMenu.selectAction(availableActions);
 
 		if (selectedAction.isEmpty()) {
-			System.out.println("\nObrigado por testar a V2!");
-
-			running = false;
+			exitGame();
 			return;
 		}
 
-		executeScenarioAction(selectedAction.get());
+	executeCombatScenarioAction(selectedAction.get());
 	}
 
-	private List<CombatScenarioAction> getAvailableScenarioActions() {
+	private List<CombatScenarioAction> getAvailableCombatScenarioActions() {
 		List<CombatScenarioAction> availableActions = new ArrayList<>();
 
 		boolean combatScenarioInProgress = currentScenario instanceof CombatScenario
@@ -212,7 +271,7 @@ public class World {
 		return scenarioBranchCatalog.hasBranchesAt(currentScenario.getId(), explorationSession.getCurrentPosition());
 	}
 
-	private void executeScenarioAction(CombatScenarioAction action) {
+	private void executeCombatScenarioAction(CombatScenarioAction action) {
 		switch (action) {
 		case EXPLORE -> explore();
 
@@ -517,6 +576,10 @@ public class World {
 				explorationSession.canEncounterMerchant(), epicEncounterAvailable);
 
 		executeExplorationEvent(eventType, position, specialArea);
+	}
+	private void exitGame() {
+		System.out.println("\nObrigado por testar a V2!");
+		running = false;
 	}
 
 }

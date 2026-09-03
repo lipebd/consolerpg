@@ -1,0 +1,21 @@
+package rpg.world.scenarios;
+
+// Defines the actions available in cities.
+public enum CityAction {
+
+	VISIT_LOCATION("Visitar um local"),
+	LEAVE_CITY("Sair da cidade"),
+	INVENTORY("Inventário"),
+	VIEW_STATUS("Ver status");
+
+	private final String displayName;
+
+	CityAction(String displayName) {
+		this.displayName = displayName;
+	}
+
+	@Override
+	public String toString() {
+		return displayName;
+	}
+}
