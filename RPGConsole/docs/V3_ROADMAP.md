@@ -237,23 +237,35 @@ The implementation must preserve stable IDs, strict startup validation and separ
 
 ## 7. World and scenario menus
 
-* [ ] Review the inventory category menu so every item category remains visible and empty-category messages appear only after the category is selected.
-* [ ] Refactor field and dungeon menus into logical groups.
-* [ ] Add the `[X] Status` shortcut outside battle.
-* [ ] Keep party status accessible from every world scenario.
-* [ ] Add inventory access outside battle.
-* [ ] Prepare equipment access outside battle.
-* [ ] Display travel only when a valid adjacent route or branch exists.
-* [ ] Separate city locations from city exits.
-* [ ] Separate adjacent travel from paid city transport.
-* [ ] Prevent world menus from growing into a single flat list.
-* [ ] Preserve consistent back and exit commands across submenus.
-* [ ] Test menu navigation without recursive menu calls.
+* [ ] Rename the world action label from `Itens` to `Inventário`.
+* [ ] Keep every inventory category visible in deterministic enum order.
+* [ ] Keep empty inventory categories selectable.
+* [ ] Display an empty-category message only after the category is selected.
+* [ ] Keep the inventory open when the entire inventory is empty.
+* [ ] Require an explicit back or close command before leaving every inventory level.
+* [ ] Preserve item sorting, pagination, details and contextual item actions.
+* [ ] Rename the world action label from `Items` to `Inventory`.
+* [ ] Refactor field and dungeon actions into logical visual groups.
+* [ ] Separate scenario actions, travel actions and party-resource actions visually.
+* [ ] Keep continuous numeric action selection across displayed groups.
+* [ ] Omit group headings when their groups contain no available actions.
+* [x] Add the `[X] Status` shortcut outside battle.
+* [x] Keep party status accessible from every world scenario.
+* [x] Add inventory access outside battle.
+* [ ] Keep the grouped world menu extensible for future equipment access without adding a placeholder action.
+* [x] Display travel only when an unlocked route exists from the current scenario.
+* [x] Keep exploration branches separate from travel actions.
+* [ ] Build available world actions incrementally instead of duplicating complete action lists for each state.
+* [x] Keep unavailable actions hidden instead of displaying non-functional placeholders.
+* [ ] Preserve consistent back and exit commands across menu levels.
+* [ ] Keep menu navigation iterative and avoid recursive menu calls.
+* [ ] Test representative world states and inventory navigation paths.
 
 ## 8. City structure and Bree services
 
 * [ ] Create a dedicated city menu.
 * [ ] Add city locations.
+* [ ] Separate city locations from city exits.
 * [ ] Add custom city exits and gates.
 * [ ] Add flavor text for each exit.
 * [ ] Implement Bree's initial locations.
@@ -263,10 +275,10 @@ The implementation must preserve stable IDs, strict startup validation and separ
 * [ ] Prevent payment when the party cannot afford the service.
 * [ ] Preserve free adjacent travel through Bree's exits.
 * [ ] Prepare city services for additional cities.
-* [ ] Display a `Back` action in the inventory even when it is empty.
-* [ ] Return to the current scenario only after the player selects `Back`.
 
 ## 9. Shops and merchants
+
+> **On hold:** Initial implementation is being developed separately and will be reviewed before this section begins.
 
 * [ ] Define fixed shops separately from their stock.
 * [ ] Define `shops.txt`.
