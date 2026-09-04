@@ -1,0 +1,7 @@
+# destinationScenarioId;price;travelDescription
+bree;25;Após uma longa viagem, o grupo alcança as movimentadas estradas de Bree.
+setegalhos;50;A viagem termina sob a copa colossal de Setegalhos.
+o_vao;75;Ao atravessar os grandes portões, o grupo desaparece além da barreira que protege O Vão.
+entrelugar;100;A paisagem se distorce durante o caminho até que o grupo finalmente alcança Entrelugar.
+deep_valley;125;O caminho conduz o grupo pelas profundezas até a cidade afundada de Deep Valley.
+mist_suburb;150;Uma névoa cada vez mais densa anuncia a chegada a Mist Suburb.
