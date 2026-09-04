@@ -20,6 +20,7 @@ import rpg.items.ItemCatalog;
 import rpg.ui.BattleRewardScreen;
 import rpg.ui.CityLocationMenu;
 import rpg.ui.CityMenu;
+import rpg.ui.CityTransportMenu;
 import rpg.ui.CombatScenarioMenu;
 import rpg.ui.ConsoleUI;
 import rpg.ui.EpicEncounterMenu;
@@ -27,8 +28,8 @@ import rpg.ui.GameOverScreen;
 import rpg.ui.InnMenu;
 import rpg.ui.InventoryMenu;
 import rpg.ui.PartyStatusMenu;
-import rpg.ui.ScenarioBranchMenu;
 import rpg.ui.RouteMenu;
+import rpg.ui.ScenarioBranchMenu;
 import rpg.world.branches.ScenarioBranchCatalog;
 import rpg.world.branches.ScenarioBranchDefinition;
 import rpg.world.encounters.EncounterCatalog;
@@ -49,41 +50,49 @@ import rpg.world.scenarios.CombatScenarioAction;
 import rpg.world.scenarios.Dungeon;
 import rpg.world.scenarios.Scenario;
 import rpg.world.scenarios.ScenarioCatalog;
+import rpg.world.transport.CityTransportCatalog;
+import rpg.world.transport.CityTransportDefinition;
 import rpg.world.travel.TravelProgress;
 import rpg.world.travel.TravelRouteDefinition;
 
 // Controls navigation and interaction with the game world.
 public class World {
 
+	private final BattleCoordinator battleCoordinator;
+
 	private final CityLocationMenu cityLocationMenu;
+	private final CityMenu cityMenu;
+	private final CityTransportMenu cityTransportMenu;
 	private final InnCatalog innCatalog;
 	private final InnMenu innMenu;
-	private final CityMenu cityMenu;
-	private final ExplorationRewardGenerator explorationRewardGenerator;
-	private final ItemCatalog itemCatalog;
+	private final PartyStatusMenu partyStatusMenu;
+	private final InventoryMenu inventoryMenu;
+	private final RouteMenu routeMenu;
 	private final ScenarioBranchMenu scenarioBranchMenu;
+	private final CombatScenarioMenu combatScenarioMenu;
+	private final EpicEncounterMenu epicEncounterMenu;
+
+	private final ItemCatalog itemCatalog;
+	private final CityTransportCatalog cityTransportCatalog;
 	private final ScenarioCatalog scenarioCatalog;
 	private final ScenarioBranchCatalog scenarioBranchCatalog;
+	private final EnemyCatalog enemyCatalog;
+
+	private final ExplorationRewardGenerator explorationRewardGenerator;
+	private final ExplorationEventGenerator explorationEventGenerator;
+	private final EncounterGenerator encounterGenerator;
+
 	private final WorldProgress worldProgress;
 	private final TravelProgress travelProgress;
-	private final PartyStatusMenu partyStatusMenu;
+
 	private Party party;
-	private final CombatScenarioMenu combatScenarioMenu;
-	private final BattleCoordinator battleCoordinator;
-	private final EpicEncounterMenu epicEncounterMenu;
-	private final EnemyCatalog enemyCatalog;
-	private final ExplorationEventGenerator explorationEventGenerator;
 	private ExplorationSession explorationSession;
-	private final EncounterGenerator encounterGenerator;
 	private Random random;
 	private Scenario currentScenario;
+
 	private boolean running;
 	private boolean shouldDisplayScenarioDescription;
 	private boolean scenarioNameAlreadyDisplayed;
-	private InventoryMenu inventoryMenu;
-	private final RouteMenu routeMenu;
-
-
 
 	public World(
 			Party party,
@@ -96,6 +105,7 @@ public class World {
 			ExplorationRewardCatalog explorationRewardCatalog,
 			ScenarioCatalog scenarioCatalog,
 			WorldProgress worldProgress,
+			CityTransportCatalog cityTransportCatalog,
 			InnCatalog innCatalog,
 			ScenarioBranchCatalog scenarioBranchCatalog,
 			TravelProgress travelProgress
@@ -111,18 +121,26 @@ public class World {
 		this.enemyCatalog = Objects.requireNonNull(enemyCatalog, "Enemy catalog cannot be null.");
 		this.scenarioCatalog = Objects.requireNonNull(scenarioCatalog, "Scenario catalog cannot be null.");
 		this.worldProgress = Objects.requireNonNull(worldProgress, "World progress cannot be null.");
-		this.scenarioBranchCatalog = Objects.requireNonNull(scenarioBranchCatalog,"Scenario branch catalog cannot be null.");
+		this.scenarioBranchCatalog = Objects
+				.requireNonNull(scenarioBranchCatalog, "Scenario branch catalog cannot be null.");
 		this.travelProgress = Objects.requireNonNull(travelProgress, "Travel progress cannot be null.");
 		this.itemCatalog = Objects.requireNonNull(itemCatalog, "Item catalog cannot be null.");
 		this.innCatalog = Objects.requireNonNull(innCatalog, "Inn catalog cannot be null.");
+		this.cityTransportCatalog = Objects
+				.requireNonNull(cityTransportCatalog, "City transport catalog cannot be null.");
+		this.worldProgress.discover(this.currentScenario.getId());
 
 		// Shared random generator and gameplay services
 		this.random = new Random();
 		BattleRewardService rewardService = new BattleRewardService(random);
 		BattleRewardScreen rewardScreen = new BattleRewardScreen(scanner);
 		this.battleCoordinator = new BattleCoordinator(
-				this.party, scanner, enemyDropCatalog, rewardService,
-				rewardScreen, random
+				this.party,
+				scanner,
+				enemyDropCatalog,
+				rewardService,
+				rewardScreen,
+				random
 		);
 		this.encounterGenerator = new EncounterGenerator(this.enemyCatalog, encounterCatalog, random);
 		this.explorationRewardGenerator = new ExplorationRewardGenerator(explorationRewardCatalog, random);
@@ -136,6 +154,7 @@ public class World {
 		this.inventoryMenu = new InventoryMenu(this.party, scanner);
 		this.partyStatusMenu = new PartyStatusMenu(this.party, scanner);
 		this.cityMenu = new CityMenu(scanner);
+		this.cityTransportMenu = new CityTransportMenu(this.party, scanner, this.scenarioCatalog);
 		this.cityLocationMenu = new CityLocationMenu(scanner);
 		this.innMenu = new InnMenu(this.party, scanner);
 
@@ -205,18 +224,51 @@ public class World {
 			return;
 		}
 
-		throw new IllegalStateException(
-				"Unsupported scenario type: " + currentScenario.getClass().getName()
-		);
+		throw new IllegalStateException("Unsupported scenario type: " + currentScenario.getClass().getName());
+	}
+
+	private List<CityTransportDefinition> getAvailableCityTransportDestinations() {
+		List<CityTransportDefinition> availableDestinations = new ArrayList<>();
+
+		for (CityTransportDefinition definition : cityTransportCatalog.getAll()) {
+			String destinationScenarioId = definition.getDestinationScenarioId();
+
+			if (!worldProgress.isDiscovered(destinationScenarioId)) {
+				continue;
+			}
+
+			if (destinationScenarioId.equals(currentScenario.getId())) {
+				continue;
+			}
+
+			availableDestinations.add(definition);
+		}
+
+		return List.copyOf(availableDestinations);
+	}
+
+	private int getCityTransportDestinationSlotCount() {
+		int destinationSlotCount = 0;
+
+		for (Scenario scenario : scenarioCatalog.getAll()) {
+			if (!(scenario instanceof City)) {
+				continue;
+			}
+
+			if (scenario.getId().equals(currentScenario.getId())) {
+				continue;
+			}
+
+			destinationSlotCount++;
+		}
+
+		return destinationSlotCount;
 	}
 
 	private void executeCityMenu(City city) {
 		List<CityAction> availableActions = getAvailableCityActions(city);
 
-		Optional<CityAction> selectedAction = cityMenu.selectAction(
-				city.getName(),
-				availableActions
-		);
+		Optional<CityAction> selectedAction = cityMenu.selectAction(city.getName(), availableActions);
 
 		if (selectedAction.isEmpty()) {
 			exitGame();
@@ -236,6 +288,9 @@ public class World {
 		if (travelProgress.hasUnlockedRoutesFrom(city.getId())) {
 			availableActions.add(CityAction.LEAVE_CITY);
 		}
+		if (!getAvailableCityTransportDestinations().isEmpty()) {
+			availableActions.add(CityAction.CITY_TRANSPORT);
+		}
 
 		availableActions.add(CityAction.INVENTORY);
 		availableActions.add(CityAction.VIEW_STATUS);
@@ -252,20 +307,16 @@ public class World {
 		case INVENTORY -> inventoryMenu.open();
 
 		case VIEW_STATUS -> partyStatusMenu.open();
+
+		case CITY_TRANSPORT -> executeCityTransportMenu();
 		}
 	}
 
 	private void executeCityLocationMenu(City city) {
 		InnDefinition innDefinition = innCatalog.findByScenarioId(city.getId())
-				.orElseThrow(
-						() -> new IllegalStateException(
-								"City has no registered Inn: " + city.getId()
-						)
-				);
+				.orElseThrow(() -> new IllegalStateException("City has no registered Inn: " + city.getId()));
 
-		OptionalInt selectedLocation = cityLocationMenu.selectLocation(
-				List.of(innDefinition.getName())
-		);
+		OptionalInt selectedLocation = cityLocationMenu.selectLocation(List.of(innDefinition.getName()));
 
 		if (selectedLocation.isEmpty()) {
 			return;
@@ -310,6 +361,9 @@ public class World {
 			availableActions.add(CombatScenarioAction.FOLLOW_ROUTE);
 		}
 
+		if (!getAvailableCityTransportDestinations().isEmpty()) {
+			availableActions.add(CombatScenarioAction.CITY_TRANSPORT);
+		}
 		availableActions.add(CombatScenarioAction.INVENTORY);
 		availableActions.add(CombatScenarioAction.VIEW_STATUS);
 
@@ -337,6 +391,8 @@ public class World {
 		case FOLLOW_ROUTE -> executeRouteMenu();
 
 		case FOLLOW_BRANCH -> executeScenarioBranchMenu();
+
+		case CITY_TRANSPORT -> executeCityTransportMenu();
 		}
 	}
 
@@ -347,10 +403,8 @@ public class World {
 			return;
 		}
 
-		List<ScenarioBranchDefinition> availableBranches = scenarioBranchCatalog.getBranchesAt(
-				currentScenario.getId(),
-				explorationSession.getCurrentPosition()
-		);
+		List<ScenarioBranchDefinition> availableBranches = scenarioBranchCatalog
+				.getBranchesAt(currentScenario.getId(), explorationSession.getCurrentPosition());
 
 		Optional<ScenarioBranchDefinition> selectedBranch = scenarioBranchMenu.open(availableBranches);
 
@@ -418,8 +472,11 @@ public class World {
 		ExplorationSettings settings = combatScenario.getExplorationSettings();
 
 		List<EnemyDefinition> selectedDefinitions = encounterGenerator.generateGroup(
-				currentScenario.getId(), position,
-				specialArea, settings.getMinEnemies(), settings.getMaxEnemies()
+				currentScenario.getId(),
+				position,
+				specialArea,
+				settings.getMinEnemies(),
+				settings.getMaxEnemies()
 		);
 
 		if (selectedDefinitions.isEmpty()) {
@@ -533,6 +590,29 @@ public class World {
 		return result;
 	}
 
+	private void executeCityTransportMenu() {
+		List<CityTransportDefinition> availableDestinations = getAvailableCityTransportDestinations();
+
+		if (availableDestinations.isEmpty()) {
+			throw new IllegalStateException("There are no available city transport destinations.");
+		}
+
+		Optional<CityTransportDefinition> selectedDestination = cityTransportMenu
+				.open(availableDestinations, getCityTransportDestinationSlotCount());
+
+		if (selectedDestination.isEmpty()) {
+			return;
+		}
+
+		CityTransportDefinition destinationDefinition = selectedDestination.get();
+
+		Scenario destination = scenarioCatalog.getById(destinationDefinition.getDestinationScenarioId());
+
+		changeScenario(destination);
+
+		System.out.println("\n" + destinationDefinition.getTravelDescription());
+	}
+
 	private void executeRouteMenu() {
 		if (currentScenario instanceof CombatScenario
 				&& (explorationSession == null || !explorationSession.isComplete())) {
@@ -552,12 +632,11 @@ public class World {
 		Scenario destination = scenarioCatalog.getById(route.getDestinationScenarioId());
 
 		if (destination instanceof CombatScenario) {
-			int startingPosition = route.getDestinationExplorationPosition()
-					.orElseThrow(
-							() -> new IllegalStateException(
-									"Travel route to combat scenario has no destination position: " + route.getId()
-							)
-					);
+			int startingPosition = route.getDestinationExplorationPosition().orElseThrow(
+					() -> new IllegalStateException(
+							"Travel route to combat scenario has no destination position: " + route.getId()
+					)
+			);
 
 			changeScenario(destination, startingPosition);
 
@@ -569,7 +648,7 @@ public class World {
 
 	private void changeScenario(Scenario destination, int startingPosition) {
 		currentScenario = destination;
-		
+
 		worldProgress.discover(destination.getId());
 
 		if (destination instanceof CombatScenario combatScenario) {
@@ -634,10 +713,8 @@ public class World {
 		boolean epicEncounterAvailable = currentScenario instanceof Dungeon
 				&& explorationSession.canOfferEpicEncounter();
 
-		ExplorationEventType eventType = explorationEventGenerator.generate(
-				settings,
-				explorationSession.canEncounterMerchant(), epicEncounterAvailable
-		);
+		ExplorationEventType eventType = explorationEventGenerator
+				.generate(settings, explorationSession.canEncounterMerchant(), epicEncounterAvailable);
 
 		executeExplorationEvent(eventType, position, specialArea);
 	}

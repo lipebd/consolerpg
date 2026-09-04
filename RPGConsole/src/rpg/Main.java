@@ -27,8 +27,6 @@ import rpg.ui.ConsoleUI;
 import rpg.ui.TitleScreen;
 import rpg.world.World;
 import rpg.world.WorldProgress;
-import rpg.world.transport.CityTransportCatalog;
-import rpg.world.transport.CityTransportLoader;
 import rpg.world.branches.ScenarioBranchCatalog;
 import rpg.world.branches.ScenarioBranchLoader;
 import rpg.world.encounters.EncounterCatalog;
@@ -47,6 +45,8 @@ import rpg.world.scenarios.ScenarioDefinition;
 import rpg.world.scenarios.ScenarioDefinitionCatalog;
 import rpg.world.scenarios.ScenarioFactory;
 import rpg.world.scenarios.ScenarioLoader;
+import rpg.world.transport.CityTransportCatalog;
+import rpg.world.transport.CityTransportLoader;
 import rpg.world.travel.TravelCatalog;
 import rpg.world.travel.TravelProgress;
 import rpg.world.travel.TravelRouteLoader;
@@ -158,7 +158,7 @@ public class Main {
 		PlayableCharacter flagelo = new PlayableCharacter("Flagelo", flageloStats);
 
 		Party party = new Party(flagelo);
-
+		
 		CharacterStats bardoStats = new CharacterStats(
 				80, // HP
 				80, // MP
@@ -287,6 +287,7 @@ public class Main {
 				explorationRewardCatalog,
 				scenarioCatalog,
 				worldProgress,
+				cityTransportCatalog,
 				innCatalog,
 				scenarioBranchCatalog,
 				travelProgress

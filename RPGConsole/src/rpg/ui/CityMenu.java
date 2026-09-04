@@ -60,6 +60,7 @@ public final class CityMenu {
 	}
 
 	private boolean startsNewActionGroup(CityAction action) {
-		return action == CityAction.INVENTORY;
+		return action == CityAction.CITY_TRANSPORT || action == CityAction.INVENTORY;
 	}
+
 }
