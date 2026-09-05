@@ -331,61 +331,61 @@ The implementation must preserve stable IDs, strict startup validation and separ
 
 ## 10. Scenario discovery and paid city travel
 
-* [ ] Rename `TravelMenu` to `RouteMenu`.
-* [ ] Rename the existing `CombatScenarioAction.TRAVEL` action to `FOLLOW_ROUTE`.
-* [ ] Display the free adjacent-route action as `Seguir caminho`.
-* [ ] Rename route-menu fields and methods to remove travel ambiguity.
-* [ ] Keep `RouteMenu` exclusive to unlocked adjacent `TravelRouteDefinition` entries.
-* [ ] Add `CITY_TRANSPORT` as a separate city and combat-scenario action.
-* [ ] Display the paid city-travel action as `Viajar`.
-* [ ] Keep paid city travel separate from adjacent routes and route unlocking.
-* [ ] Create runtime `WorldProgress` state.
-* [ ] Record discovered scenario IDs.
-* [ ] Mark the initial scenario as discovered.
-* [ ] Mark every scenario as discovered when first entered.
-* [ ] Cover destinations entered through routes, branches and paid travel.
-* [ ] Keep scenario discovery separate from route availability and access requirements.
-* [ ] Expose discovered IDs without exposing mutable internal state.
-* [ ] Prepare discovered-scenario state for future save data.
-* [ ] Define `city_transport.txt`.
-* [ ] Store the destination city scenario ID, fixed price and custom travel description.
-* [ ] Support literal `\n` in travel descriptions.
-* [ ] Create immutable city-transport definitions.
-* [ ] Create the city-transport loader and catalog.
-* [ ] Require every transport destination to reference an existing `CITY`.
-* [ ] Reject empty required fields, invalid prices and duplicate destination cities.
-* [ ] Configure Bree, Setegalhos, O Vão, Entrelugar, Deep Valley and Mist Suburb as transport destinations.
-* [ ] Use provisional destination prices of 25C, 50C, 75C, 100C, 125C and 150C.
-* [ ] Keep early-game destinations cheaper than late-game destinations.
-* [ ] Keep Reino de Altaneve out of runtime data until its scenario definition is approved.
-* [ ] Add a dedicated `CityTransportMenu`.
-* [ ] List only discovered and configured destination cities.
-* [ ] Exclude the current city when travel begins from a city.
-* [ ] Keep discovered destinations visible when the party cannot afford them.
-* [ ] Number only selectable discovered destinations.
-* [ ] Display unnumbered `--` slots for cities that remain undiscovered.
-* [ ] Derive the number of destination slots from registered `CITY` scenarios instead of a hardcoded total.
-* [ ] Display discovered destinations before empty slots.
-* [ ] Show prices and available party currency using the `C` symbol.
-* [ ] Use `C` as the numeric currency symbol throughout the current interface.
-* [ ] Keep the word `ouro` available for narrative text.
-* [ ] Omit the `Viajar` action when no valid destination city is available.
-* [ ] Allow paid city travel from cities, fields and dungeons.
-* [ ] Allow paid travel before a combat scenario's exploration is complete.
-* [ ] Keep paid travel unavailable during battles.
-* [ ] Request confirmation before charging the party.
-* [ ] Preserve party gold when travel is unaffordable or cancelled.
-* [ ] Deduct gold only after a valid destination and confirmation succeed.
-* [ ] Move the party directly to the selected destination city.
-* [ ] Display the destination's custom narrative travel description.
-* [ ] Discard an incomplete exploration session when paid travel leaves its scenario.
-* [ ] Preserve EXP, gold, items, bestiary analysis, discoveries, unlocks and all other permanent progress already obtained.
-* [ ] Create a fresh exploration session from the route-defined entry position when the abandoned scenario is entered again.
-* [ ] Preserve free adjacent travel to fields and dungeons.
-* [ ] Preserve iterative navigation across route and city-transport menus.
-* [ ] Test discovery through routes and exploration branches.
-* [ ] Test paid travel from a city and from an incomplete combat scenario.
-* [ ] Test destination filtering, empty slots, payment, cancellation, insufficient funds and permanent-progress preservation.
+* [x] Rename `TravelMenu` to `RouteMenu`.
+* [x] Rename the existing `CombatScenarioAction.TRAVEL` action to `FOLLOW_ROUTE`.
+* [x] Display the free adjacent-route action as `Seguir caminho`.
+* [x] Rename route-menu fields and methods to remove travel ambiguity.
+* [x] Keep `RouteMenu` exclusive to unlocked adjacent `TravelRouteDefinition` entries.
+* [x] Add `CITY_TRANSPORT` as a separate city and combat-scenario action.
+* [x] Display the paid city-travel action as `Viajar`.
+* [x] Keep paid city travel separate from adjacent routes and route unlocking.
+* [x] Create runtime `WorldProgress` state.
+* [x] Record discovered scenario IDs.
+* [x] Mark the initial scenario as discovered.
+* [x] Mark every scenario as discovered when first entered.
+* [x] Cover destinations entered through routes, branches and paid travel.
+* [x] Keep scenario discovery separate from route availability and access requirements.
+* [x] Expose discovered IDs without exposing mutable internal state.
+* [x] Prepare discovered-scenario state for future save data.
+* [x] Define `city_transport.txt`.
+* [x] Store the destination city scenario ID, fixed price and custom travel description.
+* [x] Support literal `\n` in travel descriptions.
+* [x] Create immutable city-transport definitions.
+* [x] Create the city-transport loader and catalog.
+* [x] Require every transport destination to reference an existing `CITY`.
+* [x] Reject empty required fields, invalid prices and duplicate destination cities.
+* [x] Configure Bree, Setegalhos, O Vão, Entrelugar, Deep Valley and Mist Suburb as transport destinations.
+* [x] Use provisional destination prices of G$ 25, G$ 50, G$ 75, G$ 100, G$ 125 and G$ 150.
+* [x] Keep early-game destinations cheaper than late-game destinations.
+* [x] Keep Reino de Altaneve out of runtime data until its scenario definition is approved.
+* [x] Add a dedicated `CityTransportMenu`.
+* [x] List only discovered and configured destination cities.
+* [x] Exclude the current city when travel begins from a city.
+* [x] Keep discovered destinations visible when the party cannot afford them.
+* [x] Number only selectable discovered destinations.
+* [x] Display unnumbered `--` slots for cities that remain undiscovered.
+* [x] Derive the number of destination slots from registered `CITY` scenarios instead of a hardcoded total.
+* [x] Display discovered destinations before empty slots.
+* [x] Show prices and available party currency through `GameCurrency`.
+* [x] Use `GOLD` as the current display name and `G$` followed by a space as the value prefix.
+* [x] Keep the currency name and value formatting centralized for future changes.
+* [x] Omit the `Viajar` action when no valid destination city is available.
+* [x] Allow paid city travel from cities, fields and dungeons.
+* [x] Allow paid travel before a combat scenario's exploration is complete.
+* [x] Keep paid travel unavailable during battles.
+* [x] Request confirmation before charging the party.
+* [x] Preserve party gold when travel is unaffordable or cancelled.
+* [x] Deduct gold only after a valid destination and confirmation succeed.
+* [x] Move the party directly to the selected destination city.
+* [x] Display the destination's custom narrative travel description.
+* [x] Discard an incomplete exploration session when paid travel leaves its scenario.
+* [x] Preserve EXP, gold, items, bestiary analysis, discoveries, unlocks and all other permanent progress already obtained.
+* [x] Create a fresh exploration session from the route-defined entry position when the abandoned scenario is entered again.
+* [x] Preserve free adjacent travel to fields and dungeons.
+* [x] Preserve iterative navigation across route and city-transport menus.
+* [x] Test discovery through routes and exploration branches.
+* [x] Test paid travel from a city and from an incomplete combat scenario.
+* [x] Test destination filtering, empty slots, payment, cancellation, insufficient funds and permanent-progress preservation.
 
 ## 11. External skills and combat effects
 

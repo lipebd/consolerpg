@@ -7,6 +7,7 @@ import java.util.Scanner;
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
 import rpg.world.inns.InnDefinition;
+import rpg.GameCurrency;
 
 // Displays an INN and controls the party-resting flow.
 public final class InnMenu {
@@ -41,20 +42,17 @@ public final class InnMenu {
 		}
 	}
 
-	private void displayInn(
-			InnDefinition innDefinition,
-			String feedbackMessage
-	) {
-		System.out.println(
-				"\n[" + innDefinition.getName().toUpperCase(Locale.ROOT) + "]"
-		);
+	private void displayInn(InnDefinition innDefinition, String feedbackMessage) {
+		System.out.println("\n[" + innDefinition.getName().toUpperCase(Locale.ROOT) + "]");
 
 		System.out.println(innDefinition.getDescription());
 
-		System.out.println(
-				"\nEstadia do grupo: " + innDefinition.getPrice() + " ouro"
-		);
-		System.out.println("Ouro disponível: " + party.getGold());
+		String stayPriceLabel = "Estadia do grupo:";
+		String availableGoldLabel = GameCurrency.getName() + " disponível:";
+		int labelWidth = Math.max(stayPriceLabel.length(), availableGoldLabel.length()) + 1;
+
+		System.out.printf("\n%-" + labelWidth + "s%s%n", stayPriceLabel, GameCurrency.format(innDefinition.getPrice()));
+		System.out.printf("%-" + labelWidth + "s%s%n", availableGoldLabel, GameCurrency.format(party.getGold()));
 
 		if (feedbackMessage != null) {
 			System.out.println();
@@ -86,13 +84,12 @@ public final class InnMenu {
 
 		restoreParty();
 
-		return "Após uma noite de descanso, todos despertam "
-				+ "com as forças completamente renovadas.";
+		return "Após uma noite de descanso, todos despertam com as forças completamente renovadas.";
 	}
 
 	private boolean confirmStay(int price) {
 		while (true) {
-			System.out.println("\nConfirmar estadia por " + price + " ouro?");
+			System.out.println("\nConfirmar estadia por " + GameCurrency.format(price) + "?");
 
 			System.out.println();
 			System.out.println("[1] Confirmar");
@@ -117,10 +114,8 @@ public final class InnMenu {
 
 	private boolean isPartyFullyRestored() {
 		for (PlayableCharacter member : party.getMembers()) {
-			if (!member.isAlive()
-					|| member.getCurrentHp() < member.getMaxHp()
-					|| member.getCurrentMp() < member.getMaxMp()
-					|| member.getCurrentSp() < member.getMaxSp()) {
+			if (!member.isAlive() || member.getCurrentHp() < member.getMaxHp()
+					|| member.getCurrentMp() < member.getMaxMp() || member.getCurrentSp() < member.getMaxSp()) {
 				return false;
 			}
 		}

@@ -5,6 +5,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Scanner;
 
+import rpg.GameCurrency;
 import rpg.characters.Party;
 import rpg.world.scenarios.Scenario;
 import rpg.world.scenarios.ScenarioCatalog;
@@ -25,10 +26,8 @@ public final class CityTransportMenu {
 		this.scenarioCatalog = Objects.requireNonNull(scenarioCatalog, "Scenario catalog cannot be null.");
 	}
 
-	public Optional<CityTransportDefinition> open(
-					List<CityTransportDefinition> destinations,
-					int destinationSlotCount
-	) {
+	public Optional<CityTransportDefinition>
+			open(List<CityTransportDefinition> destinations, int destinationSlotCount) {
 		Objects.requireNonNull(destinations, "City transport destinations cannot be null.");
 
 		if (destinationSlotCount < destinations.size()) {
@@ -85,11 +84,7 @@ public final class CityTransportMenu {
 	}
 
 	private void
-			displayMenu(
-					List<CityTransportDefinition> destinations,
-					int destinationSlotCount,
-					String feedbackMessage
-	) {
+			displayMenu(List<CityTransportDefinition> destinations, int destinationSlotCount, String feedbackMessage) {
 		System.out.println("\nEscolha seu destino:");
 
 		for (int index = 0; index < destinations.size(); index++) {
@@ -97,10 +92,10 @@ public final class CityTransportMenu {
 			Scenario destination = scenarioCatalog.getById(definition.getDestinationScenarioId());
 
 			System.out.printf(
-					"[%d] %-" + DESTINATION_NAME_WIDTH + "s %dC%n",
+					"[%d] %-" + DESTINATION_NAME_WIDTH + "s %s%n",
 					index + 1,
 					destination.getName(),
-					definition.getPrice()
+					GameCurrency.format(definition.getPrice())
 			);
 		}
 
@@ -110,7 +105,7 @@ public final class CityTransportMenu {
 			System.out.printf("    %-" + DESTINATION_NAME_WIDTH + "s --%n", "--");
 		}
 
-		System.out.println("\nOuro disponível: " + party.getGold() + "C");
+		System.out.println("\n" + GameCurrency.getName() + " disponível: " + GameCurrency.format(party.getGold()));
 
 		if (feedbackMessage != null) {
 			System.out.println();
@@ -127,7 +122,8 @@ public final class CityTransportMenu {
 
 		while (true) {
 			System.out.println(
-					"\nViajar para " + destination.getName() + " por " + destinationDefinition.getPrice() + "C?"
+					"\nViajar para " + destination.getName() + " por "
+							+ GameCurrency.format(destinationDefinition.getPrice()) + "?"
 			);
 
 			System.out.println();

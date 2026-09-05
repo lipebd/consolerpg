@@ -8,6 +8,7 @@ import java.util.OptionalInt;
 import java.util.Random;
 import java.util.Scanner;
 
+import rpg.GameCurrency;
 import rpg.battle.BattleCoordinator;
 import rpg.battle.BattleResult;
 import rpg.battle.rewards.BattleRewardService;
@@ -517,7 +518,7 @@ public class World {
 		case GOLD -> {
 			party.addGold(reward.getQuantity());
 
-			System.out.println("Você encontrou " + reward.getQuantity() + " de ouro!");
+			System.out.println("Você encontrou " + GameCurrency.format(reward.getQuantity()) + "!");
 		}
 		}
 	}

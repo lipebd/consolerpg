@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Scanner;
 
+import rpg.GameCurrency;
 import rpg.characters.Party;
 import rpg.items.Item;
 import rpg.items.ItemCategory;
@@ -34,7 +35,9 @@ public final class InventoryMenu {
 
 		while (true) {
 			System.out.println("\n[INVENTÁRIO]");
-			System.out.println("Ouro: " + party.getGold());
+			System.out.println(
+			GameCurrency.getName() + ": " + GameCurrency.format(party.getGold())
+	);
 
 			displayCategoryMenu(categories);
 

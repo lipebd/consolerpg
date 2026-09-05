@@ -8,6 +8,7 @@ import java.util.Scanner;
 import rpg.battle.rewards.BattleRewards;
 import rpg.battle.rewards.CharacterProgressionResult;
 import rpg.items.Item;
+import rpg.GameCurrency;
 
 // Displays the rewards obtained after a battle victory.
 public final class BattleRewardScreen {
@@ -25,7 +26,7 @@ public final class BattleRewardScreen {
 
 		displayExperienceRewards(rewards);
 
-		System.out.println("Ouro recebido: +" + rewards.getGold());
+		System.out.println(GameCurrency.getName() + " recebido: +" + GameCurrency.format(rewards.getGold()));
 
 		displayLevelProgress(rewards);
 		displayCollectedItems(rewards);

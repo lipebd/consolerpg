@@ -6,6 +6,7 @@ import java.util.Scanner;
 
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
+import rpg.GameCurrency;
 
 // Displays the party summary and allows character selection.
 public final class PartyStatusMenu {
@@ -66,7 +67,7 @@ public final class PartyStatusMenu {
 			displayMemberSummary(member, index + 1);
 		}
 
-		System.out.println("\nOuro: " + party.getGold());
+		System.out.println("\n" + GameCurrency.getName() + ": " + GameCurrency.format(party.getGold()));
 	}
 
 	private void displayMemberSummary(PlayableCharacter member, int optionNumber) {
@@ -77,8 +78,11 @@ public final class PartyStatusMenu {
 			return;
 		}
 
-		System.out.println(" | Nv. " + member.getLevel() + " | HP: " + member.getCurrentHp() + "/" + member.getMaxHp()
-				+ " | MP: " + member.getCurrentMp() + "/" + member.getMaxMp() + " | SP: " + member.getCurrentSp() + "/"
-				+ member.getMaxSp());
+		System.out.println(
+				" | Nv. " + member.getLevel() +
+				" | HP: " + member.getCurrentHp() + "/" + member.getMaxHp() +
+				" | MP: " + member.getCurrentMp() + "/" + member.getMaxMp() +
+				" | SP: " + member.getCurrentSp() + "/"	+ member.getMaxSp()
+		);
 	}
 }
