@@ -2,9 +2,11 @@
 
 ## Release goal
 
-V3 expands RPGConsole from a data-driven combat prototype into a data-driven world with structured exploration, external game content, city services, character progression and persistent game state.
+V3 expands RPGConsole from a data-driven combat prototype into a data-driven world with structured exploration, external scenario, item and reward content, city services, shops, scenario discovery and paid city travel.
 
 The implementation must preserve stable IDs, strict startup validation and separation between immutable definitions and mutable runtime state.
+
+Character progression, combat-system expansion, equipment, character creation, full-party rescue and persistence are outside this release. Their requirements are preserved in [`V4_ROADMAP.md`](V4_ROADMAP.md).
 
 ## Confirmed design decisions
 
@@ -14,6 +16,9 @@ The implementation must preserve stable IDs, strict startup validation and separ
 * Adjacent scenario travel is free.
 * Fast travel between discovered cities is separate from adjacent travel and always costs gold.
 * Fast-travel cost is fixed by destination city.
+* Paid city travel may leave a city, field or dungeon.
+* Leaving an incomplete exploration through paid city travel discards only its current session and preserves all permanent gains.
+* Currency display name and value formatting are centralized through `GameCurrency`.
 * Cities may provide multiple named exits with their own flavor text.
 * Cities do not use exploration sessions.
 * Exploration follows the current-position-first model:
@@ -28,6 +33,7 @@ The implementation must preserve stable IDs, strict startup validation and separ
 * The world travel action is displayed only when the current position provides a valid destination.
 * Exploration rewards use weighted, scenario-specific pools.
 * Normal and special areas may use different reward pools.
+* Special areas remain eligible for the `Nothing` event.
 * One reward event selects exactly one pool entry.
 * The selected entry grants either an item or gold, never both simultaneously.
 * Reward quantity is randomized between the configured minimum and maximum.
@@ -387,148 +393,7 @@ The implementation must preserve stable IDs, strict startup validation and separ
 * [x] Test paid travel from a city and from an incomplete combat scenario.
 * [x] Test destination filtering, empty slots, payment, cancellation, insufficient funds and permanent-progress preservation.
 
-## 11. External skills and combat effects
-
-* [ ] Define `skills.txt`.
-* [ ] Create stable skill IDs.
-* [ ] Create immutable skill definitions.
-* [ ] Create the skill loader.
-* [ ] Create the skill catalog.
-* [ ] Validate targeting, damage, recovery and resource data.
-* [ ] Support literal `\n` in skill descriptions.
-* [ ] Externalize current playable skills.
-* [ ] Replace hardcoded skill creation in `Main`.
-* [ ] Redesign the learned-skills screen to display complete targeting, resource-cost and effect information.
-* [ ] Implement temporary buffs.
-* [ ] Implement temporary debuffs.
-* [ ] Implement effect duration.
-* [ ] Display active effects during battle.
-* [ ] Prevent effects from leaking between unrelated battles.
-* [ ] Add global EXP and gold reward modifiers.
-* [ ] Add individual character EXP modifiers.
-* [ ] Test healing, revival and effect skills after externalization.
-* [ ] Define external skill-scroll links to skill and class IDs.
-* [ ] Validate skill-scroll references against skill and class catalogs.
-* [ ] Allow a compatible character to learn an unknown skill from a scroll.
-* [ ] Consume a skill scroll only after successful learning.
-* [ ] Reject duplicate or class-incompatible skill learning without consuming the item.
-* [ ] Connect recovery-item purification to active negative effects.
-
-## 12. Playable classes
-
-* [ ] Define external playable-class data.
-* [ ] Create stable IDs for all seven playable classes.
-* [ ] Store base attributes.
-* [ ] Store attribute-growth rules.
-* [ ] Store class descriptions and lore.
-* [ ] Support literal `\n` in class descriptions.
-* [ ] Define class-to-skill progression.
-* [ ] Validate referenced skill IDs.
-* [ ] Assign a playable class to every playable character.
-* [ ] Apply class growth during level-up.
-* [ ] Display the class in individual status.
-* [ ] Support the Flagelo's complete initial progression.
-* [ ] Prepare Setegalhos for class training and class changes.
-* [ ] Preserve IDs required by future save data.
-
-## 13. Equipment
-
-* [ ] Define equipment item types.
-* [ ] Define equipment slots.
-* [ ] Add weapon damage.
-* [ ] Add armor bonuses.
-* [ ] Add attribute bonuses.
-* [ ] Equip and unequip items.
-* [ ] Prevent one inventory instance from being equipped twice.
-* [ ] Recalculate effective attributes safely.
-* [ ] Preserve base attributes separately from equipment bonuses.
-* [ ] Add equipment inspection to individual status.
-* [ ] Integrate equipment with shops and exploration rewards.
-* [ ] Test equipment changes during normal progression.
-
-## 14. Character and party creation
-
-* [ ] Create the initial character-creation flow.
-* [ ] Allow the player to choose a character name.
-* [ ] Allow the player to choose from available starting classes.
-* [ ] Display class descriptions and attributes before confirmation.
-* [ ] Replace temporary hardcoded party creation in `Main`.
-* [ ] Define party-title rules.
-* [ ] Use the party title in world narration.
-* [ ] Display character history and lore.
-* [ ] Prepare character and party identity for save data.
-* [ ] Preserve temporary development-party shortcuts when needed for testing.
-* [ ] Define the maximum character-name length.
-* [ ] Reject character names exceeding the supported length.
-* [ ] Align party and individual status layouts using the supported name length.
-* [ ] Display complete character names without truncation.
-
-## 15. Full-party defeat and rescue
-
-* [ ] Replace the temporary `GameOverScreen`.
-* [ ] Send the defeated party to Bree.
-* [ ] Fully restore HP, MP and SP through the rescue flow.
-* [ ] Revive all defeated party members through rescue.
-* [ ] Preserve EXP.
-* [ ] Preserve gold.
-* [ ] Preserve inventory.
-* [ ] Preserve equipment.
-* [ ] Preserve scenario discovery and progression.
-* [ ] Keep normal post-battle behavior from automatically reviving defeated members.
-* [ ] Test defeat in fields.
-* [ ] Test defeat in dungeons.
-* [ ] Test defeat during mandatory and optional encounters.
-
-## 16. Save and load
-
-* [ ] Define the save-file format.
-* [ ] Add a save-format version.
-* [ ] Save party identity and title.
-* [ ] Save every playable character.
-* [ ] Save level, EXP and class.
-* [ ] Save learned skills.
-* [ ] Save current HP, MP and SP.
-* [ ] Save shared gold and inventory.
-* [ ] Save equipped items.
-* [ ] Save current scenario ID.
-* [ ] Save world and scenario discovery.
-* [ ] Save relevant exploration progress.
-* [ ] Save persistent shop state if finite stock is adopted.
-* [ ] Validate all loaded IDs against current catalogs.
-* [ ] Reject or safely report invalid save data.
-* [ ] Add New Game and Continue options to the title screen.
-* [ ] Prevent partial state changes when loading fails.
-* [ ] Test save and load after restarting the application.
-* [ ] Define the maximum owned gold quantity.
-* [ ] Define the maximum owned quantity of each item.
-* [ ] Keep total inventory capacity unlimited while enforcing numeric quantity limits.
-* [ ] Decide whether gains exceeding a limit are rejected, capped or partially granted.
-* [ ] Prevent integer overflow during gold and inventory quantity changes.
-* [ ] Validate saved gold and item quantities before restoring state.
-* [ ] Reject negative or out-of-range resource quantities in save data.
-
-## 17. Exploration decisions still under study
-
-* [x] Keep special areas eligible for the `Nothing` event.
-* [ ] Decide whether some special areas guarantee a specific event.
-* [x] Preserve permanent gains when leaving a scenario while discarding its current exploration session.
-* [ ] Evaluate exploration checkpoints.
-* [ ] Evaluate camps and temporary recovery.
-* [ ] Decide how completed dungeons behave when revisited.
-
-### World flags and access requirements
-
-> **Deferred:** Implement after quests and the relevant progression systems provide real state to evaluate. Do not create placeholder requirement abstractions before then.
-
-* [ ] Create stable world-progress flags for quests, story events and permanent unlocks.
-* [ ] Define reusable access requirements for routes, branches, portals and services.
-* [ ] Evaluate access requirements against party level, inventory, completed quests and world flags.
-* [ ] Support multiple simultaneous requirements for the same access point.
-* [ ] Decide whether unmet requirements hide an action or display it as blocked with a player-facing reason.
-* [ ] Replace blanket route unlocking with explicit progress triggers where required.
-* [ ] Prepare world flags, completed quests and route unlocks for save data.
-
-## 18. Validation and regression tests
+## 11. V3 validation and regression tests
 
 * [ ] Test malformed scenario data.
 * [ ] Test duplicate scenario IDs.
@@ -536,8 +401,8 @@ The implementation must preserve stable IDs, strict startup validation and separ
 * [ ] Test missing dungeon definitions.
 * [ ] Test invalid enemy references.
 * [ ] Test invalid route and branch references.
-* [ ] Test malformed item, reward, shop, skill and class data.
-* [ ] Test battles after all data externalization.
+* [ ] Test malformed item, reward, inn, shop and city-transport data.
+* [ ] Test battles after V3 data externalization.
 * [ ] Test party rewards and level-ups.
 * [ ] Test defeated-character behavior.
 * [ ] Test normal and special exploration areas.
@@ -547,21 +412,19 @@ The implementation must preserve stable IDs, strict startup validation and separ
 * [ ] Test fixed branches.
 * [ ] Test paid city transport.
 * [ ] Test city services and shops.
-* [ ] Test character creation.
-* [ ] Test full-party rescue.
-* [ ] Test save and load.
+* [ ] Test centralized currency display across rewards, inventory, status, city services and paid travel.
 * [ ] Audit every external-data loader that accepts player-facing text for literal `\n` conversion.
 * [ ] Run a complete new-game playthrough.
 * [ ] Test the portable build outside the repository.
-* [ ] Test gold and per-item quantity boundaries, overflow attempts and invalid save values.
 
-## 19. Documentation and V3 release
+## 12. Documentation and V3 release
 
 * [ ] Update `DATA_FORMATS.md`.
 * [ ] Document the literal `\n` convention for all external descriptions.
 * [ ] Update `ARCHITECTURE.md`.
 * [ ] Update `MECHANICS.md`.
 * [ ] Update `PROJECT_STATE.md`.
+* [x] Verify that all post-V3 requirements remain preserved in `V4_ROADMAP.md`.
 * [ ] Review this roadmap and mark completed tasks.
 * [ ] Remove obsolete temporary development code.
 * [ ] Generate the V3 runnable JAR.
