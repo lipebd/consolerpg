@@ -471,6 +471,47 @@ Rules:
 - Route display names and descriptions also represent city-exit labels and flavor text.
 - Adjacent travel through these routes is free.
 
+## City transport definitions
+
+Paid transport between discovered cities is loaded from:
+
+`data/city_transport.txt`
+
+Header:
+
+```text
+# destinationScenarioId;price;travelDescription
+```
+
+Example:
+
+```
+setegalhos;50;A viagem termina sob a copa colossal de Setegalhos.
+```
+
+Rules:
+
+`destinationScenarioId` must reference an existing scenario whose type is `CITY`.
+Each destination city may appear only once.
+`price` must be a positive integer.
+`travelDescription` cannot be empty.
+Literal `\n` sequences in `travelDescription` are converted into line breaks.
+Transport definitions describe configured destinations, not routes between specific origins.
+The same destination price is therefore used regardless of the city, field or dungeon from which paid travel begins.
+Scenario discovery is runtime state and is not stored in this file.
+Reino de Altaneve remains absent until its scenario definition is approved.
+
+Loading flow:
+
+```
+city_transport.txt
+    -> CityTransportLoader
+    -> CityTransportDefinition
+    -> CityTransportCatalog
+```
+
+`CityTransportLoader` validates destination references against `ScenarioDefinitionCatalog`. `World` later combines the catalog with `WorldProgress` to expose only configured destinations already discovered by the player.
+
 ## Scenario branch definitions
 
 File:
@@ -532,7 +573,7 @@ Rules:
 - Prices remain externally configurable for future balancing.
 - `InnLoader` produces immutable `InnDefinition` entries registered in `InnCatalog`.
 
-## Planned V3 data files
+## Planned future data files
 ### Skill definitions
 
 Planned file:

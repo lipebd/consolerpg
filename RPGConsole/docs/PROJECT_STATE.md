@@ -91,8 +91,8 @@ enemies.txt
 - Scenario inheritance hierarchy with `Scenario`, `CombatScenario`, `Field`, `Dungeon` and `City`.
 - `ScenarioCatalog` stores scenarios by stable ID.
 - `TravelCatalog` stores directed routes between scenarios.
-- `TravelMenu` supports multiple destinations.
-- Combat-scenario travel remains locked until exploration is complete.
+- `RouteMenu` supports multiple unlocked adjacent destinations.
+- Adjacent travel from combat scenarios remains locked until exploration is complete.
 - Bree, Verdes Ermos and Gruta de Relamparrocha are connected.
 - Scenario descriptions are displayed when entering a map and after returning from battle.
 
@@ -228,7 +228,9 @@ Responsibilities previously concentrated in `World` were extracted into dedicate
 - `CityMenu`
 - `CityLocationMenu`
 - `InnMenu`
-- `TravelMenu`
+- `RouteMenu`
+- `CityTransportMenu`
+- `WorldProgress`
 - `EpicEncounterMenu`
 - `BattleCoordinator`
 - `BattleRewardService`
@@ -262,7 +264,7 @@ The city menu currently supports:
 - Viewing party status.
 - Explicitly ending the game.
 
-Unavailable actions are omitted. Paid city transport remains absent until its own roadmap section is implemented.
+Unavailable actions are omitted. Paid city transport appears only when at least one configured and discovered destination city is available.
 
 City locations are treated as a navigation concept rather than a generic service hierarchy. `CityLocationMenu` displays only functional location names, while each selected service owns its details and interaction flow.
 
@@ -407,6 +409,42 @@ Current HP, MP and SP remain inside `GameCharacter` because they change during g
 
 Recovery power is not a character attribute. Recovery values belong to skills or items, while `GameCharacter.recoverHp()`, `recoverMp()`, `recoverSp()` and `revive()` apply changes to character resources.
 
+## Scenario discovery and paid city transport
+
+V3 roadmap section 10 is complete.
+
+Implemented scenario-discovery behavior includes:
+
+- `WorldProgress` records stable IDs of scenarios entered during the active game.
+- The initial scenario is discovered when `World` is created.
+- Routes, fixed branches and paid transport all discover their destinations.
+- Discovery remains separate from adjacent-route unlocking.
+- Discovered IDs are exposed without exposing mutable internal state.
+
+Paid city transport includes:
+
+- External destination definitions loaded from `data/city_transport.txt`.
+- Immutable `CityTransportDefinition` entries.
+- Startup validation through `CityTransportLoader`.
+- Destination lookup through `CityTransportCatalog`.
+- A dedicated `CityTransportMenu`.
+- Filtering by configured and discovered cities.
+- Unnumbered `--` slots for undiscovered cities.
+- Prices and balances formatted through `GameCurrency`.
+- Availability from cities, fields and dungeons, including incomplete exploration.
+- Confirmation before payment.
+- Preservation of gold after cancellation or insufficient funds.
+- Direct movement to the selected city and display of its travel description.
+- Disposal of an abandoned incomplete `ExplorationSession` without losing permanent progress.
+
+Adjacent routes remain free and continue to use `TravelRouteDefinition`, `TravelCatalog`, `TravelProgress` and `RouteMenu`.
+
+## Centralized currency presentation
+
+`GameCurrency` centralizes the visible currency name and numeric formatting. The current interface uses `GOLD` as the name and `G$ ` as the value prefix.
+
+Battle rewards, exploration rewards, inventory, party status, INNs and paid city transport use this shared presentation without moving gold ownership away from `Party`.
+
 ## Current limitations and temporary implementations
 
 - The merchant event has no merchandise or transaction system.
@@ -423,11 +461,11 @@ Recovery power is not a character attribute. Recovery values belong to skills or
 
 ## Current next step
 
-V3 roadmap section 8, city structure and Bree services, is complete.
+V3 roadmap sections 1 through 8 and section 10 are complete.
 
-Section 9, shops and merchants, remains on hold while its initial implementation is developed separately. That implementation must be reviewed before the section begins.
+Section 9, shops and merchants, is the next implementation target. Its scope is being reviewed and frozen before code changes begin.
 
-The next planned world-progression section is section 10: scenario discovery and paid city transport.
+After shops and merchants, the remaining V3 work consists of release-specific regression testing, documentation review, build generation and release preparation. Requirements beyond the data-driven world scope are preserved in `V4_ROADMAP.md`.
 
 ## Important conventions
 

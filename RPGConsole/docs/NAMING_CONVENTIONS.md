@@ -150,7 +150,7 @@ The following suffixes have specific meanings in RPGConsole.
 | `Generator` | Selects or creates results using rules and randomness | `EncounterGenerator`, `ExplorationEventGenerator` |
 | `Coordinator` | Orchestrates several existing components without owning all their internal rules | `BattleCoordinator` |
 | `Service` | Applies a cohesive domain operation, usually without console input | `BattleRewardService` |
-| `Menu` | Reads player input and returns a selection or decision | `TravelMenu`, `EnemyTargetMenu` |
+| `Menu` | Reads player input and returns a selection or decision | `RouteMenu`, `EnemyTargetMenu` |
 | `Screen` | Displays a complete console view or result | `TitleScreen`, `BattleRewardScreen` |
 | `Result` / `Rewards` | Stores the output of an operation | `BattleResult`, `BattleRewards` |
 | `Group` | Owns and queries a collection that acts as one domain unit | `EnemyBattleGroup` |

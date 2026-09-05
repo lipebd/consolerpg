@@ -22,21 +22,22 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 
 | Package | Responsibility | Main types |
 |---|---|---|
-| `rpg` | Application entry point and dependency construction | `Main` |
+| `rpg` | Application entry point, dependency construction and shared currency presentation | `Main`, `GameCurrency` |
 | `rpg.characters` | Character state, attributes, party ownership and enemy ranks | `GameCharacter`, `CharacterStats`, `PlayableCharacter`, `Party`, `Enemy`, `EnemyRank` |
 | `rpg.battle` | Battle execution, enemy groups, initiative and escape | `Battle`, `BattleResult`, `BattleCoordinator`, `EnemyBattleGroup`, `EnemyBattleSlot`, `BattleTurnOrder`, `BattleTurnOrderGenerator`, `BattleEscapeService` |
 | `rpg.battle.rewards` | Reward calculation and individual progression results | `BattleRewardService`, `BattleRewards`, `CharacterProgressionResult` |
 | `rpg.skills` | Skill definitions, damage, recovery and target types | `Skill`, `DamageType`, `RecoveryType`, `SkillTargetType` |
 | `rpg.items` | External item definitions, runtime item behavior, shared inventory and individual drop rules | `ItemDefinition`, `ItemDefinitionCatalog`, `ItemLoader`, `RecoveryItemDefinition`, `RecoveryItemLoader`, `ItemFactory`, `Item`, `BasicItem`, `RecoveryItem`, `ItemCatalog`, `Inventory`, `DropEntry` |
 | `rpg.enemies` | Enemy definitions and external enemy/drop loading | `EnemyDefinition`, `EnemyCatalog`, `EnemyLoader`, `EnemyDropCatalog`, `EnemyDropLoader` |
-| `rpg.world` | Active world state and high-level coordination | `World` |
+| `rpg.world` | Active world state, scenario discovery and high-level coordination | `World`, `WorldProgress` |
 | `rpg.world.scenarios` | External scenario definitions, runtime scenario hierarchy and scenario creation | `ScenarioDefinition`, `ScenarioDefinitionCatalog`, `ScenarioLoader`, `CombatScenarioDefinition`, `CombatScenarioLoader`, `DungeonDefinition`, `DungeonLoader`, `ScenarioFactory`, `Scenario`, `CombatScenario`, `Field`, `Dungeon`, `City`, `ScenarioCatalog`, `CombatScenarioAction`, `CityAction` |
 | `rpg.world.encounters` | Encounter availability and weighted group generation | `EncounterEntry`, `EncounterCatalog`, `EncounterLoader`, `EncounterGenerator` |
 | `rpg.world.exploration` | Exploration configuration, progress and event selection | `ExplorationSettings`, `ExplorationSession`, `ExplorationEventGenerator`, `ExplorationEventType`, `ExplorationAreaRestriction` |
 | `rpg.world.inns` | Immutable city-INN definitions, loading and lookup by stable or city scenario ID | `InnDefinition`, `InnCatalog`, `InnLoader` |
 | `rpg.world.rewards` | External exploration reward pools, validation and weighted selection | `ExplorationRewardEntry`, `ExplorationRewardCatalog`, `ExplorationRewardLoader`, `ExplorationRewardGenerator`, `ExplorationReward`, `ExplorationRewardType` |
 | `rpg.world.travel` | External directed-route definitions, loading and runtime unlock progress | `TravelRouteDefinition`, `TravelCatalog`, `TravelRouteLoader`, `TravelProgress` |
-| `rpg.ui` | Console menus, navigation, target selection and information screens | `TitleScreen`, `GameOverScreen`, `CombatScenarioMenu`, `CityMenu`, `CityLocationMenu`, `InnMenu`, `TravelMenu`, `InventoryMenu`, `BattleItemMenu`, `RecoveryItemUseMenu`, `EpicEncounterMenu`, `BattleRewardScreen`, `BattleTurnOrderScreen`, `PartyStatusMenu`, `CharacterStatusMenu` |
+| `rpg.world.transport` | External paid city-transport definitions, loading and destination lookup | `CityTransportDefinition`, `CityTransportCatalog`, `CityTransportLoader` |
+| `rpg.ui` | Console menus, navigation, target selection and information screens | `TitleScreen`, `GameOverScreen`, `CombatScenarioMenu`, `CityMenu`, `CityLocationMenu`, `InnMenu`, `RouteMenu`, `CityTransportMenu`, `InventoryMenu`, `BattleItemMenu`, `RecoveryItemUseMenu`, `EpicEncounterMenu`, `BattleRewardScreen`, `BattleTurnOrderScreen`, `PartyStatusMenu`, `CharacterStatusMenu` |
 
 ## Application initialization
 
@@ -49,17 +50,18 @@ Initialization includes:
 3. Creating runtime items.
 4. Loading enemy drops and encounter definitions.
 5. Loading common scenario definitions.
-6. Loading INN, combat-scenario, exploration-reward, dungeon and scenario-branch definitions.
+6. Loading city-transport, INN, combat-scenario, exploration-reward, scenario-branch and dungeon definitions.
 7. Creating and registering runtime scenarios through `ScenarioFactory`.
-8. Loading travel routes and creating `TravelProgress`.
-9. Creating the temporary playable characters and skills.
-10. Creating the party.
-11. Creating `World` with the required catalogs, state and shared dependencies.
-12. Starting the world loop.
+8. Resolving the initial scenario and creating `WorldProgress`.
+9. Loading adjacent travel routes and creating `TravelProgress`.
+10. Creating the temporary playable characters and skills.
+11. Creating the party.
+12. Creating `World` with the required catalogs, progress state and shared dependencies.
+13. Starting the world loop.
 
 External data is loaded before gameplay. Invalid definitions or unresolved references prevent the game from starting with partially inconsistent catalogs.
 
-Playable characters and skills are still constructed in `Main`. Scenarios, exploration settings, dungeons, branches, travel routes and INNs are loaded from external data.
+Playable characters and skills are still constructed in `Main`. Scenarios, exploration settings, dungeons, branches, adjacent travel routes, paid city transport and INNs are loaded from external data. `WorldProgress` and `TravelProgress` are separate runtime state objects: the former records discovered scenarios, while the latter records unlocked adjacent routes.
 
 ## Character model
 
@@ -519,23 +521,55 @@ A surviving character who gains at least one level restores all resources.
 
 A defeated character still receives EXP and may level up, but remains defeated and receives no resource restoration.
 
-## Travel flow
+## Adjacent travel flow
 
 `TravelCatalog` stores immutable directed `TravelRouteDefinition` entries loaded from `data/travel_routes.txt`.
 
 A route must be registered separately for each permitted direction. `TravelProgress` tracks which route IDs are currently unlocked and exposes only unlocked routes from a requested source scenario.
 
-`World` decides whether route selection is currently allowed:
+`World` decides whether adjacent-route selection is currently allowed:
 
-- Completed combat scenarios permit travel.
-- Incomplete combat scenarios keep travel locked.
+- Completed combat scenarios permit following an unlocked route.
+- Incomplete combat scenarios keep adjacent routes unavailable.
 - Cities expose unlocked adjacent routes as exits.
 
-`TravelMenu` receives the current scenario ID, displays its unlocked routes and returns the selected `TravelRouteDefinition`.
+`RouteMenu` receives the currently available route definitions and returns the selected `TravelRouteDefinition`. It does not resolve destinations or change world state.
 
 `World` resolves the destination through `ScenarioCatalog`. When the destination is a combat scenario, the route also determines the initial exploration position. City destinations do not use exploration positions.
 
-City exits reuse this same route infrastructure. Their display names can represent gates, roads, portals or other exit types, while route descriptions provide their flavor and destination text. These adjacent routes remain separate from future paid city transport.
+City exits reuse this route infrastructure. Their display names can represent gates, roads, portals or other exit types, while route descriptions provide their flavor and destination text.
+
+## Scenario discovery
+
+`WorldProgress` stores the scenario IDs discovered during the active game. It validates scenario references through `ScenarioCatalog` and exposes discovered IDs without exposing mutable internal state.
+
+The initial scenario is marked as discovered when `World` is created. Every successful scenario change records its destination, regardless of whether entry occurs through an adjacent route, an exploration branch or paid city transport.
+
+Scenario discovery remains independent from `TravelProgress`. Discovering a scenario does not unlock an adjacent route, and unlocking a route does not automatically discover its destination.
+
+## Paid city-transport flow
+
+`CityTransportCatalog` stores immutable `CityTransportDefinition` entries loaded from `data/city_transport.txt`. Each definition identifies one destination city, its fixed price and its player-facing travel description.
+
+The loader validates that every destination references an existing `CITY`, that prices are positive and that no destination city is registered more than once.
+
+`World` builds the available destination list by selecting configured cities already recorded in `WorldProgress`. When transport begins from a city, the current city is excluded.
+
+`CityTransportMenu`:
+
+- displays discovered destinations before undiscovered `--` slots;
+- derives the total slot count from registered `CITY` scenarios;
+- displays prices and available party currency through `GameCurrency`;
+- keeps unaffordable destinations visible;
+- validates the selected destination and available gold;
+- requests confirmation before payment;
+- preserves gold when travel is cancelled or unaffordable;
+- deducts gold only after all validations and confirmation succeed;
+- returns the selected `CityTransportDefinition` without changing the scenario.
+
+`World` resolves the selected destination through `ScenarioCatalog`, changes directly to that city and displays the definition's travel description.
+
+Paid city transport is available from cities, fields and dungeons, including incomplete combat-scenario exploration, but never during battle. Leaving an incomplete exploration discards its current `ExplorationSession`. Permanent party and world state already obtained remains unchanged. Entering that combat scenario again creates a fresh exploration session from the position defined by the route used to return.
 
 ## City and INN flow
 
@@ -547,10 +581,13 @@ City exits reuse this same route infrastructure. Their display names can represe
 
 `CityMenu` receives an incrementally built list of available `CityAction` values. It omits actions that currently have no functional destination, keeps continuous numeric selection and separates navigation actions from inventory and party status through whitespace.
 
-The city flow separates two navigation concepts:
+The paid `Viajar` action is included only when at least one configured and discovered destination city is available. It opens `CityTransportMenu` without mixing paid transport with city exits or adjacent-route unlocking.
+
+The city flow separates three navigation concepts:
 
 - Visiting a functional city location.
 - Leaving through an unlocked adjacent route.
+- Traveling directly to another discovered city through paid transport.
 
 `CityLocationMenu` displays only the names of currently functional locations. Location descriptions and actions are shown only after the player enters the selected location. Shops, taverns and other unfinished services are therefore absent instead of appearing as placeholders.
 
@@ -588,7 +625,8 @@ Important UI components include:
 - `CityMenu`
 - `CityLocationMenu`
 - `InnMenu`
-- `TravelMenu`
+- `RouteMenu`
+- `CityTransportMenu`
 - `InventoryMenu`
 - `BattleItemMenu`
 - `RecoveryItemUseMenu`
@@ -601,7 +639,9 @@ Important UI components include:
 - `CharacterStatusMenu`
 - `GameOverScreen`
 
-`World` selects the appropriate menu according to the runtime scenario type. Combat actions are built incrementally from exploration progress, available branches and unlocked routes, then displayed by `CombatScenarioMenu`. City actions are built from functional locations and unlocked exits, then displayed by `CityMenu`. Both menus preserve continuous numbering, omit unavailable actions and separate action groups through whitespace.
+`World` selects the appropriate menu according to the runtime scenario type. Combat actions are built incrementally from exploration progress, available branches, unlocked routes and paid-transport availability, then displayed by `CombatScenarioMenu`. City actions are built from functional locations, unlocked exits and paid-transport availability, then displayed by `CityMenu`. Both menus preserve continuous numbering, omit unavailable actions and separate action groups through whitespace.
+
+`RouteMenu` selects among unlocked adjacent routes. `CityTransportMenu` separately displays configured discovered cities, validates affordability, requests confirmation and controls payment before returning the selected paid destination.
 
 `InventoryMenu` controls the general inventory flow outside battle. It displays every item category in deterministic enum order, keeps empty categories selectable, reports an empty category only after it is selected, paginates non-empty contents and opens item details. Empty inventory screens remain open until the player explicitly returns or closes the inventory.
 
@@ -611,11 +651,19 @@ Important UI components include:
 
 `ItemMenuFormatter` contains shared presentation rules such as deterministic column widths, name truncation and recovery-effect summaries. It does not decide item behavior.
 
-`PartyStatusMenu` displays a compact overview of one to four allies and shared gold.
+`PartyStatusMenu` displays a compact overview of one to four allies and the shared party currency formatted through `GameCurrency`.
 
 `CharacterStatusMenu` displays one character's detailed resources, attributes, progression and learned skills.
 
 `World` does not store a `Scanner`. Console input is handled by the components that require it.
+
+## Currency presentation
+
+`GameCurrency` centralizes the player-facing currency name and numeric formatting. The current name is `GOLD`, and numeric values are displayed with the `G$ ` prefix.
+
+It does not own party gold, perform transactions or define prices. Gold remains mutable party state, while prices remain part of the systems that charge or reward currency.
+
+Menus and screens call `GameCurrency.getName()` when the currency is referenced directly and `GameCurrency.format(int)` whenever a numeric amount is displayed. Changing the visible currency convention therefore requires changing only `GameCurrency`.
 
 ## Current temporary boundaries
 

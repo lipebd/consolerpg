@@ -90,6 +90,7 @@ BattleCoordinator
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
 | `Main` | Ponto de entrada / composição | Inicia a aplicação. Cria o `Scanner`, carrega os arquivos externos, monta os catálogos, cria os serviços, personagens e a `Party`, conecta todas as dependências e inicia `World`. Deve concentrar montagem, não regras de jogo. |
+| `GameCurrency` | Utilitário de apresentação | Centraliza o nome visível da moeda e a formatação de valores numéricos. Não armazena ouro, define preços ou executa transações; essas responsabilidades pertencem aos respectivos estados e sistemas. |
 
 ---
 
@@ -215,18 +216,19 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 | `CityLocationMenu` | Menu de navegação urbana | Exibe apenas os nomes dos locais funcionais da cidade e devolve a posição selecionada. Não conhece nem executa as regras internas dos serviços. |
 | `InnMenu` | Menu de serviço urbano | Exibe os dados de `InnDefinition`, controla confirmação e pagamento da estadia e restaura a `Party`. Mantém o jogador no INN até um retorno explícito e apresenta o resultado das ações dentro da tela atual. |
 | `ScenarioBranchMenu` | Menu | Recebe as bifurcações disponíveis na posição atual, exibe seus nomes e descrições e devolve a `ScenarioBranchDefinition` escolhida. Não altera o cenário nem o estado da exploração. |
-| `TravelMenu` | Menu | Consulta as rotas desbloqueadas por meio de `TravelProgress`, exibe nomes e descrições das saídas e devolve a `TravelRouteDefinition` escolhida. Não resolve o destino nem aplica a posição de chegada; essas consequências pertencem a `World`. |
-| `InventoryMenu` | Menu geral de inventário | Exibe ouro e todas as categorias do inventário compartilhado em ordem determinística. Categorias vazias permanecem selecionáveis e exibem sua mensagem somente depois da seleção. Categorias preenchidas apresentam uma lista paginada e ordenada de itens, detalhes e ações contextuais, como o uso de `RecoveryItem`. |
+| `RouteMenu` | Menu | Recebe as rotas adjacentes atualmente disponíveis, exibe nomes e descrições das saídas e devolve a `TravelRouteDefinition` escolhida. Não resolve o destino nem aplica a posição de chegada; essas consequências pertencem a `World`. |
+| `CityTransportMenu` | Menu de transporte pago | Recebe os destinos urbanos descobertos e configurados, exibe preços e saldo por meio de `GameCurrency`, valida seleção e saldo, solicita confirmação, realiza o pagamento e devolve a `CityTransportDefinition` escolhida. Não altera o cenário. |
+| `InventoryMenu` | Menu geral de inventário | Exibe a moeda compartilhada por meio de `GameCurrency` e todas as categorias do inventário em ordem determinística. Categorias vazias permanecem selecionáveis e exibem sua mensagem somente depois da seleção. Categorias preenchidas apresentam uma lista paginada e ordenada de itens, detalhes e ações contextuais, como o uso de `RecoveryItem`. |
 | `BattleItemMenu` | Menu de itens de batalha | Filtra diretamente os consumíveis utilizáveis em batalha, apresenta uma lista paginada e abre seus detalhes. Devolve sucesso apenas quando o uso produz algum efeito, permitindo que `Battle` decida se a ação do personagem foi consumida. |
 | `RecoveryItemUseMenu` | Fluxo de uso | Centraliza a seleção de alvos, a aplicação de efeitos individuais ou coletivos, a remoção do item somente após um resultado efetivo e a apresentação dos valores recuperados. É compartilhado por `InventoryMenu` e `BattleItemMenu`. |
 | `ItemMenuFormatter` | Formatador de interface | Centraliza a largura das colunas, o truncamento seguro de nomes longos e o resumo dos componentes de recuperação usados pelas telas de inventário. |
-| `PartyStatusMenu` | Menu de consulta | Exibe uma visão resumida dos membros da `Party` e do ouro compartilhado. Permite selecionar um integrante para abrir `CharacterStatusMenu`. |
+| `PartyStatusMenu` | Menu de consulta | Exibe uma visão resumida dos membros da `Party` e da moeda compartilhada formatada por `GameCurrency`. Permite selecionar um integrante para abrir `CharacterStatusMenu`. |
 | `CharacterStatusMenu` | Tela de consulta | Mostra os detalhes de um `PlayableCharacter`: recursos, atributos, nível, EXP e habilidades. Recebe o personagem selecionado por `PartyStatusMenu`. A visualização de habilidades aguarda um comando explícito para retornar. |
 | `AllyTargetMenu` | Menu de alvo | Exibe aliados válidos conforme o contexto, como vivos, feridos ou derrotados, e devolve o `PlayableCharacter` escolhido. É usado por itens e habilidades de cura ou ressurreição. |
 | `EnemyTargetMenu` | Menu de alvo | Exibe apenas inimigos vivos de `EnemyBattleGroup` e devolve o `EnemyBattleSlot` escolhido. É usado por ataques, habilidades e análise. |
 | `EpicEncounterMenu` | Menu de confirmação | Recebe uma lista de uma a três `EnemyDefinition`, apresenta nomes e descrições do encontro épico e pergunta se o jogador deseja enfrentá-lo. Devolve apenas a decisão; `World` inicia a batalha. |
 | `BattleTurnOrderScreen` | Tela | Mostra o participante atual e uma prévia das próximas ações usando `BattleTurnOrder`. Não gera nem altera a fila. |
-| `BattleRewardScreen` | Tela | Exibe `BattleRewards`, incluindo EXP, ouro, níveis e itens obtidos. Não calcula nem concede as recompensas. |
+| `BattleRewardScreen` | Tela | Exibe `BattleRewards`, incluindo EXP, moeda formatada por `GameCurrency`, níveis e itens obtidos. Não calcula nem concede as recompensas. |
 
 ---
 
@@ -234,7 +236,8 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
-| `World` | Coordenador principal do jogo | Mantém o cenário atual, a sessão de exploração e o loop do mundo. Monta ações disponíveis, coordena exploração, eventos, viagens, encontros aleatórios, épicos e bosses, chama menus e `BattleCoordinator` e interpreta `BattleResult`. Conhece vários subsistemas porque é o ponto em que suas consequências se encontram, mas delega entrada, apresentação e cálculos específicos. |
+| `World` | Coordenador principal do jogo | Mantém o cenário atual, a sessão de exploração e o loop do mundo. Monta ações disponíveis, coordena exploração, eventos, rotas adjacentes, transporte pago, encontros aleatórios, épicos e bosses, chama menus e `BattleCoordinator` e interpreta `BattleResult`. Conhece vários subsistemas porque é o ponto em que suas consequências se encontram, mas delega entrada, apresentação e cálculos específicos. |
+| `WorldProgress` | Estado mutável | Registra os IDs dos cenários descobertos na execução atual, valida referências por meio de `ScenarioCatalog` e expõe uma cópia não modificável do progresso. Permanece separado de `TravelProgress`, pois descoberta e desbloqueio de rotas são conceitos independentes. |
 
 ---
 
@@ -340,7 +343,7 @@ ExplorationReward          = o resultado concreto do sorteio
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
 | `ScenarioFactory` | Fábrica | Recebe `ScenarioDefinition` e consulta os catálogos especializados. Conforme `ScenarioType`, cria `City`, `Field` ou `Dungeon`, combinando dados comuns, dados de combate e dados específicos da dungeon. |
-| `ScenarioCatalog` | Catálogo de execução | Registra os objetos `Scenario` já criados e permite resolvê-los por ID durante o jogo. É usado por `World`, `TravelMenu` e validações de destinos. Não guarda definições cruas dos arquivos. |
+| `ScenarioCatalog` | Catálogo de execução | Registra os objetos `Scenario` já criados e permite resolvê-los por ID durante o jogo. É usado por `World`, `RouteMenu`, `CityTransportMenu`, `WorldProgress` e validações de destinos. Não guarda definições cruas dos arquivos. |
 
 ### Fluxo completo dos cenários
 
@@ -428,21 +431,45 @@ inns.txt
 ### Diferença essencial
 
 ```text
-TravelRouteDefinition = dados fixos da rota
-TravelCatalog         = todas as rotas cadastradas
-TravelProgress        = quais rotas o jogador desbloqueou
-TravelMenu            = qual definição de rota disponível o jogador escolhe
+TravelRouteDefinition = dados fixos da rota adjacente
+TravelCatalog         = todas as rotas adjacentes cadastradas
+TravelProgress        = quais rotas adjacentes o jogador desbloqueou
+RouteMenu             = qual definição de rota disponível o jogador escolhe
 World                 = resolve o destino e aplica sua posição de chegada
 ```
 
 ---
+
+## Pacote `rpg.world.transport`
+
+| Classe | Categoria | Finalidade e relações principais |
+|---|---|---|
+| `CityTransportLoader` | Carregamento de dados | Lê `city_transport.txt`, converte quebras literais `\n`, valida preços e exige que cada destino corresponda a um cenário `CITY`. Rejeita destinos urbanos duplicados e produz `CityTransportCatalog`. |
+| `CityTransportDefinition` | Definição imutável | Armazena o ID da cidade de destino, o preço fixo e a descrição exibida após a viagem. Não guarda descoberta, saldo ou qualquer estado mutável. |
+| `CityTransportCatalog` | Catálogo | Registra transportes pagos por cidade de destino, rejeita duplicatas e fornece as definições usadas por `World` para filtrar cidades descobertas. |
+
+### Diferença para rotas adjacentes
+
+```text
+TravelRouteDefinition   = deslocamento adjacente direcionado
+TravelProgress          = desbloqueio mutável das rotas adjacentes
+CityTransportDefinition = preço e narrativa do transporte pago para uma cidade
+WorldProgress           = cenários que o jogador já descobriu
+CityTransportMenu       = seleção, confirmação e pagamento
+World                   = mudança efetiva para a cidade escolhida
+
+Atenção: o último bloco contém uma cerca Markdown interna; feche-a normalmente depois da linha de `World`.
+
+Depois salve. Não precisa mandar os trechos; execute apenas:
+
+```
 
 ## Mapa rápido de dependências
 
 | Se você está procurando... | Comece por... | Caminho principal |
 |---|---|---|
 | Inicialização e montagem | `Main` | loaders → catálogos → serviços → `World` |
-| Fluxo geral do jogo | `World` | cenário → exploração/viagem → batalha |
+| Fluxo geral do jogo | `World` | cenário → exploração/rotas/transporte → batalha |
 | Dados de um inimigo | `EnemyDefinition` | `EnemyLoader` → `EnemyCatalog` → `EnemyDefinition` |
 | Inimigo perdendo HP | `Enemy` | `EnemyDefinition` → `BattleCoordinator` → `Enemy` |
 | Sorteio de inimigos | `EncounterGenerator` | `EncounterCatalog` → filtros/pesos → definições |
@@ -456,6 +483,9 @@ World                 = resolve o destino e aplica sua posição de chegada
 | Cenário atual | `World` | objeto recuperado de `ScenarioCatalog` |
 | Rotas existentes | `TravelCatalog` | definições carregadas de `travel_routes.txt` |
 | Rotas liberadas | `TravelProgress` | estado mutável sobre `TravelCatalog` |
+| Cenários descobertos | `WorldProgress` | entradas por rota, branch ou transporte → IDs descobertos |
+| Transporte pago | `CityTransportCatalog` | destinos configurados + `WorldProgress` → `CityTransportMenu` → `World` |
+| Apresentação monetária | `GameCurrency` | nome da moeda + formatação de valores |
 | Escolha apresentada ao jogador | classes `Menu` | recebem opções válidas e devolvem uma escolha |
 | Informação apenas exibida | classes `Screen` | recebem resultados prontos e os apresentam |
 

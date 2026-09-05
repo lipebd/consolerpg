@@ -485,6 +485,61 @@ Future versions will add:
 - Character history.
 - Individual reward multipliers.
 
+## Currency presentation
+
+The party owns one shared gold balance. `GameCurrency` centralizes only how that currency is presented:
+
+- The current display name is `GOLD`.
+- Numeric values use the `G$ ` prefix.
+- Prices, balances and rewards use `GameCurrency.format(int)`.
+- Screens that name the currency directly use `GameCurrency.getName()`.
+
+Changing the visible name or symbol does not alter stored gold, prices or transaction rules.
+
+## Scenario discovery
+
+`WorldProgress` records each scenario entered during the active game.
+
+- The initial scenario is discovered when `World` is created.
+- Destinations entered through adjacent routes, fixed branches or paid transport are discovered.
+- Discovery is permanent during the active game.
+- Discovery does not unlock adjacent routes.
+- An unlocked route does not automatically discover its destination.
+- Discovered IDs are exposed without allowing callers to modify the internal state.
+
+Discovery currently controls which configured cities may appear as paid-transport destinations.
+
+## Adjacent routes and paid city transport
+
+Adjacent routes and paid city transport are separate mechanics.
+
+Adjacent routes:
+
+- connect one specific source scenario to one destination;
+- are directional and may require a separate reverse definition;
+- are free;
+- depend on `TravelProgress`;
+- are displayed as `Seguir caminho`;
+- remain unavailable while exploration of a combat scenario is incomplete;
+- may define the exploration position used when entering a field or dungeon.
+
+Paid city transport:
+
+- targets configured destination cities rather than adjacent scenarios;
+- depends on scenario discovery instead of route unlocking;
+- is displayed as `Viajar`;
+- has a fixed price determined by the destination;
+- may begin from a city, field or dungeon;
+- remains available during incomplete exploration;
+- is unavailable during battle;
+- excludes the current city when travel begins from a city;
+- keeps discovered destinations visible even when the party cannot afford them;
+- displays undiscovered city positions as unnumbered `--` entries.
+
+The player selects a destination and confirms the journey before payment. Invalid selections, insufficient funds and cancellation preserve the party's gold. A confirmed valid journey deducts the exact price and moves the party directly to the destination city.
+
+Leaving an incomplete combat scenario through paid transport discards its current `ExplorationSession`. Permanent gains already obtained—including EXP, gold, items, bestiary analysis, discoveries and route unlocks—remain unchanged. Returning later creates a fresh exploration session using the entry position of the route used to return.
+
 ## Full-party defeat
 
 A battle ends in defeat when every playable character is defeated.
