@@ -534,7 +534,7 @@ Character progression, combat-system expansion, equipment, character creation, f
 * [x] Copy all required external data files into the release build.
 * [x] Test the extracted release in an isolated directory.
 * [x] Decide the V3 release name and tag.
-* [ ] Merge the V3 branch into `master`.
+* [x] Merge the V3 branch into `master`.
 * [ ] Create and push the V3 Git tag.
 * [ ] Publish the GitHub Release and portable ZIP.
 
