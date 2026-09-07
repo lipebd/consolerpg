@@ -125,6 +125,9 @@ GameCharacter
 EnemyDefinition
 ExplorationSession
 BattleRewardService
+ShopDefinition
+ShopOfferState
+ShopTransactionService
 ```
 
 The filename must exactly match the public class name:
@@ -141,20 +144,24 @@ The following suffixes have specific meanings in RPGConsole.
 
 | Suffix | Responsibility | Example |
 |---|---|---|
-| `Definition` | Reusable immutable content template | `EnemyDefinition` |
+| `Definition` | Reusable immutable content template | `EnemyDefinition`, `ShopDefinition` |
 | `Catalog` | Registry that stores and resolves objects by stable ID or grouping key | `EnemyCatalog`, `TravelCatalog` |
 | `Loader` | Reads external data and converts it into definitions or catalog entries | `EnemyLoader`, `EnemyDropLoader` |
-| `Entry` | One association or rule stored inside a catalog/table | `EncounterEntry`, `DropEntry` |
+| `Entry` | One immutable association or rule stored inside a catalog or external-data table | `EncounterEntry`, `DropEntry`, `ShopStockEntry` |
 | `Settings` | Immutable configuration values controlling a feature | `ExplorationSettings`, `DungeonSettings` |
 | `Session` | Mutable progress that lasts for one execution of a feature | `ExplorationSession` |
-| `Generator` | Selects or creates results using rules and randomness | `EncounterGenerator`, `ExplorationEventGenerator` |
+| `State` | Mutable runtime data preserved for the lifetime of a domain object or the current program execution | `ShopState`, `ShopOfferState` |
+| `Generator` | Selects or creates results using rules and randomness | `EncounterGenerator`, `ShopStateGenerator` |
 | `Coordinator` | Orchestrates several existing components without owning all their internal rules | `BattleCoordinator` |
-| `Service` | Applies a cohesive domain operation, usually without console input | `BattleRewardService` |
-| `Menu` | Reads player input and returns a selection or decision | `RouteMenu`, `EnemyTargetMenu` |
+| `Service` | Applies a cohesive domain operation, usually without console input | `BattleRewardService`, `ShopTransactionService` |
+| `Menu` | Reads player input and manages one player-facing decision flow | `RouteMenu`, `EnemyTargetMenu`, `ShopMenu` |
 | `Screen` | Displays a complete console view or result | `TitleScreen`, `BattleRewardScreen` |
-| `Result` / `Rewards` | Stores the output of an operation | `BattleResult`, `BattleRewards` |
+| `Result` / `Rewards` | Represents the outcome of an operation | `BattleResult`, `BattleRewards`, `ShopPurchaseResult` |
 | `Group` | Owns and queries a collection that acts as one domain unit | `EnemyBattleGroup` |
 | `Slot` | Represents one uniquely identifiable position inside a runtime group | `EnemyBattleSlot` |
+
+- `Session` represents the temporary progress of a bounded execution of a mechanic, such as an exploration.
+- `State` represents mutable data linked to an entity over a broader lifecycle, such as a shop's current inventory.
 
 Before creating a new class, check whether its intended role matches one of these established terms.
 
@@ -320,6 +327,9 @@ Use consistent verbs for recurring responsibilities:
 | `collect` | Gathers values into a result collection | `collectEnemyDrops()` |
 | `validate` | Checks a rule and throws when invalid | `validateGroupSize()` |
 | `determine` | Derives one result from current state | `determineBattleResult()` |
+| `purchase` | Attempts to buy from a shop and returns the transaction outcome | `purchase(shopState, selectedOffer, quantity)` |
+| `sell` | Attempts to sell an owned item to a shop and returns the transaction outcome | `sell(selectedItem, quantity)` |
+| `decrease` | Reduces an existing mutable quantity after validation | `decreaseStock(quantity)` |
 
 Avoid methods whose names hide several unrelated operations. If `processGame()` loads files, starts a battle and saves progress, its responsibilities must be separated.
 
@@ -401,6 +411,10 @@ Examples:
 | Dungeon | `gruta_relamparrocha` | `Gruta de Relamparrocha` |
 | Enemy | `mestre_eletrogoblin` | `Mestre Eletrogoblin` |
 | Item | `meruma` | `Merumã` |
+| Shop | `mercado_bree` | `Mercado de Bree` |
+| Shop stock entry | `bree_meruma_discount` | Not displayed directly |
+
+A shop-stock entry ID identifies one possible commercial offer, not merely an item. It should remain meaningful when the same shop contains multiple offers for the same item with different prices or quantities.
 
 Do not translate stable IDs when translating display names.
 
@@ -441,12 +455,16 @@ Data filenames use lowercase `snake_case` and normally describe plural content:
 enemies.txt
 encounters.txt
 enemy_drops.txt
+shops.txt
+shop_stock.txt
 ```
 
 Header field names use `camelCase` and should match the corresponding Java vocabulary:
 
 ```text
 # enemyId;itemId;dropChance;minQuantity;maxQuantity
+# id;scenarioId;accessType;offerSlots;name;description
+# id;shopId;itemId;shopSalePricePercent;stock;weight
 ```
 
 Enum fields use their exact Java constant names:
@@ -462,6 +480,25 @@ Do not rename or reorder fields without updating:
 - `DATA_FORMATS.md`;
 - every existing data row;
 - relevant validation and tests.
+
+### Commercial vocabulary
+
+Commercial names use the shop's perspective consistently.
+
+| Name | Meaning |
+|---|---|
+| `baseShopSalePrice` | Base price used when the shop sells the item to the player |
+| `shopSalePricePercent` | Percentage applied to the base price of an offer sold by the shop |
+| `finalShopSalePrice` | Final unit price charged by the shop |
+| `shopPurchasePrice` | Unit price paid when the shop purchases the item from the player |
+| `initialStock` | Quantity assigned when one offer becomes active |
+| `remainingStock` | Mutable quantity still available during the current execution |
+| `offerSlots` | Maximum number of possible offers selected as active offers |
+| `weight` | Relative selection weight, not a percentage |
+
+Do not rename `shopPurchasePrice` to `salePrice` based on the player's perspective. The project names both sides of a commercial transaction from the shop's perspective.
+
+Use `stockEntry` for an immutable possible offer loaded from external data and `offerState` for its selected mutable runtime state.
 
 ## Player-facing display text
 

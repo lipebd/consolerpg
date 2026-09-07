@@ -2,7 +2,7 @@
 
 ## Current version
 
-V2 feature implementation completed.
+V3 feature implementation completed.
 
 Current stage:
 
@@ -10,7 +10,7 @@ Current stage:
 
 Current Git branch:
 
-`feature/v2-data-driven-enemies`
+`feature/v3-data-driven-scenarios`
 
 The V1 MMMVP is preserved by the tag:
 
@@ -258,7 +258,7 @@ Cities now use a dedicated action flow instead of the combat-scenario menu.
 
 The city menu currently supports:
 
-- Visiting a functional city location.
+- Visiting a functional city location, including INNs and fixed city shops.
 - Leaving through an unlocked adjacent route.
 - Opening the shared inventory.
 - Viewing party status.
@@ -268,7 +268,7 @@ Unavailable actions are omitted. Paid city transport appears only when at least 
 
 City locations are treated as a navigation concept rather than a generic service hierarchy. `CityLocationMenu` displays only functional location names, while each selected service owns its details and interaction flow.
 
-Bree currently provides one externally configured INN loaded from `data/inns.txt`. `InnDefinition`, `InnLoader` and `InnCatalog` preserve stable IDs, validate city references and allow at most one INN per city.
+Bree currently provides one externally configured INN and one fixed city shop. `CityLocationMenu` combines the available location names without owning their service-specific behavior.
 
 The Bree INN:
 
@@ -281,7 +281,90 @@ The Bree INN:
 - Keeps the player inside the INN after resting.
 - Displays action feedback inside the current INN screen.
 
+The Bree market uses the same shop definitions, runtime state, interface and transaction rules as exploration merchants. City shops remain accessible when they have no remaining purchase offers.
+
 City exits reuse unlocked `TravelRouteDefinition` entries. Their names and descriptions act as creative exit labels and flavor text, and adjacent travel remains free.
+
+## Shops and merchants
+
+V3 implements functional fixed shops and exploration merchants.
+
+External shop configuration is divided between:
+
+```text
+shops.txt
+    -> ShopLoader
+    -> ShopCatalog
+
+shop_stock.txt
+    -> ShopStockLoader
+    -> ShopStockCatalog
+```
+
+`shops.txt` defines each shop's stable identity, associated scenario, access type, number of active offer slots, name and description.
+
+`shop_stock.txt` defines the possible weighted offers for each shop, including the referenced item, sale-price percentage, initial stock and relative selection weight.
+
+Startup validation covers:
+
+- Stable and unique definition and offer IDs.
+- Valid shop, item and scenario references.
+- Compatibility between access type and scenario type.
+- Positive offer-slot counts, price percentages, stock quantities and weights.
+- Required base sale prices for stocked items.
+- Commercially duplicate offers.
+- Shops without possible offers.
+- Missing exploration merchants when a scenario has a positive merchant chance.
+- Price-calculation overflow.
+- Per-item anti-arbitrage rules.
+
+`ShopStateGenerator` creates every shop's active offers once during application initialization. It performs weighted selection without replacement and safely accumulates selection weights.
+
+The generated runtime structure is:
+
+```text
+ShopStateCatalog
+    -> ShopState
+        -> ShopOfferState
+```
+
+Each `ShopOfferState` preserves its remaining quantity. Active offers and quantities remain unchanged between repeated accesses during the current execution.
+
+Exhausted offers disappear from the purchase list but are not replaced by unused entries. Shops remain accessible when all active offers are exhausted. Restocking and shop-state persistence remain postponed until save and load are implemented.
+
+City shops:
+
+- Are displayed as functional city locations.
+- Support multiple named shops in the same city.
+- Resolve their existing state through `ShopStateCatalog`.
+
+Exploration merchants:
+
+- Reuse the existing merchant exploration event.
+- Remain limited to one encounter per exploration session.
+- Are selected uniformly among eligible merchants associated with the current scenario.
+- Reuse the same shop state in later exploration sessions.
+- Preserve the interaction style established by epic encounters.
+
+`ShopMenu` is shared by both access types and provides:
+
+- Shop name, description and current party gold.
+- Purchase and sale actions.
+- Deterministically sorted and paginated item lists.
+- Quantity selection.
+- Complete transaction summaries.
+- Explicit confirmation and cancellation.
+- Feedback without closing the shop.
+
+Purchases validate the selected offer, requested quantity, remaining stock, total price, party gold and resulting inventory quantity before changing any state.
+
+Sales validate the selected item, purchase price, requested quantity, owned inventory, total value and resulting party gold before changing any state.
+
+`ShopTransactionService` applies both operations atomically. Invalid, cancelled, unaffordable or overflowing transactions preserve gold, inventory and shop stock.
+
+Items sold by the player are removed from inventory but are not added to shop stock. Buyback is not implemented.
+
+`KEY_ITEM` definitions cannot declare `shopPurchasePrice`, and the category does not appear in the shop sale menu.
 
 ## External item system
 
@@ -313,7 +396,14 @@ RecoveryItemDefinitionCatalog
 - `BasicItem` for items without specialized runtime behavior.
 - `RecoveryItem` for items with a recovery definition.
 
-`ItemCatalog` contains the complete runtime objects used by enemy drops, exploration rewards, menus and inventory.
+`ItemCatalog` contains the complete runtime objects used by enemy drops, exploration rewards, shop offers, menus and inventory.
+
+Base item definitions may independently declare:
+
+- `baseShopSalePrice`, used to calculate offers sold by shops.
+- `shopPurchasePrice`, used when shops buy owned items from the party.
+
+The presence of `shopPurchasePrice` determines whether an item is sellable to shops. `playerTradable` remains reserved for future player-to-player trading.
 
 The current recovery-item model supports:
 
@@ -443,11 +533,10 @@ Adjacent routes remain free and continue to use `TravelRouteDefinition`, `Travel
 
 `GameCurrency` centralizes the visible currency name and numeric formatting. The current interface uses `GOLD` as the name and `G$ ` as the value prefix.
 
-Battle rewards, exploration rewards, inventory, party status, INNs and paid city transport use this shared presentation without moving gold ownership away from `Party`.
+Battle rewards, exploration rewards, inventory, party status, INNs, paid city transport and every shop price, total and balance use this shared presentation without moving gold ownership away from `Party`.
 
 ## Current limitations and temporary implementations
 
-- The merchant event has no merchandise or transaction system.
 - Equipment behavior and specialized equipment data are not implemented.
 - Skill-scroll behavior and specialized skill-scroll data are not implemented.
 - Recovery-item purification cannot remove effects until status effects exist.
@@ -455,17 +544,25 @@ Battle rewards, exploration rewards, inventory, party status, INNs and paid city
 - Temporary healing and revival skills exist for testing.
 - Playable classes are not represented as data yet.
 - Buffs and debuffs are not implemented.
-- Bree provides its INN, but shop and tavern functionality remain unavailable.
+- Tavern functionality remains unavailable.
 - Defeated allies remain unavailable until revived by a skill, item or city INN.
 - Full-party defeat still uses the temporary Game Over flow.
+- Shop state is regenerated when the program starts and is not persisted.
+- Shops do not restock during the current execution.
+- Items sold by the player cannot be bought back.
 
 ## Current next step
 
-V3 roadmap sections 1 through 8 and section 10 are complete.
+V3 roadmap sections 1 through 10 are complete.
 
-Section 9, shops and merchants, is the next implementation target. Its scope is being reviewed and frozen before code changes begin.
+The remaining V3 work consists of:
 
-After shops and merchants, the remaining V3 work consists of release-specific regression testing, documentation review, build generation and release preparation. Requirements beyond the data-driven world scope are preserved in `V4_ROADMAP.md`.
+- Release-specific regression testing.
+- Final consistency review of technical documentation.
+- Build generation and validation.
+- Release preparation.
+
+Requirements beyond the data-driven world scope are preserved in `V4_ROADMAP.md`.
 
 ## Important conventions
 

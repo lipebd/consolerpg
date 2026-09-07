@@ -76,6 +76,9 @@ Main
 
 World
     -> coordena cenário, exploração, viagem e início das batalhas
+    -> disponibiliza lojas urbanas como locais da cidade;
+    -> seleciona uniformemente mercadores elegíveis durante a exploração;
+    -> resolve ambos para o mesmo estado persistente em memória e para o mesmo `ShopMenu`.
 
 BattleCoordinator
     -> cria inimigos de execução
@@ -133,7 +136,7 @@ Enemy           -> luta e perde HP durante uma batalha
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
 | `ItemCategory` | Enum de domínio | Define as categorias gerais de item reconhecidas pelo jogo. Permite organizar o inventário e indicar quais comportamentos especializados podem ser associados a cada definição. |
-| `ItemDefinition` | Definição imutável | Representa os dados comuns carregados de `items.txt`: ID, categoria, permissões independentes de troca entre jogadores e venda para NPC, nome e descrição. Não representa uma unidade possuída pela `Party` nem implementa comportamento de uso. |
+| `ItemDefinition` | Definição imutável | Define os dados imutáveis compartilhados de um item: ID, categoria, permissão futura de troca entre jogadores, preços comerciais opcionais, nome e descrição. Valida preços positivos e impede `KEY_ITEM` de definir `shopPurchasePrice`. |
 | `ItemDefinitionCatalog` | Catálogo de definições | Registra as definições básicas carregadas por `ItemLoader`, rejeita IDs duplicados e permite que loaders especializados e `ItemFactory` resolvam itens por ID durante a inicialização. |
 | `ItemLoader` | Carregamento de dados | Lê `items.txt`, interpreta os campos comuns, converte quebras literais `\n`, valida os dados e registra cada `ItemDefinition` em `ItemDefinitionCatalog`. |
 | `RecoveryItemTargetType` | Enum de alvo | Define se um item de recuperação afeta um único aliado (`SINGLE_ALLY`) ou todos os aliados elegíveis (`ALL_ALLIES`). |
@@ -141,7 +144,7 @@ Enemy           -> luta e perde HP durante uma batalha
 | `RecoveryItemDefinitionCatalog` | Catálogo especializado | Registra as definições carregadas de `recovery_items.txt`, rejeita especializações duplicadas e permite que `ItemFactory` encontre o comportamento associado a cada definição básica. |
 | `RecoveryItemLoader` | Carregamento especializado | Lê `recovery_items.txt`, valida valores, alvos e referências em `ItemDefinitionCatalog`, exige a categoria `CONSUMABLE` e registra `RecoveryItemDefinition`. |
 | `ItemFactory` | Fábrica de execução | Combina cada `ItemDefinition` com sua eventual definição especializada. Cria `RecoveryItem` quando existe uma especialização de recuperação e `BasicItem` quando o item ainda não possui comportamento próprio. |
-| `Item` | Classe-base de domínio | Representa um item completo usado durante a execução, com ID, categoria, permissões comerciais, nome e descrição. É o tipo armazenado pelo inventário, pelos drops e por `ItemCatalog`. |
+| `Item` | Classe-base de domínio | Classe-base dos itens em runtime. Copia da definição a identidade, a categoria, `playerTradable`, `baseShopSalePrice`, `shopPurchasePrice`, nome e descrição. |
 | `BasicItem` | Item básico | Implementação concreta mínima de `Item` para categorias que ainda não possuem comportamento especializado. Pode ser armazenado, exibido e recebido como recompensa, mas não executa uma ação de uso. |
 | `RecoveryItem` | Item de recuperação | Especializa `Item` com efeitos combináveis de HP, MP, SP, ressurreição e futura purificação. Verifica alvos elegíveis, aplica ressurreição antes da recuperação comum de HP e devolve um `RecoveryItemUseResult`. |
 | `RecoveryItemUseResult` | Resultado imutável | Informa separadamente os efeitos realmente produzidos por um uso, evitando que menus precisem deduzir o resultado comparando estados anteriores e posteriores do personagem. |
@@ -229,6 +232,7 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 | `EpicEncounterMenu` | Menu de confirmação | Recebe uma lista de uma a três `EnemyDefinition`, apresenta nomes e descrições do encontro épico e pergunta se o jogador deseja enfrentá-lo. Devolve apenas a decisão; `World` inicia a batalha. |
 | `BattleTurnOrderScreen` | Tela | Mostra o participante atual e uma prévia das próximas ações usando `BattleTurnOrder`. Não gera nem altera a fila. |
 | `BattleRewardScreen` | Tela | Exibe `BattleRewards`, incluindo EXP, moeda formatada por `GameCurrency`, níveis e itens obtidos. Não calcula nem concede as recompensas. |
+| `ShopMenu` | Interface compartilhada por lojas urbanas e mercadores de exploração. Exibe ofertas, categorias vendáveis, confirmações, paginação, preços, estoque e feedback das transações. |
 
 ---
 
@@ -419,6 +423,49 @@ inns.txt
 
 ---
 
+## Pacote rpg.world.shops
+
+O pacote `rpg.world.shops` separa a configuração externa das lojas, o estado mutável gerado para a execução atual e as regras atômicas de compra e venda.
+
+| Classe | Tipo | Responsabilidade |
+|---|---|---|
+| `ShopAccessType` | Enum | Diferencia lojas fixas de cidade (`CITY`) e mercadores encontrados durante exploração (`EXPLORATION`). |
+| `ShopDefinition` | Definição imutável | Armazena ID, cenário, tipo de acesso, quantidade de slots, nome e descrição de uma loja. |
+| `ShopCatalog` | Catálogo | Registra lojas por ID e permite consultar todas as lojas associadas a um cenário. |
+| `ShopLoader` | Loader | Carrega `shops.txt`, valida referências e tipos de cenário e exige mercadores elegíveis quando `merchantChance` for positivo. |
+| `ShopStockEntry` | Definição imutável | Representa uma possível oferta com item, percentual de preço, estoque inicial, peso e preço final calculado. |
+| `ShopStockCatalog` | Catálogo | Registra possíveis ofertas por ID e por loja, rejeitando duplicatas comerciais. |
+| `ShopStockLoader` | Loader | Carrega `shop_stock.txt`, valida referências, preços, estoque, pesos, ofertas obrigatórias e a regra global contra arbitragem. |
+| `ShopOfferState` | Estado mutável | Mantém uma oferta selecionada e sua quantidade restante durante a execução. |
+| `ShopState` | Estado mutável agregado | Associa uma `ShopDefinition` à lista fixa de ofertas selecionadas para aquela loja. |
+| `ShopStateCatalog` | Catálogo de runtime | Preserva o mesmo `ShopState` de cada loja durante toda a execução do programa. |
+| `ShopStateGenerator` | Serviço de geração | Seleciona ofertas por peso relativo, sem reposição, e cria o estado inicial de todas as lojas. |
+| `ShopPurchaseResult` | Enum de resultado | Identifica sucesso ou motivo de rejeição de uma tentativa de compra. |
+| `ShopSaleResult` | Enum de resultado | Identifica sucesso ou motivo de rejeição de uma tentativa de venda. |
+| `ShopTransactionService` | Serviço de domínio | Valida e aplica compras e vendas de forma atômica, protegendo estoque, inventário, GOLD e cálculos contra estados inválidos e overflow. |
+
+### Fluxo das lojas
+
+```text
+shops.txt
+    -> ShopLoader
+    -> ShopCatalog
+
+shop_stock.txt
+    -> ShopStockLoader
+    -> ShopStockCatalog
+
+ShopCatalog + ShopStockCatalog
+    -> ShopStateGenerator
+    -> ShopStateCatalog
+    -> World
+    -> ShopMenu
+    -> ShopTransactionService
+    -> Party, Inventory e ShopOfferState
+```
+
+As ofertas ativas são geradas apenas uma vez por execução. Uma oferta esgotada não é substituída por outra entrada de `shop_stock.txt`, e o mesmo estado é reutilizado em acessos posteriores à loja ou ao mercador. Reabastecimento e persistência ficam adiados até a implementação de save e load.
+
 ## Pacote `rpg.world.travel`
 
 | Classe | Categoria | Finalidade e relações principais |
@@ -488,6 +535,11 @@ Depois salve. Não precisa mandar os trechos; execute apenas:
 | Apresentação monetária | `GameCurrency` | nome da moeda + formatação de valores |
 | Escolha apresentada ao jogador | classes `Menu` | recebem opções válidas e devolvem uma escolha |
 | Informação apenas exibida | classes `Screen` | recebem resultados prontos e os apresentam |
+| Definições de lojas | `ShopDefinition` | `shops.txt` → `ShopLoader` → `ShopCatalog` |
+| Possíveis ofertas | `ShopStockEntry` | `shop_stock.txt` → `ShopStockLoader` → `ShopStockCatalog` |
+| Estado comercial atual | `ShopStateCatalog` | `ShopStateCatalog` → `ShopState` → `ShopOfferState` |
+| Interface comercial | `ShopMenu` | `World` → `ShopMenu` → `ShopTransactionService` |
+| Transações comerciais | `ShopTransactionService` | validação → `Party`, `Inventory` e `ShopOfferState` |
 
 ## Regra prática para novas classes
 

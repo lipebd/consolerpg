@@ -449,7 +449,7 @@ The INN flow does not change the general behavior of `GameCharacter.restoreAllRe
 
 After a successful stay, the player remains inside the INN. Feedback from successful, unnecessary and unaffordable attempts is displayed inside the current INN screen, between the party's gold information and the available actions.
 
-City locations and city exits remain separate navigation paths. Adjacent exits reuse unlocked `TravelRouteDefinition` entries, preserve their display names and descriptions, and do not charge the party. Paid transport remains a future system.
+City locations and city exits remain separate navigation paths. Adjacent exits reuse unlocked `TravelRouteDefinition` entries, preserve their display names and descriptions, and do not charge the party. Fixed city shops are available through the same location-selection flow as INNs, while paid transport remains a separate city action.
 
 ## Party status
 
@@ -495,6 +495,131 @@ The party owns one shared gold balance. `GameCurrency` centralizes only how that
 - Screens that name the currency directly use `GameCurrency.getName()`.
 
 Changing the visible name or symbol does not alter stored gold, prices or transaction rules.
+
+## Shops and merchants
+
+Fixed city shops and exploration merchants share the same definitions, runtime state, interface and transaction rules.
+
+A `CITY` shop:
+
+- Is associated with a city scenario.
+- Appears as a functional location alongside the city's INN.
+- Remains accessible even when every active sale offer is exhausted.
+
+An `EXPLORATION` shop:
+
+- Is associated with a field or dungeon.
+- Is accessed through the existing merchant exploration event.
+- Is selected uniformly when multiple eligible merchants exist in the current scenario.
+- Uses the same persistent in-memory state whenever encountered again during the current program execution.
+
+### Commercial item prices
+
+An item may define two independent commercial prices:
+
+- `baseShopSalePrice`: base value used when shops sell the item to the player.
+- `shopPurchasePrice`: fixed unit value paid when any shop buys the item from the player.
+
+Either price may be absent when the corresponding transaction is unavailable.
+
+A `KEY_ITEM` cannot define `shopPurchasePrice` and therefore cannot be sold to shops.
+
+The actual unit price of a shop offer is calculated from its configured percentage:
+
+```text
+roundedPrice = floor((baseShopSalePrice × shopSalePricePercent + 50) / 100)
+```
+
+This produces half-up rounding for positive values. The calculated price must remain positive and within the supported integer range.
+
+For every item, `shopPurchasePrice` cannot exceed its lowest configured shop sale price. This prevents the player from buying an item cheaply and immediately selling it for profit.
+
+### Active shop offers
+
+Every shop defines a number of active offer slots. Its active offers are generated once when the application starts.
+
+Selection uses relative weights without replacement. For one selection step, the probability of entry `i` is:
+
+```text
+P(i) = weight(i) / sum(weights of all remaining entries)
+```
+
+Weights:
+
+- Are not percentages.
+- Do not need to total 100.
+- May all be scaled by the same factor without changing their relative probabilities.
+- Are recalculated over the remaining pool after each selected entry is removed.
+
+If the number of slots is equal to or greater than the number of possible entries, every entry is selected.
+
+The generated offers and their remaining quantities are preserved for the whole program execution. When an offer is exhausted:
+
+- It disappears from the visible purchase list.
+- Its slot remains empty.
+- No unused entry from `shop_stock.txt` replaces it.
+- The shop itself remains accessible.
+
+Shops and merchants do not restock during the current execution. Starting a new program execution generates a new active offer list and restores initial quantities. Persistent shop state and explicit restocking events remain postponed until save and load are implemented.
+
+### Buying
+
+The purchase interface:
+
+- Displays only active offers with remaining stock.
+- Sorts them by item category, name, unit price and stable offer ID.
+- Keeps commercially distinct offers selectable even when they reference the same item.
+- Allows a quantity up to the offer's remaining stock.
+- Skips quantity selection when only one unit remains.
+- Displays the complete item description, quantity, unit price and total before confirmation.
+
+A purchase succeeds only when:
+
+- The selected offer belongs to the current shop.
+- The quantity is positive and available.
+- The total price can be calculated without overflow.
+- The party has enough gold.
+- The resulting inventory quantity stays within the supported integer range.
+- The player confirms the transaction.
+
+Only after every validation succeeds does the transaction deduct party gold, add the items to the shared inventory and reduce the offer's remaining stock.
+
+### Selling
+
+Every shop and merchant may buy any owned item that defines `shopPurchasePrice`.
+
+The sale interface:
+
+- Organizes sellable items by the existing item categories.
+- Excludes the `KEY_ITEM` category.
+- Displays only owned items with a defined purchase price.
+- Allows a quantity up to the amount currently owned.
+- Skips quantity selection when the party owns only one unit.
+- Displays the complete item description, quantity, unit price and total before confirmation.
+
+A sale succeeds only when:
+
+- The selected item is valid and sellable.
+- The quantity is positive and owned.
+- The total value can be calculated without overflow.
+- The resulting party gold stays within the supported integer range.
+- The player confirms the transaction.
+
+Only after every validation succeeds does the transaction remove the items from the shared inventory and add the resulting gold.
+
+Items sold by the player are not added to shop stock. V3 does not implement buyback.
+
+### Transaction integrity
+
+Purchases and sales are atomic from the player's perspective.
+
+Invalid, unaffordable, stale, overflowing or cancelled transactions preserve all affected state:
+
+- Party gold.
+- Shared inventory.
+- Remaining shop stock.
+
+The shop remains open after successful, cancelled or rejected transactions until the player explicitly leaves.
 
 ## Scenario discovery
 
@@ -605,7 +730,9 @@ The total configured event chance cannot exceed 100%.
 
 Any remaining percentage represents the `Nothing` event.
 
-A merchant may appear at most once during one exploration session. If another roll falls within the merchant range after that encounter, it becomes `Nothing`.
+A merchant may appear at most once during one exploration session. When the event occurs, one eligible `EXPLORATION` shop associated with the current scenario is selected uniformly and opened through the shared shop interface.
+
+If another roll falls within the merchant range after that encounter, it becomes `Nothing`. The one-merchant-per-session restriction does not reset or regenerate the selected shop's runtime state: later exploration sessions reuse the same offers and remaining quantities.
 
 An epic encounter:
 

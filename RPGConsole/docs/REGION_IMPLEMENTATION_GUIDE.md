@@ -30,6 +30,8 @@ ID estável: ruinas_sanguemar
 | Campo | `FIELD` | `scenarios.txt`, `combat_scenarios.txt`, `encounters.txt` e `travel_routes.txt` |
 | Masmorra | `DUNGEON` | `scenarios.txt`, `combat_scenarios.txt`, `dungeons.txt`, `encounters.txt` e `travel_routes.txt` |
 
+Lojas são opcionais. Quando uma região possuir uma loja fixa ou mercador de exploração, também será necessário atualizar `shops.txt` e `shop_stock.txt`.
+
 Se a região introduzir inimigos novos, eles também devem ser cadastrados em `enemies.txt` antes de serem referenciados. Tabelas de drops em `enemy_drops.txt` são opcionais.
 
 ## 3. Cadastre inimigos novos, se houver
@@ -116,7 +118,107 @@ Regras importantes:
 - `maxEnemies` não pode ser menor que `minEnemies` nem maior que o limite suportado pela batalha, atualmente 3.
 - Cidades não recebem uma linha neste arquivo.
 
-## 6. Configure o pool de recompensas
+## 6. Configure lojas e mercadores, se houver
+
+Esta etapa é opcional para cidades, campos e masmorras.
+
+Uma cidade pode possuir uma ou mais lojas fixas. Um campo ou masmorra pode possuir um ou mais mercadores encontrados por meio do evento de exploração.
+
+### Defina a loja
+
+Arquivo: `data/shops.txt`
+
+```text
+# id;scenarioId;accessType;offerSlots;name;description
+```
+
+Exemplo de loja urbana:
+
+```text
+mercado_nova_cidade;nova_cidade;CITY;3;Mercado da Nova Cidade;Comerciantes locais oferecem provisões aos viajantes.
+```
+
+Exemplo de mercador de exploração:
+
+```text
+mascate_ruinas;ruinas_sanguemar;EXPLORATION;2;Mascate das Ruínas;Um mercador protegido por uma cobertura improvisada aguarda viajantes.
+```
+
+Regras:
+
+- O ID da loja deve ser único e usar lowercase e underscores.
+- `scenarioId` deve existir em `scenarios.txt`.
+- `CITY` somente pode referenciar um cenário `CITY`.
+- `EXPLORATION` somente pode referenciar um cenário `FIELD` ou `DUNGEON`.
+- `offerSlots` deve ser maior que zero.
+- Uma região pode possuir múltiplas lojas ou mercadores.
+- Se `merchantChance` for maior que zero, o cenário precisa possuir ao menos uma loja `EXPLORATION`.
+- Uma definição `EXPLORATION` associada a um cenário com `merchantChance` igual a zero permanece inacessível.
+
+### Defina as possíveis ofertas
+
+Arquivo: `data/shop_stock.txt`
+
+```text
+# id;shopId;itemId;shopSalePricePercent;stock;weight
+```
+
+Exemplo:
+
+```text
+ruinas_meruma_regular;mascate_ruinas;meruma;100;5;80
+ruinas_meruma_discount;mascate_ruinas;meruma;75;1;20
+```
+
+Cada linha representa uma possível oferta comercial, não apenas um item.
+
+Regras:
+
+- O ID da oferta deve ser estável e único.
+- A loja precisa existir em `shops.txt`.
+- O item precisa existir em `items.txt`.
+- O item precisa definir `baseShopSalePrice`.
+- Percentual de preço, estoque e peso devem ser maiores que zero.
+- Toda loja precisa possuir ao menos uma possível oferta.
+- A mesma loja não pode repetir item, percentual e estoque na mesma configuração comercial, mesmo usando outro ID ou peso.
+- O mesmo item pode aparecer em ofertas diferentes quando o percentual ou o estoque forem diferentes.
+- O preço final calculado deve permanecer positivo e dentro do limite suportado.
+- `shopPurchasePrice` não pode superar o menor preço final pelo qual o item é vendido em qualquer loja.
+
+O preço unitário final é calculado com arredondamento half-up:
+
+```text
+roundedPrice = floor((baseShopSalePrice × shopSalePricePercent + 50) / 100)
+```
+
+### Planeje os pesos
+
+Os pesos são relativos e não precisam somar 100.
+
+Em cada seleção, a chance de uma oferta é:
+
+```text
+P(oferta) = pesoDaOferta / somaDosPesosRestantes
+```
+
+A seleção ocorre sem reposição. Depois que uma oferta é escolhida, ela é removida do conjunto e os pesos relativos das ofertas restantes são recalculados para o próximo slot.
+
+Exemplo inicial:
+
+| Oferta | Peso | Chance no primeiro slot |
+|---|---:|---:|
+| Regular | 80 | 80% |
+| Desconto | 20 | 20% |
+
+Se outra oferta tivesse peso 100, o total seria 200. Nesse caso, os pesos 80 e 20 representariam respectivamente 40% e 10% no primeiro slot, enquanto a nova oferta representaria 50%.
+
+Multiplicar todos os pesos pelo mesmo valor não altera as probabilidades relativas.
+
+Quando `offerSlots` for igual ou maior que a quantidade de possíveis ofertas, todas serão selecionadas, independentemente dos pesos.
+
+As ofertas ativas são geradas uma vez quando o programa inicia. Ofertas esgotadas não são substituídas por registros não selecionados, e lojas não são reabastecidas durante a execução atual.
+
+## 7. Configure o pool de recompensas
 
 Esta etapa vale para `FIELD` e `DUNGEON` quando `rewardChance` for maior que zero.
 
@@ -160,7 +262,7 @@ Regras importantes:
 - Para desativar temporariamente uma recompensa, comente a linha em vez de definir peso zero.
 - Estes pools são repetíveis e não devem ser usados para recompensas únicas, narrativas ou de quests.
 
-## 7. Configure os chefes da masmorra
+## 8. Configure os chefes da masmorra
 
 Esta etapa vale apenas para `DUNGEON`.
 
@@ -188,7 +290,7 @@ Regras:
 
 Na última posição de uma masmorra, a exploração não gera um encontro aleatório: o jogador deve usar a ação de enfrentar o boss. A exploração só é concluída após a vitória.
 
-## 8. Monte a tabela de encontros
+## 9. Monte a tabela de encontros
 
 Esta etapa vale apenas para `FIELD` e `DUNGEON`.
 
@@ -223,7 +325,7 @@ Regras importantes:
 - Um líder garantido pode ocupar sozinho a penúltima posição quando essa for a intenção do cenário.
 - Chefes e épicos configurados em `dungeons.txt` não devem ser adicionados como encontros comuns.
 
-## 9. Crie as rotas e bifurcações
+## 10. Crie as rotas e bifurcações
 
 ### Rotas externas
 
@@ -298,7 +400,7 @@ Regras importantes:
 - Quando o caminho inverso precisar retornar a outra posição, configure essa chegada em `travel_routes.txt`.
 - Quebras de linha nos textos devem ser representadas por `\n`.
 
-## 10. Configure drops, se necessário
+## 11. Configure drops, se necessário
 
 Arquivo opcional: `data/enemy_drops.txt`
 
@@ -314,7 +416,7 @@ lobermo;meruma;50;1;1
 
 O inimigo e o item referenciados precisam existir em seus respectivos catálogos.
 
-## 11. Ordem recomendada de implementação
+## 12. Ordem recomendada de implementação
 
 Para evitar referências quebradas, siga esta ordem:
 
@@ -322,16 +424,17 @@ Para evitar referências quebradas, siga esta ordem:
 2. Cadastre novos inimigos e itens, quando necessários, em seus arquivos correspondentes.
 3. Cadastre a região em `scenarios.txt`.
 4. Se for uma região de combate, adicione `combat_scenarios.txt`.
-5. Se `rewardChance` for maior que zero, adicione as entradas necessárias em `exploration_rewards.txt`.
-6. Se for uma masmorra, adicione `dungeons.txt`.
-7. Adicione os encontros em `encounters.txt`.
-8. Adicione drops opcionais em `enemy_drops.txt`.
-9. Por último, conecte a região em `travel_routes.txt` e `scenario_branches.txt`, quando aplicável.
-10. Inicialize o jogo e realize o teste manual.
+5. Se a região possuir lojas ou mercadores, adicione suas definições em `shops.txt` e suas possíveis ofertas em `shop_stock.txt`.
+6. Se `rewardChance` for maior que zero, adicione as entradas necessárias em `exploration_rewards.txt`.
+7. Se for uma masmorra, adicione `dungeons.txt`.
+8. Adicione os encontros em `encounters.txt`.
+9. Adicione drops opcionais em `enemy_drops.txt`.
+10. Por último, conecte a região em `travel_routes.txt` e `scenario_branches.txt`, quando aplicável.
+11. Inicialize o jogo e realize o teste manual.
 
 Se precisar interromper o trabalho antes de concluir todas as etapas, não inicialize o jogo enquanto houver arquivos que referenciem dados ainda inexistentes.
 
-## 12. Checklist antes do commit
+## 13. Checklist antes do commit
 
 ### Todas as regiões
 
@@ -341,6 +444,11 @@ Se precisar interromper o trabalho antes de concluir todas as etapas, não inici
 - [ ] Toda origem e todo destino de rota existem.
 - [ ] As rotas de ida e volta foram criadas quando necessárias.
 - [ ] Nenhum texto contém `;`.
+- [ ] Se houver lojas, seus IDs são únicos e seus tipos de acesso correspondem ao tipo da região.
+- [ ] Toda loja cadastrada possui ao menos uma possível oferta em `shop_stock.txt`.
+- [ ] Todos os itens ofertados existem e definem `baseShopSalePrice`.
+- [ ] Percentuais de preço, estoques e pesos são positivos.
+- [ ] Não existem ofertas comercialmente duplicadas na mesma loja.
 
 ### Campos e masmorras
 
@@ -353,6 +461,7 @@ Se precisar interromper o trabalho antes de concluir todas as etapas, não inici
 - [ ] Todos os IDs de recompensas `ITEM` existem em `items.txt`.
 - [ ] Recompensas `GOLD` mantêm o campo `rewardId` vazio.
 - [ ] Quantidades e pesos das recompensas são maiores que zero e seus intervalos são válidos.
+- [ ] Se `merchantChance` for maior que zero, existe ao menos um mercador `EXPLORATION` associado ao cenário.
 
 ### Masmorras
 
@@ -374,6 +483,11 @@ Se precisar interromper o trabalho antes de concluir todas as etapas, não inici
 - [ ] Vencer o boss conclui a exploração e libera a viagem esperada.
 - [ ] `git diff --check` não aponta whitespace errors.
 - [ ] Recompensas de item e ouro respeitam cenário, área, peso e intervalo de quantidade.
+- [ ] Lojas urbanas aparecem entre os locais funcionais da cidade.
+- [ ] Mercadores aparecem somente quando o evento de exploração está disponível.
+- [ ] As ofertas respeitam slots, pesos, preços e estoques configurados.
+- [ ] Reabrir uma loja preserva suas ofertas ativas e quantidades restantes.
+- [ ] Uma oferta esgotada desaparece sem ser substituída.
 
 ## 13. Diagnóstico rápido
 

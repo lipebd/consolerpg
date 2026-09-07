@@ -271,13 +271,14 @@ Base item data is loaded from:
 Header:
 
 ```text
-# id;category;playerTradable;npcSellable;name;description
+# id;category;playerTradable;baseShopSalePrice;shopPurchasePrice;name;description
 ```
 
 Example:
 
 ```text
-meruma;CONSUMABLE;true;true;Merumã;Uma fruta que recupera 25 pontos de HP.
+meruma;CONSUMABLE;true;20;6;Merumã;Uma fruta que recupera 25 pontos de HP.
+pelo_lupino;MATERIAL;true;;15;Pelo Lupino;Um tufo espesso de pelo obtido de um Lobermo.
 ```
 
 Rules:
@@ -285,7 +286,14 @@ Rules:
 - Every item must have a unique and stable ID.
 - IDs must use lowercase letters, numbers and single underscores, following the stable content ID conventions.
 - `category` must correspond to a valid `ItemCategory`.
-- Player-to-player trading eligibility and NPC selling eligibility are stored independently.
+- `playerTradable` is reserved exclusively for future player-to-player trading.
+- `baseShopSalePrice` is the base amount charged by shops before an offer-specific percentage is applied.
+- `shopPurchasePrice` is the fixed amount paid by any shop when purchasing the item from the player.
+- Either commercial price may remain empty when the corresponding transaction is unavailable.
+- Every present commercial price must be a positive integer.
+- The presence of `shopPurchasePrice` determines whether the item can be sold to shops.
+- Items in the `KEY_ITEM` category cannot define `shopPurchasePrice`.
+- Shop-specific availability, price variation and stock are defined outside `ItemDefinition`.
 - Names and descriptions cannot be empty.
 - Literal `\n` sequences in descriptions are converted into line breaks.
 - `items.txt` stores only the properties shared by every item.
@@ -572,6 +580,157 @@ Rules:
 - The price applies to the whole party and is independent of party size.
 - Prices remain externally configurable for future balancing.
 - `InnLoader` produces immutable `InnDefinition` entries registered in `InnCatalog`.
+
+## Shop definitions
+
+File:
+
+`data/shops.txt`
+
+Each active shop line contains exactly 6 fields:
+
+```text
+# id;scenarioId;accessType;offerSlots;name;description
+```
+
+Examples:
+
+```text
+mercado_bree;bree;CITY;2;Mercado de Bree;Um mercado movimentado onde comerciantes de várias regiões oferecem suas mercadorias.
+viajante_verdes_ermos;verdes_ermos;EXPLORATION;2;Mercador Viajante;Um mercador itinerante que atravessa os campos em busca de ingredientes raros e novos clientes.
+```
+
+Supported access types:
+
+- `CITY`: a fixed shop accessed through the functional locations of a city.
+- `EXPLORATION`: a merchant accessed through the merchant event of a field or dungeon.
+
+Rules:
+
+- Shop IDs must be unique and stable.
+- IDs must use lowercase letters, numbers and single underscores.
+- `scenarioId` must reference an existing scenario.
+- `CITY` shops must reference city scenarios.
+- `EXPLORATION` shops must reference field or dungeon scenarios.
+- Multiple shops or merchants may reference the same scenario.
+- `offerSlots` must be a positive integer.
+- `offerSlots` defines the maximum number of offers selected for the shop at application initialization.
+- Names and descriptions cannot be empty.
+- Literal `\n` sequences in descriptions are converted into line breaks.
+- Every combat scenario with a positive `merchantChance` must have at least one associated `EXPLORATION` shop.
+- An `EXPLORATION` definition associated with a scenario whose `merchantChance` is zero is valid but inaccessible through the current exploration event.
+
+Loading flow:
+
+```text
+shops.txt
+    -> ShopLoader
+    -> ShopDefinition
+    -> ShopCatalog
+```
+
+## Shop stock definitions
+
+File:
+
+`data/shop_stock.txt`
+
+Each active shop-stock line contains exactly 6 fields:
+
+```text
+# id;shopId;itemId;shopSalePricePercent;stock;weight
+```
+
+Examples:
+
+```text
+bree_meruma_discount;mercado_bree;meruma;50;2;5
+bree_meruma_regular;mercado_bree;meruma;100;10;90
+bree_meruma_small;mercado_bree;meruma;100;2;20
+```
+
+Rules:
+
+- Every offer must have a unique and stable ID.
+- `shopId` must reference an existing shop.
+- `itemId` must reference an existing runtime item.
+- The referenced item must define `baseShopSalePrice`.
+- `shopSalePricePercent`, `stock` and `weight` must be positive integers.
+- Weights are relative and their total is not limited to 100.
+- Every shop must have at least one possible sale offer.
+- Offers in the same shop are commercially duplicated when they repeat the same item, price percentage and initial stock quantity.
+- Commercially duplicated offers are rejected even when their stable IDs or weights differ.
+- Distinct offers may reference the same item when their price percentages or initial stock quantities differ.
+- `stock` defines the finite initial quantity of that specific offer.
+- Items sold by the player are not added to shop stock and do not create buyback offers.
+
+The final unit price charged by a shop is calculated from the item's base price:
+
+```text
+roundedFinalPrice = roundHalfUp(baseShopSalePrice * shopSalePricePercent / 100)
+```
+
+The calculation uses overflow-safe arithmetic. Half values are rounded up to the nearest integer, and every calculated final price must be at least one and no greater than the supported integer maximum.
+
+For each item referenced by at least one sale offer:
+
+- The lowest rounded final sale price is calculated across every offer for that item.
+- `shopPurchasePrice` cannot exceed that lowest final sale price.
+- Equality is allowed and produces zero resale profit.
+- An item may define `shopPurchasePrice` without appearing in any shop sale offer.
+
+### Weighted offer selection
+
+Weights define relative selection probability, not percentages.
+
+For each shop slot, the probability of selecting one remaining offer is:
+
+```text
+offer weight / sum of all remaining offer weights
+```
+
+After an offer is selected, that exact entry is removed from the candidate pool. Selection therefore occurs without replacement. Another offer for the same item remains eligible when it is a distinct entry.
+
+Because the selected entry is removed, the conditional probability of every remaining offer is recalculated for the next slot. An offer with a low weight may therefore become more likely in later slots as higher-weight entries leave the pool.
+
+Multiplying every weight in one shop by the same positive factor does not change their relative probabilities.
+
+When `offerSlots` is equal to or greater than the number of possible offers, every offer is selected and weights have no practical effect.
+
+Accumulated selection weights use overflow-safe arithmetic.
+
+### Runtime stock behavior
+
+Every shop receives one `ShopState` during application initialization:
+
+```text
+ShopCatalog + ShopStockCatalog
+    -> ShopStateGenerator
+    -> ShopStateCatalog
+    -> World
+    -> ShopMenu
+```
+
+Runtime rules:
+
+- Active offers are generated once per program execution.
+- Each selected offer receives its configured initial stock.
+- Selected offers and remaining quantities are preserved throughout the execution.
+- An exhausted offer disappears from the visible purchase list.
+- Exhausting an offer does not activate an unused entry from `shop_stock.txt`.
+- A shop remains accessible when every active offer is exhausted.
+- Shops do not restock during the current execution.
+- Starting a new program execution generates fresh shop states.
+- Shop-state persistence and restocking rules remain postponed until save and load are implemented.
+
+Loading flow:
+
+```text
+shop_stock.txt
+    -> ShopStockLoader
+    -> ShopStockEntry
+    -> ShopStockCatalog
+```
 
 ## Planned future data files
 ### Skill definitions
