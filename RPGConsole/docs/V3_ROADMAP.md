@@ -315,25 +315,125 @@ Character progression, combat-system expansion, equipment, character creation, f
 
 ## 9. Shops and merchants
 
-> **On hold:** Initial implementation is being developed separately and will be reviewed before this section begins.
+### Commercial item data
 
-* [ ] Define fixed shops separately from their stock.
-* [ ] Define `shops.txt`.
-* [ ] Define `shop_stock.txt`.
-* [ ] Associate each shop with a scenario.
-* [ ] Support multiple shops in one city.
-* [ ] Support different stocks in different cities.
-* [ ] Validate all referenced item IDs.
-* [ ] Implement buying.
-* [ ] Implement selling.
-* [ ] Validate party gold before purchases.
-* [ ] Update shared inventory and gold after transactions.
-* [ ] Decide whether each stock entry is finite or infinite.
-* [ ] Decide when finite stock is restored.
-* [ ] Decide whether modified stock is persisted.
-* [ ] Define how exploration merchants select their stock.
-* [ ] Preserve the one-merchant-per-exploration-session rule.
+* [ ] Remove the redundant `npcSellable` property from base item definitions and runtime items.
+* [ ] Add optional `baseShopSalePrice` and `shopPurchasePrice` fields to `items.txt`.
+* [ ] Define `baseShopSalePrice` as the base amount charged by shops before an offer-specific percentage is applied.
+* [ ] Define `shopPurchasePrice` as the fixed amount paid by any shop when purchasing that item from the player.
+* [ ] Allow either commercial price to remain empty when the corresponding transaction is unavailable.
+* [ ] Require every present commercial price to be positive.
+* [ ] Use the presence of `shopPurchasePrice`, rather than a separate boolean property, to determine whether an item can be sold to shops.
+* [ ] Keep `playerTradable` exclusive to future player-to-player trading.
+* [ ] Keep all shop-specific availability, price variation and stock outside `ItemDefinition`.
+
+### External shop definitions
+
+* [ ] Create `ShopAccessType` with `CITY` and `EXPLORATION`.
+* [ ] Create immutable shop definitions, catalogs and loaders.
+* [ ] Define `shops.txt` using `id;scenarioId;accessType;offerSlots;name;description`.
+* [ ] Require positive `offerSlots`.
+* [ ] Associate `CITY` shops only with city scenarios.
+* [ ] Associate `EXPLORATION` merchants only with fields and dungeons.
+* [ ] Support multiple shops or merchants in the same scenario.
+* [ ] Create immutable shop-stock entries, catalogs and loaders.
+* [ ] Define `shop_stock.txt` using `id;shopId;itemId;shopSalePricePercent;stock;weight`.
+* [ ] Require stable unique offer IDs and valid shop and item references.
+* [ ] Require positive price percentages, stock quantities and weights without limiting their totals to 100.
+* [ ] Require every stocked item to define `baseShopSalePrice`.
+* [ ] Require every shop to have at least one possible sale offer.
+* [ ] Reject offers from the same shop that repeat the same item, price percentage and stock quantity, regardless of their stable IDs or weights.
+* [ ] Allow distinct offers to reference the same item when their price percentages or stock quantities differ.
+* [ ] Calculate final shop sale prices by applying `shopSalePricePercent` to `baseShopSalePrice`.
+* [ ] Round final shop sale prices to the nearest integer, with half values rounded up.
+* [ ] Reject any calculated shop sale price below one.
+* [ ] Use overflow-safe arithmetic when calculating final shop sale prices.
+* [ ] For each item referenced by at least one sale offer, reject configurations in which `shopPurchasePrice` exceeds that item's lowest rounded final shop sale price.
+* [ ] Allow items that define `shopPurchasePrice` without appearing in any shop sale offer.
+* [ ] Permit equality between `shopPurchasePrice` and the lowest final shop sale price, producing zero resale profit.
+
+### Runtime shop state
+
+* [ ] Use finite per-offer stock in V3, superseding the earlier plan to use infinite shop stock.
+* [ ] Create separate mutable runtime state for each shop.
+* [ ] Generate every shop's active offers once during application initialization.
+* [ ] Select active offers by relative weight without replacement.
+* [ ] Accumulate selection weights using overflow-safe arithmetic.
+* [ ] Select up to `offerSlots` entries or every possible entry when fewer are available.
+* [ ] Allow separate active offers for the same item when their price percentages or stock quantities differ.
+* [ ] Store the remaining quantity of every selected offer.
+* [ ] Reduce remaining stock only after a successful purchase.
+* [ ] Remove exhausted offers from the visible purchase list.
+* [ ] Keep a shop accessible when all of its sale offers are exhausted.
+* [ ] Preserve selected offers and remaining quantities for the entire program execution.
+* [ ] Do not restock shops or merchants during the current execution.
+* [ ] Generate fresh shop state when a new program execution starts.
+* [ ] Do not add items sold by the player to shop stock.
+* [ ] Do not implement item buyback.
+* [ ] Postpone shop-state persistence and restocking rules until save and load are implemented.
+
+### Shop and merchant access
+
+* [ ] Add `CITY` shops to the functional locations displayed by `CityLocationMenu`.
+* [ ] Support multiple named shops in one city.
+* [ ] Use the existing merchant exploration event to access `EXPLORATION` shops.
+* [ ] Require at least one eligible `EXPLORATION` merchant when a combat scenario has `merchantChance` greater than zero.
+* [ ] Ignore inaccessible `EXPLORATION` definitions associated with scenarios whose `merchantChance` is zero.
+* [ ] Select uniformly among all eligible exploration merchants associated with the current scenario.
+* [ ] Preserve the existing one-merchant-per-exploration-session rule.
+* [ ] Reuse the same shop runtime state whenever that exploration merchant is encountered in later exploration sessions.
+* [ ] Preserve the interaction and navigation style established by `EpicEncounterMenu` for exploration merchants.
+* [ ] Share shop definitions, runtime state, transaction rules and menus between city shops and exploration merchants whenever their behavior is identical.
+* [ ] Allow every `CITY` and `EXPLORATION` shop to purchase any owned item that defines `shopPurchasePrice`.
+
+### Shop interface
+
+* [ ] Display the shop name, configured description and current party gold through `GameCurrency`.
+* [ ] Provide the player-facing actions `Comprar`, `Vender` and `Voltar`.
+* [ ] Display purchase offers with item name, formatted unit price and remaining stock.
+* [ ] Keep separate offers selectable when they reference the same item but differ in price percentage or stock quantity.
+* [ ] Sort purchase offers deterministically by item category and name.
+* [ ] Break purchase-offer sorting ties by final unit price and stable offer ID.
+* [ ] Paginate shop lists consistently with the existing inventory interface.
+* [ ] Allow the player to select a purchase quantity up to the remaining stock.
+* [ ] Skip quantity selection when only one unit is available.
+* [ ] Display the complete item name, description, quantity, unit price and total price before purchase confirmation.
+* [ ] Organize the sale interface by the existing item categories.
+* [ ] Display only owned items that define `shopPurchasePrice` as sellable.
+* [ ] Allow the player to select a sale quantity up to the owned quantity.
+* [ ] Skip quantity selection when the player owns only one unit.
+* [ ] Display the complete item name, description, quantity, unit price and total value before sale confirmation.
+* [ ] Keep shops open after successful, cancelled or failed transactions until the player explicitly leaves.
+* [ ] Display clear feedback for successful, cancelled and rejected transactions.
+
+### Transaction rules and validation
+
+* [ ] Validate purchase selection, quantity, remaining stock, calculated total and party gold before changing any state.
+* [ ] Deduct party gold, add items to the shared inventory and reduce stock only after a confirmed valid purchase.
+* [ ] Validate sale selection, quantity, owned inventory, calculated total and resulting party gold before changing any state.
+* [ ] Remove items from the shared inventory and add party gold only after a confirmed valid sale.
+* [ ] Preserve gold, inventory and shop stock when a transaction is invalid, unaffordable or cancelled.
+* [ ] Use overflow-safe arithmetic for unit-price calculations, transaction totals and resulting gold balances.
+* [ ] Prevent negative values, integer overflow, unintended item duplication and item loss during transactions.
+* [ ] Keep every purchase and sale atomic from the player's perspective.
+* [ ] Use `GameCurrency` for every displayed price, total and balance.
+
+### Validation and manual tests
+
+* [ ] Test malformed shop definitions, stock entries, prices, percentages, quantities, weights and references.
+* [ ] Test invalid scenario types and missing merchants for positive exploration merchant chances.
+* [ ] Test rejection of commercially duplicate offers regardless of stable ID or weight.
+* [ ] Test distinct offers for the same item with different price percentages or stock quantities.
+* [ ] Test weighted offer selection without replacement.
+* [ ] Test overflow protection when accumulating selection weights.
+* [ ] Test `offerSlots` below, equal to and above the number of possible offers.
+* [ ] Test shop state preservation across repeated menu access and later merchant encounters.
+* [ ] Test purchases, cancellations, insufficient gold, insufficient stock and exhausted shops.
+* [ ] Test sales, cancellations, unsellable items and insufficient inventory quantities.
+* [ ] Test price rounding and per-item anti-arbitrage validation.
+* [ ] Test overflow protection in price calculation, transaction totals and gold updates.
 * [ ] Test fixed city shops and exploration merchants separately.
+
 
 ## 10. Scenario discovery and paid city travel
 
