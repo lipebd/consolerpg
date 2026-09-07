@@ -10,34 +10,19 @@ public class Enemy extends GameCharacter {
     private String description;
     private final EnemyRank rank;
     
-	public Enemy(
-	        String name,
-	        int maxHp,
-	        int maxMp,
-	        int maxSp,
-	        int attack,
-	        int defense,
-	        int healingPower,
-	        int luck,
-	        EnemyRank rank,
-	        List<DropEntry> dropTable,
-	        String description
-	) {
-	    super(
-	            name,
-	            maxHp,
-	            maxMp,
-	            maxSp,
-	            attack,
-	            defense,
-	            healingPower,
-	            luck
-	    );
+    public Enemy(
+            String name,
+            CharacterStats stats,
+            EnemyRank rank,
+            List<DropEntry> dropTable,
+            String description
+    ) {
+        super(name, stats);
 
-	    this.rank = rank;
-	    this.dropTable = List.copyOf(dropTable);
-	    this.description = description;
-	}
+        this.rank = rank;
+        this.dropTable = dropTable;
+        this.description = description;
+    }
 	
 	public String getDescription() {
 	    return description;

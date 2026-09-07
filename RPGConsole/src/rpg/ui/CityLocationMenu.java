@@ -1,0 +1,58 @@
+package rpg.ui;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.OptionalInt;
+import java.util.Scanner;
+
+// Displays functional city locations and returns the selected position.
+public final class CityLocationMenu {
+
+	private final Scanner scanner;
+
+	public CityLocationMenu(Scanner scanner) {
+		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+	}
+
+	public OptionalInt selectLocation(List<String> locationNames) {
+		Objects.requireNonNull(locationNames, "City location names cannot be null.");
+
+		if (locationNames.isEmpty()) {
+			throw new IllegalArgumentException("City location names cannot be empty.");
+		}
+
+		while (true) {
+			System.out.println("\nOnde deseja ir?");
+
+			for (int index = 0; index < locationNames.size(); index++) {
+				System.out.println(
+						"[" + (index + 1) + "] " + locationNames.get(index)
+				);
+			}
+
+			System.out.println();
+			System.out.println("[0] Voltar");
+			System.out.print("> ");
+
+			String choice = scanner.nextLine().trim();
+
+			if (choice.equals("0")) {
+				return OptionalInt.empty();
+			}
+
+			try {
+				int selectedIndex = Integer.parseInt(choice) - 1;
+
+				if (selectedIndex < 0 || selectedIndex >= locationNames.size()) {
+					System.out.println("Local inválido.");
+					continue;
+				}
+
+				return OptionalInt.of(selectedIndex);
+
+			} catch (NumberFormatException exception) {
+				System.out.println("Digite o número de um local.");
+			}
+		}
+	}
+}

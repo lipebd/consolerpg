@@ -1,0 +1,2 @@
+# id;sourceScenarioId;position;destinationScenarioId;displayName;description
+verdes_ermos_bifurcacao_setegalhos;verdes_ermos;3;setegalhos;Seguir para Setegalhos;Você encontra uma bifurcação entre os campos.\nUma estrada parcialmente escondida pela vegetação conduz ao Povoado de Setegalhos.

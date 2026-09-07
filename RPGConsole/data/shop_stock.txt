@@ -1,0 +1,7 @@
+# id;shopId;itemId;shopSalePricePercent;stock;weight
+bree_meruma_discount;mercado_bree;meruma;50;2;5
+bree_meruma_regular;mercado_bree;meruma;100;10;90
+bree_meruma_small;mercado_bree;meruma;100;2;20
+verdes_meruma_discount;viajante_verdes_ermos;meruma;75;1;10
+verdes_meruma_regular;viajante_verdes_ermos;meruma;110;5;90
+sanguemar_meruma;mascate_sanguemar;meruma;125;4;100

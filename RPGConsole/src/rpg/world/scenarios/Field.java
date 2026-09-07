@@ -1,31 +1,27 @@
 package rpg.world.scenarios;
 
-import java.util.List;
+import rpg.world.exploration.ExplorationSettings;
+
 
 // Represents an open field that can contain exploration and encounters.
 public class Field extends CombatScenario {
 
 	public Field(
+	        String id,
 	        String name,
 	        String description,
 	        int baseExperienceReward,
-	        int baseGoldReward
+	        int baseGoldReward,
+	        ExplorationSettings explorationSettings
 	) {
 	    super(
+	            id,
 	            name,
 	            description,
 	            baseExperienceReward,
-	            baseGoldReward
+	            baseGoldReward,
+	            explorationSettings
 	    );
 	}
 
-    @Override
-    public List<ScenarioAction> getAvailableActions() {
-    	return List.of(
-    	        ScenarioAction.EXPLORE,
-    	        ScenarioAction.INVENTORY,
-    	        ScenarioAction.VIEW_STATUS,
-    	        ScenarioAction.TRAVEL
-    	);
-    }
 }

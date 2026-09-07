@@ -1,0 +1,72 @@
+package rpg.ui;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Scanner;
+
+import rpg.world.travel.TravelProgress;
+import rpg.world.travel.TravelRouteDefinition;
+
+// Displays unlocked travel routes and returns the selected scenario.
+public final class RouteMenu {
+
+	private final Scanner scanner;
+	private final TravelProgress travelProgress;
+
+	public RouteMenu(
+            Scanner scanner,
+            TravelProgress travelProgress) {
+    this.scanner = scanner;
+    this.travelProgress = travelProgress;
+}
+
+	public Optional<TravelRouteDefinition> open(
+            String sourceScenarioId) {
+    List<TravelRouteDefinition> routes =
+                    travelProgress.getUnlockedRoutesFrom(
+                                    sourceScenarioId
+                    );
+
+		if (routes.isEmpty()) {
+			System.out.println("\nNão há destinos possíveis.");
+			return Optional.empty();
+		}
+
+		while (true) {
+			System.out.println("\nEscolha seu destino:");
+
+			for (int index = 0; index < routes.size(); index++) {
+				TravelRouteDefinition route = routes.get(index);
+
+				System.out.println("[" + (index + 1) + "] " + route.getDisplayName());
+
+				System.out.println("    " + route.getDescription().replace("\n", "\n    "));
+			}
+
+			System.out.println("[0] Voltar");
+			System.out.print("> ");
+
+			String choice = scanner.nextLine();
+
+			if (choice.equals("0")) {
+				return Optional.empty();
+			}
+
+			try {
+				int selectedIndex = Integer.parseInt(choice) - 1;
+
+				if (selectedIndex < 0 || selectedIndex >= routes.size()) {
+					System.out.println("Destino inválido.");
+					continue;
+				}
+
+				TravelRouteDefinition selectedRoute = routes.get(selectedIndex);
+
+				return Optional.of(selectedRoute);
+
+			} catch (NumberFormatException exception) {
+				System.out.println("Comando inválido.");
+			}
+		}
+	}
+}
