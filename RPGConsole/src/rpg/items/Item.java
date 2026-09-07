@@ -6,7 +6,8 @@ public abstract class Item {
 	private final String id;
 	private final ItemCategory category;
 	private final boolean playerTradable;
-	private final boolean npcSellable;
+	private final Integer baseShopSalePrice;
+	private final Integer shopPurchasePrice;
 	private final String name;
 	private final String description;
 
@@ -18,7 +19,8 @@ public abstract class Item {
 		this.id = definition.getId();
 		this.category = definition.getCategory();
 		this.playerTradable = definition.isPlayerTradable();
-		this.npcSellable = definition.isNpcSellable();
+		this.baseShopSalePrice = definition.getBaseShopSalePrice();
+		this.shopPurchasePrice = definition.getShopPurchasePrice();
 		this.name = definition.getName();
 		this.description = definition.getDescription();
 	}
@@ -35,8 +37,12 @@ public abstract class Item {
 		return playerTradable;
 	}
 
-	public boolean isNpcSellable() {
-		return npcSellable;
+	public Integer getBaseShopSalePrice() {
+		return baseShopSalePrice;
+	}
+
+	public Integer getShopPurchasePrice() {
+		return shopPurchasePrice;
 	}
 
 	public String getName() {

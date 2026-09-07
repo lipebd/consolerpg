@@ -317,15 +317,15 @@ Character progression, combat-system expansion, equipment, character creation, f
 
 ### Commercial item data
 
-* [ ] Remove the redundant `npcSellable` property from base item definitions and runtime items.
-* [ ] Add optional `baseShopSalePrice` and `shopPurchasePrice` fields to `items.txt`.
-* [ ] Define `baseShopSalePrice` as the base amount charged by shops before an offer-specific percentage is applied.
-* [ ] Define `shopPurchasePrice` as the fixed amount paid by any shop when purchasing that item from the player.
-* [ ] Allow either commercial price to remain empty when the corresponding transaction is unavailable.
-* [ ] Require every present commercial price to be positive.
-* [ ] Use the presence of `shopPurchasePrice`, rather than a separate boolean property, to determine whether an item can be sold to shops.
-* [ ] Keep `playerTradable` exclusive to future player-to-player trading.
-* [ ] Keep all shop-specific availability, price variation and stock outside `ItemDefinition`.
+* [x] Remove the redundant `npcSellable` property from base item definitions and runtime items.
+* [x] Add optional `baseShopSalePrice` and `shopPurchasePrice` fields to `items.txt`.
+* [x] Define `baseShopSalePrice` as the base amount charged by shops before an offer-specific percentage is applied.
+* [x] Define `shopPurchasePrice` as the fixed amount paid by any shop when purchasing that item from the player.
+* [x] Allow either commercial price to remain empty when the corresponding transaction is unavailable.
+* [x] Require every present commercial price to be positive.
+* [x] Use the presence of `shopPurchasePrice`, rather than a separate boolean property, to determine whether an item can be sold to shops.
+* [x] Keep `playerTradable` exclusive to future player-to-player trading.
+* [x] Keep all shop-specific availability, price variation and stock outside `ItemDefinition`.
 
 ### External shop definitions
 

@@ -7,12 +7,13 @@ public final class ItemDefinition {
 	private final String id;
 	private final ItemCategory category;
 	private final boolean playerTradable;
-	private final boolean npcSellable;
+	private final Integer baseShopSalePrice;
+	private final Integer shopPurchasePrice;
 	private final String name;
 	private final String description;
 
-	public ItemDefinition(String id, ItemCategory category, boolean playerTradable, boolean npcSellable, String name,
-			String description) {
+	public ItemDefinition(String id, ItemCategory category, boolean playerTradable, Integer baseShopSalePrice,
+			Integer shopPurchasePrice, String name, String description) {
 		if (id == null || id.isBlank()) {
 		    throw new IllegalArgumentException(
 		            "Item ID cannot be empty."
@@ -32,6 +33,14 @@ public final class ItemDefinition {
 			throw new IllegalArgumentException("Item category cannot be null.");
 		}
 
+		if (baseShopSalePrice != null && baseShopSalePrice <= 0) {
+			throw new IllegalArgumentException("Item base shop sale price must be positive when present.");
+		}
+
+		if (shopPurchasePrice != null && shopPurchasePrice <= 0) {
+			throw new IllegalArgumentException("Item shop purchase price must be positive when present.");
+		}
+
 		if (name == null || name.isBlank()) {
 			throw new IllegalArgumentException("Item name cannot be empty.");
 		}
@@ -43,9 +52,10 @@ public final class ItemDefinition {
 		this.id = trimmedId;
 		this.category = category;
 		this.playerTradable = playerTradable;
-		this.npcSellable = npcSellable;
 		this.name = name;
 		this.description = description;
+		this.baseShopSalePrice = baseShopSalePrice;
+		this.shopPurchasePrice = shopPurchasePrice;
 	}
 
 	public String getId() {
@@ -60,8 +70,12 @@ public final class ItemDefinition {
 		return playerTradable;
 	}
 
-	public boolean isNpcSellable() {
-		return npcSellable;
+	public Integer getBaseShopSalePrice() {
+		return baseShopSalePrice;
+	}
+
+	public Integer getShopPurchasePrice() {
+		return shopPurchasePrice;
 	}
 
 	public String getName() {

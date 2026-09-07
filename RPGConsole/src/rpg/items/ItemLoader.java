@@ -9,7 +9,7 @@ import java.util.Locale;
 // Loads common item definitions from external data.
 public final class ItemLoader {
 
-	private static final int EXPECTED_FIELD_COUNT = 6;
+	private static final int EXPECTED_FIELD_COUNT = 7;
 
 	public ItemDefinitionCatalog load(Path filePath) throws IOException {
 		ItemDefinitionCatalog catalog = new ItemDefinitionCatalog();
@@ -54,13 +54,15 @@ public final class ItemLoader {
 
 		boolean playerTradable = parseBoolean(fields[2], "player tradable");
 
-		boolean npcSellable = parseBoolean(fields[3], "NPC sellable");
+		Integer baseShopSalePrice = parseOptionalInteger(fields[3], "base shop sale price");
 
-		String name = fields[4].trim();
+		Integer shopPurchasePrice = parseOptionalInteger(fields[4], "shop purchase price");
 
-		String description = fields[5].trim().replace("\\n", "\n");
+		String name = fields[5].trim();
 
-		return new ItemDefinition(id, category, playerTradable, npcSellable, name, description);
+		String description = fields[6].trim().replace("\\n", "\n");
+
+		return new ItemDefinition(id, category, playerTradable, baseShopSalePrice, shopPurchasePrice, name, description);
 	}
 
 	private ItemCategory parseCategory(String value) {
@@ -70,6 +72,20 @@ public final class ItemLoader {
 			return ItemCategory.valueOf(normalizedValue);
 		} catch (IllegalArgumentException exception) {
 			throw new IllegalArgumentException("Invalid item category: " + normalizedValue, exception);
+		}
+	}
+
+	private Integer parseOptionalInteger(String value, String fieldName) {
+		String normalizedValue = value.trim();
+
+		if (normalizedValue.isEmpty()) {
+			return null;
+		}
+
+		try {
+			return Integer.parseInt(normalizedValue);
+		} catch (NumberFormatException exception) {
+			throw new IllegalArgumentException("Invalid " + fieldName + ": " + normalizedValue, exception);
 		}
 	}
 
