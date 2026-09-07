@@ -355,19 +355,19 @@ Character progression, combat-system expansion, equipment, character creation, f
 ### Runtime shop state
 
 * [ ] Use finite per-offer stock in V3, superseding the earlier plan to use infinite shop stock.
-* [ ] Create separate mutable runtime state for each shop.
-* [ ] Generate every shop's active offers once during application initialization.
-* [ ] Select active offers by relative weight without replacement.
-* [ ] Accumulate selection weights using overflow-safe arithmetic.
-* [ ] Select up to `offerSlots` entries or every possible entry when fewer are available.
-* [ ] Allow separate active offers for the same item when their price percentages or stock quantities differ.
-* [ ] Store the remaining quantity of every selected offer.
+* [x] Create separate mutable runtime state for each shop.
+* [x] Generate every shop's active offers once during application initialization.
+* [x] Select active offers by relative weight without replacement.
+* [x] Accumulate selection weights using overflow-safe arithmetic.
+* [x] Select up to `offerSlots` entries or every possible entry when fewer are available.
+* [x] Allow separate active offers for the same item when their price percentages or stock quantities differ.
+* [x] Store the remaining quantity of every selected offer.
 * [ ] Reduce remaining stock only after a successful purchase.
-* [ ] Remove exhausted offers from the visible purchase list.
+* [x] Remove exhausted offers from the visible purchase list.
 * [ ] Keep a shop accessible when all of its sale offers are exhausted.
 * [ ] Preserve selected offers and remaining quantities for the entire program execution.
 * [ ] Do not restock shops or merchants during the current execution.
-* [ ] Generate fresh shop state when a new program execution starts.
+* [x] Generate fresh shop state when a new program execution starts.
 * [ ] Do not add items sold by the player to shop stock.
 * [ ] Do not implement item buyback.
 * [ ] Postpone shop-state persistence and restocking rules until save and load are implemented.
@@ -424,9 +424,9 @@ Character progression, combat-system expansion, equipment, character creation, f
 * [x] Test invalid scenario types and missing merchants for positive exploration merchant chances.
 * [x] Test rejection of commercially duplicate offers regardless of stable ID or weight.
 * [x] Test distinct offers for the same item with different price percentages or stock quantities.
-* [ ] Test weighted offer selection without replacement.
-* [ ] Test overflow protection when accumulating selection weights.
-* [ ] Test `offerSlots` below, equal to and above the number of possible offers.
+* [x] Test weighted offer selection without replacement.
+* [x] Test overflow protection when accumulating selection weights.
+* [x] Test `offerSlots` below, equal to and above the number of possible offers.
 * [ ] Test shop state preservation across repeated menu access and later merchant encounters.
 * [ ] Test purchases, cancellations, insufficient gold, insufficient stock and exhausted shops.
 * [ ] Test sales, cancellations, unsellable items and insufficient inventory quantities.
