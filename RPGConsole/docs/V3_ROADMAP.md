@@ -336,21 +336,21 @@ Character progression, combat-system expansion, equipment, character creation, f
 * [x] Associate `CITY` shops only with city scenarios.
 * [x] Associate `EXPLORATION` merchants only with fields and dungeons.
 * [x] Support multiple shops or merchants in the same scenario.
-* [ ] Create immutable shop-stock entries, catalogs and loaders.
-* [ ] Define `shop_stock.txt` using `id;shopId;itemId;shopSalePricePercent;stock;weight`.
-* [ ] Require stable unique offer IDs and valid shop and item references.
-* [ ] Require positive price percentages, stock quantities and weights without limiting their totals to 100.
-* [ ] Require every stocked item to define `baseShopSalePrice`.
-* [ ] Require every shop to have at least one possible sale offer.
-* [ ] Reject offers from the same shop that repeat the same item, price percentage and stock quantity, regardless of their stable IDs or weights.
-* [ ] Allow distinct offers to reference the same item when their price percentages or stock quantities differ.
-* [ ] Calculate final shop sale prices by applying `shopSalePricePercent` to `baseShopSalePrice`.
-* [ ] Round final shop sale prices to the nearest integer, with half values rounded up.
-* [ ] Reject any calculated shop sale price below one.
-* [ ] Use overflow-safe arithmetic when calculating final shop sale prices.
-* [ ] For each item referenced by at least one sale offer, reject configurations in which `shopPurchasePrice` exceeds that item's lowest rounded final shop sale price.
-* [ ] Allow items that define `shopPurchasePrice` without appearing in any shop sale offer.
-* [ ] Permit equality between `shopPurchasePrice` and the lowest final shop sale price, producing zero resale profit.
+* [x] Create immutable shop-stock entries, catalogs and loaders.
+* [x] Define `shop_stock.txt` using `id;shopId;itemId;shopSalePricePercent;stock;weight`.
+* [x] Require stable unique offer IDs and valid shop and item references.
+* [x] Require positive price percentages, stock quantities and weights without limiting their totals to 100.
+* [x] Require every stocked item to define `baseShopSalePrice`.
+* [x] Require every shop to have at least one possible sale offer.
+* [x] Reject offers from the same shop that repeat the same item, price percentage and stock quantity, regardless of their stable IDs or weights.
+* [x] Allow distinct offers to reference the same item when their price percentages or stock quantities differ.
+* [x] Calculate final shop sale prices by applying `shopSalePricePercent` to `baseShopSalePrice`.
+* [x] Round final shop sale prices to the nearest integer, with half values rounded up.
+* [x] Reject any calculated shop sale price below one.
+* [x] Use overflow-safe arithmetic when calculating final shop sale prices.
+* [x] For each item referenced by at least one sale offer, reject configurations in which `shopPurchasePrice` exceeds that item's lowest rounded final shop sale price.
+* [x] Allow items that define `shopPurchasePrice` without appearing in any shop sale offer.
+* [x] Permit equality between `shopPurchasePrice` and the lowest final shop sale price, producing zero resale profit.
 
 ### Runtime shop state
 
@@ -422,15 +422,15 @@ Character progression, combat-system expansion, equipment, character creation, f
 
 * [ ] Test malformed shop definitions, stock entries, prices, percentages, quantities, weights and references.
 * [x] Test invalid scenario types and missing merchants for positive exploration merchant chances.
-* [ ] Test rejection of commercially duplicate offers regardless of stable ID or weight.
-* [ ] Test distinct offers for the same item with different price percentages or stock quantities.
+* [x] Test rejection of commercially duplicate offers regardless of stable ID or weight.
+* [x] Test distinct offers for the same item with different price percentages or stock quantities.
 * [ ] Test weighted offer selection without replacement.
 * [ ] Test overflow protection when accumulating selection weights.
 * [ ] Test `offerSlots` below, equal to and above the number of possible offers.
 * [ ] Test shop state preservation across repeated menu access and later merchant encounters.
 * [ ] Test purchases, cancellations, insufficient gold, insufficient stock and exhausted shops.
 * [ ] Test sales, cancellations, unsellable items and insufficient inventory quantities.
-* [ ] Test price rounding and per-item anti-arbitrage validation.
+* [x] Test price rounding and per-item anti-arbitrage validation.
 * [ ] Test overflow protection in price calculation, transaction totals and gold updates.
 * [ ] Test fixed city shops and exploration merchants separately.
 
