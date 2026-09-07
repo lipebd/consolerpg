@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Scanner;
 
+import rpg.world.shops.ShopCatalog;
+import rpg.world.shops.ShopLoader;
 import rpg.characters.CharacterStats;
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
@@ -56,6 +58,7 @@ public class Main {
 
 	public static void main(String[] args) {
 
+		ShopCatalog shopCatalog;
 		CityTransportCatalog cityTransportCatalog;
 		InnCatalog innCatalog;
 		ExplorationRewardCatalog explorationRewardCatalog;
@@ -100,6 +103,9 @@ public class Main {
 			CombatScenarioLoader combatScenarioLoader = new CombatScenarioLoader();
 			CombatScenarioDefinitionCatalog combatScenarioDefinitionCatalog = combatScenarioLoader
 					.load(Path.of("data", "combat_scenarios.txt"), scenarioDefinitionCatalog);
+			ShopLoader shopLoader = new ShopLoader();
+			shopCatalog = shopLoader
+					.load(Path.of("data", "shops.txt"), scenarioDefinitionCatalog, combatScenarioDefinitionCatalog);
 			ExplorationRewardLoader explorationRewardLoader = new ExplorationRewardLoader();
 			explorationRewardCatalog = explorationRewardLoader
 					.load(Path.of("data", "exploration_rewards.txt"), combatScenarioDefinitionCatalog, itemCatalog);
@@ -158,7 +164,7 @@ public class Main {
 		PlayableCharacter flagelo = new PlayableCharacter("Flagelo", flageloStats);
 
 		Party party = new Party(flagelo);
-		
+
 		CharacterStats bardoStats = new CharacterStats(
 				80, // HP
 				80, // MP

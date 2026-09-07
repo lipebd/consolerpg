@@ -329,13 +329,13 @@ Character progression, combat-system expansion, equipment, character creation, f
 
 ### External shop definitions
 
-* [ ] Create `ShopAccessType` with `CITY` and `EXPLORATION`.
-* [ ] Create immutable shop definitions, catalogs and loaders.
-* [ ] Define `shops.txt` using `id;scenarioId;accessType;offerSlots;name;description`.
-* [ ] Require positive `offerSlots`.
-* [ ] Associate `CITY` shops only with city scenarios.
-* [ ] Associate `EXPLORATION` merchants only with fields and dungeons.
-* [ ] Support multiple shops or merchants in the same scenario.
+* [x] Create `ShopAccessType` with `CITY` and `EXPLORATION`.
+* [x] Create immutable shop definitions, catalogs and loaders.
+* [x] Define `shops.txt` using `id;scenarioId;accessType;offerSlots;name;description`.
+* [x] Require positive `offerSlots`.
+* [x] Associate `CITY` shops only with city scenarios.
+* [x] Associate `EXPLORATION` merchants only with fields and dungeons.
+* [x] Support multiple shops or merchants in the same scenario.
 * [ ] Create immutable shop-stock entries, catalogs and loaders.
 * [ ] Define `shop_stock.txt` using `id;shopId;itemId;shopSalePricePercent;stock;weight`.
 * [ ] Require stable unique offer IDs and valid shop and item references.
@@ -377,8 +377,8 @@ Character progression, combat-system expansion, equipment, character creation, f
 * [ ] Add `CITY` shops to the functional locations displayed by `CityLocationMenu`.
 * [ ] Support multiple named shops in one city.
 * [ ] Use the existing merchant exploration event to access `EXPLORATION` shops.
-* [ ] Require at least one eligible `EXPLORATION` merchant when a combat scenario has `merchantChance` greater than zero.
-* [ ] Ignore inaccessible `EXPLORATION` definitions associated with scenarios whose `merchantChance` is zero.
+* [x] Require at least one eligible `EXPLORATION` merchant when a combat scenario has `merchantChance` greater than zero.
+* [x] Ignore inaccessible `EXPLORATION` definitions associated with scenarios whose `merchantChance` is zero.
 * [ ] Select uniformly among all eligible exploration merchants associated with the current scenario.
 * [ ] Preserve the existing one-merchant-per-exploration-session rule.
 * [ ] Reuse the same shop runtime state whenever that exploration merchant is encountered in later exploration sessions.
@@ -421,7 +421,7 @@ Character progression, combat-system expansion, equipment, character creation, f
 ### Validation and manual tests
 
 * [ ] Test malformed shop definitions, stock entries, prices, percentages, quantities, weights and references.
-* [ ] Test invalid scenario types and missing merchants for positive exploration merchant chances.
+* [x] Test invalid scenario types and missing merchants for positive exploration merchant chances.
 * [ ] Test rejection of commercially duplicate offers regardless of stable ID or weight.
 * [ ] Test distinct offers for the same item with different price percentages or stock quantities.
 * [ ] Test weighted offer selection without replacement.
