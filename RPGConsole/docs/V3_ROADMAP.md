@@ -429,12 +429,12 @@ Character progression, combat-system expansion, equipment, character creation, f
 * [x] Test weighted offer selection without replacement.
 * [x] Test overflow protection when accumulating selection weights.
 * [x] Test `offerSlots` below, equal to and above the number of possible offers.
-* [ ] Test shop state preservation across repeated menu access and later merchant encounters.
+* [x] Test shop state preservation across repeated menu access and later merchant encounters.
 * [x] Test purchases, cancellations, insufficient gold, insufficient stock and exhausted shops.
 * [x] Test sales, cancellations, unsellable items and insufficient inventory quantities.
 * [x] Test price rounding and per-item anti-arbitrage validation.
 * [x] Test overflow protection in price calculation, transaction totals and gold updates.
-* [ ] Test fixed city shops and exploration merchants separately.
+* [x] Test fixed city shops and exploration merchants separately.
 
 
 ## 10. Scenario discovery and paid city travel
