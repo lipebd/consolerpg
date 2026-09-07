@@ -85,4 +85,65 @@ public final class ShopTransactionService {
 			throw new IllegalStateException("Validated shop stock changed during purchase.", exception);
 		}
 	}
+
+	private void applySale(Item selectedItem, int quantity, int totalValue, int expectedGold) {
+		if (!party.getInventory().removeItem(selectedItem, quantity)) {
+			throw new IllegalStateException("Party inventory changed before shop sale.");
+		}
+
+		party.addGold(totalValue);
+
+		if (party.getGold() != expectedGold) {
+			boolean inventoryRestored = party.getInventory().addItem(selectedItem, quantity);
+
+			if (!inventoryRestored) {
+				throw new IllegalStateException("Shop sale rollback failed.");
+			}
+
+			throw new IllegalStateException("Party gold changed during shop sale.");
+		}
+	}
+
+	public ShopSaleResult sell(Item selectedItem, int quantity) {
+		if (selectedItem == null) {
+			return ShopSaleResult.INVALID_SELECTION;
+		}
+
+		Integer unitPrice = selectedItem.getShopPurchasePrice();
+
+		if (unitPrice == null) {
+			return ShopSaleResult.ITEM_NOT_SELLABLE;
+		}
+
+		if (quantity <= 0) {
+			return ShopSaleResult.INVALID_QUANTITY;
+		}
+
+		Inventory inventory = party.getInventory();
+
+		if (inventory.getQuantity(selectedItem) < quantity) {
+			return ShopSaleResult.INSUFFICIENT_INVENTORY;
+		}
+
+		int totalValue;
+
+		try {
+			totalValue = Math.multiplyExact(unitPrice, quantity);
+		} catch (ArithmeticException exception) {
+			return ShopSaleResult.TOTAL_OVERFLOW;
+		}
+
+		int resultingGold;
+
+		try {
+			resultingGold = Math.addExact(party.getGold(), totalValue);
+		} catch (ArithmeticException exception) {
+			return ShopSaleResult.GOLD_CAPACITY_EXCEEDED;
+		}
+
+		applySale(selectedItem, quantity, totalValue, resultingGold);
+
+		return ShopSaleResult.SUCCESS;
+	}
+
 }

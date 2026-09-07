@@ -12,21 +12,25 @@ public final class ItemDefinition {
 	private final String name;
 	private final String description;
 
-	public ItemDefinition(String id, ItemCategory category, boolean playerTradable, Integer baseShopSalePrice,
-			Integer shopPurchasePrice, String name, String description) {
+	public ItemDefinition(
+			String id,
+			ItemCategory category,
+			boolean playerTradable,
+			Integer baseShopSalePrice,
+			Integer shopPurchasePrice,
+			String name,
+			String description
+	) {
 		if (id == null || id.isBlank()) {
-		    throw new IllegalArgumentException(
-		            "Item ID cannot be empty."
-		    );
+			throw new IllegalArgumentException("Item ID cannot be empty.");
 		}
 
 		String trimmedId = id.trim();
 
 		if (!trimmedId.matches(ID_PATTERN)) {
-		    throw new IllegalArgumentException(
-		            "Item ID must use lowercase letters, numbers "
-		                    + "and single underscores: " + trimmedId
-		    );
+			throw new IllegalArgumentException(
+					"Item ID must use lowercase letters, numbers " + "and single underscores: " + trimmedId
+			);
 		}
 
 		if (category == null) {
@@ -39,6 +43,10 @@ public final class ItemDefinition {
 
 		if (shopPurchasePrice != null && shopPurchasePrice <= 0) {
 			throw new IllegalArgumentException("Item shop purchase price must be positive when present.");
+		}
+
+		if (category == ItemCategory.KEY_ITEM && shopPurchasePrice != null) {
+			throw new IllegalArgumentException("Key items cannot define a shop purchase price.");
 		}
 
 		if (name == null || name.isBlank()) {

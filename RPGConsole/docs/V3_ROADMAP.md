@@ -324,6 +324,7 @@ Character progression, combat-system expansion, equipment, character creation, f
 * [x] Allow either commercial price to remain empty when the corresponding transaction is unavailable.
 * [x] Require every present commercial price to be positive.
 * [x] Use the presence of `shopPurchasePrice`, rather than a separate boolean property, to determine whether an item can be sold to shops.
+* [x] Require `KEY_ITEM` definitions to leave `shopPurchasePrice` empty.
 * [x] Keep `playerTradable` exclusive to future player-to-player trading.
 * [x] Keep all shop-specific availability, price variation and stock outside `ItemDefinition`.
 
@@ -368,9 +369,9 @@ Character progression, combat-system expansion, equipment, character creation, f
 * [x] Preserve selected offers and remaining quantities for the entire program execution.
 * [x] Do not restock shops or merchants during the current execution.
 * [x] Generate fresh shop state when a new program execution starts.
-* [ ] Do not add items sold by the player to shop stock.
-* [ ] Do not implement item buyback.
-* [ ] Postpone shop-state persistence and restocking rules until save and load are implemented.
+* [x] Do not add items sold by the player to shop stock.
+* [x] Do not implement item buyback.
+* [x] Postpone shop-state persistence and restocking rules until save and load are implemented.
 
 ### Shop and merchant access
 
@@ -383,8 +384,8 @@ Character progression, combat-system expansion, equipment, character creation, f
 * [x] Preserve the existing one-merchant-per-exploration-session rule.
 * [x] Reuse the same shop runtime state whenever that exploration merchant is encountered in later exploration sessions.
 * [x] Preserve the interaction and navigation style established by `EpicEncounterMenu` for exploration merchants.
-* [ ] Share shop definitions, runtime state, transaction rules and menus between city shops and exploration merchants whenever their behavior is identical.
-* [ ] Allow every `CITY` and `EXPLORATION` shop to purchase any owned item that defines `shopPurchasePrice`.
+* [x] Share shop definitions, runtime state, transaction rules and menus between city shops and exploration merchants whenever their behavior is identical.
+* [x] Allow every `CITY` and `EXPLORATION` shop to purchase any owned item that defines `shopPurchasePrice`.
 
 ### Shop interface
 
@@ -398,29 +399,30 @@ Character progression, combat-system expansion, equipment, character creation, f
 * [x] Allow the player to select a purchase quantity up to the remaining stock.
 * [x] Skip quantity selection when only one unit is available.
 * [x] Display the complete item name, description, quantity, unit price and total price before purchase confirmation.
-* [ ] Organize the sale interface by the existing item categories.
-* [ ] Display only owned items that define `shopPurchasePrice` as sellable.
-* [ ] Allow the player to select a sale quantity up to the owned quantity.
-* [ ] Skip quantity selection when the player owns only one unit.
-* [ ] Display the complete item name, description, quantity, unit price and total value before sale confirmation.
-* [ ] Keep shops open after successful, cancelled or failed transactions until the player explicitly leaves.
-* [ ] Display clear feedback for successful, cancelled and rejected transactions.
+* [x] Organize the sale interface by the existing item categories.
+* [x] Display only owned items that define `shopPurchasePrice` as sellable.
+* [x] Exclude `KEY_ITEM` from the sale category menu.
+* [x] Allow the player to select a sale quantity up to the owned quantity.
+* [x] Skip quantity selection when the player owns only one unit.
+* [x] Display the complete item name, description, quantity, unit price and total value before sale confirmation.
+* [x] Keep shops open after successful, cancelled or failed transactions until the player explicitly leaves.
+* [x] Display clear feedback for successful, cancelled and rejected transactions.
 
 ### Transaction rules and validation
 
 * [x] Validate purchase selection, quantity, remaining stock, calculated total and party gold before changing any state.
 * [x] Deduct party gold, add items to the shared inventory and reduce stock only after a confirmed valid purchase.
-* [ ] Validate sale selection, quantity, owned inventory, calculated total and resulting party gold before changing any state.
-* [ ] Remove items from the shared inventory and add party gold only after a confirmed valid sale.
-* [ ] Preserve gold, inventory and shop stock when a transaction is invalid, unaffordable or cancelled.
-* [ ] Use overflow-safe arithmetic for unit-price calculations, transaction totals and resulting gold balances.
-* [ ] Prevent negative values, integer overflow, unintended item duplication and item loss during transactions.
-* [ ] Keep every purchase and sale atomic from the player's perspective.
-* [ ] Use `GameCurrency` for every displayed price, total and balance.
+* [x] Validate sale selection, quantity, owned inventory, calculated total and resulting party gold before changing any state.
+* [x] Remove items from the shared inventory and add party gold only after a confirmed valid sale.
+* [x] Preserve gold, inventory and shop stock when a transaction is invalid, unaffordable or cancelled.
+* [x] Use overflow-safe arithmetic for unit-price calculations, transaction totals and resulting gold balances.
+* [x] Prevent negative values, integer overflow, unintended item duplication and item loss during transactions.
+* [x] Keep every purchase and sale atomic from the player's perspective.
+* [x] Use `GameCurrency` for every displayed price, total and balance.
 
 ### Validation and manual tests
 
-* [ ] Test malformed shop definitions, stock entries, prices, percentages, quantities, weights and references.
+* [x] Test malformed shop definitions, stock entries, prices, percentages, quantities, weights and references.
 * [x] Test invalid scenario types and missing merchants for positive exploration merchant chances.
 * [x] Test rejection of commercially duplicate offers regardless of stable ID or weight.
 * [x] Test distinct offers for the same item with different price percentages or stock quantities.
@@ -429,9 +431,9 @@ Character progression, combat-system expansion, equipment, character creation, f
 * [x] Test `offerSlots` below, equal to and above the number of possible offers.
 * [ ] Test shop state preservation across repeated menu access and later merchant encounters.
 * [x] Test purchases, cancellations, insufficient gold, insufficient stock and exhausted shops.
-* [ ] Test sales, cancellations, unsellable items and insufficient inventory quantities.
+* [x] Test sales, cancellations, unsellable items and insufficient inventory quantities.
 * [x] Test price rounding and per-item anti-arbitrage validation.
-* [ ] Test overflow protection in price calculation, transaction totals and gold updates.
+* [x] Test overflow protection in price calculation, transaction totals and gold updates.
 * [ ] Test fixed city shops and exploration merchants separately.
 
 
