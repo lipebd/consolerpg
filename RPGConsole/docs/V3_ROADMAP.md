@@ -517,7 +517,7 @@ Character progression, combat-system expansion, equipment, character creation, f
 * [x] Test centralized currency display across rewards, inventory, status, city services and paid travel.
 * [x] Audit every external-data loader that accepts player-facing text for literal `\n` conversion.
 * [x] Run a complete new-game playthrough.
-* [ ] Test the portable build outside the repository.
+* [x] Test the portable build outside the repository.
 
 ## 12. Documentation and V3 release
 
@@ -529,11 +529,17 @@ Character progression, combat-system expansion, equipment, character creation, f
 * [x] Verify that all post-V3 requirements remain preserved in `V4_ROADMAP.md`.
 * [ ] Review this roadmap and mark completed tasks.
 * [ ] Remove obsolete temporary development code.
-* [ ] Generate the V3 runnable JAR.
-* [ ] Generate the portable Windows application.
-* [ ] Copy all required external data files into the release build.
-* [ ] Test the extracted release in an isolated directory.
-* [ ] Decide the V3 release name and tag.
+* [x] Generate the V3 runnable JAR.
+* [x] Generate the portable Windows application.
+* [x] Copy all required external data files into the release build.
+* [x] Test the extracted release in an isolated directory.
+* [x] Decide the V3 release name and tag.
 * [ ] Merge the V3 branch into `master`.
 * [ ] Create and push the V3 Git tag.
 * [ ] Publish the GitHub Release and portable ZIP.
+
+Release name: `RPGConsole V3`
+
+Git tag: `v3.0.0`
+
+Portable artifact: `RPGConsole-v3-windows-x64.zip`
