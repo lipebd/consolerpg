@@ -497,35 +497,35 @@ Character progression, combat-system expansion, equipment, character creation, f
 
 ## 11. V3 validation and regression tests
 
-* [ ] Test malformed scenario data.
-* [ ] Test duplicate scenario IDs.
-* [ ] Test missing combat-scenario definitions.
-* [ ] Test missing dungeon definitions.
-* [ ] Test invalid enemy references.
-* [ ] Test invalid route and branch references.
-* [ ] Test malformed item, reward, inn, shop and city-transport data.
-* [ ] Test battles after V3 data externalization.
-* [ ] Test party rewards and level-ups.
-* [ ] Test defeated-character behavior.
-* [ ] Test normal and special exploration areas.
-* [ ] Test mandatory dungeon bosses.
-* [ ] Test optional epic encounters.
-* [ ] Test adjacent travel.
-* [ ] Test fixed branches.
-* [ ] Test paid city transport.
-* [ ] Test city services and shops.
-* [ ] Test centralized currency display across rewards, inventory, status, city services and paid travel.
-* [ ] Audit every external-data loader that accepts player-facing text for literal `\n` conversion.
-* [ ] Run a complete new-game playthrough.
+* [x] Test malformed scenario data.
+* [x] Test duplicate scenario IDs.
+* [x] Test missing combat-scenario definitions.
+* [x] Test missing dungeon definitions.
+* [x] Test invalid enemy references.
+* [x] Test invalid route and branch references.
+* [x] Test malformed item, reward, inn, shop and city-transport data.
+* [x] Test battles after V3 data externalization.
+* [x] Test party rewards and level-ups.
+* [x] Test defeated-character behavior.
+* [x] Test normal and special exploration areas.
+* [x] Test mandatory dungeon bosses.
+* [x] Test optional epic encounters.
+* [x] Test adjacent travel.
+* [x] Test fixed branches.
+* [x] Test paid city transport.
+* [x] Test city services and shops.
+* [x] Test centralized currency display across rewards, inventory, status, city services and paid travel.
+* [x] Audit every external-data loader that accepts player-facing text for literal `\n` conversion.
+* [x] Run a complete new-game playthrough.
 * [ ] Test the portable build outside the repository.
 
 ## 12. Documentation and V3 release
 
-* [ ] Update `DATA_FORMATS.md`.
-* [ ] Document the literal `\n` convention for all external descriptions.
-* [ ] Update `ARCHITECTURE.md`.
-* [ ] Update `MECHANICS.md`.
-* [ ] Update `PROJECT_STATE.md`.
+* [x] Update `DATA_FORMATS.md`.
+* [x] Document the literal `\n` convention for all external descriptions.
+* [x] Update `ARCHITECTURE.md`.
+* [x] Update `MECHANICS.md`.
+* [x] Update `PROJECT_STATE.md`.
 * [x] Verify that all post-V3 requirements remain preserved in `V4_ROADMAP.md`.
 * [ ] Review this roadmap and mark completed tasks.
 * [ ] Remove obsolete temporary development code.
