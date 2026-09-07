@@ -527,8 +527,8 @@ Character progression, combat-system expansion, equipment, character creation, f
 * [x] Update `MECHANICS.md`.
 * [x] Update `PROJECT_STATE.md`.
 * [x] Verify that all post-V3 requirements remain preserved in `V4_ROADMAP.md`.
-* [ ] Review this roadmap and mark completed tasks.
-* [ ] Remove obsolete temporary development code.
+* [x] Review this roadmap and mark completed tasks.
+* [x] Remove obsolete temporary development code.
 * [x] Generate the V3 runnable JAR.
 * [x] Generate the portable Windows application.
 * [x] Copy all required external data files into the release build.
