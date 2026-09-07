@@ -535,8 +535,8 @@ Character progression, combat-system expansion, equipment, character creation, f
 * [x] Test the extracted release in an isolated directory.
 * [x] Decide the V3 release name and tag.
 * [x] Merge the V3 branch into `master`.
-* [ ] Create and push the V3 Git tag.
-* [ ] Publish the GitHub Release and portable ZIP.
+* [x] Create and push the V3 Git tag.
+* [x] Publish the GitHub Release and portable ZIP.
 
 Release name: `RPGConsole V3`
 
