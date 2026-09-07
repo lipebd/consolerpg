@@ -34,6 +34,6 @@ public final class GameOverScreen {
 			return;
 		}
 
-		System.out.println("\nTodos os integrantes do grupo " + "foram derrotados.");
+		System.out.println("\nTodos os integrantes do grupo foram derrotados.");
 	}
 }

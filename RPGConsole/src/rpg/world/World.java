@@ -782,7 +782,7 @@ public class World {
 	}
 
 	private void exitGame() {
-		System.out.println("\nObrigado por testar a V2!");
+		System.out.println("\nObrigado por testar a V3!");
 		running = false;
 	}
 
