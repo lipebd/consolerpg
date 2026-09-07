@@ -8,6 +8,8 @@ import java.util.OptionalInt;
 import java.util.Random;
 import java.util.Scanner;
 
+import rpg.world.shops.ShopCatalog;
+import rpg.world.shops.ShopStateCatalog;
 import rpg.GameCurrency;
 import rpg.battle.BattleCoordinator;
 import rpg.battle.BattleResult;
@@ -55,6 +57,9 @@ import rpg.world.transport.CityTransportCatalog;
 import rpg.world.transport.CityTransportDefinition;
 import rpg.world.travel.TravelProgress;
 import rpg.world.travel.TravelRouteDefinition;
+import rpg.world.shops.ShopAccessType;
+import rpg.world.shops.ShopDefinition;
+import rpg.world.shops.ShopState;
 
 // Controls navigation and interaction with the game world.
 public class World {
@@ -78,6 +83,8 @@ public class World {
 	private final ScenarioCatalog scenarioCatalog;
 	private final ScenarioBranchCatalog scenarioBranchCatalog;
 	private final EnemyCatalog enemyCatalog;
+	private final ShopCatalog shopCatalog;
+	private final ShopStateCatalog shopStateCatalog;
 
 	private final ExplorationRewardGenerator explorationRewardGenerator;
 	private final ExplorationEventGenerator explorationEventGenerator;
@@ -100,6 +107,8 @@ public class World {
 			Scenario initialScenario,
 			Scanner scanner,
 			ItemCatalog itemCatalog,
+			ShopCatalog shopCatalog,
+			ShopStateCatalog shopStateCatalog,
 			EnemyCatalog enemyCatalog,
 			EnemyDropCatalog enemyDropCatalog,
 			EncounterCatalog encounterCatalog,
@@ -126,6 +135,8 @@ public class World {
 				.requireNonNull(scenarioBranchCatalog, "Scenario branch catalog cannot be null.");
 		this.travelProgress = Objects.requireNonNull(travelProgress, "Travel progress cannot be null.");
 		this.itemCatalog = Objects.requireNonNull(itemCatalog, "Item catalog cannot be null.");
+		this.shopCatalog = Objects.requireNonNull(shopCatalog, "Shop catalog cannot be null.");
+		this.shopStateCatalog = Objects.requireNonNull(shopStateCatalog, "Shop state catalog cannot be null.");
 		this.innCatalog = Objects.requireNonNull(innCatalog, "Inn catalog cannot be null.");
 		this.cityTransportCatalog = Objects
 				.requireNonNull(cityTransportCatalog, "City transport catalog cannot be null.");
@@ -526,9 +537,34 @@ public class World {
 	private void executeMerchantEvent() {
 		explorationSession.markMerchantEncountered();
 
-		System.out.println("Você encontrou um mercador viajante!");
+		ShopState merchantState = selectExplorationMerchant();
 
-		System.out.println("Ele ainda não possui mercadorias disponíveis.");
+		ShopDefinition merchantDefinition = merchantState.getDefinition();
+
+		System.out.println("\n[MERCADOR]");
+
+		System.out.println("\n[" + merchantDefinition.getName() + "]");
+
+		System.out.println(merchantDefinition.getDescription());
+
+		System.out.println("\nAs negociações ainda não estão disponíveis.");
+	}
+
+	private ShopState selectExplorationMerchant() {
+		List<ShopDefinition> eligibleMerchants = shopCatalog.getByScenarioId(currentScenario.getId()).stream()
+				.filter(shopDefinition -> shopDefinition.getAccessType() == ShopAccessType.EXPLORATION).toList();
+
+		if (eligibleMerchants.isEmpty()) {
+			throw new IllegalStateException(
+					"No eligible exploration merchant is available for scenario: " + currentScenario.getId()
+			);
+		}
+
+		int selectedIndex = random.nextInt(eligibleMerchants.size());
+
+		ShopDefinition selectedMerchant = eligibleMerchants.get(selectedIndex);
+
+		return shopStateCatalog.getByShopId(selectedMerchant.getId());
 	}
 
 	private void executeEpicEncounter() {

@@ -298,6 +298,8 @@ public class Main {
 				currentScenario,
 				scanner,
 				itemCatalog,
+				shopCatalog,
+				shopStateCatalog,
 				enemyCatalog,
 				enemyDropCatalog,
 				encounterCatalog,

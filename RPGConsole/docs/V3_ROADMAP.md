@@ -365,8 +365,8 @@ Character progression, combat-system expansion, equipment, character creation, f
 * [ ] Reduce remaining stock only after a successful purchase.
 * [x] Remove exhausted offers from the visible purchase list.
 * [ ] Keep a shop accessible when all of its sale offers are exhausted.
-* [ ] Preserve selected offers and remaining quantities for the entire program execution.
-* [ ] Do not restock shops or merchants during the current execution.
+* [x] Preserve selected offers and remaining quantities for the entire program execution.
+* [x] Do not restock shops or merchants during the current execution.
 * [x] Generate fresh shop state when a new program execution starts.
 * [ ] Do not add items sold by the player to shop stock.
 * [ ] Do not implement item buyback.
@@ -379,9 +379,9 @@ Character progression, combat-system expansion, equipment, character creation, f
 * [ ] Use the existing merchant exploration event to access `EXPLORATION` shops.
 * [x] Require at least one eligible `EXPLORATION` merchant when a combat scenario has `merchantChance` greater than zero.
 * [x] Ignore inaccessible `EXPLORATION` definitions associated with scenarios whose `merchantChance` is zero.
-* [ ] Select uniformly among all eligible exploration merchants associated with the current scenario.
-* [ ] Preserve the existing one-merchant-per-exploration-session rule.
-* [ ] Reuse the same shop runtime state whenever that exploration merchant is encountered in later exploration sessions.
+* [x] Select uniformly among all eligible exploration merchants associated with the current scenario.
+* [x] Preserve the existing one-merchant-per-exploration-session rule.
+* [x] Reuse the same shop runtime state whenever that exploration merchant is encountered in later exploration sessions.
 * [ ] Preserve the interaction and navigation style established by `EpicEncounterMenu` for exploration merchants.
 * [ ] Share shop definitions, runtime state, transaction rules and menus between city shops and exploration merchants whenever their behavior is identical.
 * [ ] Allow every `CITY` and `EXPLORATION` shop to purchase any owned item that defines `shopPurchasePrice`.
