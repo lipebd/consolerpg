@@ -5,11 +5,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Scanner;
+import java.util.OptionalInt;
 
 import rpg.GameCurrency;
 import rpg.characters.Party;
 import rpg.world.shops.ShopOfferState;
 import rpg.world.shops.ShopState;
+import rpg.items.Item;
+import rpg.world.shops.ShopPurchaseResult;
+import rpg.world.shops.ShopTransactionService;
 
 // Displays a shop and its currently available offers.
 public final class ShopMenu {
@@ -19,11 +23,12 @@ public final class ShopMenu {
 
 	private final Party party;
 	private final Scanner scanner;
+	private final ShopTransactionService transactionService;
 
 	public ShopMenu(Party party, Scanner scanner) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
-
 		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+		this.transactionService = new ShopTransactionService(this.party);
 	}
 
 	public void open(ShopState shopState) {
@@ -76,19 +81,21 @@ public final class ShopMenu {
 	}
 
 	private void openPurchaseOffers(ShopState shopState) {
-		List<ShopOfferState> availableOffers = getSortedAvailableOffers(shopState);
-
-		if (availableOffers.isEmpty()) {
-			displayEmptyPurchaseList();
-			return;
-		}
-
 		int currentPage = 0;
-		int totalPages = (availableOffers.size() + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE;
-
 		String feedbackMessage = null;
 
 		while (true) {
+			List<ShopOfferState> availableOffers = getSortedAvailableOffers(shopState);
+
+			if (availableOffers.isEmpty()) {
+				displayEmptyPurchaseList(feedbackMessage);
+				return;
+			}
+
+			int totalPages = (availableOffers.size() + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE;
+
+			currentPage = Math.min(currentPage, totalPages - 1);
+
 			int firstIndex = currentPage * ITEMS_PER_PAGE;
 
 			int lastIndex = Math.min(firstIndex + ITEMS_PER_PAGE, availableOffers.size());
@@ -123,12 +130,141 @@ public final class ShopMenu {
 					continue;
 				}
 
-				feedbackMessage = "As compras ainda não estão disponíveis.";
+				ShopOfferState selectedOffer = availableOffers.get(firstIndex + selectedIndex);
+
+				OptionalInt selectedQuantity = selectPurchaseQuantity(selectedOffer);
+
+				if (selectedQuantity.isEmpty()) {
+					feedbackMessage = "Compra cancelada.";
+					continue;
+				}
+
+				int quantity = selectedQuantity.getAsInt();
+				int totalPrice;
+
+				try {
+					totalPrice = Math.multiplyExact(selectedOffer.getStockEntry().getFinalShopSalePrice(), quantity);
+
+				} catch (ArithmeticException exception) {
+					feedbackMessage = "O valor total da compra excede o limite suportado.";
+					continue;
+				}
+
+				if (!confirmPurchase(selectedOffer, quantity, totalPrice)) {
+					feedbackMessage = "Compra cancelada.";
+					continue;
+				}
+
+				ShopPurchaseResult purchaseResult = transactionService.purchase(shopState, selectedOffer, quantity);
+
+				feedbackMessage = getPurchaseFeedback(purchaseResult);
 
 			} catch (NumberFormatException exception) {
 				feedbackMessage = "Comando inválido.";
 			}
 		}
+	}
+
+	private OptionalInt selectPurchaseQuantity(ShopOfferState offerState) {
+		int availableQuantity = offerState.getRemainingStock();
+
+		if (availableQuantity == 1) {
+			return OptionalInt.of(1);
+		}
+
+		Item item = offerState.getStockEntry().getItem();
+
+		while (true) {
+			System.out.println("\n[QUANTIDADE]");
+
+			System.out.println();
+			System.out.println(item.getName());
+
+			System.out.println("Estoque disponível: " + availableQuantity);
+
+			System.out.println();
+			System.out.println("Digite a quantidade que deseja comprar.");
+			System.out.println("[0] Cancelar");
+			System.out.print("> ");
+
+			String choice = scanner.nextLine().trim();
+
+			if (choice.equals("0")) {
+				return OptionalInt.empty();
+			}
+
+			try {
+				int quantity = Integer.parseInt(choice);
+
+				if (quantity < 1 || quantity > availableQuantity) {
+					System.out.println("Quantidade inválida.");
+					continue;
+				}
+
+				return OptionalInt.of(quantity);
+
+			} catch (NumberFormatException exception) {
+				System.out.println("Digite uma quantidade válida.");
+			}
+		}
+	}
+
+	private boolean confirmPurchase(ShopOfferState offerState, int quantity, int totalPrice) {
+		Item item = offerState.getStockEntry().getItem();
+
+		int unitPrice = offerState.getStockEntry().getFinalShopSalePrice();
+
+		while (true) {
+			System.out.println("\n[CONFIRMAR COMPRA]");
+
+			System.out.println();
+			System.out.println("[" + item.getName().toUpperCase(Locale.ROOT) + "]");
+
+			System.out.println();
+			System.out.println(item.getDescription());
+
+			System.out.println();
+			System.out.println("Quantidade: " + quantity);
+			System.out.println("Preço unitário: " + GameCurrency.format(unitPrice));
+			System.out.println("Total: " + GameCurrency.format(totalPrice));
+
+			System.out.println();
+			System.out.println("[1] Confirmar");
+			System.out.println("[0] Cancelar");
+			System.out.print("> ");
+
+			String choice = scanner.nextLine().trim();
+
+			switch (choice) {
+			case "1" -> {
+				return true;
+			}
+
+			case "0" -> {
+				return false;
+			}
+
+			default -> System.out.println("Opção inválida.");
+			}
+		}
+	}
+
+	private String getPurchaseFeedback(ShopPurchaseResult purchaseResult) {
+		return switch (purchaseResult) {
+		case SUCCESS -> "Compra realizada com sucesso.";
+
+		case INVALID_SELECTION -> "A oferta selecionada não está mais disponível.";
+
+		case INVALID_QUANTITY -> "A quantidade selecionada é inválida.";
+
+		case INSUFFICIENT_STOCK -> "O estoque disponível não é suficiente.";
+
+		case INSUFFICIENT_GOLD -> "As moedas do grupo não são suficientes para esta compra.";
+
+		case INVENTORY_CAPACITY_EXCEEDED -> "O inventário não comporta essa quantidade.";
+
+		case TOTAL_OVERFLOW -> "O valor total da compra excede o limite suportado.";
+		};
 	}
 
 	private List<ShopOfferState> getSortedAvailableOffers(ShopState shopState) {
@@ -213,12 +349,16 @@ public final class ShopMenu {
 		System.out.print("> ");
 	}
 
-	private void displayEmptyPurchaseList() {
+	private void displayEmptyPurchaseList(String feedbackMessage) {
 		while (true) {
 			System.out.println("\n[COMPRAR]");
 
 			System.out.println();
 			System.out.println("Não há itens disponíveis para compra.");
+			if (feedbackMessage != null) {
+				System.out.println();
+				System.out.println(feedbackMessage);
+			}
 
 			System.out.println();
 			System.out.println("[0] Voltar à loja");

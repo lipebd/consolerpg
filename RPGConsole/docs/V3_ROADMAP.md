@@ -354,7 +354,7 @@ Character progression, combat-system expansion, equipment, character creation, f
 
 ### Runtime shop state
 
-* [ ] Use finite per-offer stock in V3, superseding the earlier plan to use infinite shop stock.
+* [x] Use finite per-offer stock in V3, superseding the earlier plan to use infinite shop stock.
 * [x] Create separate mutable runtime state for each shop.
 * [x] Generate every shop's active offers once during application initialization.
 * [x] Select active offers by relative weight without replacement.
@@ -362,7 +362,7 @@ Character progression, combat-system expansion, equipment, character creation, f
 * [x] Select up to `offerSlots` entries or every possible entry when fewer are available.
 * [x] Allow separate active offers for the same item when their price percentages or stock quantities differ.
 * [x] Store the remaining quantity of every selected offer.
-* [ ] Reduce remaining stock only after a successful purchase.
+* [x] Reduce remaining stock only after a successful purchase.
 * [x] Remove exhausted offers from the visible purchase list.
 * [x] Keep a shop accessible when all of its sale offers are exhausted.
 * [x] Preserve selected offers and remaining quantities for the entire program execution.
@@ -395,9 +395,9 @@ Character progression, combat-system expansion, equipment, character creation, f
 * [x] Sort purchase offers deterministically by item category and name.
 * [x] Break purchase-offer sorting ties by final unit price and stable offer ID.
 * [x] Paginate shop lists consistently with the existing inventory interface.
-* [ ] Allow the player to select a purchase quantity up to the remaining stock.
-* [ ] Skip quantity selection when only one unit is available.
-* [ ] Display the complete item name, description, quantity, unit price and total price before purchase confirmation.
+* [x] Allow the player to select a purchase quantity up to the remaining stock.
+* [x] Skip quantity selection when only one unit is available.
+* [x] Display the complete item name, description, quantity, unit price and total price before purchase confirmation.
 * [ ] Organize the sale interface by the existing item categories.
 * [ ] Display only owned items that define `shopPurchasePrice` as sellable.
 * [ ] Allow the player to select a sale quantity up to the owned quantity.
@@ -408,8 +408,8 @@ Character progression, combat-system expansion, equipment, character creation, f
 
 ### Transaction rules and validation
 
-* [ ] Validate purchase selection, quantity, remaining stock, calculated total and party gold before changing any state.
-* [ ] Deduct party gold, add items to the shared inventory and reduce stock only after a confirmed valid purchase.
+* [x] Validate purchase selection, quantity, remaining stock, calculated total and party gold before changing any state.
+* [x] Deduct party gold, add items to the shared inventory and reduce stock only after a confirmed valid purchase.
 * [ ] Validate sale selection, quantity, owned inventory, calculated total and resulting party gold before changing any state.
 * [ ] Remove items from the shared inventory and add party gold only after a confirmed valid sale.
 * [ ] Preserve gold, inventory and shop stock when a transaction is invalid, unaffordable or cancelled.
@@ -428,7 +428,7 @@ Character progression, combat-system expansion, equipment, character creation, f
 * [x] Test overflow protection when accumulating selection weights.
 * [x] Test `offerSlots` below, equal to and above the number of possible offers.
 * [ ] Test shop state preservation across repeated menu access and later merchant encounters.
-* [ ] Test purchases, cancellations, insufficient gold, insufficient stock and exhausted shops.
+* [x] Test purchases, cancellations, insufficient gold, insufficient stock and exhausted shops.
 * [ ] Test sales, cancellations, unsellable items and insufficient inventory quantities.
 * [x] Test price rounding and per-item anti-arbitrage validation.
 * [ ] Test overflow protection in price calculation, transaction totals and gold updates.
