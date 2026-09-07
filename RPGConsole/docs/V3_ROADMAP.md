@@ -364,7 +364,7 @@ Character progression, combat-system expansion, equipment, character creation, f
 * [x] Store the remaining quantity of every selected offer.
 * [ ] Reduce remaining stock only after a successful purchase.
 * [x] Remove exhausted offers from the visible purchase list.
-* [ ] Keep a shop accessible when all of its sale offers are exhausted.
+* [x] Keep a shop accessible when all of its sale offers are exhausted.
 * [x] Preserve selected offers and remaining quantities for the entire program execution.
 * [x] Do not restock shops or merchants during the current execution.
 * [x] Generate fresh shop state when a new program execution starts.
@@ -374,27 +374,27 @@ Character progression, combat-system expansion, equipment, character creation, f
 
 ### Shop and merchant access
 
-* [ ] Add `CITY` shops to the functional locations displayed by `CityLocationMenu`.
-* [ ] Support multiple named shops in one city.
-* [ ] Use the existing merchant exploration event to access `EXPLORATION` shops.
+* [x] Add `CITY` shops to the functional locations displayed by `CityLocationMenu`.
+* [x] Support multiple named shops in one city.
+* [x] Use the existing merchant exploration event to access `EXPLORATION` shops.
 * [x] Require at least one eligible `EXPLORATION` merchant when a combat scenario has `merchantChance` greater than zero.
 * [x] Ignore inaccessible `EXPLORATION` definitions associated with scenarios whose `merchantChance` is zero.
 * [x] Select uniformly among all eligible exploration merchants associated with the current scenario.
 * [x] Preserve the existing one-merchant-per-exploration-session rule.
 * [x] Reuse the same shop runtime state whenever that exploration merchant is encountered in later exploration sessions.
-* [ ] Preserve the interaction and navigation style established by `EpicEncounterMenu` for exploration merchants.
+* [x] Preserve the interaction and navigation style established by `EpicEncounterMenu` for exploration merchants.
 * [ ] Share shop definitions, runtime state, transaction rules and menus between city shops and exploration merchants whenever their behavior is identical.
 * [ ] Allow every `CITY` and `EXPLORATION` shop to purchase any owned item that defines `shopPurchasePrice`.
 
 ### Shop interface
 
-* [ ] Display the shop name, configured description and current party gold through `GameCurrency`.
-* [ ] Provide the player-facing actions `Comprar`, `Vender` and `Voltar`.
-* [ ] Display purchase offers with item name, formatted unit price and remaining stock.
-* [ ] Keep separate offers selectable when they reference the same item but differ in price percentage or stock quantity.
-* [ ] Sort purchase offers deterministically by item category and name.
-* [ ] Break purchase-offer sorting ties by final unit price and stable offer ID.
-* [ ] Paginate shop lists consistently with the existing inventory interface.
+* [x] Display the shop name, configured description and current party gold through `GameCurrency`.
+* [x] Provide the player-facing actions `Comprar`, `Vender` and `Voltar`.
+* [x] Display purchase offers with item name, formatted unit price and remaining stock.
+* [x] Keep separate offers selectable when they reference the same item but differ in price percentage or stock quantity.
+* [x] Sort purchase offers deterministically by item category and name.
+* [x] Break purchase-offer sorting ties by final unit price and stable offer ID.
+* [x] Paginate shop lists consistently with the existing inventory interface.
 * [ ] Allow the player to select a purchase quantity up to the remaining stock.
 * [ ] Skip quantity selection when only one unit is available.
 * [ ] Display the complete item name, description, quantity, unit price and total price before purchase confirmation.

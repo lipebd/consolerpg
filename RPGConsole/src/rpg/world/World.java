@@ -8,8 +8,6 @@ import java.util.OptionalInt;
 import java.util.Random;
 import java.util.Scanner;
 
-import rpg.world.shops.ShopCatalog;
-import rpg.world.shops.ShopStateCatalog;
 import rpg.GameCurrency;
 import rpg.battle.BattleCoordinator;
 import rpg.battle.BattleResult;
@@ -33,6 +31,7 @@ import rpg.ui.InventoryMenu;
 import rpg.ui.PartyStatusMenu;
 import rpg.ui.RouteMenu;
 import rpg.ui.ScenarioBranchMenu;
+import rpg.ui.ShopMenu;
 import rpg.world.branches.ScenarioBranchCatalog;
 import rpg.world.branches.ScenarioBranchDefinition;
 import rpg.world.encounters.EncounterCatalog;
@@ -53,13 +52,15 @@ import rpg.world.scenarios.CombatScenarioAction;
 import rpg.world.scenarios.Dungeon;
 import rpg.world.scenarios.Scenario;
 import rpg.world.scenarios.ScenarioCatalog;
+import rpg.world.shops.ShopAccessType;
+import rpg.world.shops.ShopCatalog;
+import rpg.world.shops.ShopDefinition;
+import rpg.world.shops.ShopState;
+import rpg.world.shops.ShopStateCatalog;
 import rpg.world.transport.CityTransportCatalog;
 import rpg.world.transport.CityTransportDefinition;
 import rpg.world.travel.TravelProgress;
 import rpg.world.travel.TravelRouteDefinition;
-import rpg.world.shops.ShopAccessType;
-import rpg.world.shops.ShopDefinition;
-import rpg.world.shops.ShopState;
 
 // Controls navigation and interaction with the game world.
 public class World {
@@ -77,6 +78,7 @@ public class World {
 	private final ScenarioBranchMenu scenarioBranchMenu;
 	private final CombatScenarioMenu combatScenarioMenu;
 	private final EpicEncounterMenu epicEncounterMenu;
+	private final ShopMenu shopMenu;
 
 	private final ItemCatalog itemCatalog;
 	private final CityTransportCatalog cityTransportCatalog;
@@ -169,6 +171,7 @@ public class World {
 		this.cityTransportMenu = new CityTransportMenu(this.party, scanner, this.scenarioCatalog);
 		this.cityLocationMenu = new CityLocationMenu(scanner);
 		this.innMenu = new InnMenu(this.party, scanner);
+		this.shopMenu = new ShopMenu(this.party, scanner);
 
 		// Initial exploration state
 		if (this.currentScenario instanceof CombatScenario combatScenario) {
@@ -293,7 +296,11 @@ public class World {
 	private List<CityAction> getAvailableCityActions(City city) {
 		List<CityAction> availableActions = new ArrayList<>();
 
-		if (innCatalog.findByScenarioId(city.getId()).isPresent()) {
+		boolean hasInn = innCatalog.findByScenarioId(city.getId()).isPresent();
+
+		boolean hasCityShop = !getCityShops(city).isEmpty();
+
+		if (hasInn || hasCityShop) {
 			availableActions.add(CityAction.VISIT_LOCATION);
 		}
 
@@ -325,16 +332,40 @@ public class World {
 	}
 
 	private void executeCityLocationMenu(City city) {
-		InnDefinition innDefinition = innCatalog.findByScenarioId(city.getId())
-				.orElseThrow(() -> new IllegalStateException("City has no registered Inn: " + city.getId()));
+		Optional<InnDefinition> innDefinition = innCatalog.findByScenarioId(city.getId());
 
-		OptionalInt selectedLocation = cityLocationMenu.selectLocation(List.of(innDefinition.getName()));
+		List<ShopDefinition> cityShops = getCityShops(city);
+
+		List<String> locationNames = new ArrayList<>();
+
+		innDefinition.ifPresent(definition -> locationNames.add(definition.getName()));
+
+		for (ShopDefinition shopDefinition : cityShops) {
+			locationNames.add(shopDefinition.getName());
+		}
+
+		OptionalInt selectedLocation = cityLocationMenu.selectLocation(locationNames);
 
 		if (selectedLocation.isEmpty()) {
 			return;
 		}
 
-		innMenu.open(innDefinition);
+		int selectedIndex = selectedLocation.getAsInt();
+
+		if (innDefinition.isPresent()) {
+			if (selectedIndex == 0) {
+				innMenu.open(innDefinition.get());
+				return;
+			}
+
+			selectedIndex--;
+		}
+
+		ShopDefinition selectedShop = cityShops.get(selectedIndex);
+
+		ShopState selectedShopState = shopStateCatalog.getByShopId(selectedShop.getId());
+
+		shopMenu.open(selectedShopState);
 	}
 
 	private void executeCombatScenarioMenu() {
@@ -539,15 +570,9 @@ public class World {
 
 		ShopState merchantState = selectExplorationMerchant();
 
-		ShopDefinition merchantDefinition = merchantState.getDefinition();
-
 		System.out.println("\n[MERCADOR]");
 
-		System.out.println("\n[" + merchantDefinition.getName() + "]");
-
-		System.out.println(merchantDefinition.getDescription());
-
-		System.out.println("\nAs negociações ainda não estão disponíveis.");
+		shopMenu.open(merchantState);
 	}
 
 	private ShopState selectExplorationMerchant() {
@@ -759,6 +784,11 @@ public class World {
 	private void exitGame() {
 		System.out.println("\nObrigado por testar a V2!");
 		running = false;
+	}
+
+	private List<ShopDefinition> getCityShops(City city) {
+		return shopCatalog.getByScenarioId(city.getId()).stream()
+				.filter(shopDefinition -> shopDefinition.getAccessType() == ShopAccessType.CITY).toList();
 	}
 
 }
