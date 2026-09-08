@@ -18,28 +18,95 @@ The implementation must continue to preserve stable IDs, strict startup validati
 
 ---
 
-## 1. External skills and combat effects
+## 1. Combat effects and external skills
+
+### Attribute-stage rules
+
+* [ ] Define ATK, DEF, MAG, RES, VEL and LCK as stage-modifiable attributes.
+* [ ] Create immutable internal stage-multiplier rules.
+* [ ] Limit positive and negative stages independently between 0 and 3.
+* [ ] Calculate the effective stage by subtracting negative stages from positive stages.
+* [ ] Apply the frozen multiplier for each effective stage from `-3` to `+3`.
+* [ ] Round multiplied attributes to the nearest integer using half-up rounding.
+* [ ] Keep stage modifiers separate from base, natural and equipment attributes.
+
+### Mutable combat-effect state
+
+* [ ] Create mutable positive and negative stage state for every modifiable attribute.
+* [ ] Store independent remaining durations for positive and negative states.
+* [ ] Add same-polarity stages up to the limit of 3.
+* [ ] Preserve the greatest remaining duration when same-polarity effects accumulate.
+* [ ] Preserve opposite-polarity states independently instead of destructively cancelling them.
+* [ ] Expose effective ATK, DEF, MAG, RES, VEL and LCK to battle calculations.
+* [ ] Display active positive and negative states during battle.
+* [ ] Clear all temporary character effects immediately upon defeat.
+* [ ] Clear all remaining temporary character effects when the battle ends.
+* [ ] Prevent effects from leaking between unrelated battles.
+
+### Effect duration and action order
+
+* [ ] Decrease effect duration only after the affected character consumes one of its own turns.
+* [ ] Keep durations unchanged after menus, cancellations and actions that produce no effect.
+* [ ] Support ordered skill components applied before or after the primary damage or recovery component.
+* [ ] Apply pre-action effects before calculating the primary component.
+* [ ] Decrease the acting character's existing effect durations at the end of its consumed turn.
+* [ ] Apply deferred post-action effects after the duration decrease.
+* [ ] Prevent newly applied post-action effects from losing duration immediately.
+* [ ] Treat a skill as effective when at least one of its components produces an effect.
+* [ ] Consume skill resources and the acting character's turn only when at least one component produces an effect.
+
+### Speed-stage lifecycle
+
+* [ ] Keep VEL stages pending for the next turn-order calculation.
+* [ ] Keep the current round order unchanged when VEL changes.
+* [ ] Calculate the next round order using pending VEL stages.
+* [ ] Remove the VEL stages immediately after generating the affected round order.
+* [ ] Keep the generated round order unchanged after the VEL stages are removed.
+* [ ] Allow pending positive VEL stages to be dissipated before order generation.
+* [ ] Allow pending negative VEL stages to be purified before order generation.
+* [ ] Preserve VEL stages applied after order generation for the subsequent round.
+
+### Purification and dissipation
+
+* [ ] Remove all negative attribute states when purification succeeds.
+* [ ] Remove all positive attribute states when dissipation succeeds.
+* [ ] Treat purification or dissipation as ineffective when no eligible state exists.
+* [ ] Keep special battle states outside automatic purification and dissipation.
+* [ ] Connect recovery-item purification to active negative states.
+
+### External skill definitions
 
 * [ ] Define `skills.txt`.
 * [ ] Create stable skill IDs.
 * [ ] Create immutable skill definitions.
+* [ ] Define external ordered skill-effect components.
 * [ ] Create the skill loader.
 * [ ] Create the skill catalog.
-* [ ] Validate targeting, damage, recovery and resource data.
+* [ ] Validate targeting, damage, recovery, resource and effect data.
+* [ ] Validate effect attributes, stages, durations and execution order.
 * [ ] Support literal `\n` in skill descriptions.
+* [ ] Support skills containing multiple effect components.
+* [ ] Support reversible special battle states required by individual skills.
 * [ ] Externalize current playable skills.
 * [ ] Replace hardcoded skill creation in `Main`.
 * [ ] Redesign the learned-skills screen to display complete targeting, resource-cost and effect information.
-* [ ] Implement temporary buffs.
-* [ ] Implement temporary debuffs.
-* [ ] Implement effect duration.
-* [ ] Display active effects during battle.
-* [ ] Prevent effects from leaking between unrelated battles.
 * [ ] Add global EXP and gold reward modifiers.
 * [ ] Add individual character EXP modifiers.
-* [ ] Connect recovery-item purification to active negative effects.
+
+### Combat-effect and skill validation
+
+* [ ] Test every stage and its attribute multiplier.
+* [ ] Test half-up rounding of effective attributes.
+* [ ] Test same-polarity accumulation, stage limits and duration renewal.
+* [ ] Test independent positive and negative durations on the same attribute.
+* [ ] Test duration changes after consumed and non-consumed actions.
+* [ ] Test pre-action and post-action skill effects.
+* [ ] Test pending VEL application, removal and turn-order generation.
+* [ ] Test purification and dissipation with and without eligible states.
+* [ ] Test immediate character-effect cleanup after defeat and subsequent revival.
+* [ ] Test remaining battle-effect cleanup after victory, full-party defeat and escape.
 * [ ] Test damage, healing, revival, resource recovery and effect skills after externalization.
-* [ ] Test effect application, duration, expiration and battle cleanup.
+* [ ] Test skills with multiple components when some components are ineffective.
 * [ ] Test global and individual reward modifiers.
 
 ## 2. Playable classes and level progression

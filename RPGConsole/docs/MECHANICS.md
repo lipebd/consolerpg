@@ -232,6 +232,165 @@ These references prevent collective battle results from depending on a permanent
 
 Future party titles will be reserved primarily for collective narrative events rather than individual combat actions.
 
+## Temporary attribute effects
+
+Temporary buffs and debuffs modify effective combat attributes without changing base, natural or equipment values.
+
+The stage-modifiable attributes are:
+
+- ATK
+- DEF
+- MAG
+- RES
+- VEL
+- LCK
+
+HP, MP and SP do not use temporary stages.
+
+### Attribute stages
+
+Positive and negative stages are stored independently for each attribute.
+
+Each polarity is limited between `0` and `3`.
+
+The effective stage is calculated as:
+
+```text
+effectiveStage = positiveStages - negativeStages
+```
+
+Opposite polarities therefore cancel only in the effective result. They do not remove one another because their durations remain independent.
+
+Stage multipliers:
+
+| Effective stage | Multiplier |
+| ---: | ---: |
+| `+3` | `1.50` |
+| `+2` | `1.30` |
+| `+1` | `1.15` |
+| `0` | `1.00` |
+| `-1` | `0.85` |
+| `-2` | `0.70` |
+| `-3` | `0.50` |
+
+The effective attribute is calculated as:
+
+```text
+effectiveAttribute =
+    roundHalfUp(structuralAttribute × stageMultiplier)
+```
+
+Half-up rounding converts only the fractional result to the nearest integer. Integer results remain unchanged.
+
+Stage multipliers are internal balance rules and are not exposed through external data files.
+
+### Stage accumulation and duration
+
+Applications of the same polarity add their stages up to the limit of `3`.
+
+When same-polarity effects accumulate, the state preserves the greatest remaining duration.
+
+Example:
+
+```text
+ATK +1 for 4 turns
+ATK +2 for 2 turns
+Result: ATK +3 for 4 turns
+```
+
+An application produces an effect when it increases the stored stage or remaining duration. An application that changes neither is ineffective.
+
+Positive and negative states of the same attribute preserve independent durations.
+
+### Turn-based duration
+
+Except for VEL, effect duration is measured in consumed turns of the affected character.
+
+The duration decreases only after that character completes an action that consumes its turn.
+
+The following do not decrease duration:
+
+- Opening or cancelling menus.
+- Viewing the turn order.
+- Analyzing an enemy.
+- Cancelling a target selection.
+- Attempting an action for which no component can produce an effect.
+- Actions consumed by other battle participants.
+
+A character with multiple actions in the same round may decrease its durations multiple times during that round.
+
+### Ordered skill effects
+
+A skill may apply components before or after its primary damage or recovery component.
+
+Pre-action effects are applied before the primary component and participate in its calculations. Their duration is decreased at the end of that same consumed turn when they affect the acting character.
+
+Post-action effects are applied after the acting character's duration decrease. They do not lose duration immediately and remain active until the affected character completes a later consumed turn.
+
+Effects applied to another participant are decreased only when that affected participant completes one of its own consumed turns.
+
+### Composite skill effectiveness
+
+A skill containing multiple components is effective when at least one component produces an effect.
+
+Possible effective components include:
+
+- Damage.
+- Healing.
+- Revival.
+- Resource recovery.
+- Stage application or duration renewal.
+- Purification.
+- Dissipation.
+- A supported special battle effect.
+
+The skill consumes its resources and the acting character's turn once when at least one component succeeds.
+
+If no component can produce an effect, the skill consumes neither resources nor the turn.
+
+### Speed stages
+
+VEL stages do not use conventional turn duration.
+
+A VEL buff or debuff applied during the current round remains pending for the next turn-order calculation.
+
+The current order is never reorganized retroactively.
+
+At the start of the following round:
+
+1. The complete turn order is generated using effective VEL.
+2. The VEL states used by the calculation are removed.
+3. The generated order remains unchanged for the entire round.
+4. Any VEL state applied after that generation remains pending for the subsequent round.
+
+Pending positive VEL stages may be dissipated before order generation.
+
+Pending negative VEL stages may be purified before order generation.
+
+If removed before generation, they do not affect the next round.
+
+### Purification and dissipation
+
+Purification removes all negative attribute states from the target.
+
+Dissipation removes all positive attribute states from the target.
+
+Pending VEL states are eligible for these operations.
+
+Purification or dissipation is ineffective when the target has no state of the corresponding polarity.
+
+Special battle states are not automatically treated as positive or negative attribute states.
+
+### Effect cleanup
+
+When a character is defeated, all of that character's temporary attribute states and special temporary battle states are removed immediately.
+
+Revival does not restore removed effects.
+
+At the end of a battle, all remaining temporary battle states are removed from every participant.
+
+Temporary effects cannot persist into an unrelated battle.
+
 ## Skill recovery
 
 Recovery skills separate the recovery effect from their target.
