@@ -8,6 +8,8 @@ import java.util.Scanner;
 import rpg.characters.CharacterStats;
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
+import rpg.classes.PlayableClassCatalog;
+import rpg.classes.PlayableClassLoader;
 import rpg.enemies.EnemyCatalog;
 import rpg.enemies.EnemyDropCatalog;
 import rpg.enemies.EnemyDropLoader;
@@ -77,12 +79,15 @@ public class Main {
 		EnemyDropCatalog enemyDropCatalog;
 		ScenarioCatalog scenarioCatalog;
 		ScenarioBranchCatalog scenarioBranchCatalog;
+		PlayableClassCatalog playableClassCatalog;
 		Scenario currentScenario;
 		TravelProgress travelProgress;
 		WorldProgress worldProgress;
 		Scanner scanner = new Scanner(System.in);
 
 		try {
+			PlayableClassLoader playableClassLoader = new PlayableClassLoader();
+			playableClassCatalog = playableClassLoader.load(Path.of("data", "playable_classes.txt"));
 			EnemyLoader enemyLoader = new EnemyLoader();
 			enemyCatalog = enemyLoader.load(Path.of("data", "enemies.txt"));
 			ItemLoader itemLoader = new ItemLoader();

@@ -18,38 +18,38 @@ The implementation must continue to preserve stable IDs, strict startup validati
 
 ---
 
-## 1. Combat effects and external skills
+## 1. Combat effects
 
 ### Attribute-stage rules
 
-* [ ] Define ATK, DEF, MAG, RES, VEL and LCK as stage-modifiable attributes.
-* [ ] Create immutable internal stage-multiplier rules.
-* [ ] Limit positive and negative stages independently between 0 and 3.
-* [ ] Calculate the effective stage by subtracting negative stages from positive stages.
-* [ ] Apply the frozen multiplier for each effective stage from `-3` to `+3`.
-* [ ] Round multiplied attributes to the nearest integer using half-up rounding.
-* [ ] Keep stage modifiers separate from base, natural and equipment attributes.
+* [x] Define ATK, DEF, MAG, RES, VEL and LCK as stage-modifiable attributes.
+* [x] Create immutable internal stage-multiplier rules.
+* [x] Limit positive and negative stages independently between 0 and 3.
+* [x] Calculate the effective stage by subtracting negative stages from positive stages.
+* [x] Apply the frozen multiplier for each effective stage from `-3` to `+3`.
+* [x] Round multiplied attributes to the nearest integer using half-up rounding.
+* [x] Keep stage modifiers separate from base, natural and equipment attributes.
 
 ### Mutable combat-effect state
 
-* [ ] Create mutable positive and negative stage state for every modifiable attribute.
-* [ ] Store independent remaining durations for positive and negative states.
-* [ ] Add same-polarity stages up to the limit of 3.
-* [ ] Preserve the greatest remaining duration when same-polarity effects accumulate.
-* [ ] Preserve opposite-polarity states independently instead of destructively cancelling them.
-* [ ] Expose effective ATK, DEF, MAG, RES, VEL and LCK to battle calculations.
-* [ ] Display active positive and negative states during battle.
-* [ ] Clear all temporary character effects immediately upon defeat.
-* [ ] Clear all remaining temporary character effects when the battle ends.
-* [ ] Prevent effects from leaking between unrelated battles.
+* [x] Create mutable positive and negative stage state for every modifiable attribute.
+* [x] Store independent remaining durations for positive and negative states.
+* [x] Add same-polarity stages up to the limit of 3.
+* [x] Preserve the greatest remaining duration when same-polarity effects accumulate.
+* [x] Preserve opposite-polarity states independently instead of destructively cancelling them.
+* [x] Expose effective ATK, DEF, MAG, RES, VEL and LCK to battle calculations.
+* [x] Display active positive and negative states during battle.
+* [x] Clear all temporary character effects immediately upon defeat.
+* [x] Clear all remaining temporary character effects when the battle ends.
+* [x] Prevent effects from leaking between unrelated battles.
 
 ### Effect duration and action order
 
-* [ ] Decrease effect duration only after the affected character consumes one of its own turns.
-* [ ] Keep durations unchanged after menus, cancellations and actions that produce no effect.
+* [x] Decrease effect duration only after the affected character consumes one of its own turns.
+* [x] Keep durations unchanged after menus, cancellations and actions that produce no effect.
 * [ ] Support ordered skill components applied before or after the primary damage or recovery component.
 * [ ] Apply pre-action effects before calculating the primary component.
-* [ ] Decrease the acting character's existing effect durations at the end of its consumed turn.
+* [x] Decrease the acting character's existing effect durations at the end of its consumed turn.
 * [ ] Apply deferred post-action effects after the duration decrease.
 * [ ] Prevent newly applied post-action effects from losing duration immediately.
 * [ ] Treat a skill as effective when at least one of its components produces an effect.
@@ -57,22 +57,53 @@ The implementation must continue to preserve stable IDs, strict startup validati
 
 ### Speed-stage lifecycle
 
-* [ ] Keep VEL stages pending for the next turn-order calculation.
-* [ ] Keep the current round order unchanged when VEL changes.
-* [ ] Calculate the next round order using pending VEL stages.
-* [ ] Remove the VEL stages immediately after generating the affected round order.
-* [ ] Keep the generated round order unchanged after the VEL stages are removed.
-* [ ] Allow pending positive VEL stages to be dissipated before order generation.
-* [ ] Allow pending negative VEL stages to be purified before order generation.
-* [ ] Preserve VEL stages applied after order generation for the subsequent round.
+* [x] Keep VEL stages pending for the next turn-order calculation.
+* [x] Keep the current round order unchanged when VEL changes.
+* [x] Calculate the next round order using pending VEL stages.
+* [x] Remove the VEL stages immediately after generating the affected round order.
+* [x] Keep the generated round order unchanged after the VEL stages are removed.
+* [x] Allow pending positive VEL stages to be dissipated before order generation.
+* [x] Allow pending negative VEL stages to be purified before order generation.
+* [x] Preserve VEL stages applied after order generation for the subsequent round.
 
 ### Purification and dissipation
 
-* [ ] Remove all negative attribute states when purification succeeds.
-* [ ] Remove all positive attribute states when dissipation succeeds.
-* [ ] Treat purification or dissipation as ineffective when no eligible state exists.
+* [x] Remove all negative attribute states when purification succeeds.
+* [x] Remove all positive attribute states when dissipation succeeds.
+* [x] Treat purification or dissipation as ineffective when no eligible state exists.
 * [ ] Keep special battle states outside automatic purification and dissipation.
-* [ ] Connect recovery-item purification to active negative states.
+* [x] Connect recovery-item purification to active negative states.
+
+### Combat-effect and skill validation
+
+* [ ] Test every stage and its attribute multiplier.
+* [x] Test half-up rounding of effective attributes.
+* [x] Test same-polarity accumulation, stage limits and duration renewal.
+* [x] Test independent positive and negative durations on the same attribute.
+* [ ] Test duration changes after consumed and non-consumed actions.
+* [ ] Test pre-action and post-action skill effects.
+* [ ] Test pending VEL application, removal and turn-order generation.
+* [ ] Test purification and dissipation with and without eligible states.
+* [ ] Test immediate character-effect cleanup after defeat and subsequent revival.
+* [ ] Test remaining battle-effect cleanup after victory, full-party defeat and escape.
+* [ ] Test damage, healing, revival, resource recovery and effect skills after externalization.
+* [ ] Test skills with multiple components when some components are ineffective.
+* [ ] Test global and individual reward modifiers.
+
+## 2. Playable classes, external skills and level progression
+
+* [x] Define external playable-class data.
+* [x] Create stable IDs for all seven playable classes.
+* [x] Create immutable playable-class definitions.
+* [x] Create the playable-class loader.
+* [x] Create the playable-class catalog.
+* [x] Store base HP, MP, SP, ATK, DEF, MAG, RES, VEL and LCK.
+* [x] Store each class's primary and secondary attributes.
+* [x] Store class weight categories.
+* [x] Store class descriptions and lore.
+* [x] Support literal `\n` in class descriptions.
+* [x] Validate base attributes, primary and secondary attributes, weight and descriptive data.
+* [x] Validate per-stat limits and total base-stat distribution according to the playable-class balance rules.
 
 ### External skill definitions
 
@@ -93,36 +124,7 @@ The implementation must continue to preserve stable IDs, strict startup validati
 * [ ] Add global EXP and gold reward modifiers.
 * [ ] Add individual character EXP modifiers.
 
-### Combat-effect and skill validation
 
-* [ ] Test every stage and its attribute multiplier.
-* [ ] Test half-up rounding of effective attributes.
-* [ ] Test same-polarity accumulation, stage limits and duration renewal.
-* [ ] Test independent positive and negative durations on the same attribute.
-* [ ] Test duration changes after consumed and non-consumed actions.
-* [ ] Test pre-action and post-action skill effects.
-* [ ] Test pending VEL application, removal and turn-order generation.
-* [ ] Test purification and dissipation with and without eligible states.
-* [ ] Test immediate character-effect cleanup after defeat and subsequent revival.
-* [ ] Test remaining battle-effect cleanup after victory, full-party defeat and escape.
-* [ ] Test damage, healing, revival, resource recovery and effect skills after externalization.
-* [ ] Test skills with multiple components when some components are ineffective.
-* [ ] Test global and individual reward modifiers.
-
-## 2. Playable classes and level progression
-
-* [ ] Define external playable-class data.
-* [ ] Create stable IDs for all seven playable classes.
-* [ ] Create immutable playable-class definitions.
-* [ ] Create the playable-class loader.
-* [ ] Create the playable-class catalog.
-* [ ] Store base HP, MP, SP, ATK, DEF, MAG, RES, VEL and LCK.
-* [ ] Store each class's primary and secondary attributes.
-* [ ] Store class weight categories.
-* [ ] Store class descriptions and lore.
-* [ ] Support literal `\n` in class descriptions.
-* [ ] Validate base attributes, primary and secondary attributes, weight and descriptive data.
-* [ ] Validate per-stat limits and total base-stat distribution according to the playable-class balance rules.
 * [ ] Create immutable global character-growth rules.
 * [ ] Define integer growth values for HP, MP, SP and regular attributes.
 * [ ] Define the primary-attribute growth interval.
@@ -147,7 +149,7 @@ The implementation must continue to preserve stable IDs, strict startup validati
 * [ ] Display attribute growth and newly learned skills during level-up.
 * [ ] Preserve a temporary development shortcut for assigning any playable class during party creation.
 * [ ] Keep the normal new-game flow restricted to the Flagelo class.
-* [ ] Test the base attributes of all seven playable classes.
+* [x] Test the base attributes of all seven playable classes.
 * [ ] Test attribute and resource growth at levels before, during and after primary and secondary growth thresholds.
 * [ ] Test natural progression independently from equipment bonuses.
 * [ ] Test initial and level-based skill learning for all seven playable classes.
@@ -161,6 +163,7 @@ The implementation must continue to preserve stable IDs, strict startup validati
 * [ ] Reject duplicate or class-incompatible skill learning without consuming the item.
 * [ ] Test successful and rejected skill-scroll use.
 
+
 ## 3. Equipment
 
 * [ ] Define the weapon, armor and trinket equipment slots.
@@ -172,7 +175,7 @@ The implementation must continue to preserve stable IDs, strict startup validati
 * [ ] Create the equipment catalogs.
 * [ ] Link every equipment definition to a stable item ID.
 * [ ] Validate equipment references against the item catalog.
-** [ ] Prevent the same item ID from defining more than one equipment category.
+* [ ] Prevent the same item ID from defining more than one equipment category.
 * [ ] Store an integer level requirement for every equipment item.
 * [ ] Reject equipment use below its level requirement.
 
