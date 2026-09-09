@@ -102,6 +102,14 @@ final class AttributeStageState {
 		clearNegative();
 	}
 
+	public boolean hasPositiveState() {
+		return positiveStages > 0;
+	}
+
+	public boolean hasNegativeState() {
+		return negativeStages > 0;
+	}
+
 	public int getEffectiveStage() {
 		return positiveStages - negativeStages;
 	}

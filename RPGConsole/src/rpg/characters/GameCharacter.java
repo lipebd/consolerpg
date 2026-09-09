@@ -240,6 +240,14 @@ public abstract class GameCharacter {
 		combatEffectState.finishConsumedTurn();
 	}
 
+	public boolean hasPositiveAttributeStates() {
+		return combatEffectState.hasPositiveStates();
+	}
+
+	public boolean hasNegativeAttributeStates() {
+		return combatEffectState.hasNegativeStates();
+	}
+
 	public boolean purifyNegativeAttributeStates() {
 		return combatEffectState.purifyAllNegativeStates();
 	}

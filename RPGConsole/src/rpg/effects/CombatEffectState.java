@@ -43,6 +43,28 @@ public final class CombatEffectState {
 		}
 	}
 
+	public boolean hasPositiveStates() {
+		for (AttributeStageState state : attributeStates.values()) {
+
+			if (state.hasPositiveState()) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public boolean hasNegativeStates() {
+		for (AttributeStageState state : attributeStates.values()) {
+
+			if (state.hasNegativeState()) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	public boolean purifyAllNegativeStates() {
 		boolean changed = false;
 
