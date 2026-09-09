@@ -26,6 +26,8 @@ import rpg.skills.DamageType;
 import rpg.skills.RecoveryType;
 import rpg.skills.Skill;
 import rpg.skills.SkillTargetType;
+import rpg.skills.SkillCatalog;
+import rpg.skills.SkillLoader;
 import rpg.ui.ConsoleUI;
 import rpg.ui.TitleScreen;
 import rpg.world.World;
@@ -65,6 +67,7 @@ public class Main {
 
 	public static void main(String[] args) {
 
+		SkillCatalog skillCatalog;
 		ShopStateCatalog shopStateCatalog;
 		ShopCatalog shopCatalog;
 		ShopStockCatalog shopStockCatalog;
@@ -88,6 +91,9 @@ public class Main {
 		try {
 			PlayableClassLoader playableClassLoader = new PlayableClassLoader();
 			playableClassCatalog = playableClassLoader.load(Path.of("data", "playable_classes.txt"));
+			SkillLoader skillLoader = new SkillLoader();
+			skillCatalog = skillLoader
+					.load(Path.of("data", "skills.txt"), Path.of("data", "skill_effects.txt"), playableClassCatalog);
 			EnemyLoader enemyLoader = new EnemyLoader();
 			enemyCatalog = enemyLoader.load(Path.of("data", "enemies.txt"));
 			ItemLoader itemLoader = new ItemLoader();

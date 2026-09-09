@@ -1,0 +1,188 @@
+package rpg.skills;
+
+import java.util.List;
+import java.util.Objects;
+
+// Stores the complete immutable definition of a playable skill.
+public final class SkillDefinition {
+
+	private static final String ID_PATTERN = "[a-z0-9]+(?:_[a-z0-9]+)*";
+
+	private final String id;
+	private final String classId;
+	private final int acquisitionLevel;
+	private final int mpCost;
+	private final int spCost;
+	private final String name;
+	private final String description;
+	private final List<SkillEffectDefinition> effects;
+
+	public SkillDefinition(
+			String id,
+			String classId,
+			int acquisitionLevel,
+			int mpCost,
+			int spCost,
+			String name,
+			String description,
+			List<SkillEffectDefinition> effects
+	) {
+		this.id = validateId(id, "Skill");
+		this.classId = validateId(classId, "Playable class");
+
+		if (acquisitionLevel < 1) {
+			throw new IllegalArgumentException("Skill acquisition level must be positive: " + this.id);
+		}
+
+		if (mpCost < 0 || spCost < 0) {
+			throw new IllegalArgumentException("Skill resource costs cannot be negative: " + this.id);
+		}
+
+		if (name == null || name.isBlank()) {
+			throw new IllegalArgumentException("Skill name cannot be empty: " + this.id);
+		}
+
+		if (description == null || description.isBlank()) {
+			throw new IllegalArgumentException("Skill description cannot be empty: " + this.id);
+		}
+
+		Objects.requireNonNull(effects, "Skill effects cannot be null.");
+
+		if (effects.isEmpty()) {
+			throw new IllegalArgumentException("Skill must contain at least one effect: " + this.id);
+		}
+
+		this.effects = List.copyOf(effects);
+
+		validateEffectOrder();
+		validateEffectiveComponents();
+		validateDamagePowerModifiers();
+
+		this.acquisitionLevel = acquisitionLevel;
+		this.mpCost = mpCost;
+		this.spCost = spCost;
+		this.name = name.trim();
+		this.description = description.trim();
+	}
+
+	private String validateId(String value, String fieldName) {
+		if (value == null || value.isBlank()) {
+			throw new IllegalArgumentException(fieldName + " ID cannot be empty.");
+		}
+
+		String trimmedValue = value.trim();
+
+		if (!trimmedValue.matches(ID_PATTERN)) {
+			throw new IllegalArgumentException(
+					fieldName + " ID must use lowercase letters, " + "numbers and single underscores: " + trimmedValue
+			);
+		}
+
+		return trimmedValue;
+	}
+
+	private void validateEffectOrder() {
+		int previousSequence = 0;
+		SkillExecutionPhase previousPhase = null;
+
+		for (SkillEffectDefinition effect : effects) {
+			if (effect.getSequence() <= previousSequence) {
+				throw new IllegalArgumentException(
+						"Skill effect sequences must be positive, " + "unique and declared in ascending order: " + id
+				);
+			}
+
+			if (previousPhase != null && getPhaseOrder(effect.getPhase()) < getPhaseOrder(previousPhase)) {
+				throw new IllegalArgumentException("Skill effect phases cannot move backwards: " + id);
+			}
+
+			previousSequence = effect.getSequence();
+			previousPhase = effect.getPhase();
+		}
+	}
+
+	private int getPhaseOrder(SkillExecutionPhase phase) {
+		return switch (phase) {
+		case PRE_ACTION -> 0;
+		case PRIMARY -> 1;
+		case POST_ACTION -> 2;
+		};
+	}
+
+	private void validateEffectiveComponents() {
+		boolean hasEffectiveComponent = effects.stream()
+				.anyMatch(effect -> effect.getEffectType() != SkillEffectType.DAMAGE_POWER_MODIFIER);
+
+		if (!hasEffectiveComponent) {
+			throw new IllegalArgumentException(
+					"Skill must contain an effect capable of " + "affecting a target: " + id
+			);
+		}
+	}
+
+	private void validateDamagePowerModifiers() {
+		for (int index = 0; index < effects.size(); index++) {
+			SkillEffectDefinition effect = effects.get(index);
+
+			if (effect.getEffectType() != SkillEffectType.DAMAGE_POWER_MODIFIER) {
+				continue;
+			}
+
+			boolean hasCompatibleLaterDamage = false;
+
+			for (int laterIndex = index + 1; laterIndex < effects.size(); laterIndex++) {
+				SkillEffectDefinition laterEffect = effects.get(laterIndex);
+
+				if (laterEffect.getEffectType() == SkillEffectType.DAMAGE
+						&& laterEffect.getTargetType() == effect.getTargetType()) {
+					hasCompatibleLaterDamage = true;
+					break;
+				}
+			}
+
+			if (!hasCompatibleLaterDamage) {
+				throw new IllegalArgumentException(
+						"Damage-power modifier must precede " + "a damage effect with the same target: " + id
+				);
+			}
+		}
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public String getClassId() {
+		return classId;
+	}
+
+	public int getAcquisitionLevel() {
+		return acquisitionLevel;
+	}
+
+	public int getMpCost() {
+		return mpCost;
+	}
+
+	public int getSpCost() {
+		return spCost;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public List<SkillEffectDefinition> getEffects() {
+		return effects;
+	}
+
+	public List<SkillEffectDefinition> getEffectsByPhase(SkillExecutionPhase phase) {
+		Objects.requireNonNull(phase, "Skill execution phase cannot be null.");
+
+		return effects.stream().filter(effect -> effect.getPhase() == phase).toList();
+	}
+}

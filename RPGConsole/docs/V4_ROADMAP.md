@@ -107,16 +107,16 @@ The implementation must continue to preserve stable IDs, strict startup validati
 
 ### External skill definitions
 
-* [ ] Define `skills.txt`.
-* [ ] Create stable skill IDs.
-* [ ] Create immutable skill definitions.
-* [ ] Define external ordered skill-effect components.
-* [ ] Create the skill loader.
-* [ ] Create the skill catalog.
-* [ ] Validate targeting, damage, recovery, resource and effect data.
-* [ ] Validate effect attributes, stages, durations and execution order.
-* [ ] Support literal `\n` in skill descriptions.
-* [ ] Support skills containing multiple effect components.
+* [x] Define `skills.txt`.
+* [x] Create stable skill IDs.
+* [x] Create immutable skill definitions.
+* [x] Define external ordered skill-effect components.
+* [x] Create the skill loader.
+* [x] Create the skill catalog.
+* [x] Validate targeting, damage, recovery, resource and effect data.
+* [x] Validate effect attributes, stages, durations and execution order.
+* [x] Support literal `\n` in skill descriptions.
+* [x] Support skills containing multiple effect components.
 * [ ] Support reversible special battle states required by individual skills.
 * [ ] Externalize current playable skills.
 * [ ] Replace hardcoded skill creation in `Main`.
@@ -124,6 +124,7 @@ The implementation must continue to preserve stable IDs, strict startup validati
 * [ ] Add global EXP and gold reward modifiers.
 * [ ] Add individual character EXP modifiers.
 
+### Character progression
 
 * [ ] Create immutable global character-growth rules.
 * [ ] Define integer growth values for HP, MP, SP and regular attributes.
@@ -137,8 +138,8 @@ The implementation must continue to preserve stable IDs, strict startup validati
 * [ ] Apply MAG specialization to MP growth.
 * [ ] Apply ATK specialization to SP growth.
 * [ ] Keep natural level progression separate from equipment bonuses.
-* [ ] Define class-to-skill progression.
-* [ ] Validate referenced skill IDs and skill-unlock levels.
+* [x] Define class-to-skill progression through each skill's class ID and acquisition level.
+* [x] Validate skill class IDs and acquisition levels.
 * [ ] Assign a playable class to every playable character.
 * [ ] Calculate a character's natural attributes from class and level.
 * [ ] Grant the correct initial skills for the character's class and level.

@@ -1,0 +1,6 @@
+# id;classId;acquisitionLevel;mpCost;spCost;name;description
+quebra_armadura;flagelo;3;0;20;Quebra-Armadura;Golpeia e estilhaça a proteção do inimigo, causando dano físico.\nReduz a DEF do alvo em 1 estágio por 2 turnos.
+perseveranca;flagelo;10;0;40;Perseverança;Mesmo ferido, firma os pés em batalha e avança contra o inimigo, causando dano físico.\nAo final do ataque, recupera 20 de seu próprio HP.
+lenda_viva;flagelo;20;0;50;Lenda Viva;Libera o potencial adquirido durante sua jornada, aumentando ATK, DEF, MAG, RES e LCK em 1 estágio por 2 turnos e deixando VEL +1 pendente para a próxima rodada.\nEm seguida, ataca um inimigo com força esmagadora.
+abraco_da_floresta;druida;7;25;0;Abraço da Floresta;Canaliza a energia da terra para fechar as feridas de um aliado, restaurando 30 de HP e removendo todos os efeitos negativos de atributo que o afetam.
+distorcao_ancestral;quebramagos;15;0;60;Distorção Ancestral;Invoca a força de um avatar ancestral para distorcer a natureza de um inimigo, invertendo seus valores de ATK e MAG, assim como os de DEF e RES, até o final da batalha.\nUsar a habilidade novamente sobre o mesmo alvo desfaz a inversão.
