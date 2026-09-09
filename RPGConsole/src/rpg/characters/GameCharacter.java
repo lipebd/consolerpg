@@ -1,5 +1,8 @@
 package rpg.characters;
 
+import rpg.effects.AttributeStageRules;
+import rpg.effects.CombatEffectState;
+
 // Represents the basic attributes and behaviors shared by all game characters.
 public abstract class GameCharacter {
 
@@ -17,6 +20,7 @@ public abstract class GameCharacter {
 	private int speed;
 	private int luck;
 
+	private final CombatEffectState combatEffectState;
 	private boolean defending;
 
 	/**
@@ -27,6 +31,8 @@ public abstract class GameCharacter {
 	 */
 	public GameCharacter(String name, CharacterStats stats) {
 		this.name = name;
+
+		this.combatEffectState = new CombatEffectState();
 
 		this.maxHp = stats.getMaxHp();
 		this.currentHp = maxHp;
@@ -75,6 +81,10 @@ public abstract class GameCharacter {
 		}
 
 		currentHp = currentHp - actualDamage;
+
+		if (!isAlive()) {
+			clearTemporaryBattleEffects();
+		}
 
 		return actualDamage;
 	}
@@ -195,26 +205,82 @@ public abstract class GameCharacter {
 	}
 
 	public int getAttack() {
-		return attack;
+		return calculateEffectiveAttribute(attack, CharacterAttribute.ATK);
 	}
 
 	public int getDefense() {
-		return defense;
+		return calculateEffectiveAttribute(defense, CharacterAttribute.DEF);
 	}
 
 	public int getMagic() {
-		return magic;
+		return calculateEffectiveAttribute(magic, CharacterAttribute.MAG);
 	}
 
 	public int getResistance() {
-		return resistance;
+		return calculateEffectiveAttribute(resistance, CharacterAttribute.RES);
 	}
 
 	public int getSpeed() {
-		return speed;
+		return calculateEffectiveAttribute(speed, CharacterAttribute.VEL);
 	}
 
 	public int getLuck() {
-		return luck;
+		return calculateEffectiveAttribute(luck, CharacterAttribute.LCK);
 	}
+
+	public boolean applyTimedAttributeStages(CharacterAttribute attribute, int stageChange, int duration) {
+		return combatEffectState.applyTimedStages(attribute, stageChange, duration);
+	}
+
+	public boolean applyPendingSpeedStages(int stageChange) {
+		return combatEffectState.applyPendingSpeedStages(stageChange);
+	}
+
+	public void finishConsumedTurn() {
+		combatEffectState.finishConsumedTurn();
+	}
+
+	public boolean purifyNegativeAttributeStates() {
+		return combatEffectState.purifyAllNegativeStates();
+	}
+
+	public boolean dissipatePositiveAttributeStates() {
+		return combatEffectState.dissipateAllPositiveStates();
+	}
+
+	public boolean consumePendingSpeedStages() {
+		return combatEffectState.consumePendingSpeedStages();
+	}
+
+	public void clearTemporaryBattleEffects() {
+		combatEffectState.clearAll();
+		defending = false;
+	}
+
+	public int getEffectiveAttributeStage(CharacterAttribute attribute) {
+		return combatEffectState.getEffectiveStage(attribute);
+	}
+
+	public int getPositiveAttributeStages(CharacterAttribute attribute) {
+		return combatEffectState.getPositiveStages(attribute);
+	}
+
+	public int getPositiveAttributeRemainingTurns(CharacterAttribute attribute) {
+		return combatEffectState.getPositiveRemainingTurns(attribute);
+	}
+
+	public int getNegativeAttributeStages(CharacterAttribute attribute) {
+		return combatEffectState.getNegativeStages(attribute);
+	}
+
+	public int getNegativeAttributeRemainingTurns(CharacterAttribute attribute) {
+		return combatEffectState.getNegativeRemainingTurns(attribute);
+	}
+
+	private int calculateEffectiveAttribute(int structuralValue, CharacterAttribute attribute) {
+		int effectiveStage = combatEffectState.getEffectiveStage(attribute);
+
+		return AttributeStageRules.applyMultiplier(structuralValue, effectiveStage);
+	}
+
 }
