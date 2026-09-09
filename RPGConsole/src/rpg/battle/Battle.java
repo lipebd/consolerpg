@@ -715,7 +715,7 @@ public class Battle {
 
 		return character.getName() + " e seus companheiros";
 	}
-	
+
 	private void consumePendingSpeedStages() {
 		for (PlayableCharacter member : party.getMembers()) {
 			member.consumePendingSpeedStages();
