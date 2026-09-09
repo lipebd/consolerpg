@@ -15,6 +15,7 @@ import rpg.skills.RecoveryType;
 import rpg.skills.Skill;
 import rpg.ui.AllyTargetMenu;
 import rpg.ui.BattleTurnOrderScreen;
+import rpg.ui.CombatEffectFormatter;
 import rpg.ui.EnemyTargetMenu;
 import rpg.ui.BattleItemMenu;
 
@@ -22,6 +23,9 @@ import rpg.ui.BattleItemMenu;
 public class Battle {
 
 	private static final int MINIMUM_STATUS_NAME_WIDTH = 8;
+	private static final int SLOT_LABEL_WIDTH = 4;
+
+	private static final String EFFECTS_LABEL = "Efeitos:";
 
 	private BattleEscapeService escapeService;
 	private BattleTurnOrderGenerator turnOrderGenerator;
@@ -143,7 +147,7 @@ public class Battle {
 	private void displayEnemyStatuses(int nameColumnWidth, int hpValueColumnWidth) {
 		System.out.println("\n[INIMIGOS]");
 
-		String rowFormat = "%-4s %-" + nameColumnWidth + "s HP %" + hpValueColumnWidth + "s%s%n";
+		String rowFormat = "%-" + SLOT_LABEL_WIDTH + "s %-" + nameColumnWidth + "s HP %" + hpValueColumnWidth + "s%s%n";
 
 		List<EnemyBattleSlot> slots = enemyGroup.getSlots();
 
@@ -161,6 +165,8 @@ public class Battle {
 					formatResourceValue(enemy.getCurrentHp(), enemy.getMaxHp()),
 					condition
 			);
+
+			displayActiveEffects(enemy);
 		}
 	}
 
@@ -172,8 +178,8 @@ public class Battle {
 	) {
 		System.out.println("\n[GRUPO]");
 
-		String rowFormat = "%-4s %-" + nameColumnWidth + "s HP %" + hpValueColumnWidth + "s  MP %" + mpValueColumnWidth
-				+ "s  SP %" + spValueColumnWidth + "s%s%n";
+		String rowFormat = "%-" + SLOT_LABEL_WIDTH + "s %-" + nameColumnWidth + "s HP %" + hpValueColumnWidth
+				+ "s  MP %" + mpValueColumnWidth + "s  SP %" + spValueColumnWidth + "s%s%n";
 
 		List<PlayableCharacter> members = party.getMembers();
 
@@ -192,6 +198,24 @@ public class Battle {
 					formatResourceValue(member.getCurrentSp(), member.getMaxSp()),
 					condition
 			);
+
+			displayActiveEffects(member);
+		}
+	}
+
+	private void displayActiveEffects(GameCharacter character) {
+		List<String> effectLines = CombatEffectFormatter.formatActiveEffectLines(character);
+
+		String statusIndent = " ".repeat(SLOT_LABEL_WIDTH + 1);
+
+		String firstLinePrefix = statusIndent + EFFECTS_LABEL + " ";
+
+		String continuationIndent = " ".repeat(firstLinePrefix.length());
+
+		for (int index = 0; index < effectLines.size(); index++) {
+			String prefix = index == 0 ? firstLinePrefix : continuationIndent;
+
+			System.out.println(prefix + effectLines.get(index));
 		}
 	}
 
