@@ -65,22 +65,27 @@ public abstract class GameCharacter {
 		return true;
 	}
 
-	public int takeDamage(int damage) {
-		int actualDamage = damage;
+	public int takeDamage(double damage) {
+		if (!isAlive()) {
+			return 0;
+		}
+
+		if (!Double.isFinite(damage)) {
+			throw new IllegalArgumentException("Damage must be a finite number.");
+		}
+
+		double adjustedDamage = damage;
 
 		if (defending) {
-			actualDamage = actualDamage / 2;
+			adjustedDamage /= 2.0;
 			defending = false;
 		}
 
-		if (actualDamage < 1) {
-			actualDamage = 1;
-		}
-		if (actualDamage > currentHp) { // The max damage that can be taken is the current HP
-			actualDamage = currentHp;
-		}
+		long roundedDamage = Math.round(adjustedDamage);
 
-		currentHp = currentHp - actualDamage;
+		int actualDamage = (int) Math.min(Math.max(1L, roundedDamage), currentHp);
+
+		currentHp -= actualDamage;
 
 		if (!isAlive()) {
 			clearTemporaryBattleEffects();

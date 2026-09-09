@@ -391,6 +391,64 @@ At the end of a battle, all remaining temporary battle states are removed from e
 
 Temporary effects cannot persist into an unrelated battle.
 
+## Damage calculation
+
+Physical and magical damage use internal balance factors that are not exposed through external data files.
+
+Current factors:
+
+```text
+KF = 20
+KM = 20
+```
+
+Physical damage uses effective ATK against effective DEF.
+
+Magical damage uses effective MAG against effective RES.
+
+Effective attributes include all applicable natural values, equipment bonuses and temporary attribute stages.
+
+Damage power is calculated as:
+
+```text
+basePower =
+    skillPower
+    + weaponBaseDamage
+    + effectiveOffensiveAttribute
+```
+
+When an applicable conditional power modifier exists:
+
+```text
+modifiedPower =
+    basePower
+    × (1 + powerModifierPercent / 100)
+```
+
+Physical damage before defending is:
+
+```text
+physicalDamage =
+    modifiedPower
+    × KF
+    / (effectiveDefense + KF)
+```
+
+Magical damage before defending is:
+
+```text
+magicalDamage =
+    modifiedPower
+    × KM
+    / (effectiveResistance + KM)
+```
+
+Defending divides the calculated damage by two before rounding.
+
+The final result is rounded to the nearest integer using half-up rounding, with a minimum of 1 damage and a maximum equal to the target's current HP.
+
+The defending state is consumed when the character receives damage.
+
 ## Skill recovery
 
 Recovery skills separate the recovery effect from their target.
