@@ -780,6 +780,23 @@ A playable character's available skills are derived from its class skill definit
 
 When one reward crosses several levels, every skill whose acquisition level is above the previous level and at or below the new level is reported as newly unlocked. Skill definitions remain unique catalog entries; they are not copied into a mutable learned-skill list.
 
+### Skill-detail presentation
+
+Available skills are first displayed as a compact selectable list. Selecting one opens a shared detail sheet containing:
+
+- Acquisition level.
+- Main type.
+- Power.
+- Action target.
+- MP and SP cost.
+- External narrative description.
+
+The first displayable component in `PRIMARY` defines the summary type, power and action target. If a future valid skill has no displayable `PRIMARY` component, the first displayable component in execution order is used as a fallback. Secondary effects remain part of the narrative description and do not replace the main classification.
+
+Power is the component's base power, not the final damage or recovery amount after attributes, defenses and other battle calculations. Narrative descriptions must therefore avoid promising a fixed final value when the result is scaled at runtime.
+
+`CharacterStatusMenu` and battle confirmation use the same `SkillDetailFormatter` output so that technical and narrative information cannot diverge between those interfaces.
+
 ## Level-up resource restoration
 
 A playable character who survives a victorious battle and gains at least one level restores these resources after the new natural maximums are installed:

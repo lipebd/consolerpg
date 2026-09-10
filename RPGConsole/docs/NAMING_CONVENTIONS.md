@@ -154,14 +154,14 @@ The following suffixes have specific meanings in RPGConsole.
 | `Execution` | Mutable state limited to one execution of a composite action | `SkillExecution` |
 | `Context` | Inputs and shared selections used throughout one execution | `SkillExecutionContext` |
 | `Generator` | Selects or creates results using rules and randomness | `EncounterGenerator`, `ShopStateGenerator` |
-| `Calculator` | Centralizes one domain formula without coordinating the complete flow | `DamageCalculator`, `RecoveryCalculator`, `EffectResistanceCalculator` |
+| `Calculator` | Centralizes one domain formula without coordinating the complete flow | `DamageCalculator`, `RecoveryCalculator`, `EffectResistanceCalculator`, `CharacterGrowthCalculator` |
 | `Coordinator` | Orchestrates several existing components without owning all their internal rules | `BattleCoordinator` |
 | `Service` | Applies a cohesive domain operation, usually without console input | `BattleRewardService`, `ShopTransactionService` |
 | `Menu` | Reads player input and manages one player-facing decision flow | `RouteMenu`, `EnemyTargetMenu`, `ShopMenu` |
 | `Screen` | Displays a complete console view or result | `TitleScreen`, `BattleRewardScreen` |
 | `Result` / `Rewards` | Represents the outcome of an operation | `BattleResult`, `BattleRewards`, `ShopPurchaseResult` |
 | `Outcome` | Closed enum describing how an attempted operation concluded | `SkillEffectOutcome` |
-| `Formatter` | Produces shared presentation text without deciding domain behavior | `CombatEffectFormatter`, `ItemMenuFormatter` |
+| `Formatter` | Produces shared presentation text without deciding domain behavior | `CombatEffectFormatter`, `ItemMenuFormatter`, `SkillDetailFormatter` |
 | `Group` | Owns and queries a collection that acts as one domain unit | `EnemyBattleGroup` |
 | `Slot` | Represents one uniquely identifiable position inside a runtime group | `EnemyBattleSlot` |
 
@@ -169,6 +169,8 @@ The following suffixes have specific meanings in RPGConsole.
 - `State` represents mutable data linked to an entity over a broader lifecycle, such as a shop's current inventory.
 - `Execution` is narrower than `Session`: it exists for one composite action and is discarded when that action finishes.
 - `Calculator` owns a formula; its caller owns sequencing, mutation and presentation.
+
+Use `naturalStats` for the character values produced by class and level before equipment bonuses and temporary combat effects. Use `effective` only for values after every currently applicable modifier has been considered.
 
 A `Definition` does not require a parallel mutable class with the same root name. Create a runtime counterpart only when the concept has persistent instance state. For example, `SkillDefinition` can be referenced directly by a character because per-use state belongs to `SkillExecution`; an otherwise empty `Skill` wrapper would add no responsibility.
 

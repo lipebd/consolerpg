@@ -142,40 +142,40 @@ Current milestone: the combat-effect and external skill-execution foundation is 
 * [x] Replace hardcoded skill creation in `Main`.
 * [x] Use loaded class and skill definitions when assembling the temporary development party.
 * [ ] Complete the approved external skill data for all seven playable classes.
-* [ ] Redesign the learned-skills screen to display complete targeting, resource-cost and effect information.
+* [x] Redesign the learned-skills screen to display main type, power, targeting, resource cost and the external narrative description.
 * [ ] Add global EXP and gold reward modifiers.
 * [ ] Add individual character EXP modifiers.
 
 ### Character progression
 
-* [ ] Create immutable global character-growth rules.
-* [ ] Define integer growth values for HP, MP, SP and regular attributes.
-* [ ] Define the primary-attribute growth interval.
-* [ ] Define the secondary-attribute growth interval.
-* [ ] Keep internal character-growth balance constants out of external data files.
-* [ ] Apply the configured general growth to every natural character stat after level 1.
-* [ ] Apply one additional primary-attribute growth unit every two levels.
-* [ ] Apply one additional secondary-attribute growth unit every three levels.
-* [ ] Apply defensive specialization to HP growth.
-* [ ] Apply MAG specialization to MP growth.
-* [ ] Apply ATK specialization to SP growth.
-* [ ] Keep natural level progression separate from equipment bonuses.
+* [x] Create immutable global character-growth rules.
+* [x] Define integer growth values for HP, MP, SP and regular attributes.
+* [x] Define the primary-attribute growth interval.
+* [x] Define the secondary-attribute growth interval.
+* [x] Keep internal character-growth balance constants out of external data files.
+* [x] Apply the configured general growth to every natural character stat after level 1.
+* [x] Apply one additional primary-attribute growth unit every two levels.
+* [x] Apply one additional secondary-attribute growth unit every three levels.
+* [x] Apply defensive specialization to HP growth.
+* [x] Apply MAG specialization to MP growth.
+* [x] Apply ATK specialization to SP growth.
+* [x] Keep natural level progression separate from temporary combat effects and future equipment bonuses.
 * [x] Define class-to-skill progression through each skill's class ID and acquisition level.
 * [x] Validate skill class IDs and acquisition levels.
 * [x] Assign a playable-class definition to every current playable character.
-* [ ] Calculate a character's natural attributes from class and level.
-* [ ] Grant the correct initial skills for the character's class and level.
-* [ ] Apply attribute and resource growth during level-up.
-* [ ] Grant newly unlocked class skills during level-up.
-* [ ] Prevent the same skill from being learned more than once.
-* [ ] Display the class in individual status.
-* [ ] Display attribute growth and newly learned skills during level-up.
+* [x] Calculate a character's natural attributes from class and level.
+* [x] Expose the correct available skills for the character's class and level.
+* [x] Apply attribute and resource growth during level-up.
+* [x] Report every class skill newly unlocked across one or more gained levels.
+* [x] Keep skill availability derived from unique definitions instead of duplicating learned skills.
+* [x] Display the class in individual status.
+* [x] Display attribute growth and newly learned skills during level-up.
 * [x] Preserve a temporary development shortcut for assigning any playable class during party creation.
 * [ ] Keep the normal new-game flow restricted to the Flagelo class.
 * [x] Test the base attributes of all seven playable classes.
-* [ ] Test attribute and resource growth at levels before, during and after primary and secondary growth thresholds.
+* [x] Test attribute and resource growth at levels before, during and after primary and secondary growth thresholds.
 * [ ] Test natural progression independently from equipment bonuses.
-* [ ] Test initial and level-based skill learning for all seven playable classes.
+* [x] Test initial and level-based availability for the currently externalized skill subset.
 
 ### Skill-scroll integration
 
@@ -350,7 +350,7 @@ Current milestone: the combat-effect and external skill-execution foundation is 
 
 * [ ] Test malformed skill and class data.
 * [ ] Test battles after skill, effect, class and equipment integration.
-* [ ] Test party rewards and level-ups after class progression is implemented.
+* [x] Test party rewards and level-ups after class progression is implemented.
 * [ ] Test equipment changes during normal progression.
 * [ ] Test character creation.
 * [ ] Test full-party rescue.

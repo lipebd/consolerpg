@@ -109,8 +109,8 @@ BattleCoordinator
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
 | `CharacterStats` | Dados imutáveis validados | Agrupa HP, MP, SP, ataque, defesa, magia, resistência, velocidade e sorte. Exige HP máximo e todos os atributos regulares positivos; MP e SP máximos podem ser zero. É usado na criação de `PlayableCharacter`, `Enemy` e `EnemyDefinition`. |
-| `GameCharacter` | Classe-base de execução | Guarda HP, MP e SP atuais e o estado temporário de combate compartilhado por aliados e inimigos. Fornece operações de dano, defesa, recuperação, ressurreição, gasto de recursos, estágios de atributo, Distorção Ancestral e consulta de atributos efetivos. O cálculo de ataques pertence a `DamageCalculator`. |
-| `PlayableCharacter` | Personagem jogável | Estende `GameCharacter` com nível, EXP, definição de classe e definições de habilidade desbloqueadas. Seus objetos pertencem a `Party` e participam das batalhas como aliados. |
+| `GameCharacter` | Classe-base de execução | Guarda HP, MP e SP atuais e o estado temporário de combate compartilhado por aliados e inimigos. Fornece operações de dano, defesa, recuperação, ressurreição, gasto de recursos, efeitos temporários e consulta de atributos efetivos. Também expõe uma cópia imutável dos atributos naturais e permite que subclasses substituam esse conjunto de forma protegida. O cálculo de ataques pertence a `DamageCalculator`. |
+| `PlayableCharacter` | Personagem jogável | Estende `GameCharacter` com nível, EXP, definição de classe e acesso dinâmico às habilidades liberadas no nível atual. Ao ganhar níveis, usa `CharacterGrowthCalculator` para substituir os atributos naturais uma única vez pelo resultado do nível final. Seus objetos pertencem a `Party` e participam das batalhas como aliados. |
 | `Enemy` | Inimigo de execução | Estende `GameCharacter` e representa uma ocorrência mutável de um inimigo dentro de uma batalha. Recebe seus dados de `EnemyDefinition`, possui rank, descrição e tabela de drops, e é colocado em `EnemyBattleSlot`. Vários objetos `Enemy` podem nascer da mesma definição sem compartilhar HP. |
 | `EnemyRank` | Enum de domínio | Define os ranks válidos dos inimigos, como comum, veterano, líder, boss, épico e lendário. É usado por loaders, definições, recompensas e validações de dungeon. |
 | `Party` | Estado compartilhado do grupo | Armazena de um a quatro `PlayableCharacter`, além do inventário e ouro compartilhados. É consumida por `World`, `Battle`, menus e serviços de recompensa. Recursos e progressão individuais continuam pertencendo a cada personagem. |
@@ -122,6 +122,7 @@ BattleCoordinator
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
 | `PlayableClassDefinition` | Definição imutável | Armazena ID, nome, atributos-base, atributos primário e secundário, categoria de peso e descrição de uma classe jogável. É referenciada por `PlayableCharacter` e pelas definições de habilidade. |
+| `CharacterGrowthCalculator` | Calculador de domínio | Calcula todos os atributos naturais de uma classe em um nível-alvo a partir dos atributos-base e das regras globais de crescimento. Centraliza os intervalos primário e secundário, os bônus de recursos por especialização e a proteção contra overflow. |
 | `PlayableClassLoader` | Carregamento de dados | Lê as sete classes de `playable_classes.txt`, interpreta descrições com `\n`, cria `CharacterStats`, valida os dados e acrescenta linha e ID ao erro quando um cadastro é inválido. |
 | `PlayableClassCatalog` | Catálogo | Registra e localiza `PlayableClassDefinition` por ID estável e permite que `SkillLoader` valide a classe associada a cada habilidade. |
 | `PlayableClassWeight` | Enum de domínio | Define as categorias de peso das classes, usadas agora na validação e futuramente na compatibilidade com armaduras. |
@@ -242,9 +243,9 @@ World
 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
-| `BattleRewardService` | Serviço de regra | Calcula EXP, ouro, progressão individual e drops após uma vitória. Recebe os inimigos derrotados, o cenário de combate e a `Party`; atualiza os recursos correspondentes e produz `BattleRewards`. |
+| `BattleRewardService` | Serviço de regra | Calcula EXP, ouro, progressão individual e drops após uma vitória. Captura os atributos naturais antes e depois do ganho de níveis, identifica habilidades recém-liberadas, restaura sobreviventes somente após instalar os novos máximos e produz `BattleRewards`. |
 | `BattleRewards` | Resultado agregado | Agrupa tudo que foi obtido na batalha: EXP, ouro, drops consolidados e resultados de progressão dos personagens. É produzido por `BattleRewardService` e exibido por `BattleRewardScreen`. |
-| `CharacterProgressionResult` | Resultado individual | Registra o que aconteceu com um `PlayableCharacter` ao receber EXP: nível anterior, nível atual, EXP concedida e eventual restauração de recursos. Faz parte de `BattleRewards`. |
+| `CharacterProgressionResult` | Resultado individual | Registra EXP concedida, níveis anterior e atual, cópias dos atributos naturais antes e depois do crescimento, habilidades recém-liberadas e eventual restauração de recursos. Faz parte de `BattleRewards`. |
 
 ---
 
@@ -269,13 +270,14 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 | `RecoveryItemUseMenu` | Fluxo de uso | Centraliza a seleção de alvos, a aplicação de efeitos individuais ou coletivos, a remoção do item somente após um resultado efetivo e a apresentação dos valores recuperados. É compartilhado por `InventoryMenu` e `BattleItemMenu`. |
 | `ItemMenuFormatter` | Formatador de interface | Centraliza a largura das colunas, o truncamento seguro de nomes longos e o resumo dos componentes de recuperação usados pelas telas de inventário. |
 | `PartyStatusMenu` | Menu de consulta | Exibe uma visão resumida dos membros da `Party` e da moeda compartilhada formatada por `GameCurrency`. Permite selecionar um integrante para abrir `CharacterStatusMenu`. |
-| `CharacterStatusMenu` | Tela de consulta | Mostra os detalhes de um `PlayableCharacter`: recursos, atributos, nível, EXP e habilidades. Recebe o personagem selecionado por `PartyStatusMenu`. A visualização de habilidades aguarda um comando explícito para retornar. |
+| `CharacterStatusMenu` | Tela de consulta | Mostra classe, recursos, atributos, nível e EXP de um `PlayableCharacter`. Apresenta suas habilidades disponíveis em uma lista compacta e abre a ficha técnica e narrativa da habilidade selecionada por meio de `SkillDetailFormatter`. |
 | `AllyTargetMenu` | Menu de alvo | Exibe aliados vivos ou derrotados conforme o contexto e devolve o `PlayableCharacter` escolhido. Um aliado vivo pode ser selecionado mesmo com HP cheio porque componentes compostos ainda podem purificá-lo ou fortalecê-lo. |
 | `EnemyTargetMenu` | Menu de alvo | Exibe apenas inimigos vivos de `EnemyBattleGroup` e devolve o `EnemyBattleSlot` escolhido. É usado por ataques, habilidades e análise. |
 | `CombatEffectFormatter` | Formatador de interface | Produz a apresentação compartilhada dos estágios ativos e da Distorção Ancestral sem mover regras de duração ou atributo para a interface. |
+| `SkillDetailFormatter` | Formatador de interface | Produz a ficha compartilhada de uma habilidade com nível, tipo principal, poder, alvo, custo e descrição narrativa. Deriva os campos técnicos do primeiro componente efetivo de `PRIMARY` e é reutilizado pelo status e pela confirmação em batalha. |
 | `EpicEncounterMenu` | Menu de confirmação | Recebe uma lista de uma a três `EnemyDefinition`, apresenta nomes e descrições do encontro épico e pergunta se o jogador deseja enfrentá-lo. Devolve apenas a decisão; `World` inicia a batalha. |
 | `BattleTurnOrderScreen` | Tela | Mostra o participante atual e uma prévia das próximas ações usando `BattleTurnOrder`. Não gera nem altera a fila. |
-| `BattleRewardScreen` | Tela | Exibe `BattleRewards`, incluindo EXP, moeda formatada por `GameCurrency`, níveis e itens obtidos. Não calcula nem concede as recompensas. |
+| `BattleRewardScreen` | Tela | Exibe `BattleRewards`, incluindo EXP, moeda formatada por `GameCurrency`, níveis, crescimento natural compacto, habilidades recém-aprendidas e itens obtidos. Não calcula nem concede as recompensas. |
 | `ShopMenu` | Menu comercial | Interface compartilhada por lojas urbanas e mercadores de exploração. Exibe ofertas, categorias vendáveis, confirmações, paginação, preços, estoque e feedback das transações. |
 
 ---
@@ -558,6 +560,7 @@ World                   = mudança efetiva para a cidade escolhida
 | Fluxo geral do jogo | `World` | cenário → exploração/rotas/transporte → batalha |
 | Dados de um inimigo | `EnemyDefinition` | `EnemyLoader` → `EnemyCatalog` → `EnemyDefinition` |
 | Dados de uma classe jogável | `PlayableClassDefinition` | `playable_classes.txt` → `PlayableClassLoader` → `PlayableClassCatalog` |
+| Crescimento natural de um personagem | `CharacterGrowthCalculator` | definição de classe + nível → `CharacterStats` → `PlayableCharacter` |
 | Inimigo perdendo HP | `Enemy` | `EnemyDefinition` → `BattleCoordinator` → `Enemy` |
 | Sorteio de inimigos | `EncounterGenerator` | `EncounterCatalog` → filtros/pesos → definições |
 | Execução da luta | `Battle` | ordem de turnos → ações → `BattleResult` |

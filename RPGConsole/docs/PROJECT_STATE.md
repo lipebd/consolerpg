@@ -6,7 +6,7 @@ V4 gameplay-systems implementation in progress.
 
 Current stage:
 
-`Combat effects and external skill execution completed; character progression next`
+`Combat effects, external skill execution and natural character progression completed`
 
 Current Git branch:
 
@@ -496,6 +496,29 @@ The first V4 gameplay-system block is complete.
 - `DAMAGE_POWER_MODIFIER` affects every later compatible damage component against the same target during one execution. Multiple modifiers use overflow-protected accumulation.
 - Recovery-item purification is connected to active negative attribute states.
 
+## V4 natural character progression
+
+The natural-growth and level-based skill-availability block is complete.
+
+- `CharacterGrowthCalculator` derives a complete natural `CharacterStats` snapshot from one playable-class definition and target level.
+- Base growth after level 1 is `HP +25`, `MP +10`, `SP +10` and `+1` to every regular attribute per level.
+- The primary attribute gains one additional point every two levels; the secondary attribute gains one additional point every three levels.
+- ATK specialization adds SP growth, MAG adds MP growth, and DEF or RES adds HP growth on the same schedules. Defensive specializations are cumulative.
+- Growth is calculated directly from class base stats and final level, avoiding incremental drift when several levels are gained at once.
+- Natural stats remain separate from temporary effects and future equipment bonuses.
+- `PlayableCharacter` keeps its immutable class definition and exposes skills available for its current level dynamically.
+- `BattleRewardService` records natural stats before and after leveling, detects every newly unlocked skill and restores surviving characters only after the new maximums are installed.
+- `BattleRewardScreen` displays compact stat deltas and newly learned skill names; `CharacterStatusMenu` displays the character's class.
+- Experience and level arithmetic reject overflow instead of wrapping silently.
+
+## V4 skill-detail presentation
+
+- `CharacterStatusMenu` presents available skills as a compact selectable list instead of expanding every description at once.
+- `SkillDetailFormatter` derives level, main type, power, action target and resource cost from the immutable skill definition.
+- The main display component is the first effective component in `PRIMARY`; secondary components remain described by the external narrative text.
+- Character status and battle confirmation reuse the same formatted skill sheet.
+- Narrative descriptions avoid promising final damage or recovery amounts that depend on effective attributes and combat formulas.
+
 ## Character attributes
 
 The complete character attribute set is:
@@ -559,7 +582,7 @@ Battle rewards, exploration rewards, inventory, party status, INNs, paid city tr
 - Equipment behavior and specialized equipment data are not implemented.
 - Skill-scroll behavior and specialized skill-scroll data are not implemented.
 - The development party is still assembled in `Main`; normal character and party creation are not implemented.
-- Playable-class and skill definitions are external, but natural class growth, level-based acquisition feedback and the full approved skill roster remain unfinished.
+- Playable-class and skill definitions are external and natural class growth is integrated, but the full approved skill roster remains unfinished.
 - Enemy turns currently use basic attacks; enemy skill selection is deferred.
 - Tavern functionality remains unavailable.
 - Defeated allies remain unavailable until revived by a skill, item or city INN.
@@ -570,17 +593,9 @@ Battle rewards, exploration rewards, inventory, party status, INNs, paid city tr
 
 ## Current next step
 
-The combat-effect and external skill-execution foundation in V4 roadmap sections 1 and 2 is complete. Remaining unchecked items in the combat section primarily represent broader regression coverage rather than missing core architecture.
+The combat-effect, external skill-execution, natural-progression and learned-skill presentation foundations in V4 roadmap sections 1 and 2 are complete. Remaining unchecked items in those sections include the full approved skill roster and reward modifiers.
 
-The next implementation block is character progression:
-
-- calculate natural attributes from class and level;
-- apply the frozen primary, secondary and resource-growth rules;
-- assign class progression to every playable character;
-- grant initial and newly unlocked skills by class and acquisition level;
-- display class, attribute growth and new skills in the relevant interfaces.
-
-The approved skill data for all seven classes and the expanded learned-skills display must also be completed before the external-skill section is closed. Equipment, character creation, defeat rescue and save/load remain later V4 blocks in `V4_ROADMAP.md`.
+The next implementation block should be selected from those remaining section 2 dependencies before equipment work begins. Normal character creation, equipment, defeat rescue and save/load remain later V4 blocks. The level-7 class-path decision is tracked as post-V4 work. The temporary development party must not be mistaken for either final flow.
 
 ## Important conventions
 

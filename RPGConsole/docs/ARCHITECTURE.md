@@ -24,7 +24,7 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 |---|---|---|
 | `rpg` | Application entry point, dependency construction and shared currency presentation | `Main`, `GameCurrency` |
 | `rpg.characters` | Character state, attributes, party ownership and enemy ranks | `GameCharacter`, `CharacterStats`, `PlayableCharacter`, `Party`, `Enemy`, `EnemyRank` |
-| `rpg.classes` | Immutable playable-class definitions, external loading and lookup | `PlayableClassDefinition`, `PlayableClassLoader`, `PlayableClassCatalog`, `PlayableClassWeight` |
+| `rpg.classes` | Immutable playable-class definitions, external loading, lookup and natural-growth calculation | `PlayableClassDefinition`, `PlayableClassLoader`, `PlayableClassCatalog`, `PlayableClassWeight`, `CharacterGrowthCalculator` |
 | `rpg.battle` | Battle coordination, skill execution and centralized combat calculations | `Battle`, `BattleResult`, `BattleCoordinator`, `SkillExecutor`, `SkillExecution`, `SkillExecutionContext`, `SkillEffectResult`, `DamageCalculator`, `RecoveryCalculator`, `EffectResistanceCalculator`, `EnemyBattleGroup`, `BattleTurnOrder`, `BattleEscapeService` |
 | `rpg.battle.rewards` | Reward calculation and individual progression results | `BattleRewardService`, `BattleRewards`, `CharacterProgressionResult` |
 | `rpg.effects` | Mutable combat-effect state and reusable attribute-stage rules | `CombatEffectState`, `AttributeStageState`, `AttributeStageRules`, `SpecialBattleStateType` |
@@ -40,7 +40,7 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.world.rewards` | External exploration reward pools, validation and weighted selection | `ExplorationRewardEntry`, `ExplorationRewardCatalog`, `ExplorationRewardLoader`, `ExplorationRewardGenerator`, `ExplorationReward`, `ExplorationRewardType` |
 | `rpg.world.travel` | External directed-route definitions, loading and runtime unlock progress | `TravelRouteDefinition`, `TravelCatalog`, `TravelRouteLoader`, `TravelProgress` |
 | `rpg.world.transport` | External paid city-transport definitions, loading and destination lookup | `CityTransportDefinition`, `CityTransportCatalog`, `CityTransportLoader` |
-| `rpg.ui` | Console menus, navigation, target selection and information screens | `TitleScreen`, `GameOverScreen`, `CombatScenarioMenu`, `CityMenu`, `CityLocationMenu`, `InnMenu`, `RouteMenu`, `CityTransportMenu`, `InventoryMenu`, `BattleItemMenu`, `RecoveryItemUseMenu`, `EpicEncounterMenu`, `BattleRewardScreen`, `BattleTurnOrderScreen`, `PartyStatusMenu`, `CharacterStatusMenu`, `ShopMenu` |
+| `rpg.ui` | Console menus, navigation, target selection, shared formatters and information screens | `TitleScreen`, `GameOverScreen`, `CombatScenarioMenu`, `CityMenu`, `CityLocationMenu`, `InnMenu`, `RouteMenu`, `CityTransportMenu`, `InventoryMenu`, `BattleItemMenu`, `RecoveryItemUseMenu`, `EpicEncounterMenu`, `BattleRewardScreen`, `BattleTurnOrderScreen`, `PartyStatusMenu`, `CharacterStatusMenu`, `SkillDetailFormatter`, `ShopMenu` |
 
 ## Application initialization
 
@@ -62,7 +62,7 @@ Initialization includes:
 12. Creating and registering runtime scenarios through `ScenarioFactory`.
 13. Resolving the initial scenario and creating `WorldProgress`.
 14. Loading adjacent travel routes and creating `TravelProgress`.
-15. Creating the temporary playable characters and party from loaded class and skill definitions.
+15. Creating one shared `CharacterGrowthCalculator` and the temporary playable characters from loaded class and skill definitions.
 16. Creating `World` with the required catalogs, shop states, progress state and shared dependencies.
 17. Starting the world loop.
 
@@ -100,6 +100,7 @@ Maximum HP and all six regular attributes must be positive. Maximum MP and SP ma
 - Recovering HP, MP and SP and reviving.
 - Applying, reducing and clearing temporary combat effects.
 - Returning effective attributes after stage modifiers and special structural states.
+- Returning an immutable snapshot of its natural attributes, without temporary combat effects.
 - Checking whether the character is alive.
 - Restoring all resources for a living character.
 
@@ -109,6 +110,21 @@ Maximum HP and all six regular attributes must be positive. Maximum MP and SP ma
 - EXP.
 - Its playable-class definition.
 - Class skills unlocked at the current level.
+- Natural-stat recalculation through `CharacterGrowthCalculator` after gaining one or more levels.
+
+Natural growth has one formula owner:
+
+```text
+PlayableClassDefinition + target level
+                    ↓
+        CharacterGrowthCalculator
+                    ↓
+             CharacterStats
+                    ↓
+          PlayableCharacter
+```
+
+The calculator derives the complete natural-stat snapshot directly from the class definition and target level. It does not increment the character's previous values, which prevents accumulated drift and allows a multi-level gain to replace natural stats once after the final level is known.
 
 `Party` stores:
 
@@ -431,11 +447,11 @@ The battle system is divided into the following responsibilities:
 - `EnemyTargetMenu`
   - Selects a living enemy target.
 - `BattleRewardService`
-  - Calculates EXP, gold, progression and consolidated drops.
+  - Calculates EXP, gold, progression and consolidated drops; captures natural-stat snapshots around level gains and identifies newly unlocked skills.
 - `BattleRewards`
   - Stores the complete reward result.
 - `CharacterProgressionResult`
-  - Stores one ally's EXP, levels and resource-restoration result.
+  - Stores one ally's EXP, levels, natural-stat snapshots, newly unlocked skills and resource-restoration result.
 - `BattleRewardScreen`
   - Displays party progression and collected rewards.
 
@@ -573,9 +589,12 @@ Gold and items are granted once to `Party`.
 - EXP received.
 - Previous level.
 - Current level.
+- Previous natural-stat snapshot.
+- Current natural-stat snapshot.
+- Skill definitions unlocked while crossing the level interval.
 - Whether HP, MP and SP were restored.
 
-A surviving character who gains at least one level restores all resources.
+A surviving character who gains at least one level restores all resources after the new natural maximums are installed.
 
 A defeated character still receives EXP and may level up, but remains defeated and receives no resource restoration.
 
@@ -730,6 +749,7 @@ Important UI components include:
 - `BattleRewardScreen`
 - `PartyStatusMenu`
 - `CharacterStatusMenu`
+- `SkillDetailFormatter`
 - `GameOverScreen`
 - `ShopMenu`
 
@@ -751,6 +771,8 @@ Important UI components include:
 
 `CharacterStatusMenu` displays one character's detailed resources, attributes, progression and currently available class skills.
 
+`SkillDetailFormatter` derives one shared player-facing skill sheet from `SkillDefinition` and its ordered components. It uses the first displayable `PRIMARY` component as the main type, power and target, while the external narrative description explains secondary effects. `CharacterStatusMenu` and battle confirmation reuse the same formatted details instead of maintaining separate translations.
+
 `World` does not store a `Scanner`. Console input is handled by the components that require it.
 
 ## Currency presentation
@@ -767,7 +789,7 @@ The following implementations remain intentionally temporary:
 
 - Only base item data and recovery-item behavior are currently externalized. Equipment and skill-scroll specialization will be defined when their corresponding systems exist.
 - The development party is still assembled in `Main`; the normal character-creation flow has not replaced it yet.
-- Playable-class definitions and the first approved set of skill definitions are external, but natural class growth, level-based acquisition feedback and the complete skill roster remain unfinished.
+- Playable-class definitions, natural class growth and the first approved set of skill definitions are integrated, but the complete skill roster remains unfinished.
 - Equipment and skill-scroll behavior are not implemented.
 - Enemy actions currently use basic attacks; enemy skill selection can reuse the skill executor later but is outside the current scope.
 - Bree currently provides its INN and fixed shop, while tavern functionality remains unavailable.

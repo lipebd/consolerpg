@@ -26,6 +26,7 @@ import rpg.ui.EnemyTargetMenu;
 import rpg.ui.BattleItemMenu;
 import rpg.characters.CharacterAttribute;
 import rpg.skills.DamageType;
+import rpg.ui.SkillDetailFormatter;
 
 // Controls a battle between a party and an enemy group.
 public class Battle {
@@ -386,12 +387,12 @@ public class Battle {
 				SkillDefinition skill = skills.get(index);
 
 				System.out.println(
-						"[" + (index + 1) + "] " + skill.getName() + " | MP: " + skill.getMpCost() + " | SP: "
-								+ skill.getSpCost()
+						"[" + (index + 1) + "] " + skill.getName() + " | Custo: "
+								+ SkillDetailFormatter.formatCost(skill)
 				);
 			}
 
-			System.out.println("[0] Voltar");
+			System.out.println("\n[0] Voltar");
 			System.out.print("> ");
 
 			String choice = scanner.nextLine();
@@ -749,12 +750,11 @@ public class Battle {
 	}
 
 	private boolean confirmSkillUse(SkillDefinition skill) {
-		System.out.println("\n[" + skill.getName().toUpperCase() + "]");
-
-		System.out.println(skill.getDescription());
+		System.out.println("\n" + SkillDetailFormatter.formatDetails(skill));
 
 		while (true) {
 			System.out.println("\n[1] Usar | [0] Voltar");
+
 			System.out.print("> ");
 
 			String confirmation = scanner.nextLine();
