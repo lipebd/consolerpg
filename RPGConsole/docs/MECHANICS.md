@@ -129,7 +129,9 @@ The current battle menu contains:
 
 Analyzing, inspecting the round, cancelling target selection and returning from a submenu do not consume the current action.
 
-An action is consumed only when its effect is successfully executed or when a failed flee attempt explicitly consumes the acting character's turn.
+Basic attacks, defending, successfully used items and flee attempts consume the acting character's action.
+
+A skill consumes its resources and action when at least one component constitutes a valid attempt. Applied, resisted and not-triggered components are valid attempts. Components whose condition does not match or that cannot affect any selected target are not attempts.
 
 ## Defending
 
@@ -236,6 +238,14 @@ Future party titles will be reserved primarily for collective narrative events r
 
 Temporary buffs and debuffs modify effective combat attributes without changing base, natural or equipment values.
 
+Character statistics observe these structural invariants:
+
+- Maximum HP must be positive.
+- Maximum MP and SP cannot be negative.
+- ATK, DEF, MAG, RES, VEL and LCK must be positive.
+
+Invalid statistics prevent game-data initialization. File loaders identify the affected definition and source line.
+
 The stage-modifiable attributes are:
 
 - ATK
@@ -329,24 +339,19 @@ Post-action effects are applied after the acting character's duration decrease. 
 
 Effects applied to another participant are decreased only when that affected participant completes one of its own consumed turns.
 
-### Composite skill effectiveness
+### Composite skill attempts
 
-A skill containing multiple components is effective when at least one component produces an effect.
+Every attempted component-target pair produces one explicit result:
 
-Possible effective components include:
+- `APPLIED`: the component affected the target.
+- `RESISTED`: the component triggered, but the target resisted it.
+- `NOT_TRIGGERED`: the component was applicable, but its configured trigger roll failed.
 
-- Damage.
-- Healing.
-- Revival.
-- Resource recovery.
-- Stage application or duration renewal.
-- Purification.
-- Dissipation.
-- A supported special battle effect.
+A component whose condition does not match or that cannot affect its target produces no result and does not constitute an attempt.
 
-The skill consumes its resources and the acting character's turn once when at least one component succeeds.
+A skill consumes its resources and the acting character's turn once when at least one component is attempted. A resisted component and a component that does not trigger still count as valid attempts.
 
-If no component can produce an effect, the skill consumes neither resources nor the turn.
+If no component can be attempted, the skill consumes neither resources nor the turn.
 
 ### Speed stages
 
@@ -417,6 +422,8 @@ basePower =
     + effectiveOffensiveAttribute
 ```
 
+Basic attacks use the physical formula with zero skill power, zero weapon base damage and no conditional power modifier. Both playable-character and enemy basic attacks use the same centralized calculation.
+
 When an applicable conditional power modifier exists:
 
 ```text
@@ -424,6 +431,14 @@ modifiedPower =
     basePower
     × (1 + powerModifierPercent / 100)
 ```
+
+A `DAMAGE_POWER_MODIFIER` affects every later compatible damage component:
+
+- within the same skill execution;
+- against the same selected target;
+- until that skill use ends.
+
+It does not affect earlier damage, other targets or future skill uses. Multiple compatible modifiers add their percentages using overflow-safe arithmetic.
 
 Physical damage before defending is:
 
@@ -449,25 +464,136 @@ The final result is rounded to the nearest integer using half-up rounding, with 
 
 The defending state is consumed when the character receives damage.
 
+## Skill execution
+
+Skills are immutable external definitions composed of one or more ordered effects.
+
+Each use creates one mutable execution. Targets are selected once for each target type used by the skill and are reused by all compatible effects.
+
+Effects are executed in this order:
+
+```text
+PRE_ACTION
+PRIMARY
+end-of-turn duration reduction
+POST_ACTION
+```
+
+`PRE_ACTION` effects are fully applied before `PRIMARY` effects. Therefore, an attribute change applied during `PRE_ACTION` can affect damage, recovery or resistance calculations performed later in the same skill.
+
+`POST_ACTION` effects are executed only after the acting character finishes the consumed turn and all conventional effect durations are reduced.
+
+Skill resources are consumed only after target selection and when the execution is able to consume the turn.
+
+Components are evaluated in this order:
+
+```text
+condition
+applicability
+trigger chance
+resistance, when applicable
+application
+```
+
+An applicable component that is resisted or does not trigger still counts as an attempted component and consumes the turn. A component whose condition does not match or that cannot affect any selected target does not constitute an attempt.
+
+## Skill-effect trigger chance
+
+Each skill component may define its own `triggerChancePercent` in `skill_effects.txt`.
+
+An empty trigger field means `100%`. Explicit values must be integers between `1` and `100`.
+
+Trigger chance is rolled once per component execution, after condition and applicability checks. The result is shared by every applicable target of that component.
+
+When the trigger fails:
+
+- the component is recorded as `NOT_TRIGGERED` for its applicable targets;
+- no target performs a resistance check;
+- the component still constitutes a valid attempt.
+
+A guaranteed component does not consume a random value for its trigger.
+
+## Resistible effect application
+
+The following effects can be resisted:
+
+- negative attribute stages;
+- dissipation of positive attribute stages.
+
+Damage, recovery, revival, positive attribute stages, purification and ancestral distortion do not perform a resistance check.
+
+Application chance uses the effective LCK of the applying character and the effective RES of each receiving character at the moment the component is executed.
+
+```text
+applicationChance =
+    MIN(
+        0.85,
+        ROUND(
+            applyingLCK
+            / (
+                applyingLCK
+                + targetRES / KR
+            ),
+            2
+        )
+    )
+```
+
+Current resistance balance factor:
+
+```text
+KR = 1
+```
+
+The maximum application chance is 85%.
+
+After a component triggers, each applicable target performs an independent resistance check. A component may therefore trigger once and still be applied to some targets while being resisted by others.
+
+Application chance against resistance is calculated at runtime and is independent from the component's externally configured trigger chance.
+
+## Distorted attributes
+
+Ancestral distortion swaps the structural values used by these effective attributes:
+
+```text
+ATK ↔ MAG
+DEF ↔ RES
+```
+
+Attribute stages remain attached to their original attributes. For example, an ATK stage continues modifying effective ATK even when its structural value comes from MAG.
+
+Applying ancestral distortion again to the same target restores the original structural arrangement.
+
+Ancestral distortion cannot be resisted. Purification and dissipation do not remove it. It remains active until toggled again or until temporary battle effects are cleared at the end of battle.
+
 ## Skill recovery
 
-Recovery skills separate the recovery effect from their target.
+HP recovery and revival components define their scaling attribute directly. They currently accept effective ATK or effective MAG.
 
-Recovery types:
+The calculated amount is:
 
-- `NONE`
-- `HEAL`
-- `REVIVE`
+```text
+recovery =
+    power
+    × (1 + (effectiveAttribute - 10) / 100)
+```
+
+The result is rounded once using half-up rounding. An applicable recovery has a minimum calculated value of 1.
+
+Effective attributes include temporary stages and ancestral distortion. HP recovery is then limited by the target's missing HP. Revival is limited by the target's maximum HP.
+
+MP and SP recovery currently use fixed component power and do not define a scaling attribute.
 
 Skill target types currently include:
 
-- `NONE`
 - `SELF`
 - `SINGLE_ALLY`
 - `ALL_ALLIES`
 - `ALL_BUT_SELF`
+- `RANDOM_ALLY`
 - `SINGLE_ENEMY`
 - `ALL_ENEMIES`
+- `RANDOM_ENEMY`
 
 ### Healing
 
@@ -484,7 +610,7 @@ Regular healing:
 Revive effects:
 
 - Affect only defeated allies.
-- Restore HP according to the skill's base healing value.
+- Restore HP according to the component's scaled recovery value.
 - Cannot target living allies.
 - Do not restore removed temporary battle effects.
 - Add the revived ally to the turn order only in the following round.

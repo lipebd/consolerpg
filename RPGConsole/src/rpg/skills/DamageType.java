@@ -4,8 +4,7 @@ package rpg.skills;
 public enum DamageType {
 
     PHYSICAL("Físico"),
-    MAGICAL("Mágico"),
-    NONE("Nenhum");
+    MAGICAL("Mágico");
 
     private final String displayName;
 

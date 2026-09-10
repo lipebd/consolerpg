@@ -167,16 +167,6 @@ public abstract class GameCharacter {
 		return currentHp > 0;
 	}
 
-	public int attack(GameCharacter target) {
-		int damage = attack - target.getDefense();
-
-		if (damage < 1) {
-			damage = 1;
-		}
-
-		return target.takeDamage(damage);
-	}
-
 	public void defend() {
 		defending = true;
 	}
@@ -210,19 +200,27 @@ public abstract class GameCharacter {
 	}
 
 	public int getAttack() {
-		return calculateEffectiveAttribute(attack, CharacterAttribute.ATK);
+		int structuralValue = combatEffectState.hasDistortedAttributes() ? magic : attack;
+
+		return calculateEffectiveAttribute(structuralValue, CharacterAttribute.ATK);
 	}
 
 	public int getDefense() {
-		return calculateEffectiveAttribute(defense, CharacterAttribute.DEF);
+		int structuralValue = combatEffectState.hasDistortedAttributes() ? resistance : defense;
+
+		return calculateEffectiveAttribute(structuralValue, CharacterAttribute.DEF);
 	}
 
 	public int getMagic() {
-		return calculateEffectiveAttribute(magic, CharacterAttribute.MAG);
+		int structuralValue = combatEffectState.hasDistortedAttributes() ? attack : magic;
+
+		return calculateEffectiveAttribute(structuralValue, CharacterAttribute.MAG);
 	}
 
 	public int getResistance() {
-		return calculateEffectiveAttribute(resistance, CharacterAttribute.RES);
+		int structuralValue = combatEffectState.hasDistortedAttributes() ? defense : resistance;
+
+		return calculateEffectiveAttribute(structuralValue, CharacterAttribute.RES);
 	}
 
 	public int getSpeed() {
@@ -294,6 +292,14 @@ public abstract class GameCharacter {
 		int effectiveStage = combatEffectState.getEffectiveStage(attribute);
 
 		return AttributeStageRules.applyMultiplier(structuralValue, effectiveStage);
+	}
+
+	public void toggleDistortedAttributes() {
+		combatEffectState.toggleDistortedAttributes();
+	}
+
+	public boolean hasDistortedAttributes() {
+		return combatEffectState.hasDistortedAttributes();
 	}
 
 }

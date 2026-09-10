@@ -38,6 +38,10 @@ public final class CombatEffectFormatter {
 			lines.add(String.join(" | ", attributeSummaries.subList(startIndex, endIndex)));
 		}
 
+		if (character.hasDistortedAttributes()) {
+			lines.add("Distorção Ancestral: ATK ⇄ MAG | DEF ⇄ RES");
+		}
+
 		return List.copyOf(lines);
 	}
 

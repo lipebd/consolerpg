@@ -11,75 +11,72 @@ import rpg.characters.EnemyRank;
 // Loads enemy definitions from an external text file.
 public class EnemyLoader {
 
-    public EnemyCatalog load(Path filePath) throws IOException {
-        EnemyCatalog catalog = new EnemyCatalog();
+	public EnemyCatalog load(Path filePath) throws IOException {
+		EnemyCatalog catalog = new EnemyCatalog();
 
-        List<String> lines = Files.readAllLines(filePath);
+		List<String> lines = Files.readAllLines(filePath);
 
-        for (String line : lines) {
-            line = line.trim();
+		for (int lineIndex = 0; lineIndex < lines.size(); lineIndex++) {
 
-            if (line.isBlank() || line.startsWith("#")) {
-                continue;
-            }
+			String line = lines.get(lineIndex).trim();
 
-            EnemyDefinition enemyDefinition = parseLine(line);
+			if (line.isBlank() || line.startsWith("#")) {
+				continue;
+			}
 
-            catalog.register(enemyDefinition);
-        }
+			int lineNumber = lineIndex + 1;
 
-        return catalog;
-    }
+			try {
+				EnemyDefinition enemyDefinition = parseLine(line);
 
-    private EnemyDefinition parseLine(String line) {
-        String[] fields = line.split(";", -1);
+				catalog.register(enemyDefinition);
+			} catch (IllegalArgumentException exception) {
+				throw new IllegalArgumentException(
+						"Invalid enemy definition at line " + lineNumber + " in " + filePath + ": "
+								+ exception.getMessage(),
+						exception
+				);
+			}
+		}
 
-        if (fields.length != 13) {
-            throw new IllegalArgumentException(
-                    "Dados inválidos: " + line
-            );
-        }
+		return catalog;
+	}
 
-        String id = fields[0].trim();
-        String name = fields[1].trim();
+	private EnemyDefinition parseLine(String line) {
+		String[] fields = line.split(";", -1);
 
-        int maxHp = Integer.parseInt(fields[2].trim());
-        int maxMp = Integer.parseInt(fields[3].trim());
-        int maxSp = Integer.parseInt(fields[4].trim());
-        int attack = Integer.parseInt(fields[5].trim());
-        int defense = Integer.parseInt(fields[6].trim());
-        int magic = Integer.parseInt(fields[7].trim());
-        int resistance = Integer.parseInt(fields[8].trim());
-        int speed = Integer.parseInt(fields[9].trim());
-        int luck = Integer.parseInt(fields[10].trim());
+		if (fields.length != 13) {
+			throw new IllegalArgumentException("Dados inválidos: " + line);
+		}
 
-        EnemyRank rank = EnemyRank.valueOf(
-                fields[11].trim().toUpperCase()
-        );
+		String id = fields[0].trim();
+		String name = fields[1].trim();
 
-        String description = fields[12]
-                .trim()
-                .replace("\\n", System.lineSeparator());
+		int maxHp = Integer.parseInt(fields[2].trim());
+		int maxMp = Integer.parseInt(fields[3].trim());
+		int maxSp = Integer.parseInt(fields[4].trim());
+		int attack = Integer.parseInt(fields[5].trim());
+		int defense = Integer.parseInt(fields[6].trim());
+		int magic = Integer.parseInt(fields[7].trim());
+		int resistance = Integer.parseInt(fields[8].trim());
+		int speed = Integer.parseInt(fields[9].trim());
+		int luck = Integer.parseInt(fields[10].trim());
 
-        CharacterStats stats = new CharacterStats(
-                maxHp,
-                maxMp,
-                maxSp,
-                attack,
-                defense,
-                magic,
-                resistance,
-                speed,
-                luck
-        );
+		EnemyRank rank = EnemyRank.valueOf(fields[11].trim().toUpperCase());
 
-        return new EnemyDefinition(
-                id,
-                name,
-                stats,
-                rank,
-                List.of(),
-                description
-        );
-    }
+		String description = fields[12].trim().replace("\\n", System.lineSeparator());
+
+		CharacterStats stats;
+
+		try {
+			stats = new CharacterStats(maxHp, maxMp, maxSp, attack, defense, magic, resistance, speed, luck);
+		} catch (IllegalArgumentException exception) {
+			throw new IllegalArgumentException(
+					"Invalid stats for enemy '" + id + "': " + exception.getMessage(),
+					exception
+			);
+		}
+
+		return new EnemyDefinition(id, name, stats, rank, List.of(), description);
+	}
 }

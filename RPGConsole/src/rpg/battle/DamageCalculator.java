@@ -25,10 +25,6 @@ public final class DamageCalculator {
 
 		Objects.requireNonNull(damageType, "Damage type cannot be null.");
 
-		if (damageType == DamageType.NONE) {
-			throw new IllegalArgumentException("Damage type cannot be NONE.");
-		}
-
 		if (skillPower < 0) {
 			throw new IllegalArgumentException("Skill power cannot be negative.");
 		}
@@ -64,8 +60,6 @@ public final class DamageCalculator {
 		return switch (damageType) {
 		case PHYSICAL -> attacker.getAttack();
 		case MAGICAL -> attacker.getMagic();
-
-		case NONE -> throw new IllegalArgumentException("Damage type cannot be NONE.");
 		};
 	}
 
@@ -73,8 +67,6 @@ public final class DamageCalculator {
 		return switch (damageType) {
 		case PHYSICAL -> target.getDefense();
 		case MAGICAL -> target.getResistance();
-
-		case NONE -> throw new IllegalArgumentException("Damage type cannot be NONE.");
 		};
 	}
 
@@ -82,8 +74,6 @@ public final class DamageCalculator {
 		return switch (damageType) {
 		case PHYSICAL -> PHYSICAL_BALANCE_FACTOR;
 		case MAGICAL -> MAGICAL_BALANCE_FACTOR;
-
-		case NONE -> throw new IllegalArgumentException("Damage type cannot be NONE.");
 		};
 	}
 }

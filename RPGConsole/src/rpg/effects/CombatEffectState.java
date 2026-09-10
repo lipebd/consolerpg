@@ -9,6 +9,7 @@ import rpg.characters.CharacterAttribute;
 // Tracks all mutable temporary attribute states of one character.
 public final class CombatEffectState {
 
+	private boolean attributesDistorted;
 	private final Map<CharacterAttribute, AttributeStageState> attributeStates;
 
 	public CombatEffectState() {
@@ -18,6 +19,7 @@ public final class CombatEffectState {
 
 			attributeStates.put(attribute, new AttributeStageState());
 		}
+		attributesDistorted = false;
 	}
 
 	public boolean applyTimedStages(CharacterAttribute attribute, int stageChange, int duration) {
@@ -97,11 +99,21 @@ public final class CombatEffectState {
 		return changed;
 	}
 
+	public void toggleDistortedAttributes() {
+		attributesDistorted = !attributesDistorted;
+	}
+
+	public boolean hasDistortedAttributes() {
+		return attributesDistorted;
+	}
+
 	public void clearAll() {
 		for (AttributeStageState state : attributeStates.values()) {
 
 			state.clearAll();
 		}
+
+		attributesDistorted = false;
 	}
 
 	public int getEffectiveStage(CharacterAttribute attribute) {

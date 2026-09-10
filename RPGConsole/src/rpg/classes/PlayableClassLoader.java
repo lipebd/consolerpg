@@ -19,16 +19,27 @@ public final class PlayableClassLoader {
 
 		List<String> lines = Files.readAllLines(filePath);
 
-		for (String line : lines) {
-			line = line.trim();
+		for (int lineIndex = 0; lineIndex < lines.size(); lineIndex++) {
+
+			String line = lines.get(lineIndex).trim();
 
 			if (line.isBlank() || line.startsWith("#")) {
 				continue;
 			}
 
-			PlayableClassDefinition classDefinition = parseLine(line);
+			int lineNumber = lineIndex + 1;
 
-			catalog.register(classDefinition);
+			try {
+				PlayableClassDefinition classDefinition = parseLine(line);
+
+				catalog.register(classDefinition);
+			} catch (IllegalArgumentException exception) {
+				throw new IllegalArgumentException(
+						"Invalid playable-class definition at line " + lineNumber + " in " + filePath + ": "
+								+ exception.getMessage(),
+						exception
+				);
+			}
 		}
 
 		return catalog;
@@ -72,17 +83,26 @@ public final class PlayableClassLoader {
 
 		String description = fields[14].trim().replace("\\n", System.lineSeparator());
 
-		CharacterStats baseStats = new CharacterStats(
-				baseHp,
-				baseMp,
-				baseSp,
-				baseAttack,
-				baseDefense,
-				baseMagic,
-				baseResistance,
-				baseSpeed,
-				baseLuck
-		);
+		CharacterStats baseStats;
+
+		try {
+			baseStats = new CharacterStats(
+					baseHp,
+					baseMp,
+					baseSp,
+					baseAttack,
+					baseDefense,
+					baseMagic,
+					baseResistance,
+					baseSpeed,
+					baseLuck
+			);
+		} catch (IllegalArgumentException exception) {
+			throw new IllegalArgumentException(
+					"Invalid stats for playable class '" + id + "': " + exception.getMessage(),
+					exception
+			);
+		}
 
 		return new PlayableClassDefinition(
 				id,

@@ -29,14 +29,14 @@ Each valid enemy line contains exactly 13 fields:
 | 1 | ID | `String` | `lobermo` |
 | 2 | Name | `String` | `Lobermo` |
 | 3 | Maximum HP | `int` | `50` |
-| 4 | Maximum MP | `int` | `0` |
-| 5 | Maximum SP | `int` | `0` |
+| 4 | Maximum MP | `int` | `1` |
+| 5 | Maximum SP | `int` | `1` |
 | 6 | Attack | `int` | `8` |
 | 7 | Defense | `int` | `5` |
-| 8 | Magic | `int` | `0` |
-| 9 | Resistance | `int` | `0` |
+| 8 | Magic | `int` | `1` |
+| 9 | Resistance | `int` | `1` |
 | 10 | Speed | `int` | `5` |
-| 11 | Luck | `int` | `0` |
+| 11 | Luck | `int` | `1` |
 | 12 | Enemy rank | `EnemyRank` | `COMMON` |
 | 13 | Description | `String` | `Uma criatura lupina...` |
 
@@ -49,7 +49,7 @@ Header:
 Example:
 
 ```text
-lobermo;Lobermo;50;0;0;8;5;0;0;5;0;COMMON;Uma criatura lupina que percorre os Verdes Ermos em busca de presas.
+lobermo;Lobermo;50;1;1;8;5;1;1;5;1;COMMON;Uma criatura lupina que percorre os Verdes Ermos em busca de presas.
 ```
 
 Supported enemy ranks:
@@ -70,6 +70,14 @@ enemies.txt
     -> EnemyDefinition
     -> Enemy
 ```
+
+Rules:
+
+- Maximum HP must be positive.
+- Maximum MP and SP cannot be negative.
+- ATK, DEF, MAG, RES, VEL and LCK must be positive.
+- Literal `\n` sequences in descriptions are converted into line breaks.
+- Invalid definitions report their source line and enemy ID.
 
 `EnemyLoader` ignores blank lines and comments, requires exactly 13 fields, converts numeric values and `EnemyRank`, creates `CharacterStats`, and registers an `EnemyDefinition`.
 
@@ -732,26 +740,139 @@ shop_stock.txt
     -> ShopStockCatalog
 ```
 
-## Planned future data files
-### Skill definitions
+## Skill definitions
 
-Planned file:
+General skill data is loaded from:
 
 `data/skills.txt`
 
-Recovery effect and target must use separate fields.
+Header:
 
-Planned fields include:
+```text
+# id;classId;acquisitionLevel;mpCost;spCost;name;description
+```
 
-- Stable skill ID.
-- Display name.
-- Required level.
-- Playable class ID.
-- Damage type.
-- Base damage.
-- Base healing.
-- Recovery type.
-- Recovery target type.
-- MP cost.
-- SP cost.
-- Description.
+Each valid line contains exactly 7 fields:
+
+| Position | Field | Java type | Example |
+|---:|---|---|---|
+| 1 | Skill ID | `String` | `quebra_armadura` |
+| 2 | Playable-class ID | `String` | `flagelo` |
+| 3 | Acquisition level | `int` | `3` |
+| 4 | MP cost | `int` | `0` |
+| 5 | SP cost | `int` | `20` |
+| 6 | Name | `String` | `Quebra-Armadura` |
+| 7 | Description | `String` | `Ataca e reduz a defesa do alvo.` |
+
+Rules:
+
+- Skill and class IDs must use stable lowercase IDs.
+- Acquisition level must be positive.
+- MP and SP costs cannot be negative.
+- Name and description cannot be empty.
+- Literal `\n` sequences in descriptions are converted into line breaks.
+- Every skill must receive at least one component from `skill_effects.txt`.
+- Skill IDs must be unique.
+
+Example:
+
+```text
+quebra_armadura;flagelo;3;0;20;Quebra-Armadura;Ataca o alvo e reduz sua defesa.
+```
+
+## Skill-effect definitions
+
+Ordered skill components are loaded from:
+
+`data/skill_effects.txt`
+
+Header:
+
+```text
+# skillId;sequence;phase;effectType;targetType;damageType;power;attribute;stages;duration;triggerChancePercent;specialStateType;conditionType;conditionValue
+```
+
+Each valid line contains exactly 14 fields:
+
+| Position | Field | Java type | Empty value |
+|---:|---|---|---|
+| 1 | Skill ID | `String` | Not allowed |
+| 2 | Sequence | `int` | Not allowed |
+| 3 | Execution phase | `SkillExecutionPhase` | Not allowed |
+| 4 | Effect type | `SkillEffectType` | Not allowed |
+| 5 | Target type | `SkillTargetType` | Not allowed |
+| 6 | Damage type | `DamageType` | Allowed when inapplicable |
+| 7 | Power | `Integer` | Allowed when inapplicable |
+| 8 | Attribute | `CharacterAttribute` | Allowed when inapplicable |
+| 9 | Stages | `Integer` | Allowed when inapplicable |
+| 10 | Duration | `Integer` | Allowed when inapplicable |
+| 11 | Trigger chance | `int` | Defaults to `100` |
+| 12 | Special state type | `SpecialBattleStateType` | Allowed when inapplicable |
+| 13 | Condition type | `SkillConditionType` | Not allowed |
+| 14 | Condition value | `Integer` | Allowed when inapplicable |
+
+Execution phases:
+
+- `PRE_ACTION`
+- `PRIMARY`
+- `POST_ACTION`
+
+Effect types:
+
+- `DAMAGE`
+- `DAMAGE_POWER_MODIFIER`
+- `HP_RECOVERY`
+- `MP_RECOVERY`
+- `SP_RECOVERY`
+- `REVIVE`
+- `ATTRIBUTE_STAGE`
+- `PURIFICATION`
+- `DISSIPATION`
+- `SPECIAL_STATE`
+
+Target types:
+
+- `SELF`
+- `SINGLE_ALLY`
+- `ALL_ALLIES`
+- `ALL_BUT_SELF`
+- `RANDOM_ALLY`
+- `SINGLE_ENEMY`
+- `ALL_ENEMIES`
+- `RANDOM_ENEMY`
+
+Rules:
+
+- Sequences must be positive, unique and declared in ascending order within each skill.
+- Phases cannot move backwards from `PRE_ACTION` to `PRIMARY` to `POST_ACTION`.
+- Empty `triggerChancePercent` means `100`; explicit values must be between `1` and `100`.
+- Trigger chance is configured per component and rolled once for all of that component's applicable targets.
+- Damage requires `PHYSICAL` or `MAGICAL` damage type and positive power.
+- HP recovery and revival require positive power and an `ATK` or `MAG` scaling attribute.
+- MP and SP recovery use fixed positive power and leave the attribute field empty.
+- Attribute-stage components require an attribute and stages from `-3` to `3`, excluding zero.
+- Non-VEL stages require a positive duration; VEL stages leave duration empty.
+- `DISTORTED_ATTRIBUTES` uses `SPECIAL_STATE` and currently targets `SINGLE_ENEMY`.
+- `DAMAGE_POWER_MODIFIER` must precede a compatible damage component with the same target type.
+- Condition type `NONE` leaves `conditionValue` empty.
+- HP-percentage conditions require a value between `1` and `100`.
+
+Examples:
+
+```text
+quebra_armadura;1;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;10;;;;;;NONE;
+quebra_armadura;2;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ENEMY;;;DEF;-1;2;;;NONE;
+perseveranca;2;POST_ACTION;HP_RECOVERY;SELF;;20;ATK;;;;;NONE;
+abraco_da_floresta;1;PRIMARY;HP_RECOVERY;SINGLE_ALLY;;30;MAG;;;;;NONE;
+distorcao_ancestral;1;PRIMARY;SPECIAL_STATE;SINGLE_ENEMY;;;;;;;DISTORTED_ATTRIBUTES;NONE;
+```
+
+Loading flow:
+
+```text
+skills.txt + skill_effects.txt
+    -> SkillLoader
+    -> SkillDefinition
+    -> ordered SkillEffectDefinition components
+    -> SkillCatalog
+```

@@ -168,7 +168,9 @@ public final class SkillLoader {
 
 		Integer duration = parseOptionalInteger(fields[9], "duration", skillId);
 
-		int chancePercent = parseRequiredInteger(fields[10], "chance percentage", skillId);
+		Integer configuredTriggerChancePercent = parseOptionalInteger(fields[10], "trigger chance percentage", skillId);
+
+		int triggerChancePercent = configuredTriggerChancePercent == null ? 100 : configuredTriggerChancePercent;
 
 		SpecialBattleStateType specialStateType = parseOptionalEnum(
 				fields[11],
@@ -196,7 +198,7 @@ public final class SkillLoader {
 				attribute,
 				stages,
 				duration,
-				chancePercent,
+				triggerChancePercent,
 				specialStateType,
 				conditionType,
 				conditionValue

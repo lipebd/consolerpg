@@ -22,10 +22,6 @@ import rpg.items.ItemFactory;
 import rpg.items.ItemLoader;
 import rpg.items.RecoveryItemDefinitionCatalog;
 import rpg.items.RecoveryItemLoader;
-import rpg.skills.DamageType;
-import rpg.skills.RecoveryType;
-import rpg.skills.Skill;
-import rpg.skills.SkillTargetType;
 import rpg.skills.SkillCatalog;
 import rpg.skills.SkillLoader;
 import rpg.ui.ConsoleUI;
@@ -183,7 +179,11 @@ public class Main {
 				10 // LCK
 		);
 
-		PlayableCharacter flagelo = new PlayableCharacter("Flagelo", flageloStats);
+		PlayableCharacter flagelo = new PlayableCharacter(
+				"Flagelo",
+				flageloStats,
+				skillCatalog.getByClassId("flagelo")
+		);
 
 		Party party = new Party(flagelo);
 
@@ -199,110 +199,9 @@ public class Main {
 				14 // LCK
 		);
 
-		PlayableCharacter bardo = new PlayableCharacter("Bardo", bardoStats);
+		PlayableCharacter bardo = new PlayableCharacter("Bardo", bardoStats, skillCatalog.getByClassId("bardo"));
 
 		party.addMember(bardo);
-
-		Skill investida = new Skill(
-				"Investida",
-				1,
-				DamageType.PHYSICAL,
-				5,
-				0,
-				RecoveryType.NONE,
-				SkillTargetType.NONE,
-				0,
-				10,
-				"Corre até o alvo e o atropela.\nCausa dano físico moderado e pode causar dano a si mesmo."
-		);
-
-		Skill perseveranca = new Skill(
-				"Perseverança",
-				1,
-				DamageType.NONE,
-				0,
-				10,
-				RecoveryType.HEAL,
-				SkillTargetType.SELF,
-				0,
-				10,
-				"Mesmo ferido, firma seus pés em batalha e avança sobre o inimigo causando dano físico."
-						+ "\nAo final do ataque, recupera uma pequena quantidade do próprio HP"
-		);
-
-		Skill palavraCurativa = new Skill(
-				"Palavra Curativa",
-				1,
-				DamageType.NONE,
-				0,
-				35,
-				RecoveryType.HEAL,
-				SkillTargetType.SINGLE_ALLY,
-				0,
-				10,
-				"Uma frase inspiradora, um grito de ajuda, ou apenas uma ordem, que restaura 35 de HP de um aliado."
-		);
-
-		Skill inspiracaoDoBardo = new Skill(
-				"Inspiração do Bardo",
-				1,
-				DamageType.NONE,
-				0,
-				10,
-				RecoveryType.HEAL,
-				SkillTargetType.ALL_ALLIES,
-				0,
-				10,
-				"Inspira seus aliados, curando HP de todo o grupo."
-		);
-
-		Skill chamadoDosEcos = new Skill(
-				"Chamado dos Ecos (TEMP)",
-				1,
-				DamageType.NONE,
-				0,
-				10,
-				RecoveryType.HEAL,
-				SkillTargetType.ALL_BUT_SELF,
-				0,
-				10,
-				"Entra em um transe altruísta, invocando forças obscuras para normalizar e curar os aliados enquanto abre mão da sua própria cura."
-						+ "\nReforça a DEF e RES dos aliados em 2 pontos por 2 turnos."
-		);
-
-		Skill reviveUm = new Skill(
-				"Revive um (TEMP)",
-				1,
-				DamageType.NONE,
-				0,
-				100,
-				RecoveryType.REVIVE,
-				SkillTargetType.SINGLE_ALLY,
-				0,
-				15,
-				"Skill de teste. Revive um aliado."
-		);
-
-		Skill reviveTodos = new Skill(
-				"Revive todos (TEMP)",
-				1,
-				DamageType.NONE,
-				0,
-				50,
-				RecoveryType.REVIVE,
-				SkillTargetType.ALL_ALLIES,
-				0,
-				15,
-				"Skill de teste. Revive todos os aliados."
-		);
-
-		flagelo.learnSkill(investida);
-		flagelo.learnSkill(perseveranca);
-		flagelo.learnSkill(chamadoDosEcos);
-		flagelo.learnSkill(reviveUm);
-		bardo.learnSkill(inspiracaoDoBardo);
-		bardo.learnSkill(palavraCurativa);
-		bardo.learnSkill(reviveTodos);
 
 		World world = new World(
 				party,

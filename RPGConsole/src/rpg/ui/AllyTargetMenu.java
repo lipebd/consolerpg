@@ -5,9 +5,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Scanner;
 
-import rpg.items.RecoveryItem;
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
+import rpg.items.RecoveryItem;
 
 //Controls party-member selection according to the current target context.
 public final class AllyTargetMenu {
@@ -93,12 +93,4 @@ public final class AllyTargetMenu {
 		}
 	}
 
-	public Optional<PlayableCharacter> selectInjuredTarget(Party party) {
-		Objects.requireNonNull(party, "Party cannot be null.");
-
-		List<PlayableCharacter> injuredMembers = party.getLivingMembers().stream()
-				.filter(member -> member.getCurrentHp() < member.getMaxHp()).toList();
-
-		return selectTarget(injuredMembers, "Escolha um aliado para curar:", "Nenhum aliado precisa de cura.");
-	}
 }

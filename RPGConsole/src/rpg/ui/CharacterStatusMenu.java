@@ -5,7 +5,7 @@ import java.util.Objects;
 import java.util.Scanner;
 
 import rpg.characters.PlayableCharacter;
-import rpg.skills.Skill;
+import rpg.skills.SkillDefinition;
 
 // Displays the detailed status of one playable character.
 public final class CharacterStatusMenu {
@@ -62,24 +62,39 @@ public final class CharacterStatusMenu {
 				+ character.getLuck());
 	}
 
-	private void displaySkills(PlayableCharacter character) {
-		List<Skill> skills = character.getSkills();
+private void displaySkills(
+		PlayableCharacter character
+) {
+	List<SkillDefinition> skills =
+			character.getUnlockedSkillDefinitions();
 
-		System.out.println("\n[HABILIDADES DE " + character.getName().toUpperCase() + "]");
+	System.out.println(
+			"\n[HABILIDADES DE "
+					+ character.getName().toUpperCase()
+					+ "]"
+	);
 
-		if (skills.isEmpty()) {
-			System.out.println("Nenhuma habilidade aprendida.");
-		} else {
-			for (Skill skill : skills) {
-				System.out.println("\n- " + skill.getName() + " | Nv. " + skill.getRequiredLevel());
+	if (skills.isEmpty()) {
+		System.out.println(
+				"Nenhuma habilidade aprendida."
+		);
+	} else {
+		for (SkillDefinition skill : skills) {
+			System.out.println(
+					"\n- "
+							+ skill.getName()
+							+ " | Nv. "
+							+ skill.getAcquisitionLevel()
+			);
 
-				System.out.println("  " + skill.getDescription());
-			}
+			System.out.println(
+					"  " + skill.getDescription()
+			);
 		}
-
-		waitForBack();
 	}
 
+	waitForBack();
+}
 	private void waitForBack() {
 		while (true) {
 			System.out.println("\n[0] Voltar");

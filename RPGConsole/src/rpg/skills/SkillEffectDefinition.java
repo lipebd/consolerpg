@@ -20,7 +20,7 @@ public final class SkillEffectDefinition {
 	private final CharacterAttribute attribute;
 	private final Integer stages;
 	private final Integer duration;
-	private final int chancePercent;
+	private final int triggerChancePercent;
 	private final SpecialBattleStateType specialStateType;
 	private final SkillConditionType conditionType;
 	private final Integer conditionValue;
@@ -35,7 +35,7 @@ public final class SkillEffectDefinition {
 			CharacterAttribute attribute,
 			Integer stages,
 			Integer duration,
-			int chancePercent,
+			int triggerChancePercent,
 			SpecialBattleStateType specialStateType,
 			SkillConditionType conditionType,
 			Integer conditionValue
@@ -48,22 +48,17 @@ public final class SkillEffectDefinition {
 		this.phase = Objects.requireNonNull(phase, "Skill execution phase cannot be null.");
 		this.effectType = Objects.requireNonNull(effectType, "Skill effect type cannot be null.");
 		this.targetType = Objects.requireNonNull(targetType, "Skill effect target type cannot be null.");
+		if (triggerChancePercent < 1 || triggerChancePercent > 100) {
+			throw new IllegalArgumentException("Skill effect trigger chance " + "must be between 1 and 100.");
+		}
 		this.conditionType = Objects.requireNonNull(conditionType, "Skill condition type cannot be null.");
-
-		if (targetType == SkillTargetType.NONE) {
-			throw new IllegalArgumentException("Skill effect target type cannot be NONE.");
-		}
-
-		if (chancePercent < 1 || chancePercent > 100) {
-			throw new IllegalArgumentException("Skill effect chance must be between 1 and 100.");
-		}
 
 		this.damageType = damageType;
 		this.power = power;
 		this.attribute = attribute;
 		this.stages = stages;
 		this.duration = duration;
-		this.chancePercent = chancePercent;
+		this.triggerChancePercent = triggerChancePercent;
 		this.specialStateType = specialStateType;
 		this.conditionValue = conditionValue;
 
@@ -93,7 +88,9 @@ public final class SkillEffectDefinition {
 
 		case DAMAGE_POWER_MODIFIER -> validateDamagePowerModifier();
 
-		case HP_RECOVERY, MP_RECOVERY, SP_RECOVERY -> validateResourceRecovery();
+		case HP_RECOVERY -> validateHpRecovery();
+
+		case MP_RECOVERY, SP_RECOVERY -> validateFixedResourceRecovery();
 
 		case REVIVE -> validateRevival();
 
@@ -108,7 +105,7 @@ public final class SkillEffectDefinition {
 	}
 
 	private void validateDamage() {
-		if (damageType == null || damageType == DamageType.NONE) {
+		if (damageType == null) {
 			throw new IllegalArgumentException("A damage effect must define a valid damage type.");
 		}
 
@@ -134,9 +131,22 @@ public final class SkillEffectDefinition {
 		rejectSpecialState();
 	}
 
-	private void validateResourceRecovery() {
+	private void validateHpRecovery() {
 		if (!isAllyTarget()) {
-			throw new IllegalArgumentException("A resource-recovery effect must target allies.");
+			throw new IllegalArgumentException("An HP-recovery effect must target allies.");
+		}
+
+		requirePositivePower();
+		requireRecoveryScalingAttribute();
+
+		rejectDamageType();
+		rejectAttributeStageData();
+		rejectSpecialState();
+	}
+
+	private void validateFixedResourceRecovery() {
+		if (!isAllyTarget()) {
+			throw new IllegalArgumentException("An MP/SP-recovery effect must target allies.");
 		}
 
 		requirePositivePower();
@@ -148,13 +158,15 @@ public final class SkillEffectDefinition {
 
 	private void validateRevival() {
 		if (!isAllyTarget() || targetType == SkillTargetType.SELF) {
+
 			throw new IllegalArgumentException("A revival effect must target one or more allies.");
 		}
 
 		requirePositivePower();
+		requireRecoveryScalingAttribute();
 
 		rejectDamageType();
-		rejectAttributeData();
+		rejectAttributeStageData();
 		rejectSpecialState();
 	}
 
@@ -228,6 +240,19 @@ public final class SkillEffectDefinition {
 		rejectPower();
 		rejectAttributeData();
 		rejectSpecialState();
+	}
+
+	private void requireRecoveryScalingAttribute() {
+		if (attribute != CharacterAttribute.ATK && attribute != CharacterAttribute.MAG) {
+
+			throw new IllegalArgumentException(effectType + " must scale with ATK or MAG.");
+		}
+	}
+
+	private void rejectAttributeStageData() {
+		if (stages != null || duration != null) {
+			throw new IllegalArgumentException(effectType + " cannot define stages or duration.");
+		}
 	}
 
 	private void rejectDamageType() {
@@ -306,8 +331,8 @@ public final class SkillEffectDefinition {
 		return duration;
 	}
 
-	public int getChancePercent() {
-		return chancePercent;
+	public int getTriggerChancePercent() {
+		return triggerChancePercent;
 	}
 
 	public SpecialBattleStateType getSpecialStateType() {
