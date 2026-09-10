@@ -28,10 +28,14 @@ Alguns nomes aparecem repetidamente porque representam papéis diferentes dentro
 | `Session` / `Progress` | Guarda estado mutável que muda enquanto o jogador avança. |
 | `Entry` | Representa uma entrada individual de uma fila, tabela ou grupo de dados. |
 | `Service` | Executa uma regra específica sem assumir o controle do fluxo completo do jogo. |
+| `Calculator` | Centraliza uma fórmula ou cálculo de domínio sem controlar o fluxo que o utiliza. |
 | `Coordinator` | Conecta vários objetos e serviços para executar um processo maior. |
+| `Execution` | Guarda o estado mutável e limitado de uma única execução de uma ação composta. |
+| `Context` | Agrupa as entradas compartilhadas por uma execução, como usuário e alvos. |
 | `Menu` | Exibe opções, lê a escolha do jogador e devolve o resultado para quem chamou. |
 | `Screen` | Exibe informações; normalmente não decide regras do domínio. |
 | `Result` | Transporta o resultado já calculado de uma operação para outra camada. |
+| `Outcome` | Enumera as conclusões possíveis de uma tentativa sem exigir inferência da interface. |
 | `enum` | Define um conjunto fechado de valores válidos e evita o uso de textos soltos para representar estados. |
 
 ## Fluxos fundamentais
@@ -65,6 +69,9 @@ Enemy           = uma ocorrência mutável dentro de uma batalha
 
 ScenarioDefinition = dados comuns carregados de scenarios.txt
 Scenario           = cenário de execução usado por World
+
+SkillDefinition = conteúdo imutável e reutilizável da habilidade
+SkillExecution  = estado temporário de uma única utilização
 ```
 
 ### Coordenação principal
@@ -101,12 +108,23 @@ BattleCoordinator
 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
-| `CharacterStats` | Dados imutáveis | Agrupa os valores-base completos de um personagem: HP, MP, SP, ataque, defesa, magia, resistência, velocidade e sorte. É usado na criação de `PlayableCharacter`, `Enemy` e `EnemyDefinition`, evitando construtores com muitos números desconectados. |
-| `GameCharacter` | Classe-base de execução | Representa o estado e o comportamento compartilhados por aliados e inimigos. Guarda recursos mutáveis, como HP, MP e SP atuais, e fornece operações comuns, como atacar, defender, receber dano, gastar recursos, recuperar HP e verificar se está vivo. É herdada por `PlayableCharacter` e `Enemy`. |
-| `PlayableCharacter` | Personagem jogável | Estende `GameCharacter` com dados controlados pelo jogador: nível, EXP, habilidades aprendidas e progressão individual. Seus objetos pertencem a `Party` e participam das batalhas como aliados. |
+| `CharacterStats` | Dados imutáveis validados | Agrupa HP, MP, SP, ataque, defesa, magia, resistência, velocidade e sorte. Exige HP máximo e todos os atributos regulares positivos; MP e SP máximos podem ser zero. É usado na criação de `PlayableCharacter`, `Enemy` e `EnemyDefinition`. |
+| `GameCharacter` | Classe-base de execução | Guarda HP, MP e SP atuais e o estado temporário de combate compartilhado por aliados e inimigos. Fornece operações de dano, defesa, recuperação, ressurreição, gasto de recursos, estágios de atributo, Distorção Ancestral e consulta de atributos efetivos. O cálculo de ataques pertence a `DamageCalculator`. |
+| `PlayableCharacter` | Personagem jogável | Estende `GameCharacter` com nível, EXP, definição de classe e definições de habilidade desbloqueadas. Seus objetos pertencem a `Party` e participam das batalhas como aliados. |
 | `Enemy` | Inimigo de execução | Estende `GameCharacter` e representa uma ocorrência mutável de um inimigo dentro de uma batalha. Recebe seus dados de `EnemyDefinition`, possui rank, descrição e tabela de drops, e é colocado em `EnemyBattleSlot`. Vários objetos `Enemy` podem nascer da mesma definição sem compartilhar HP. |
 | `EnemyRank` | Enum de domínio | Define os ranks válidos dos inimigos, como comum, veterano, líder, boss, épico e lendário. É usado por loaders, definições, recompensas e validações de dungeon. |
 | `Party` | Estado compartilhado do grupo | Armazena de um a quatro `PlayableCharacter`, além do inventário e ouro compartilhados. É consumida por `World`, `Battle`, menus e serviços de recompensa. Recursos e progressão individuais continuam pertencendo a cada personagem. |
+
+---
+
+## Pacote `rpg.classes`
+
+| Classe | Categoria | Finalidade e relações principais |
+|---|---|---|
+| `PlayableClassDefinition` | Definição imutável | Armazena ID, nome, atributos-base, atributos primário e secundário, categoria de peso e descrição de uma classe jogável. É referenciada por `PlayableCharacter` e pelas definições de habilidade. |
+| `PlayableClassLoader` | Carregamento de dados | Lê as sete classes de `playable_classes.txt`, interpreta descrições com `\n`, cria `CharacterStats`, valida os dados e acrescenta linha e ID ao erro quando um cadastro é inválido. |
+| `PlayableClassCatalog` | Catálogo | Registra e localiza `PlayableClassDefinition` por ID estável e permite que `SkillLoader` valide a classe associada a cada habilidade. |
+| `PlayableClassWeight` | Enum de domínio | Define as categorias de peso das classes, usadas agora na validação e futuramente na compatibilidade com armaduras. |
 
 ---
 
@@ -114,7 +132,7 @@ BattleCoordinator
 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
-| `EnemyLoader` | Carregamento de dados | Lê `enemies.txt`, ignora comentários e linhas vazias, converte atributos e rank, interpreta quebras literais `\n` e cria `EnemyDefinition`. Registra cada definição em `EnemyCatalog`. |
+| `EnemyLoader` | Carregamento de dados | Lê `enemies.txt`, ignora comentários e linhas vazias, converte atributos e rank, interpreta quebras literais `\n` e cria `EnemyDefinition`. Registra cada definição em `EnemyCatalog` e acrescenta linha e ID ao erro quando os dados são inválidos. |
 | `EnemyDefinition` | Definição imutável | Armazena o ID, nome, atributos, rank e descrição reutilizáveis de um tipo de inimigo. É consultada por encontros, bosses e épicos. O `BattleCoordinator` usa a definição para criar um novo `Enemy` mutável. |
 | `EnemyCatalog` | Catálogo | Registra `EnemyDefinition` por ID estável, rejeita IDs duplicados e permite recuperar a definição de um inimigo. É usado por loaders que validam referências, por `EncounterGenerator`, por dungeons e por `BattleCoordinator`. |
 | `EnemyDropLoader` | Carregamento de dados | Lê `enemy_drops.txt`, valida os IDs de inimigos usando `EnemyCatalog`, resolve os itens completos no `ItemCatalog` recebido, cria `DropEntry` e registra as entradas em `EnemyDropCatalog`. |
@@ -146,7 +164,7 @@ Enemy           -> luta e perde HP durante uma batalha
 | `ItemFactory` | Fábrica de execução | Combina cada `ItemDefinition` com sua eventual definição especializada. Cria `RecoveryItem` quando existe uma especialização de recuperação e `BasicItem` quando o item ainda não possui comportamento próprio. |
 | `Item` | Classe-base de domínio | Classe-base dos itens em runtime. Copia da definição a identidade, a categoria, `playerTradable`, `baseShopSalePrice`, `shopPurchasePrice`, nome e descrição. |
 | `BasicItem` | Item básico | Implementação concreta mínima de `Item` para categorias que ainda não possuem comportamento especializado. Pode ser armazenado, exibido e recebido como recompensa, mas não executa uma ação de uso. |
-| `RecoveryItem` | Item de recuperação | Especializa `Item` com efeitos combináveis de HP, MP, SP, ressurreição e futura purificação. Verifica alvos elegíveis, aplica ressurreição antes da recuperação comum de HP e devolve um `RecoveryItemUseResult`. |
+| `RecoveryItem` | Item de recuperação | Especializa `Item` com efeitos combináveis de HP, MP, SP, ressurreição e purificação. Verifica alvos elegíveis, aplica ressurreição antes da recuperação comum de HP e devolve um `RecoveryItemUseResult`. |
 | `RecoveryItemUseResult` | Resultado imutável | Informa separadamente os efeitos realmente produzidos por um uso, evitando que menus precisem deduzir o resultado comparando estados anteriores e posteriores do personagem. |
 | `ItemCatalog` | Catálogo de execução | Registra os objetos `Item` completos criados por `ItemFactory`, rejeita IDs duplicados e permite resolvê-los por ID. É usado por drops, exploração e demais fluxos que precisam do item de execução, não das definições cruas. |
 | `Inventory` | Estado mutável | Guarda os itens pertencentes à `Party` e suas quantidades compartilhadas. Permite adicionar, remover, consultar e listar itens; não impõe peso nem limite de capacidade. |
@@ -157,10 +175,26 @@ Enemy           -> luta e perde HP durante uma batalha
 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
-| `Skill` | Definição de habilidade | Armazena os dados necessários para usar uma habilidade: nível exigido, custos, dano, cura, tipos e alvo. Atualmente é criada em Java e aprendida por `PlayableCharacter`; `Battle` interpreta seus dados ao executar a ação. |
-| `DamageType` | Enum de domínio | Identifica a natureza do dano de uma habilidade, permitindo que `Battle` escolha os atributos e cálculos adequados. |
-| `RecoveryType` | Enum de domínio | Informa se a habilidade não recupera recursos, cura HP ou revive um aliado. Trabalha em conjunto com `SkillTargetType`. |
-| `SkillTargetType` | Enum de domínio | Define quais alvos uma habilidade aceita, como o próprio usuário, um aliado, todos os aliados, um inimigo ou todos os inimigos. Orienta `Battle`, `AllyTargetMenu` e `EnemyTargetMenu`. |
+| `SkillDefinition` | Definição imutável | Combina identidade, classe, nível de aquisição, custos, nome, descrição e lista ordenada de componentes de uma habilidade. Pode ser referenciada diretamente pelo personagem porque o estado mutável de cada uso fica em `SkillExecution`. |
+| `SkillEffectDefinition` | Definição imutável de componente | Representa um componente de dano, recuperação, estágio, purificação, dissipação, modificador ou estado especial. Valida quais campos são obrigatórios, opcionais ou proibidos para cada tipo. |
+| `SkillLoader` | Carregamento de dados | Lê `skills.txt` e `skill_effects.txt`, valida IDs de classe, cabeçalhos, componentes, sequência, fases e referências cruzadas e registra habilidades completas. |
+| `SkillCatalog` | Catálogo | Registra `SkillDefinition` por ID estável e oferece as definições carregadas aos personagens e sistemas consumidores. |
+| `SkillEffectType` | Enum de domínio | Define os tipos fechados de componente reconhecidos pelo executor. |
+| `SkillTargetType` | Enum de alvo | Define alvos como usuário, aliado, inimigo, grupos completos ou alvos aleatórios. Orienta a seleção feita uma única vez para a execução. |
+| `SkillExecutionPhase` | Enum de fase | Ordena componentes em `PRE_ACTION`, `PRIMARY` e `POST_ACTION`. |
+| `SkillConditionType` | Enum de condição | Define condições opcionais avaliadas antes da aplicabilidade e dos testes probabilísticos. |
+| `DamageType` | Enum de domínio | Distingue dano físico e mágico para que `DamageCalculator` use o atributo ofensivo, a defesa e o fator adequados. |
+
+---
+
+## Pacote `rpg.effects`
+
+| Classe | Categoria | Finalidade e relações principais |
+|---|---|---|
+| `CombatEffectState` | Estado mutável agregado | Guarda os estados positivos e negativos de cada atributo e o estado de Distorção Ancestral de um personagem. Centraliza aplicação, redução, purificação, dissipação e limpeza. |
+| `AttributeStageState` | Estado mutável | Mantém separadamente estágios positivos e negativos e suas durações para um atributo. |
+| `AttributeStageRules` | Regras imutáveis | Limita estágios, aplica os multiplicadores congelados e faz o arredondamento half-up do atributo efetivo. |
+| `SpecialBattleStateType` | Enum de domínio | Define estados especiais que não pertencem automaticamente às regras de purificação e dissipação. |
 
 ---
 
@@ -180,6 +214,14 @@ Enemy           -> luta e perde HP durante uma batalha
 | `EnemyBattleSlot` | Posição de batalha | Liga um `Enemy` de execução ao nome usado durante a batalha. Permite numerar inimigos repetidos, como `Lobermo 1` e `Lobermo 2`, sem alterar o nome original da definição. |
 | `BattleEscapeService` | Serviço de regra | Calcula a tentativa de fuga em duas etapas usando sorte, velocidade e médias dos inimigos vivos. Não encerra a batalha diretamente; devolve `EscapeAttemptResult` para `Battle`. |
 | `EscapeAttemptResult` | Objeto de resultado | Transporta o sucesso ou fracasso da fuga e os valores de chance relevantes para que `Battle` possa aplicar a consequência e apresentar o resultado. |
+| `DamageCalculator` | Calculador de domínio | Centraliza a fórmula de dano físico e mágico usada por habilidades e ataques básicos. Mantém `KF` e `KM` como constantes internas de balanceamento. |
+| `RecoveryCalculator` | Calculador de domínio | Calcula recuperação de HP e ressurreição a partir do poder e do ATK ou MAG efetivo indicado pelo componente. MP e SP permanecem fixos. |
+| `EffectResistanceCalculator` | Calculador de domínio | Calcula e sorteia a resistência baseada na LCK efetiva do aplicador e na RES efetiva do alvo. Mantém `KR` e o teto de chance em um único lugar. |
+| `SkillExecutor` | Executor de domínio | Orquestra condições, aplicabilidade, um trigger por componente, resistência individual e aplicação. Reutiliza calculadores e operações de `GameCharacter` sem repetir suas fórmulas. |
+| `SkillExecution` | Estado de uma utilização | Preserva os resultados, modificadores acumulados e componentes `POST_ACTION` de uma única utilização de habilidade. |
+| `SkillExecutionContext` | Contexto imutável | Agrupa o usuário e os alvos selecionados uma única vez para todos os componentes da habilidade. |
+| `SkillEffectResult` | Resultado imutável | Associa componente, alvo, desfecho e valor produzido para que `Battle` apenas apresente o resultado. |
+| `SkillEffectOutcome` | Enum de resultado | Distingue `APPLIED`, `RESISTED` e `NOT_TRIGGERED`. |
 
 ### Fluxo resumido da batalha
 
@@ -189,6 +231,7 @@ World
     -> EnemyDefinition vira Enemy
     -> EnemyBattleGroup
     -> Battle
+    -> SkillExecutor, quando a ação é uma habilidade
     -> BattleResult
     -> World
 ```
@@ -227,12 +270,13 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 | `ItemMenuFormatter` | Formatador de interface | Centraliza a largura das colunas, o truncamento seguro de nomes longos e o resumo dos componentes de recuperação usados pelas telas de inventário. |
 | `PartyStatusMenu` | Menu de consulta | Exibe uma visão resumida dos membros da `Party` e da moeda compartilhada formatada por `GameCurrency`. Permite selecionar um integrante para abrir `CharacterStatusMenu`. |
 | `CharacterStatusMenu` | Tela de consulta | Mostra os detalhes de um `PlayableCharacter`: recursos, atributos, nível, EXP e habilidades. Recebe o personagem selecionado por `PartyStatusMenu`. A visualização de habilidades aguarda um comando explícito para retornar. |
-| `AllyTargetMenu` | Menu de alvo | Exibe aliados válidos conforme o contexto, como vivos, feridos ou derrotados, e devolve o `PlayableCharacter` escolhido. É usado por itens e habilidades de cura ou ressurreição. |
+| `AllyTargetMenu` | Menu de alvo | Exibe aliados vivos ou derrotados conforme o contexto e devolve o `PlayableCharacter` escolhido. Um aliado vivo pode ser selecionado mesmo com HP cheio porque componentes compostos ainda podem purificá-lo ou fortalecê-lo. |
 | `EnemyTargetMenu` | Menu de alvo | Exibe apenas inimigos vivos de `EnemyBattleGroup` e devolve o `EnemyBattleSlot` escolhido. É usado por ataques, habilidades e análise. |
+| `CombatEffectFormatter` | Formatador de interface | Produz a apresentação compartilhada dos estágios ativos e da Distorção Ancestral sem mover regras de duração ou atributo para a interface. |
 | `EpicEncounterMenu` | Menu de confirmação | Recebe uma lista de uma a três `EnemyDefinition`, apresenta nomes e descrições do encontro épico e pergunta se o jogador deseja enfrentá-lo. Devolve apenas a decisão; `World` inicia a batalha. |
 | `BattleTurnOrderScreen` | Tela | Mostra o participante atual e uma prévia das próximas ações usando `BattleTurnOrder`. Não gera nem altera a fila. |
 | `BattleRewardScreen` | Tela | Exibe `BattleRewards`, incluindo EXP, moeda formatada por `GameCurrency`, níveis e itens obtidos. Não calcula nem concede as recompensas. |
-| `ShopMenu` | Interface compartilhada por lojas urbanas e mercadores de exploração. Exibe ofertas, categorias vendáveis, confirmações, paginação, preços, estoque e feedback das transações. |
+| `ShopMenu` | Menu comercial | Interface compartilhada por lojas urbanas e mercadores de exploração. Exibe ofertas, categorias vendáveis, confirmações, paginação, preços, estoque e feedback das transações. |
 
 ---
 
@@ -504,11 +548,6 @@ CityTransportDefinition = preço e narrativa do transporte pago para uma cidade
 WorldProgress           = cenários que o jogador já descobriu
 CityTransportMenu       = seleção, confirmação e pagamento
 World                   = mudança efetiva para a cidade escolhida
-
-Atenção: o último bloco contém uma cerca Markdown interna; feche-a normalmente depois da linha de `World`.
-
-Depois salve. Não precisa mandar os trechos; execute apenas:
-
 ```
 
 ## Mapa rápido de dependências
@@ -518,9 +557,14 @@ Depois salve. Não precisa mandar os trechos; execute apenas:
 | Inicialização e montagem | `Main` | loaders → catálogos → serviços → `World` |
 | Fluxo geral do jogo | `World` | cenário → exploração/rotas/transporte → batalha |
 | Dados de um inimigo | `EnemyDefinition` | `EnemyLoader` → `EnemyCatalog` → `EnemyDefinition` |
+| Dados de uma classe jogável | `PlayableClassDefinition` | `playable_classes.txt` → `PlayableClassLoader` → `PlayableClassCatalog` |
 | Inimigo perdendo HP | `Enemy` | `EnemyDefinition` → `BattleCoordinator` → `Enemy` |
 | Sorteio de inimigos | `EncounterGenerator` | `EncounterCatalog` → filtros/pesos → definições |
 | Execução da luta | `Battle` | ordem de turnos → ações → `BattleResult` |
+| Definição de uma habilidade | `SkillDefinition` | `skills.txt` + `skill_effects.txt` → `SkillLoader` → `SkillCatalog` |
+| Uma utilização de habilidade | `SkillExecution` | `Battle` → contexto e alvos → `SkillExecutor` → resultados → `Battle` |
+| Fórmulas de combate | classes `Calculator` | executor ou batalha → calculador especializado → operação em `GameCharacter` |
+| Efeitos temporários | `CombatEffectState` | componente aplicado → estados por atributo → atributo efetivo/formatter |
 | Preparação da luta | `BattleCoordinator` | definições → grupo → `Battle` → recompensas |
 | Recompensas de batalha | `BattleRewardService` | inimigos derrotados → `BattleRewards` |
 | Recompensas de exploração | `ExplorationRewardGenerator` | `ExplorationRewardCatalog` → filtros/pesos → `ExplorationReward` → `Party` |

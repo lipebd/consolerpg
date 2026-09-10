@@ -2,15 +2,15 @@
 
 ## Current version
 
-V3 feature implementation completed.
+V4 gameplay-systems implementation in progress.
 
 Current stage:
 
-`Release preparation and documentation`
+`Combat effects and external skill execution completed; character progression next`
 
 Current Git branch:
 
-`feature/v3-data-driven-scenarios`
+`feature/v4-gameplay-systems`
 
 The V1 MMMVP is preserved by the tag:
 
@@ -149,27 +149,7 @@ enemy_drops.txt
 
 ### Recovery skills
 
-Supported recovery types:
-
-- Healing.
-- Revival.
-
-Supported skill targets:
-
-- Self.
-- One ally.
-- All allies.
-- All allies except the user.
-- One enemy.
-- All enemies.
-
-Current rules:
-
-- Healing cannot target defeated allies.
-- Revival targets only defeated allies.
-- Skills do not consume resources when no valid target exists.
-- Revived allies enter the initiative queue only in the following round.
-- Temporary healing and revival skills remain hardcoded for V2 testing.
+V2 introduced healing and revival as single-purpose hardcoded skill fields. V4 replaced that precursor with external ordered components. HP recovery and revival now scale through `RecoveryCalculator`; MP and SP recovery remain fixed-power components. Targeting and applicability belong to each component, and revived allies still enter the initiative queue only in the following round.
 
 ### Multiple enemies
 
@@ -414,11 +394,11 @@ The current recovery-item model supports:
 - Combined effects.
 - Single-ally targeting.
 - Whole-party targeting.
-- Future status-effect purification.
+- Purification of active negative attribute states.
 
 Revival is applied before ordinary HP recovery. Items are removed only when at least one configured component produces an effect.
 
-Purification data is loaded and preserved, but the corresponding runtime effect depends on the future status-effect system.
+Purification is applied only when the target has an eligible negative attribute state. An ineffective item attempt does not consume the item or the acting character's battle action.
 
 ## External exploration reward pools
 
@@ -479,6 +459,43 @@ An ineffective item attempt does not consume the item or the acting character's 
 
 The shared inventory has no weight or capacity limit.
 
+## V4 combat effects and external skills
+
+The first V4 gameplay-system block is complete.
+
+### External playable-class and skill definitions
+
+- All seven playable classes have stable external definitions and startup validation.
+- `skills.txt` stores immutable skill headers.
+- `skill_effects.txt` stores ordered effect components.
+- `SkillLoader` combines and validates both files and registers complete `SkillDefinition` objects in `SkillCatalog`.
+- `PlayableCharacter` references its class definition and exposes skills unlocked at its current level.
+- The old hardcoded `Skill` and `RecoveryType` types were removed.
+- The temporary development party is still assembled in `Main`, but its class and skill content comes from loaded definitions.
+
+### Skill execution
+
+- One `SkillExecutionContext` preserves the user and targets selected for the complete skill use.
+- `SkillExecutor` processes `PRE_ACTION`, `PRIMARY` and deferred `POST_ACTION` components in sequence.
+- Existing temporary-effect durations decrease after the acting character consumes its turn and before `POST_ACTION` components are applied.
+- Each component is evaluated in this order: condition, applicability, trigger, resistance when applicable, then application.
+- `triggerChancePercent` belongs to the component. A blank field means 100%, and one trigger roll is shared by all its applicable targets.
+- Resistance is calculated separately for each target from the user's effective LCK and the target's effective RES.
+- `SkillEffectOutcome` distinguishes `APPLIED`, `RESISTED` and `NOT_TRIGGERED` for presentation.
+- A resisted or non-triggered applicable component is still a valid attempt and consumes the action and resources. A failed condition or inapplicable component is not a valid attempt.
+
+### Combat calculations and effects
+
+- `DamageCalculator` owns physical and magical damage formulas for skills and basic attacks, with `KF = 20` and `KM = 20`.
+- `RecoveryCalculator` owns ATK- or MAG-scaled HP recovery and revival; MP and SP recovery remain fixed.
+- `EffectResistanceCalculator` owns the LCK-against-RES formula, `KR = 1` and the 85% application cap.
+- Negative attribute stages and dissipation are resistible. Distorção Ancestral is not.
+- Attribute stages track positive and negative values and durations independently.
+- Distorção Ancestral swaps the structural values of ATK/MAG and DEF/RES while stages remain attached to their named attributes.
+- Distorção is reversible, persists visibly across turns, stays outside purification and dissipation and is removed by battle cleanup.
+- `DAMAGE_POWER_MODIFIER` affects every later compatible damage component against the same target during one execution. Multiple modifiers use overflow-protected accumulation.
+- Recovery-item purification is connected to active negative attribute states.
+
 ## Character attributes
 
 The complete character attribute set is:
@@ -493,11 +510,13 @@ The complete character attribute set is:
 - VEL — Speed
 - LCK — Luck
 
-Initial values are grouped in immutable `CharacterStats`.
+Initial values are grouped in immutable `CharacterStats`. Maximum HP and all six regular attributes must be positive; maximum MP and SP may be zero. Enemy and playable-class loaders report the source line and content ID when invalid values are found.
 
 Current HP, MP and SP remain inside `GameCharacter` because they change during gameplay.
 
-Recovery power is not a character attribute. Recovery values belong to skills or items, while `GameCharacter.recoverHp()`, `recoverMp()`, `recoverSp()` and `revive()` apply changes to character resources.
+Temporary attribute stages and special battle states belong to each character's `CombatEffectState`. Battle formulas consume effective attributes rather than repeating stage logic.
+
+Recovery power is not a character attribute. Recovery values belong to skill components or items. `RecoveryCalculator` calculates scaled skill recovery, while `GameCharacter.recoverHp()`, `recoverMp()`, `recoverSp()` and `revive()` apply changes to character resources.
 
 ## Scenario discovery and paid city transport
 
@@ -539,11 +558,9 @@ Battle rewards, exploration rewards, inventory, party status, INNs, paid city tr
 
 - Equipment behavior and specialized equipment data are not implemented.
 - Skill-scroll behavior and specialized skill-scroll data are not implemented.
-- Recovery-item purification cannot remove effects until status effects exist.
-- Playable characters and skills are created in `Main`.
-- Temporary healing and revival skills exist for testing.
-- Playable classes are not represented as data yet.
-- Buffs and debuffs are not implemented.
+- The development party is still assembled in `Main`; normal character and party creation are not implemented.
+- Playable-class and skill definitions are external, but natural class growth, level-based acquisition feedback and the full approved skill roster remain unfinished.
+- Enemy turns currently use basic attacks; enemy skill selection is deferred.
 - Tavern functionality remains unavailable.
 - Defeated allies remain unavailable until revived by a skill, item or city INN.
 - Full-party defeat still uses the temporary Game Over flow.
@@ -553,16 +570,17 @@ Battle rewards, exploration rewards, inventory, party status, INNs, paid city tr
 
 ## Current next step
 
-V3 roadmap sections 1 through 10 are complete.
+The combat-effect and external skill-execution foundation in V4 roadmap sections 1 and 2 is complete. Remaining unchecked items in the combat section primarily represent broader regression coverage rather than missing core architecture.
 
-The remaining V3 work consists of:
+The next implementation block is character progression:
 
-- Release-specific regression testing.
-- Final consistency review of technical documentation.
-- Build generation and validation.
-- Release preparation.
+- calculate natural attributes from class and level;
+- apply the frozen primary, secondary and resource-growth rules;
+- assign class progression to every playable character;
+- grant initial and newly unlocked skills by class and acquisition level;
+- display class, attribute growth and new skills in the relevant interfaces.
 
-Requirements beyond the data-driven world scope are preserved in `V4_ROADMAP.md`.
+The approved skill data for all seven classes and the expanded learned-skills display must also be completed before the external-skill section is closed. Equipment, character creation, defeat rescue and save/load remain later V4 blocks in `V4_ROADMAP.md`.
 
 ## Important conventions
 

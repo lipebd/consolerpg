@@ -24,9 +24,11 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 |---|---|---|
 | `rpg` | Application entry point, dependency construction and shared currency presentation | `Main`, `GameCurrency` |
 | `rpg.characters` | Character state, attributes, party ownership and enemy ranks | `GameCharacter`, `CharacterStats`, `PlayableCharacter`, `Party`, `Enemy`, `EnemyRank` |
-| `rpg.battle` | Battle execution, enemy groups, initiative and escape | `Battle`, `BattleResult`, `BattleCoordinator`, `EnemyBattleGroup`, `EnemyBattleSlot`, `BattleTurnOrder`, `BattleTurnOrderGenerator`, `BattleEscapeService` |
+| `rpg.classes` | Immutable playable-class definitions, external loading and lookup | `PlayableClassDefinition`, `PlayableClassLoader`, `PlayableClassCatalog`, `PlayableClassWeight` |
+| `rpg.battle` | Battle coordination, skill execution and centralized combat calculations | `Battle`, `BattleResult`, `BattleCoordinator`, `SkillExecutor`, `SkillExecution`, `SkillExecutionContext`, `SkillEffectResult`, `DamageCalculator`, `RecoveryCalculator`, `EffectResistanceCalculator`, `EnemyBattleGroup`, `BattleTurnOrder`, `BattleEscapeService` |
 | `rpg.battle.rewards` | Reward calculation and individual progression results | `BattleRewardService`, `BattleRewards`, `CharacterProgressionResult` |
-| `rpg.skills` | Skill definitions, damage, recovery and target types | `Skill`, `DamageType`, `RecoveryType`, `SkillTargetType` |
+| `rpg.effects` | Mutable combat-effect state and reusable attribute-stage rules | `CombatEffectState`, `AttributeStageState`, `AttributeStageRules`, `SpecialBattleStateType` |
+| `rpg.skills` | Immutable skill and component definitions, external loading and closed skill vocabularies | `SkillDefinition`, `SkillEffectDefinition`, `SkillLoader`, `SkillCatalog`, `DamageType`, `SkillTargetType`, `SkillEffectType`, `SkillExecutionPhase`, `SkillConditionType` |
 | `rpg.items` | External item definitions, runtime item behavior, shared inventory and individual drop rules | `ItemDefinition`, `ItemDefinitionCatalog`, `ItemLoader`, `RecoveryItemDefinition`, `RecoveryItemLoader`, `ItemFactory`, `Item`, `BasicItem`, `RecoveryItem`, `ItemCatalog`, `Inventory`, `DropEntry` |
 | `rpg.enemies` | Enemy definitions and external enemy/drop loading | `EnemyDefinition`, `EnemyCatalog`, `EnemyLoader`, `EnemyDropCatalog`, `EnemyDropLoader` |
 | `rpg.world` | Active world state, scenario discovery and high-level coordination | `World`, `WorldProgress` |
@@ -55,16 +57,18 @@ Initialization includes:
 7. Loading shop definitions and their possible stock entries.
 8. Generating one runtime state for every shop through `ShopStateGenerator`.
 9. Loading exploration-reward, dungeon and scenario-branch definitions.
-10. Creating and registering runtime scenarios through `ScenarioFactory`.
-11. Resolving the initial scenario and creating `WorldProgress`.
-12. Loading adjacent travel routes and creating `TravelProgress`.
-13. Creating the temporary playable characters, skills and party.
-14. Creating `World` with the required catalogs, shop states, progress state and shared dependencies.
-15. Starting the world loop.
+10. Loading playable-class definitions.
+11. Loading skill headers and ordered skill-effect components and creating `SkillCatalog`.
+12. Creating and registering runtime scenarios through `ScenarioFactory`.
+13. Resolving the initial scenario and creating `WorldProgress`.
+14. Loading adjacent travel routes and creating `TravelProgress`.
+15. Creating the temporary playable characters and party from loaded class and skill definitions.
+16. Creating `World` with the required catalogs, shop states, progress state and shared dependencies.
+17. Starting the world loop.
 
 External data is loaded before gameplay. Invalid definitions or unresolved references prevent the game from starting with partially inconsistent catalogs.
 
-Playable characters and skills are still constructed in `Main`. Scenarios, exploration settings, dungeons, branches, adjacent travel routes, paid city transport, INNs, shops and possible shop offers are loaded from external data.
+The temporary development party is still assembled in `Main`, but playable-class and skill content comes from external definitions. Scenarios, exploration settings, dungeons, branches, adjacent travel routes, paid city transport, INNs, shops and possible shop offers are also loaded from external data.
 
 `WorldProgress`, `TravelProgress` and `ShopStateCatalog` represent separate runtime concerns. `WorldProgress` records discovered scenarios, `TravelProgress` records unlocked adjacent routes, and `ShopStateCatalog` preserves every shop's selected offers and remaining stock for the current program execution.
 
@@ -79,20 +83,23 @@ Party
 └── one to four PlayableCharacter objects
 ```
 
-`CharacterStats` groups immutable initial values:
+`CharacterStats` groups and validates immutable initial values:
 
 - Maximum HP, MP and SP.
 - Attack and defense.
 - Magic and resistance.
 - Speed and luck.
 
+Maximum HP and all six regular attributes must be positive. Maximum MP and SP may be zero. Loaders add file, line and content-ID context when invalid stats prevent a definition from being created.
+
 `GameCharacter` stores mutable current HP, MP and SP and implements behavior shared by allies and enemies, including:
 
-- Attacking.
 - Defending.
 - Spending MP and SP.
 - Receiving damage.
-- Recovering HP.
+- Recovering HP, MP and SP and reviving.
+- Applying, reducing and clearing temporary combat effects.
+- Returning effective attributes after stage modifiers and special structural states.
 - Checking whether the character is alive.
 - Restoring all resources for a living character.
 
@@ -100,8 +107,8 @@ Party
 
 - Level.
 - EXP.
-- Learned skills.
-- Physical skill execution.
+- Its playable-class definition.
+- Class skills unlocked at the current level.
 
 `Party` stores:
 
@@ -135,11 +142,11 @@ Individual state belongs to `PlayableCharacter`:
 - Attributes.
 - Level.
 - EXP.
-- Skills.
+- Playable-class and skill definitions.
 - Defensive state.
 - Future equipment.
 - Future individual EXP multiplier.
-- Future temporary buffs and debuffs.
+- Temporary combat effects.
 
 This separation allows party members to enter and leave the group without duplicating shared resources.
 
@@ -170,8 +177,8 @@ Scenario
 
 `Dungeon` adds `DungeonSettings`, including:
 
-- Boss enemy ID.
-- Optional epic enemy ID.
+- A required group of one to three boss enemy IDs.
+- An optional group of one to three epic enemy IDs.
 
 `City` represents non-combat settlements. Cities use their own action flow, separate functional locations from adjacent exits and do not create exploration sessions. Bree currently provides a configurable INN and fixed shop. Paid city transport is available through the shared world flow, while taverns remain a future system.
 
@@ -190,7 +197,7 @@ The same `EnemyDefinition` can create many independent `Enemy` objects without s
 
 This distinction also permits repeated enemies in one battle. Two Lobermos created from the same definition have independent HP and defensive state.
 
-The same separation already applies to items and scenarios. Scenario definitions are loaded first and later transformed into runtime `City`, `Field` and `Dungeon` objects by `ScenarioFactory`. Skills and playable classes will adopt the same model in future sections.
+The same separation applies to items, scenarios, playable classes and skills. Scenario definitions are transformed into runtime `City`, `Field` and `Dungeon` objects by `ScenarioFactory`. A `PlayableCharacter` references immutable class and skill definitions, while one mutable `SkillExecution` represents the state of a single skill use. A separate mutable `Skill` object is unnecessary because persistent per-use state does not belong to the definition.
 
 Shop data follows the same separation:
 
@@ -384,9 +391,23 @@ Exploration rewards are repeatable and remain independent from the individual dr
 The battle system is divided into the following responsibilities:
 
 - `Battle`
-  - Coordinates the battle lifecycle and character actions.
+  - Coordinates the battle lifecycle, target selection, presentation and character actions.
 - `BattleCoordinator`
   - Creates runtime enemies, starts battles and grants victory rewards.
+- `SkillExecutor`
+  - Evaluates component conditions and applicability, performs trigger and resistance tests and delegates each applied operation to its single domain owner.
+- `SkillExecution`
+  - Preserves the mutable state and accumulated results of one skill use, including deferred `POST_ACTION` components.
+- `SkillExecutionContext`
+  - Stores the user and the targets selected once for the complete skill use.
+- `SkillEffectResult` and `SkillEffectOutcome`
+  - Report `APPLIED`, `RESISTED` or `NOT_TRIGGERED` without requiring the interface to infer what happened.
+- `DamageCalculator`
+  - Calculates physical and magical damage for skills and basic attacks.
+- `RecoveryCalculator`
+  - Calculates attribute-scaled HP recovery and revival power.
+- `EffectResistanceCalculator`
+  - Centralizes the LCK-against-RES resistance formula and its balance factor.
 - `EnemyBattleGroup`
   - Stores one to three enemy slots.
 - `EnemyBattleSlot`
@@ -406,7 +427,7 @@ The battle system is divided into the following responsibilities:
 - `EscapeAttemptResult`
   - Stores the result and relevant flee chances.
 - `AllyTargetMenu`
-  - Selects living, injured or defeated party members according to context.
+  - Selects living or defeated party members according to context.
 - `EnemyTargetMenu`
   - Selects a living enemy target.
 - `BattleRewardService`
@@ -434,6 +455,8 @@ BattleTurnOrderGenerator
 BattleTurnOrder
         ↓
 ally and enemy actions
+        ↓
+SkillExecutor and combat calculators when required
         ↓
 BattleResult
         ↓
@@ -489,30 +512,46 @@ A revived ally does not exist in the current queue snapshot and therefore acts o
 
 ## Skill architecture
 
-`Skill` currently stores:
+Skill content is split between two external files and two immutable definition types:
 
-- Required level.
-- Damage type.
-- Base damage.
-- Base healing.
-- MP cost.
-- SP cost.
-- Recovery type.
-- Target type.
-- Description.
+- `skills.txt` defines the skill identity, class, acquisition level, resource costs, name and description.
+- `skill_effects.txt` defines ordered components, execution phase, effect type, target type and effect-specific data.
+- `SkillDefinition` combines one header with its validated ordered components.
+- `SkillEffectDefinition` validates the fields permitted and required by each component type.
 
-Recovery effect and target are stored separately.
+`SkillLoader` reads both files, validates cross-references and component ordering and registers complete definitions in `SkillCatalog`. `PlayableCharacter` exposes the definitions unlocked by its class and current level.
 
-Examples:
+One use follows this lifecycle:
 
-- Healing with `SELF`.
-- Healing with `SINGLE_ALLY`.
-- Healing with `ALL_ALLIES`.
-- Healing with `ALL_BUT_SELF`.
-- Revival with `SINGLE_ALLY`.
-- Revival with `ALL_ALLIES`.
+```text
+select targets once
+        ↓
+create SkillExecutionContext
+        ↓
+execute PRE_ACTION components
+        ↓
+execute PRIMARY components
+        ↓
+finishConsumedTurn
+        ↓
+execute deferred POST_ACTION components
+```
 
-This prepares the project for a future collection of independent skill effects, where one skill may apply damage, healing, buffs and debuffs using different targets.
+For each component, `SkillExecutor` evaluates:
+
+```text
+condition
+    → applicability
+    → one component trigger roll
+    → one resistance roll per eligible target, when resistible
+    → application
+```
+
+A blank external trigger chance means 100%. A component trigger is rolled once and shared across its targets; resistance remains individual because it uses each target's effective RES. Negative attribute stages and dissipation are resistible. Distorção Ancestral is reversible but not resistible and remains outside purification and dissipation.
+
+Damage, recovery, attribute-stage mutation and resource changes remain owned by their existing calculators or character operations. This keeps `SkillExecutor` responsible for orchestration instead of duplicating domain formulas.
+
+`DAMAGE_POWER_MODIFIER` affects every later compatible damage component against the same target during the same `SkillExecution`. Multiple modifiers accumulate with overflow protection and never leak into another target or skill use.
 
 ## Battle reward architecture
 
@@ -710,7 +749,7 @@ Important UI components include:
 
 `PartyStatusMenu` displays a compact overview of one to four allies and the shared party currency formatted through `GameCurrency`.
 
-`CharacterStatusMenu` displays one character's detailed resources, attributes, progression and learned skills.
+`CharacterStatusMenu` displays one character's detailed resources, attributes, progression and currently available class skills.
 
 `World` does not store a `Scanner`. Console input is handled by the components that require it.
 
@@ -727,15 +766,14 @@ Menus and screens call `GameCurrency.getName()` when the currency is referenced 
 The following implementations remain intentionally temporary:
 
 - Only base item data and recovery-item behavior are currently externalized. Equipment and skill-scroll specialization will be defined when their corresponding systems exist.
-- Recovery-item purification is represented in external data and runtime definitions, but it cannot remove effects until the status-effect system is implemented.
-- Playable characters and test skills are constructed in `Main`.
-- Temporary recovery and revive skills exist for testing.
-- Playable classes are not represented as data.
-- Equipment, buffs and debuffs are not implemented.
+- The development party is still assembled in `Main`; the normal character-creation flow has not replaced it yet.
+- Playable-class definitions and the first approved set of skill definitions are external, but natural class growth, level-based acquisition feedback and the complete skill roster remain unfinished.
+- Equipment and skill-scroll behavior are not implemented.
+- Enemy actions currently use basic attacks; enemy skill selection can reuse the skill executor later but is outside the current scope.
 - Bree currently provides its INN and fixed shop, while tavern functionality remains unavailable.
 - Shop state is regenerated when the application starts; persistence and restocking remain postponed until save and load are implemented.
 - Defeat opens `GameOverScreen` instead of rescuing the party in Bree.
 - Save and load are not implemented.
 - `Battle` remains large and may later be divided into more focused action services.
 
-These limitations are tracked in `V3_ROADMAP.md` and should be replaced incrementally instead of through one large rewrite.
+These limitations are tracked in `V4_ROADMAP.md` and should be replaced incrementally instead of through one large rewrite.

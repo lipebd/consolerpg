@@ -702,7 +702,7 @@ Recovery effects follow these rules:
 - An individual item is consumed only when its selected target is affected.
 - The result records the effects actually produced instead of inferring them from the item definition.
 
-Purification is already represented by item data but remains inactive until status effects are implemented.
+Purification removes eligible negative attribute states. If no selected target has an eligible negative state or another applicable recovery component, the item is not consumed.
 
 ## Battle rewards
 
@@ -724,12 +724,65 @@ The reward screen:
 - Condenses equal EXP values into `EXP recebida por aliado`.
 - Lists individual values when character multipliers produce different rewards.
 - Displays every character who gained one or more levels.
-- Displays level progression compactly.
+- Displays level progression and natural-stat growth compactly.
+- Announces every skill unlocked while crossing the gained level interval.
 - Aggregates equal item drops into one quantity.
+
+## Natural character progression
+
+Every playable class defines its level-1 natural stats in `playable_classes.txt` together with one primary and one secondary regular attribute.
+
+Natural growth is calculated directly from the class definition and the target level. It is not applied incrementally to the character's previous values.
+
+For a target level:
+
+```text
+gainedLevels = level - 1
+primaryGrowthOccurrences = floor(level / 2)
+secondaryGrowthOccurrences = floor(level / 3)
+```
+
+Every level after level 1 grants:
+
+```text
+HP  +25
+MP  +10
+SP  +10
+ATK +1
+DEF +1
+MAG +1
+RES +1
+VEL +1
+LCK +1
+```
+
+The primary attribute gains one additional point at levels 2, 4, 6 and every two levels thereafter.
+
+The secondary attribute gains one additional point at levels 3, 6, 9 and every three levels thereafter.
+
+Attribute specialization also increases the associated natural resource:
+
+| Specialized attribute | Additional resource growth |
+|---|---|
+| `ATK` | `SP +10` per corresponding primary or secondary occurrence |
+| `MAG` | `MP +10` per corresponding primary or secondary occurrence |
+| `DEF` or `RES` | `HP +25` per corresponding primary or secondary occurrence |
+
+Resource bonuses are cumulative. A class whose primary and secondary attributes are `DEF` and `RES` receives the defensive HP bonus from both schedules.
+
+Natural stats exclude equipment bonuses, temporary stages and Distorção Ancestral. Combat systems use effective attributes after applicable modifiers, while progression and reward comparison use immutable natural-stat snapshots.
+
+If several levels are gained at once, the final level is determined first and the complete natural-stat set is calculated and installed once. Arithmetic overflow is rejected instead of wrapping silently.
+
+## Level-based skill availability
+
+A playable character's available skills are derived from its class skill definitions and current level. A skill is available when its acquisition level is less than or equal to the character's level.
+
+When one reward crosses several levels, every skill whose acquisition level is above the previous level and at or below the new level is reported as newly unlocked. Skill definitions remain unique catalog entries; they are not copied into a mutable learned-skill list.
 
 ## Level-up resource restoration
 
-A playable character who survives a victorious battle and gains at least one level restores:
+A playable character who survives a victorious battle and gains at least one level restores these resources after the new natural maximums are installed:
 
 - 100% of maximum HP.
 - 100% of maximum MP.

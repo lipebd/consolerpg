@@ -5,7 +5,7 @@ import java.nio.file.Path;
 import java.util.Random;
 import java.util.Scanner;
 
-import rpg.characters.CharacterStats;
+import rpg.classes.CharacterGrowthCalculator;
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
 import rpg.classes.PlayableClassCatalog;
@@ -167,39 +167,24 @@ public class Main {
 		TitleScreen.show(scanner);
 		ConsoleUI.clearScreen();
 
-		CharacterStats flageloStats = new CharacterStats(
-				120, // HP
-				50, // MP
-				110, // SP
-				15, // ATK
-				14, // DEF
-				9, // MAG
-				12, // RES
-				12, // VEL
-				10 // LCK
-		);
+		CharacterGrowthCalculator characterGrowthCalculator =
+				new CharacterGrowthCalculator();
 
 		PlayableCharacter flagelo = new PlayableCharacter(
 				"Flagelo",
-				flageloStats,
-				skillCatalog.getByClassId("flagelo")
+				playableClassCatalog.getById("flagelo"),
+				skillCatalog.getByClassId("flagelo"),
+				characterGrowthCalculator
 		);
 
 		Party party = new Party(flagelo);
 
-		CharacterStats bardoStats = new CharacterStats(
-				80, // HP
-				80, // MP
-				60, // SP
-				8, // ATK
-				8, // DEF
-				12, // MAG
-				10, // RES
-				15, // VEL
-				14 // LCK
+		PlayableCharacter bardo = new PlayableCharacter(
+				"Bardo",
+				playableClassCatalog.getById("bardo"),
+				skillCatalog.getByClassId("bardo"),
+				characterGrowthCalculator
 		);
-
-		PlayableCharacter bardo = new PlayableCharacter("Bardo", bardoStats, skillCatalog.getByClassId("bardo"));
 
 		party.addMember(bardo);
 

@@ -47,6 +47,13 @@ public final class CharacterStatusMenu {
 			System.out.println("Estado: DERROTADO");
 		}
 
+		System.out.println(
+				"Classe: "
+						+ character
+								.getPlayableClassDefinition()
+								.getName()
+		);
+
 		System.out.println("Nível: " + character.getLevel());
 
 		System.out.println("EXP: " + character.getExperience() + "/" + character.getExperienceRequiredForNextLevel());

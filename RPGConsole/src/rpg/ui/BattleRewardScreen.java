@@ -5,10 +5,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Scanner;
 
+import rpg.GameCurrency;
 import rpg.battle.rewards.BattleRewards;
 import rpg.battle.rewards.CharacterProgressionResult;
+import rpg.characters.CharacterStats;
 import rpg.items.Item;
-import rpg.GameCurrency;
+import rpg.skills.SkillDefinition;
 
 // Displays the rewards obtained after a battle victory.
 public final class BattleRewardScreen {
@@ -43,8 +45,6 @@ public final class BattleRewardScreen {
 			return;
 		}
 
-		System.out.println("");
-
 		for (CharacterProgressionResult result : results) {
 			int levelsGained = result.getLevelsGained();
 
@@ -54,7 +54,7 @@ public final class BattleRewardScreen {
 
 			String levelWord = levelsGained == 1 ? "nível" : "níveis";
 
-			String message = "- " + result.getCharacter().getName() + " subiu " + levelsGained + " " + levelWord + "! ["
+			String message = "\n- " + result.getCharacter().getName() + " subiu " + levelsGained + " " + levelWord + "! ["
 					+ result.getPreviousLevel() + " -> " + result.getCurrentLevel() + "]";
 
 			if (result.wereResourcesRestored()) {
@@ -62,7 +62,78 @@ public final class BattleRewardScreen {
 			}
 
 			System.out.println(message);
+
+			displayNaturalStatGrowth(result);
+			displayNewlyUnlockedSkills(result);
 		}
+	}
+
+	private void displayNaturalStatGrowth(CharacterProgressionResult result) {
+		CharacterStats previousStats = result.getPreviousNaturalStats();
+
+		CharacterStats currentStats = result.getCurrentNaturalStats();
+
+		System.out.println(
+				"  [" + formatGrowth("HP", previousStats.getMaxHp(), currentStats.getMaxHp()) + " | "
+						+ formatGrowth("MP", previousStats.getMaxMp(), currentStats.getMaxMp()) + " | "
+						+ formatGrowth("SP", previousStats.getMaxSp(), currentStats.getMaxSp()) + " | "
+						+ formatGrowth("ATK", previousStats.getAttack(), currentStats.getAttack()) + " | "
+						+ formatGrowth("DEF", previousStats.getDefense(), currentStats.getDefense()) + " | "
+						+ formatGrowth("MAG", previousStats.getMagic(), currentStats.getMagic()) + " | "
+						+ formatGrowth("RES", previousStats.getResistance(), currentStats.getResistance()) + " | "
+						+ formatGrowth("VEL", previousStats.getSpeed(), currentStats.getSpeed()) + " | "
+						+ formatGrowth("LCK", previousStats.getLuck(), currentStats.getLuck()) + "]"
+		);
+	}
+
+	private void displayNewlyUnlockedSkills(
+			CharacterProgressionResult result
+	) {
+		List<SkillDefinition> newlyUnlockedSkills =
+				result.getNewlyUnlockedSkillDefinitions();
+
+		if (newlyUnlockedSkills.isEmpty()) {
+			return;
+		}
+
+		String characterName =
+				result.getCharacter().getName();
+
+		String skillNames = String.join(
+				" | ",
+				newlyUnlockedSkills
+						.stream()
+						.map(SkillDefinition::getName)
+						.toList()
+		);
+
+		if (newlyUnlockedSkills.size() == 1) {
+			System.out.println(
+					"  "
+							+ characterName
+							+ " aprendeu "
+							+ skillNames
+							+ "!"
+			);
+
+			return;
+		}
+
+		System.out.println(
+				"  "
+						+ characterName
+						+ " aprendeu novas habilidades: "
+						+ skillNames
+						+ "."
+		);
+	}
+
+	private String formatGrowth(String label, int previousValue, int currentValue) {
+		int growth = currentValue - previousValue;
+
+		String formattedGrowth = growth >= 0 ? "+" + growth : Integer.toString(growth);
+
+		return label + " " + formattedGrowth;
 	}
 
 	private void displayCollectedItems(BattleRewards rewards) {

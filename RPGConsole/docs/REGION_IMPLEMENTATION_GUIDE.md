@@ -45,7 +45,7 @@ Arquivo: `data/enemies.txt`
 Exemplo:
 
 ```text
-marcego;Marcego;60;0;0;10;5;5;5;20;0;COMMON;Monstrinho nadador e agressivo que se assemelha a um animal voador.
+marcego;Marcego;60;0;0;10;5;5;5;20;1;COMMON;Monstrinho nadador e agressivo que se assemelha a um animal voador.
 ```
 
 Ranks aceitos:
@@ -58,6 +58,8 @@ Ranks aceitos:
 - `LEGENDARY`
 
 Use `\n` dentro da descrição quando quiser uma quebra de linha na exibição. Não insira `;` nos textos, pois o ponto e vírgula separa os campos.
+
+`maxHp`, ATK, DEF, MAG, RES, VEL e LCK devem ser maiores que zero. `maxMp` e `maxSp` podem ser zero, mas nunca negativos. Quando um atributo é inválido, `EnemyLoader` informa a linha e o ID do inimigo para que o cadastro seja localizado rapidamente.
 
 Os inimigos comuns, veteranos e líderes podem ser usados em `encounters.txt`. Inimigos `BOSS` e `EPIC` de masmorras são associados em `dungeons.txt` e não precisam entrar na tabela de encontros aleatórios.
 
@@ -467,7 +469,7 @@ Se precisar interromper o trabalho antes de concluir todas as etapas, não inici
 
 - [ ] A masmorra existe em `dungeons.txt`.
 - [ ] Existe de 1 a 3 bosses de rank `BOSS`.
-- [ ] Existe de 1 a 3 épicos de rank `EPIC`.
+- [ ] Quando houver encontro épico, existe de 1 a 3 inimigos de rank `EPIC`.
 - [ ] A posição final foi reservada para o boss.
 - [ ] Bosses e épicos não foram incluídos nos encontros aleatórios.
 
@@ -489,7 +491,7 @@ Se precisar interromper o trabalho antes de concluir todas as etapas, não inici
 - [ ] Reabrir uma loja preserva suas ofertas ativas e quantidades restantes.
 - [ ] Uma oferta esgotada desaparece sem ser substituída.
 
-## 13. Diagnóstico rápido
+## 14. Diagnóstico rápido
 
 Para localizar todas as referências de uma região:
 

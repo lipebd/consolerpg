@@ -13,6 +13,8 @@ import rpg.characters.Party;
 import rpg.items.DropEntry;
 import rpg.items.Item;
 import rpg.world.scenarios.CombatScenario;
+import rpg.characters.CharacterStats;
+import rpg.skills.SkillDefinition;
 
 // Calculates and grants rewards after a battle victory.
 public final class BattleRewardService {
@@ -99,9 +101,17 @@ public final class BattleRewardService {
 		for (PlayableCharacter member : party.getMembers()) {
 			int previousLevel = member.getLevel();
 
+			CharacterStats previousNaturalStats = member.getNaturalStats();
+
 			member.gainExperience(experienceReward);
 
 			int currentLevel = member.getLevel();
+
+			CharacterStats currentNaturalStats = member.getNaturalStats();
+
+			List<SkillDefinition> newlyUnlockedSkillDefinitions = member.getUnlockedSkillDefinitions().stream()
+					.filter(skillDefinition -> skillDefinition.getAcquisitionLevel() > previousLevel)
+					.filter(skillDefinition -> skillDefinition.getAcquisitionLevel() <= currentLevel).toList();
 
 			boolean resourcesRestored = false;
 
@@ -109,8 +119,18 @@ public final class BattleRewardService {
 				resourcesRestored = member.restoreAllResources();
 			}
 
-			results.add(new CharacterProgressionResult(member, experienceReward, previousLevel, currentLevel,
-					resourcesRestored));
+			results.add(
+					new CharacterProgressionResult(
+							member,
+							experienceReward,
+							previousLevel,
+							currentLevel,
+							resourcesRestored,
+							previousNaturalStats,
+							currentNaturalStats,
+							newlyUnlockedSkillDefinitions
+					)
+			);
 		}
 
 		return results;

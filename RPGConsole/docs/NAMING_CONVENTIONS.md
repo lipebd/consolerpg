@@ -151,17 +151,26 @@ The following suffixes have specific meanings in RPGConsole.
 | `Settings` | Immutable configuration values controlling a feature | `ExplorationSettings`, `DungeonSettings` |
 | `Session` | Mutable progress that lasts for one execution of a feature | `ExplorationSession` |
 | `State` | Mutable runtime data preserved for the lifetime of a domain object or the current program execution | `ShopState`, `ShopOfferState` |
+| `Execution` | Mutable state limited to one execution of a composite action | `SkillExecution` |
+| `Context` | Inputs and shared selections used throughout one execution | `SkillExecutionContext` |
 | `Generator` | Selects or creates results using rules and randomness | `EncounterGenerator`, `ShopStateGenerator` |
+| `Calculator` | Centralizes one domain formula without coordinating the complete flow | `DamageCalculator`, `RecoveryCalculator`, `EffectResistanceCalculator` |
 | `Coordinator` | Orchestrates several existing components without owning all their internal rules | `BattleCoordinator` |
 | `Service` | Applies a cohesive domain operation, usually without console input | `BattleRewardService`, `ShopTransactionService` |
 | `Menu` | Reads player input and manages one player-facing decision flow | `RouteMenu`, `EnemyTargetMenu`, `ShopMenu` |
 | `Screen` | Displays a complete console view or result | `TitleScreen`, `BattleRewardScreen` |
 | `Result` / `Rewards` | Represents the outcome of an operation | `BattleResult`, `BattleRewards`, `ShopPurchaseResult` |
+| `Outcome` | Closed enum describing how an attempted operation concluded | `SkillEffectOutcome` |
+| `Formatter` | Produces shared presentation text without deciding domain behavior | `CombatEffectFormatter`, `ItemMenuFormatter` |
 | `Group` | Owns and queries a collection that acts as one domain unit | `EnemyBattleGroup` |
 | `Slot` | Represents one uniquely identifiable position inside a runtime group | `EnemyBattleSlot` |
 
 - `Session` represents the temporary progress of a bounded execution of a mechanic, such as an exploration.
 - `State` represents mutable data linked to an entity over a broader lifecycle, such as a shop's current inventory.
+- `Execution` is narrower than `Session`: it exists for one composite action and is discarded when that action finishes.
+- `Calculator` owns a formula; its caller owns sequencing, mutation and presentation.
+
+A `Definition` does not require a parallel mutable class with the same root name. Create a runtime counterpart only when the concept has persistent instance state. For example, `SkillDefinition` can be referenced directly by a character because per-use state belongs to `SkillExecution`; an otherwise empty `Skill` wrapper would add no responsibility.
 
 Before creating a new class, check whether its intended role matches one of these established terms.
 
@@ -457,6 +466,8 @@ encounters.txt
 enemy_drops.txt
 shops.txt
 shop_stock.txt
+skills.txt
+skill_effects.txt
 ```
 
 Header field names use `camelCase` and should match the corresponding Java vocabulary:
@@ -465,6 +476,8 @@ Header field names use `camelCase` and should match the corresponding Java vocab
 # enemyId;itemId;dropChance;minQuantity;maxQuantity
 # id;scenarioId;accessType;offerSlots;name;description
 # id;shopId;itemId;shopSalePricePercent;stock;weight
+# id;classId;acquisitionLevel;mpCost;spCost;name;description
+# skillId;sequence;phase;effectType;targetType;damageType;power;attribute;stages;duration;triggerChancePercent;specialStateType;conditionType;conditionValue
 ```
 
 Enum fields use their exact Java constant names:
@@ -569,15 +582,17 @@ Recommended categories:
 - `docs/`: documentation-only work;
 - `test/`: tests and test infrastructure.
 
-Commit messages use concise English imperative descriptions:
+Commit messages use a concise conventional prefix followed by an English imperative description:
 
 ```text
-Add external enemy drop tables
-Refactor battle reward flow
-Support weighted enemy groups
-Fix boss position after fleeing
-Update V2 architecture documentation
+feat: add external enemy drop tables
+refactor: simplify battle reward flow
+feat: support weighted enemy groups
+fix: preserve boss position after fleeing
+docs: update V4 architecture documentation
 ```
+
+Use `feat`, `fix`, `refactor`, `docs` or `test` according to the primary purpose of the commit.
 
 Do not use the commit subject as a complete patch note. Detailed context can be placed in the commit body when necessary.
 

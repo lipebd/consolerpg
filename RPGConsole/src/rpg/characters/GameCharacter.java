@@ -1,5 +1,7 @@
 package rpg.characters;
 
+import java.util.Objects;
+
 import rpg.effects.AttributeStageRules;
 import rpg.effects.CombatEffectState;
 
@@ -23,25 +25,26 @@ public abstract class GameCharacter {
 	private final CombatEffectState combatEffectState;
 	private boolean defending;
 
-	/**
-	 * Creates a character with full HP, MP and SP.
-	 *
-	 * @param name  character's name
-	 * @param stats character's initial attributes
-	 */
 	public GameCharacter(String name, CharacterStats stats) {
 		this.name = name;
 
 		this.combatEffectState = new CombatEffectState();
 
-		this.maxHp = stats.getMaxHp();
+		replaceNaturalStats(stats);
+
 		this.currentHp = maxHp;
-
-		this.maxMp = stats.getMaxMp();
 		this.currentMp = maxMp;
-
-		this.maxSp = stats.getMaxSp();
 		this.currentSp = maxSp;
+
+		this.defending = false;
+	}
+
+	protected final void replaceNaturalStats(CharacterStats stats) {
+		Objects.requireNonNull(stats, "Character stats cannot be null.");
+
+		this.maxHp = stats.getMaxHp();
+		this.maxMp = stats.getMaxMp();
+		this.maxSp = stats.getMaxSp();
 
 		this.attack = stats.getAttack();
 		this.defense = stats.getDefense();
@@ -49,8 +52,6 @@ public abstract class GameCharacter {
 		this.resistance = stats.getResistance();
 		this.speed = stats.getSpeed();
 		this.luck = stats.getLuck();
-
-		this.defending = false;
 	}
 
 	public boolean restoreAllResources() {
@@ -161,6 +162,10 @@ public abstract class GameCharacter {
 		}
 		currentSp = currentSp - amount;
 		return true;
+	}
+
+	public CharacterStats getNaturalStats() {
+		return new CharacterStats(maxHp, maxMp, maxSp, attack, defense, magic, resistance, speed, luck);
 	}
 
 	public boolean isAlive() {

@@ -16,6 +16,8 @@ Quests, world flags, access requirements, remaining exploration decisions, save 
 
 The implementation must continue to preserve stable IDs, strict startup validation and separation between immutable definitions and mutable runtime state. Validation and regression testing must accompany each system instead of being postponed to a final generic phase.
 
+Current milestone: the combat-effect and external skill-execution foundation is complete. Remaining unchecked validation items in section 1 represent broader regression coverage, not missing core architecture.
+
 ---
 
 ## 1. Combat effects
@@ -47,13 +49,14 @@ The implementation must continue to preserve stable IDs, strict startup validati
 
 * [x] Decrease effect duration only after the affected character consumes one of its own turns.
 * [x] Keep durations unchanged after menus, cancellations and actions that produce no effect.
-* [ ] Support ordered skill components applied before or after the primary damage or recovery component.
-* [ ] Apply pre-action effects before calculating the primary component.
+* [x] Support ordered skill components applied before or after the primary damage or recovery component.
+* [x] Apply pre-action effects before calculating the primary component.
 * [x] Decrease the acting character's existing effect durations at the end of its consumed turn.
-* [ ] Apply deferred post-action effects after the duration decrease.
-* [ ] Prevent newly applied post-action effects from losing duration immediately.
-* [ ] Treat a skill as effective when at least one of its components produces an effect.
-* [ ] Consume skill resources and the acting character's turn only when at least one component produces an effect.
+* [x] Apply deferred post-action effects after the duration decrease.
+* [x] Prevent newly applied post-action effects from losing duration immediately.
+* [x] Treat applied, resisted and non-triggered applicable components as valid attempts.
+* [x] Consume skill resources and the acting character's turn once when at least one component constitutes a valid attempt.
+* [x] Keep failed conditions and inapplicable components outside action and resource consumption.
 
 ### Speed-stage lifecycle
 
@@ -71,8 +74,25 @@ The implementation must continue to preserve stable IDs, strict startup validati
 * [x] Remove all negative attribute states when purification succeeds.
 * [x] Remove all positive attribute states when dissipation succeeds.
 * [x] Treat purification or dissipation as ineffective when no eligible state exists.
-* [ ] Keep special battle states outside automatic purification and dissipation.
+* [x] Keep special battle states outside automatic purification and dissipation.
 * [x] Connect recovery-item purification to active negative states.
+
+### Component execution, resistance and calculations
+
+* [x] Evaluate each component in the order condition, applicability, trigger, resistance when applicable, then application.
+* [x] Store an optional `triggerChancePercent` on each external component, with an empty field equivalent to 100%.
+* [x] Roll the trigger once per component and share its result across all applicable targets.
+* [x] Roll resistance independently for every eligible target.
+* [x] Centralize resistance based on the user's effective LCK and the target's effective RES, with `KR = 1` and an 85% application cap.
+* [x] Make negative attribute stages and dissipation resistible.
+* [x] Distinguish `APPLIED`, `RESISTED` and `NOT_TRIGGERED` in skill-effect results.
+* [x] Implement reversible, non-resistible Distorção Ancestral outside purification and dissipation.
+* [x] Display Distorção Ancestral while it remains active.
+* [x] Centralize physical and magical damage for skills and basic attacks through `DamageCalculator`.
+* [x] Centralize ATK- or MAG-scaled HP recovery and revival through `RecoveryCalculator`.
+* [x] Keep MP and SP recovery as fixed-power components.
+* [x] Apply `DAMAGE_POWER_MODIFIER` to every later compatible damage component against the same target during one skill execution.
+* [x] Accumulate multiple damage-power modifiers with overflow protection.
 
 ### Combat-effect and skill validation
 
@@ -81,13 +101,13 @@ The implementation must continue to preserve stable IDs, strict startup validati
 * [x] Test same-polarity accumulation, stage limits and duration renewal.
 * [x] Test independent positive and negative durations on the same attribute.
 * [ ] Test duration changes after consumed and non-consumed actions.
-* [ ] Test pre-action and post-action skill effects.
+* [x] Test pre-action and post-action skill effects.
 * [ ] Test pending VEL application, removal and turn-order generation.
 * [ ] Test purification and dissipation with and without eligible states.
 * [ ] Test immediate character-effect cleanup after defeat and subsequent revival.
 * [ ] Test remaining battle-effect cleanup after victory, full-party defeat and escape.
-* [ ] Test damage, healing, revival, resource recovery and effect skills after externalization.
-* [ ] Test skills with multiple components when some components are ineffective.
+* [ ] Complete regression tests for damage, HP/MP/SP recovery, revival and effect skills after externalization.
+* [x] Test skills with multiple components when components are resisted, not triggered or applied in different phases.
 * [ ] Test global and individual reward modifiers.
 
 ## 2. Playable classes, external skills and level progression
@@ -117,9 +137,11 @@ The implementation must continue to preserve stable IDs, strict startup validati
 * [x] Validate effect attributes, stages, durations and execution order.
 * [x] Support literal `\n` in skill descriptions.
 * [x] Support skills containing multiple effect components.
-* [ ] Support reversible special battle states required by individual skills.
-* [ ] Externalize current playable skills.
-* [ ] Replace hardcoded skill creation in `Main`.
+* [x] Support reversible special battle states required by individual skills.
+* [x] Externalize the currently implemented playable-skill subset.
+* [x] Replace hardcoded skill creation in `Main`.
+* [x] Use loaded class and skill definitions when assembling the temporary development party.
+* [ ] Complete the approved external skill data for all seven playable classes.
 * [ ] Redesign the learned-skills screen to display complete targeting, resource-cost and effect information.
 * [ ] Add global EXP and gold reward modifiers.
 * [ ] Add individual character EXP modifiers.
@@ -140,7 +162,7 @@ The implementation must continue to preserve stable IDs, strict startup validati
 * [ ] Keep natural level progression separate from equipment bonuses.
 * [x] Define class-to-skill progression through each skill's class ID and acquisition level.
 * [x] Validate skill class IDs and acquisition levels.
-* [ ] Assign a playable class to every playable character.
+* [x] Assign a playable-class definition to every current playable character.
 * [ ] Calculate a character's natural attributes from class and level.
 * [ ] Grant the correct initial skills for the character's class and level.
 * [ ] Apply attribute and resource growth during level-up.
@@ -148,7 +170,7 @@ The implementation must continue to preserve stable IDs, strict startup validati
 * [ ] Prevent the same skill from being learned more than once.
 * [ ] Display the class in individual status.
 * [ ] Display attribute growth and newly learned skills during level-up.
-* [ ] Preserve a temporary development shortcut for assigning any playable class during party creation.
+* [x] Preserve a temporary development shortcut for assigning any playable class during party creation.
 * [ ] Keep the normal new-game flow restricted to the Flagelo class.
 * [x] Test the base attributes of all seven playable classes.
 * [ ] Test attribute and resource growth at levels before, during and after primary and secondary growth thresholds.
