@@ -675,6 +675,8 @@ public class Battle {
 		switch (result.getEffect().getEffectType()) {
 		case DAMAGE -> displayDamage(target, targetName, result.getAmount());
 
+		case RECOIL_DAMAGE -> displayDamage(target, targetName, result.getAmount());
+
 		case HP_RECOVERY -> System.out.println(
 				targetName + " recuperou " + result.getAmount() + " de HP. HP atual: " + target.getCurrentHp() + "/"
 						+ target.getMaxHp() + "."
@@ -700,9 +702,7 @@ public class Battle {
 
 		case SPECIAL_STATE -> displaySpecialStateResult(target, targetName);
 
-		case DAMAGE_POWER_MODIFIER -> {
-			// Its result is reflected in later damage.
-		}
+		case DAMAGE_POWER_MODIFIER -> {}
 		}
 	}
 

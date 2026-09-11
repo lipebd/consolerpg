@@ -16,7 +16,7 @@ Quests, world flags, access requirements, remaining exploration decisions, save 
 
 The implementation must continue to preserve stable IDs, strict startup validation and separation between immutable definitions and mutable runtime state. Validation and regression testing must accompany each system instead of being postponed to a final generic phase.
 
-Current milestone: the combat-effect and external skill-execution foundation is complete. Remaining unchecked validation items in section 1 represent broader regression coverage, not missing core architecture.
+Current milestone: the combat-effect foundation, external skill execution and the approved 30-skill playable roster are complete. Remaining unchecked validation items in section 1 represent broader regression coverage, not missing core architecture.
 
 ---
 
@@ -85,6 +85,7 @@ Current milestone: the combat-effect and external skill-execution foundation is 
 * [x] Roll resistance independently for every eligible target.
 * [x] Centralize resistance based on the user's effective LCK and the target's effective RES, with `KR = 1` and an 85% application cap.
 * [x] Make negative attribute stages and dissipation resistible.
+* [x] Keep negative attribute stages resistible when the user applies them to itself.
 * [x] Distinguish `APPLIED`, `RESISTED` and `NOT_TRIGGERED` in skill-effect results.
 * [x] Implement reversible, non-resistible Distorção Ancestral outside purification and dissipation.
 * [x] Display Distorção Ancestral while it remains active.
@@ -93,6 +94,8 @@ Current milestone: the combat-effect and external skill-execution foundation is 
 * [x] Keep MP and SP recovery as fixed-power components.
 * [x] Apply `DAMAGE_POWER_MODIFIER` to every later compatible damage component against the same target during one skill execution.
 * [x] Accumulate multiple damage-power modifiers with overflow protection.
+* [x] Implement direct non-lethal recoil as a percentage of the actual damage dealt by the immediately preceding single-enemy damage component.
+* [x] Validate recoil ordering, targeting, percentage and source-component requirements.
 
 ### Combat-effect and skill validation
 
@@ -108,6 +111,8 @@ Current milestone: the combat-effect and external skill-execution foundation is 
 * [ ] Test remaining battle-effect cleanup after victory, full-party defeat and escape.
 * [ ] Complete regression tests for damage, HP/MP/SP recovery, revival and effect skills after externalization.
 * [x] Test skills with multiple components when components are resisted, not triggered or applied in different phases.
+* [x] Test conditional components before and after damage, conditional stage values and self-debuff resistance after a pre-action LCK increase.
+* [x] Test recoil source damage, independent trigger chance, half-up rounding and the non-lethal HP limit.
 * [ ] Test global and individual reward modifiers.
 
 ## 2. Playable classes, external skills and level progression
@@ -138,10 +143,10 @@ Current milestone: the combat-effect and external skill-execution foundation is 
 * [x] Support literal `\n` in skill descriptions.
 * [x] Support skills containing multiple effect components.
 * [x] Support reversible special battle states required by individual skills.
-* [x] Externalize the currently implemented playable-skill subset.
+* [x] Externalize all 30 approved playable skills across the seven class definitions.
 * [x] Replace hardcoded skill creation in `Main`.
 * [x] Use loaded class and skill definitions when assembling the temporary development party.
-* [ ] Complete the approved external skill data for all seven playable classes.
+* [x] Complete the approved external skill data for all seven playable classes.
 * [x] Redesign the learned-skills screen to display main type, power, targeting, resource cost and the external narrative description.
 * [ ] Add global EXP and gold reward modifiers.
 * [ ] Add individual character EXP modifiers.

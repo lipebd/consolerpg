@@ -95,6 +95,22 @@ public abstract class GameCharacter {
 		return actualDamage;
 	}
 
+	public int takeNonLethalDamage(int damage) {
+		if (damage < 0) {
+			throw new IllegalArgumentException("Non-lethal damage cannot be negative.");
+		}
+
+		if (!isAlive() || damage == 0 || currentHp == 1) {
+			return 0;
+		}
+
+		int actualDamage = Math.min(damage, currentHp - 1);
+
+		currentHp -= actualDamage;
+
+		return actualDamage;
+	}
+
 	public int recoverHp(int recoveryAmount) {
 		if (!isAlive()) {
 			return 0;

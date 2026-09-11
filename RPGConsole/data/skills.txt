@@ -1,6 +1,44 @@
 # id;classId;acquisitionLevel;mpCost;spCost;name;description
+# Flagelo
+investida;flagelo;1;0;10;Investida;Corre até o alvo e o atropela, causando dano físico moderado.\nO impacto pode fazer com que sofra parte do dano causado, sem ser nocauteado pelo recuo.
 quebra_armadura;flagelo;3;0;20;Quebra-Armadura;Golpeia e estilhaça a proteção do inimigo, causando dano físico.\nReduz a DEF do alvo em 1 estágio por 2 turnos.
+grito_de_guerra;flagelo;7;0;35;Grito de "Guerra";Ignora a dor e solta um grito que eleva a própria moral.\nAumenta ATK, DEF e RES em 1 estágio por 2 turnos.
 perseveranca;flagelo;10;0;40;Perseverança;Mesmo ferido, firma os pés em batalha e avança contra o inimigo, causando dano físico.\nAo final do ataque, recupera parte do próprio HP de acordo com seu ATK.
+golpe_experiente;flagelo;15;0;40;Golpe Experiente;Ataca um ponto vulnerável do inimigo, causando dano físico.\nReduz DEF e RES do alvo em 2 estágios por 2 turnos.
 lenda_viva;flagelo;20;0;50;Lenda Viva;Libera o potencial adquirido durante sua jornada, aumentando ATK, DEF, MAG, RES e LCK em 1 estágio por 2 turnos e deixando VEL +1 pendente para a próxima rodada.\nEm seguida, ataca um inimigo com força esmagadora.
+
+# Druida
 abraco_da_floresta;druida;7;25;0;Abraço da Floresta;Canaliza a energia da terra para fechar as feridas de um aliado, restaurando HP de acordo com sua MAG e removendo todos os efeitos negativos de atributo que o afetam.
+raizes_asfixiantes;druida;10;40;0;Raízes Asfixiantes;Vinhas brotam do solo e prendem os inimigos, causando dano mágico.\nDeixa VEL -2 pendente para a próxima rodada.
+pele_de_arvore;druida;15;35;0;Pele de Árvore;Endurece a própria pele com uma casca mística protetora.\nAumenta a própria DEF em 3 estágios por 3 turnos.
+postura_do_predador;druida;20;0;45;Postura do Predador;Assume uma postura de fera selvagem e avança contra um inimigo, causando dano físico massivo.\nApós o ataque, aumenta o próprio ATK em 2 estágios por 2 turnos.
+
+# Quebramagos
+quebra_manto;quebramagos;7;0;35;Quebra-manto;Agarra o inimigo e o esmaga com toda a sua força, causando dano físico.\nReduz a DEF do alvo em 1 estágio por 2 turnos.
+golpe_de_ruptura;quebramagos;10;0;45;Golpe de Ruptura;Concentra toda a força em um dos punhos e desfere um poderoso golpe contra o inimigo, causando alto dano físico.
 distorcao_ancestral;quebramagos;15;0;60;Distorção Ancestral;Invoca a força de um avatar ancestral para distorcer a natureza de um inimigo, invertendo seus valores de ATK e MAG, assim como os de DEF e RES, até o final da batalha.\nUsar a habilidade novamente sobre o mesmo alvo desfaz a inversão.
+avatar_da_conquista;quebramagos;20;0;45;Avatar da Conquista;Concentra sua força vital, aumentando o próprio ATK em 2 estágios por 2 turnos.\nEm seguida, projeta o corpo contra um inimigo como uma lança, causando dano físico e reduzindo sua DEF em 2 estágios pelo mesmo período.
+
+# Espectro
+lamina_das_sombras;espectro;7;25;25;Lâmina das Sombras;Some nas sombras e reaparece atrás do inimigo, perfurando-o com sua arma e causando dano físico.\nApós o ataque, deixa VEL +1 pendente para a próxima rodada.
+chamado_dos_ecos;espectro;10;30;30;Chamado dos Ecos;Entra em um transe reparador e invoca ecos sombrios para restaurar o HP dos outros aliados vivos.\nEm seguida, aumenta DEF e RES dos aliados afetados em 2 estágios por 2 turnos.
+poco_de_desespero;espectro;15;50;0;Poço de Desespero;Abre um poço sob os inimigos, mergulhando suas almas em profundo desespero.\nCausa dano mágico e reduz ATK, DEF, MAG e RES em 1 estágio por 3 turnos.
+veu_da_extincao;espectro;20;80;0;Véu da Extinção;Emite uma onda palpável de sombras que atravessa um inimigo, causando alto dano físico.\nReduz a RES do alvo em 3 estágios por 2 turnos.
+
+# Atirador
+saque_relampago;atirador;7;0;25;Saque Relâmpago;Saca uma de suas pistolas e dispara antes que o inimigo consiga reagir, causando dano físico.\nO impulso do disparo deixa VEL +1 pendente para a próxima rodada.
+fogo_de_supressao;atirador;10;0;45;Fogo de Supressão;Dispara repetidamente contra os inimigos, obrigando-os a interromper seus avanços.\nCausa dano físico e reduz o ATK dos alvos em 1 estágio por 2 turnos.
+pulso_incapacitante;atirador;15;40;0;Pulso Incapacitante;Dispara um projétil carregado com energia elétrica contra um inimigo, causando alto dano mágico e sobrecarregando seus sentidos.\nDeixa VEL -3 pendente para a próxima rodada.
+calculo_terminal;atirador;20;0;60;Cálculo Terminal;Analisa os movimentos do inimigo, calcula sua trajetória e dispara contra seu ponto mais vulnerável, causando dano físico massivo.\nSe o alvo possuir 30% ou menos do HP máximo, o poder do ataque aumenta em 50%.
+
+# Metamorfo
+modificacao_parcial;metamorfo;7;30;0;Modificação Parcial;Modifica parte do próprio corpo a partir das essências gravadas em seu espírito e golpeia um inimigo, causando dano mágico.\nApós o ataque, aumenta MAG e LCK em 1 estágio por 2 turnos.
+adaptacao;metamorfo;10;40;0;Adaptação;Expande sua consciência através do caos e prepara corpo e espírito para resistir às ameaças percebidas.\nAumenta DEF e RES em 2 estágios por 3 turnos. Com 20% ou menos do HP máximo, o aumento passa a 3 estágios.
+subjugamento;metamorfo;15;55;0;Subjugamento;Invade a mente de um inimigo e confronta diretamente sua vontade, causando dano mágico e reduzindo ATK e MAG em 2 estágios por 3 turnos.\nApós o ataque, se o alvo estiver com 30% ou menos do HP máximo, reduz também DEF e RES em 1 estágio pelo mesmo período.
+transfiguracao;metamorfo;20;80;0;Transfiguração;Rompe os limites entre corpo, mente e espírito, assumindo uma forma monstruosa inspirada nas essências gravadas em sua alma.\nA transformação aumenta LCK antes de liberar uma onda de dano mágico contra todos os inimigos. Também fortalece MAG e prepara VEL para a próxima rodada, mas sua instabilidade pode reduzir DEF e RES.
+
+# Bardo
+sussurros_dissonantes;bardo;7;5;0;Sussurros Dissonantes;Sussurra palavras imbuídas de magia que desorientam um inimigo, causando dano mágico.\nReduz a LCK do alvo em 1 estágio por 1 turno.
+inspiracao_do_bardo;bardo;10;15;0;Inspiração do Bardo;Inspira um aliado por meio de uma apresentação carregada de magia.\nAumenta ATK, MAG e LCK em 1 estágio por 2 turnos e deixa VEL +1 pendente para a próxima rodada.
+palavra_curativa;bardo;15;15;0;Palavra Curativa;Uma frase inspiradora, um grito de ajuda ou apenas uma ordem carregada de magia restaura o HP de todos os aliados.
+onda_trovejante;bardo;20;40;0;Onda Trovejante;Emana um estrondo que atinge os inimigos, causando dano físico e obrigando-os a recuar.\nReduz a DEF dos alvos em 2 estágios por 1 turno.

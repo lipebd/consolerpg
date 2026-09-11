@@ -108,7 +108,7 @@ public final class SkillExecutor {
 
 		for (GameCharacter target : execution.getContext().getTargets(effect.getTargetType())) {
 
-			if (conditionMatches(execution, effect, target) && canAffect(effect, target)) {
+			if (conditionMatches(execution, effect, target) && canAffect(execution, effect, target)) {
 
 				applicableTargets.add(target);
 			}
@@ -146,6 +146,8 @@ public final class SkillExecutor {
 
 		return switch (effect.getEffectType()) {
 		case DAMAGE -> applyDamage(execution, effect, target);
+
+		case RECOIL_DAMAGE -> applyRecoilDamage(execution, effect, target);
 
 		case HP_RECOVERY -> applyHpRecovery(execution, effect, target);
 
@@ -188,6 +190,23 @@ public final class SkillExecutor {
 		int actualDamage = target.takeDamage(calculatedDamage);
 
 		return createAmountResult(effect, target, actualDamage);
+	}
+
+	private SkillEffectResult
+			applyRecoilDamage(SkillExecution execution, SkillEffectDefinition effect, GameCharacter target) {
+		int calculatedDamage = resolveRecoilDamage(execution, effect);
+
+		int actualDamage = target.takeNonLethalDamage(calculatedDamage);
+
+		return createAmountResult(effect, target, actualDamage);
+	}
+
+	private int resolveRecoilDamage(SkillExecution execution, SkillEffectDefinition recoilEffect) {
+		SkillEffectDefinition sourceEffect = execution.getSkillDefinition().getRecoilSourceEffect(recoilEffect);
+
+		int sourceDamage = execution.getSingleTargetDamageAmount(sourceEffect);
+
+		return damageCalculator.calculateRecoilDamage(sourceDamage, recoilEffect.getPower());
 	}
 
 	private SkillEffectResult applyAttributeStages(SkillEffectDefinition effect, GameCharacter target) {
@@ -239,7 +258,8 @@ public final class SkillExecutor {
 				.getEffectsByPhase(SkillExecutionPhase.POST_ACTION)) {
 
 			for (GameCharacter target : execution.getContext().getTargets(effect.getTargetType())) {
-				if (conditionMatches(execution, effect, target) && canAffect(effect, target)) {
+				if (conditionMatches(execution, effect, target) && canAffect(execution, effect, target)) {
+
 					return true;
 				}
 			}
@@ -267,9 +287,13 @@ public final class SkillExecutor {
 		return currentPercentageValue <= maximumPercentageValue;
 	}
 
-	private boolean canAffect(SkillEffectDefinition effect, GameCharacter target) {
+	private boolean canAffect(SkillExecution execution, SkillEffectDefinition effect, GameCharacter target) {
 		return switch (effect.getEffectType()) {
+
 		case DAMAGE -> target.isAlive();
+
+		case RECOIL_DAMAGE ->
+			target.isAlive() && target.getCurrentHp() > 1 && resolveRecoilDamage(execution, effect) > 0;
 
 		case DAMAGE_POWER_MODIFIER -> target.isAlive();
 
@@ -289,6 +313,7 @@ public final class SkillExecutor {
 
 		case SPECIAL_STATE -> target.isAlive();
 		};
+
 	}
 
 	private boolean canApplyAttributeStages(SkillEffectDefinition effect, GameCharacter target) {

@@ -86,6 +86,8 @@ public final class SkillEffectDefinition {
 		switch (effectType) {
 		case DAMAGE -> validateDamage();
 
+		case RECOIL_DAMAGE -> validateRecoilDamage();
+
 		case DAMAGE_POWER_MODIFIER -> validateDamagePowerModifier();
 
 		case HP_RECOVERY -> validateHpRecovery();
@@ -102,6 +104,26 @@ public final class SkillEffectDefinition {
 
 		case SPECIAL_STATE -> validateSpecialState();
 		}
+	}
+
+	private void validateRecoilDamage() {
+		if (phase != SkillExecutionPhase.PRIMARY) {
+			throw new IllegalArgumentException("A recoil-damage effect must use PRIMARY.");
+		}
+
+		if (targetType != SkillTargetType.SELF) {
+			throw new IllegalArgumentException("A recoil-damage effect must target SELF.");
+		}
+
+		requirePositivePower();
+
+		if (power > 100) {
+			throw new IllegalArgumentException("Recoil-damage percentage cannot exceed 100.");
+		}
+
+		rejectDamageType();
+		rejectAttributeData();
+		rejectSpecialState();
 	}
 
 	private void validateDamage() {

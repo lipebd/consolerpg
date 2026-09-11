@@ -25,6 +25,8 @@ public final class SkillDetailFormatter {
 		case MAGICAL -> "Mágico";
 		};
 
+		case RECOIL_DAMAGE -> "Recuo";
+
 		case HP_RECOVERY -> "Cura";
 
 		case MP_RECOVERY, SP_RECOVERY -> "Recuperação";

@@ -4,6 +4,7 @@ package rpg.skills;
 public enum SkillEffectType {
 
     DAMAGE,
+	RECOIL_DAMAGE,
     DAMAGE_POWER_MODIFIER,
     HP_RECOVERY,
     MP_RECOVERY,

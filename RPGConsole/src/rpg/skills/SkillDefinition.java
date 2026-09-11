@@ -57,6 +57,7 @@ public final class SkillDefinition {
 		validateEffectOrder();
 		validateEffectiveComponents();
 		validateDamagePowerModifiers();
+		validateRecoilDamageEffects();
 
 		this.acquisitionLevel = acquisitionLevel;
 		this.mpCost = mpCost;
@@ -148,6 +149,15 @@ public final class SkillDefinition {
 		}
 	}
 
+	private void validateRecoilDamageEffects() {
+		for (SkillEffectDefinition effect : effects) {
+			if (effect.getEffectType() == SkillEffectType.RECOIL_DAMAGE) {
+
+				getRecoilSourceEffect(effect);
+			}
+		}
+	}
+
 	public String getId() {
 		return id;
 	}
@@ -184,5 +194,37 @@ public final class SkillDefinition {
 		Objects.requireNonNull(phase, "Skill execution phase cannot be null.");
 
 		return effects.stream().filter(effect -> effect.getPhase() == phase).toList();
+	}
+
+	public SkillEffectDefinition getRecoilSourceEffect(SkillEffectDefinition recoilEffect) {
+		Objects.requireNonNull(recoilEffect, "Recoil effect cannot be null.");
+
+		if (recoilEffect.getEffectType() != SkillEffectType.RECOIL_DAMAGE) {
+
+			throw new IllegalArgumentException("Effect must be RECOIL_DAMAGE: " + id);
+		}
+
+		int recoilIndex = effects.indexOf(recoilEffect);
+
+		if (recoilIndex < 1) {
+			throw new IllegalArgumentException(
+					"Recoil damage must immediately follow " + "its source damage effect: " + id
+			);
+		}
+
+		SkillEffectDefinition sourceEffect = effects.get(recoilIndex - 1);
+
+		boolean isCompatibleSource = sourceEffect.getEffectType() == SkillEffectType.DAMAGE
+				&& sourceEffect.getPhase() == recoilEffect.getPhase()
+				&& sourceEffect.getTargetType() == SkillTargetType.SINGLE_ENEMY;
+
+		if (!isCompatibleSource) {
+			throw new IllegalArgumentException(
+					"Recoil damage must immediately follow " + "a single-enemy damage effect " + "in the same phase: "
+							+ id
+			);
+		}
+
+		return sourceEffect;
 	}
 }

@@ -6,7 +6,7 @@ V4 gameplay-systems implementation in progress.
 
 Current stage:
 
-`Combat effects, external skill execution and natural character progression completed`
+`Combat effects, complete external playable-skill roster and natural character progression completed`
 
 Current Git branch:
 
@@ -472,6 +472,8 @@ The first V4 gameplay-system block is complete.
 - `PlayableCharacter` references its class definition and exposes skills unlocked at its current level.
 - The old hardcoded `Skill` and `RecoveryType` types were removed.
 - The temporary development party is still assembled in `Main`, but its class and skill content comes from loaded definitions.
+- All 30 approved playable skills across the seven class definitions are registered externally.
+- Skill powers and resource costs remain provisional until the general balance pass.
 
 ### Skill execution
 
@@ -483,6 +485,7 @@ The first V4 gameplay-system block is complete.
 - Resistance is calculated separately for each target from the user's effective LCK and the target's effective RES.
 - `SkillEffectOutcome` distinguishes `APPLIED`, `RESISTED` and `NOT_TRIGGERED` for presentation.
 - A resisted or non-triggered applicable component is still a valid attempt and consumes the action and resources. A failed condition or inapplicable component is not a valid attempt.
+- Conditional components are evaluated against runtime state when their ordered position is reached, so later conditions can observe damage or attribute changes produced earlier in the same execution.
 
 ### Combat calculations and effects
 
@@ -490,10 +493,12 @@ The first V4 gameplay-system block is complete.
 - `RecoveryCalculator` owns ATK- or MAG-scaled HP recovery and revival; MP and SP recovery remain fixed.
 - `EffectResistanceCalculator` owns the LCK-against-RES formula, `KR = 1` and the 85% application cap.
 - Negative attribute stages and dissipation are resistible. Distorção Ancestral is not.
+- Negative stages applied to the user are also resistible; each such component compares the user's effective LCK with its own effective RES when it executes.
 - Attribute stages track positive and negative values and durations independently.
 - Distorção Ancestral swaps the structural values of ATK/MAG and DEF/RES while stages remain attached to their named attributes.
 - Distorção is reversible, persists visibly across turns, stays outside purification and dissipation and is removed by battle cleanup.
 - `DAMAGE_POWER_MODIFIER` affects every later compatible damage component against the same target during one execution. Multiple modifiers use overflow-protected accumulation.
+- `RECOIL_DAMAGE` derives a percentage from the actual damage of the immediately preceding single-enemy damage component and applies direct non-lethal damage to the user.
 - Recovery-item purification is connected to active negative attribute states.
 
 ## V4 natural character progression
@@ -582,7 +587,7 @@ Battle rewards, exploration rewards, inventory, party status, INNs, paid city tr
 - Equipment behavior and specialized equipment data are not implemented.
 - Skill-scroll behavior and specialized skill-scroll data are not implemented.
 - The development party is still assembled in `Main`; normal character and party creation are not implemented.
-- Playable-class and skill definitions are external and natural class growth is integrated, but the full approved skill roster remains unfinished.
+- Playable-class definitions, natural growth and the complete approved 30-skill roster are external; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy turns currently use basic attacks; enemy skill selection is deferred.
 - Tavern functionality remains unavailable.
 - Defeated allies remain unavailable until revived by a skill, item or city INN.
@@ -593,9 +598,9 @@ Battle rewards, exploration rewards, inventory, party status, INNs, paid city tr
 
 ## Current next step
 
-The combat-effect, external skill-execution, natural-progression and learned-skill presentation foundations in V4 roadmap sections 1 and 2 are complete. Remaining unchecked items in those sections include the full approved skill roster and reward modifiers.
+The combat-effect, external skill-execution, complete playable-skill roster, natural-progression and learned-skill presentation foundations in V4 roadmap sections 1 and 2 are complete. Remaining unchecked section 2 dependencies are reward modifiers and broader regression coverage.
 
-The next implementation block should be selected from those remaining section 2 dependencies before equipment work begins. Normal character creation, equipment, defeat rescue and save/load remain later V4 blocks. The level-7 class-path decision is tracked as post-V4 work. The temporary development party must not be mistaken for either final flow.
+The next implementation block is global EXP and gold reward modifiers followed by individual character EXP modifiers, completing the remaining section 2 behavior before equipment work begins. Normal character creation, equipment, defeat rescue and save/load remain later V4 blocks. The level-7 class-path decision is tracked as post-V4 work. The temporary development party must not be mistaken for either final flow.
 
 ## Important conventions
 

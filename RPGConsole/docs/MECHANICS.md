@@ -464,6 +464,39 @@ The final result is rounded to the nearest integer using half-up rounding, with 
 
 The defending state is consumed when the character receives damage.
 
+## Recoil damage
+
+`RECOIL_DAMAGE` applies direct non-lethal damage to the skill user based on the actual HP damage dealt by the immediately preceding `SINGLE_ENEMY` damage component.
+
+```text
+recoilDamage =
+    ROUND_HALF_UP(
+        actualDamageDealt
+        × recoilPercent
+        / 100
+    )
+```
+
+The damage actually received by the user is limited to:
+
+```text
+actualRecoilDamage =
+    MIN(
+        recoilDamage,
+        userCurrentHp - 1
+    )
+```
+
+Recoil damage:
+
+- uses the source component's actual damage after defense, defending, rounding and current-HP limits;
+- ignores the user's DEF, RES and defending state;
+- does not consume the user's defending state;
+- cannot reduce the user below 1 HP;
+- is inapplicable when the user has only 1 HP or when its source dealt no damage;
+- may have its own component trigger chance;
+- cannot be resisted.
+
 ## Skill execution
 
 Skills are immutable external definitions composed of one or more ordered effects.
@@ -520,6 +553,8 @@ The following effects can be resisted:
 - negative attribute stages;
 - dissipation of positive attribute stages.
 
+Negative attribute stages remain resistible when the user applies them to itself. In that case, the same character provides both the effective LCK used to apply the effect and the effective RES used to resist it.
+
 Damage, recovery, revival, positive attribute stages, purification and ancestral distortion do not perform a resistance check.
 
 Application chance uses the effective LCK of the applying character and the effective RES of each receiving character at the moment the component is executed.
@@ -548,6 +583,8 @@ KR = 1
 The maximum application chance is 85%.
 
 After a component triggers, each applicable target performs an independent resistance check. A component may therefore trigger once and still be applied to some targets while being resisted by others.
+
+Every negative attribute-stage component performs its own resistance check. Because effective attributes are read when each component executes, a `PRE_ACTION` LCK increase can improve the application chance of later hostile or self-inflicted stages in the same skill.
 
 Application chance against resistance is calculated at runtime and is independent from the component's externally configured trigger chance.
 

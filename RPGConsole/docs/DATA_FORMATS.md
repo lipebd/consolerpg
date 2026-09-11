@@ -820,6 +820,7 @@ Execution phases:
 Effect types:
 
 - `DAMAGE`
+- `RECOIL_DAMAGE`
 - `DAMAGE_POWER_MODIFIER`
 - `HP_RECOVERY`
 - `MP_RECOVERY`
@@ -848,6 +849,8 @@ Rules:
 - Empty `triggerChancePercent` means `100`; explicit values must be between `1` and `100`.
 - Trigger chance is configured per component and rolled once for all of that component's applicable targets.
 - Damage requires `PHYSICAL` or `MAGICAL` damage type and positive power.
+- Recoil damage uses `PRIMARY`, targets `SELF`, leaves `damageType` empty and defines a percentage from `1` to `100` in `power`.
+- A `RECOIL_DAMAGE` component must immediately follow a `SINGLE_ENEMY` damage component in the same phase. It uses the actual HP damage dealt by that component and cannot defeat the user.
 - HP recovery and revival require positive power and an `ATK` or `MAG` scaling attribute.
 - MP and SP recovery use fixed positive power and leave the attribute field empty.
 - Attribute-stage components require an attribute and stages from `-3` to `3`, excluding zero.
@@ -860,6 +863,8 @@ Rules:
 Examples:
 
 ```text
+investida;1;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;5;;;;;;NONE;
+investida;2;PRIMARY;RECOIL_DAMAGE;SELF;;50;;;;25;;NONE;
 quebra_armadura;1;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;10;;;;;;NONE;
 quebra_armadura;2;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ENEMY;;;DEF;-1;2;;;NONE;
 perseveranca;2;POST_ACTION;HP_RECOVERY;SELF;;20;ATK;;;;;NONE;

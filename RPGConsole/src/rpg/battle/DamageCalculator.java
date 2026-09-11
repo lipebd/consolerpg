@@ -56,6 +56,20 @@ public final class DamageCalculator {
 		return calculatedDamage;
 	}
 
+	public int calculateRecoilDamage(int actualDamageDealt, int recoilPercent) {
+		if (actualDamageDealt < 0) {
+			throw new IllegalArgumentException("Actual damage dealt cannot be negative.");
+		}
+
+		if (recoilPercent < 1 || recoilPercent > 100) {
+			throw new IllegalArgumentException("Recoil percentage must be between 1 and 100.");
+		}
+
+		long scaledDamage = (long) actualDamageDealt * recoilPercent;
+
+		return (int) Math.round(scaledDamage / 100.0);
+	}
+
 	private int getOffensiveAttribute(GameCharacter attacker, DamageType damageType) {
 		return switch (damageType) {
 		case PHYSICAL -> attacker.getAttack();

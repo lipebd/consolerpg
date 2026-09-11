@@ -8,6 +8,9 @@ import java.util.Objects;
 
 import rpg.characters.GameCharacter;
 import rpg.skills.SkillDefinition;
+import rpg.skills.SkillEffectDefinition;
+import rpg.skills.SkillEffectType;
+import rpg.skills.SkillTargetType;
 
 // Tracks the mutable execution of one skill use.
 public final class SkillExecution {
@@ -61,6 +64,24 @@ public final class SkillExecution {
 
 	int getEffectResultCount() {
 		return effectResults.size();
+	}
+
+	int getSingleTargetDamageAmount(SkillEffectDefinition damageEffect) {
+		Objects.requireNonNull(damageEffect, "Damage effect cannot be null.");
+
+		if (damageEffect.getEffectType() != SkillEffectType.DAMAGE
+				|| damageEffect.getTargetType() != SkillTargetType.SINGLE_ENEMY) {
+
+			throw new IllegalArgumentException("Effect must be single-enemy damage.");
+		}
+
+		for (SkillEffectResult result : effectResults) {
+			if (result.getEffect() == damageEffect) {
+				return result.getAmount();
+			}
+		}
+
+		return 0;
 	}
 
 	List<SkillEffectResult> getEffectResultsFrom(int startingIndex) {
