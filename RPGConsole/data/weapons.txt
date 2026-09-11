@@ -1,0 +1,68 @@
+# itemId;damageType;weaponType;levelRequirement;normalAttackName;baseWeaponDamage;hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus
+adaga_improvisada;PHYSICAL;DAGGER;1;Corte Rápido;1;;;10;;;;;;
+adaga_comum;PHYSICAL;DAGGER;5;Corte Profundo;3;;;10;2;;;;;
+adaga_pesada;PHYSICAL;DAGGER;7;Talho Sangrento;6;;;15;5;;;;;
+adaga_do_heroi;PHYSICAL;DAGGER;10;Talho Heroico;10;;;15;5;;;;5;
+pequena_inquisidora;PHYSICAL;DAGGER;12;Marca da Culpa;15;;;25;7;;;;5;
+grande_inquisidora;PHYSICAL;DAGGER;15;Condenação Silenciosa;20;;;25;7;;;;6;
+aureate;PHYSICAL;DAGGER;17;Expurgo Sagrado;25;;;50;10;;;;7;
+memento_mori;PHYSICAL;DAGGER;20;Beijo do Túmulo;30;;;50;10;;;;7;
+cetro_comum;MAGICAL;SCEPTER;7;Faísca Arcana;8;;15;;;;3;;;
+cetro_do_erudito;MAGICAL;SCEPTER;10;Rajada Arcana;12;;15;;;;7;;;1
+o_sabio;MAGICAL;SCEPTER;12;Ruptura Mística;17;;20;;;;7;;;2
+o_oraculo;MAGICAL;SCEPTER;15;Eco do Destino;22;;25;;;;10;;;5
+aurora;MAGICAL;SCEPTER;17;Primeira Luz;27;;25;;;;10;;5;
+regia_umbra;MAGICAL;SCEPTER;20;Silêncio Eterno;35;;50;;;;12;;5;
+luvas_de_couro;PHYSICAL;GAUNTLET;7;Soco Rápido;8;;;15;3;;;;3;
+manoplas_de_ferro;PHYSICAL;GAUNTLET;10;Murro de Ferro;12;;;15;3;;;;3;
+punhos_do_discipulo;PHYSICAL;GAUNTLET;12;Golpe Fundamental;17;;;20;3;;;;3;
+oblivio;PHYSICAL;GAUNTLET;15;Esquecimento;22;;;25;5;;;;5;
+anatema;PHYSICAL;GAUNTLET;17;Condenação;27;;;25;5;;;;5;
+anatema_e_oblivio;PHYSICAL;GAUNTLET;20;Última Sentença;40;;;50;10;;;;10;
+alaude_de_madeira;MAGICAL;LUTE;1;Acorde Desafinado;3;;;;;;;;;5
+alaude_profissional;MAGICAL;LUTE;5;Solo Encantador;8;;15;;;;3;;;7
+eco_dos_ancestrais;MAGICAL;LUTE;10;Melodia Atordoante;12;;20;;;;5;;;10
+sinfonia_do_crepusculo;MAGICAL;LUTE;15;Harmonia Transcendental;22;;25;;;;10;;;12
+requiem;MAGICAL;LUTE;20;Canto da Agonia;40;;50;;;;12;;;15
+foice_comum;PHYSICAL;SCYTHE;7;Corte Transversal;8;;;10;3;;;;;
+foice_do_ceifador;PHYSICAL;SCYTHE;10;Golpe Fantasma;12;;;10;5;;;;;
+lamina_do_ocaso;MAGICAL;SCYTHE;12;Corte Umbral;15;;15;15;5;;5;;;
+eclipse_penumbral;MAGICAL;SCYTHE;15;Desolação;17;;20;15;5;;7;;;
+ceifa_almas;MAGICAL;SCYTHE;17;Colheita;20;;20;20;7;;10;;;
+sentenca_do_vazio;MAGICAL;SCYTHE;20;Corte do Fim;22;;25;20;7;;12;;;
+pistola_comum;PHYSICAL;PISTOL;7;Disparo Rápido;8;;;15;3;;;;3;
+pistola_de_repeticao;PHYSICAL;PISTOL;10;Rajada Curta;12;;;15;3;;;;3;
+pistola_do_duelista;PHYSICAL;PISTOL;12;Tiro Certeiro;17;;;20;5;;;;5;
+estrela_de_sanguemar;PHYSICAL;PISTOL;15;Rajada Rubra;22;;;25;5;;;;5;
+olho_do_falcao;PHYSICAL;PISTOL;17;Disparo Implacável;27;;;25;7;;;;7;
+ultimo_argumento;PHYSICAL;PISTOL;20;Sentença Balística;35;;;50;10;;;;10;
+rifle_de_caca;PHYSICAL;RIFLE;7;Tiro Preciso;10;;;10;3;;;;;
+rifle_de_precisao;PHYSICAL;RIFLE;10;Disparo Perfurante;15;;;15;5;;;;;
+vigilia;PHYSICAL;RIFLE;12;Mira Paciente;20;;;20;7;;;;;
+horizonte_partido;PHYSICAL;RIFLE;15;Ruptura Distante;25;;;25;7;;;;;
+olho_do_carrasco;PHYSICAL;RIFLE;17;Veredito Longínquo;30;;;25;10;;;;;
+longa_noite;PHYSICAL;RIFLE;20;Último Horizonte;45;;;50;12;;;;;
+espada_de_ferro;PHYSICAL;SWORD;7;Corte Firme;8;;;15;3;;;;;
+espada_de_aco;PHYSICAL;SWORD;10;Golpe Ascendente;12;;;15;5;;;;;
+lamina_do_cavaleiro;PHYSICAL;SWORD;12;Talho de Vanguarda;17;;;20;5;;;;;
+juramento;PHYSICAL;SWORD;15;Corte Solene;22;;;25;7;;;;;
+caliburn;PHYSICAL;SWORD;17;Clarão Soberano;27;;;25;10;;;;;
+excalibur;PHYSICAL;SWORD;20;Sentença do Rei;40;;;50;12;;;;;
+arco_de_caca;PHYSICAL;BOW;7;Flecha Certeira;8;;;15;3;;;;;3
+arco_recurvo;PHYSICAL;BOW;10;Disparo Tenso;12;;;15;3;;;;;3
+arco_do_patrulheiro;PHYSICAL;BOW;12;Flecha Perfurante;17;;;20;5;;;;;5
+sussurro_verde;PHYSICAL;BOW;15;Flecha Silenciosa;22;;;25;5;;;;;5
+lua_crescente;PHYSICAL;BOW;17;Disparo Lunar;27;;;25;7;;;;;7
+arco_de_artemis;PHYSICAL;BOW;20;Flecha Celestial;35;;;50;10;;;;;10
+cajado_comum;MAGICAL;STAFF;7;Pulso Arcano;8;;15;;;;3;;;
+cajado_do_adepto;MAGICAL;STAFF;10;Onda Mística;12;;15;;;;5;;1;
+coracao_da_floresta;MAGICAL;STAFF;12;Seiva Arcana;17;;20;;;;7;;2;
+bastao_das_estacoes;MAGICAL;STAFF;15;Convergência Elemental;22;;25;;;;10;;3;
+raiz_primordial;MAGICAL;STAFF;17;Despertar Telúrico;27;;25;;;;10;;5;
+axis_mundi;MAGICAL;STAFF;20;Ruptura do Mundo;40;;50;;;;12;;7;
+grimorio_comum;MAGICAL;GRIMOIRE;7;Selo Menor;10;;10;;;;3;;;
+compendio_arcano;MAGICAL;GRIMOIRE;10;Fórmula Rúnica;15;;15;;;;5;;;
+codice_hermetico;MAGICAL;GRIMOIRE;12;Teorema Impossível;20;;20;;;;7;;;
+livro_das_mil_vozes;MAGICAL;GRIMOIRE;15;Coro Proibido;25;;25;;;;7;;;
+evangelho_do_abismo;MAGICAL;GRIMOIRE;17;Palavra do Vazio;30;;25;;;;10;;;
+o_livro_inacabado;MAGICAL;GRIMOIRE;20;Última Palavra;45;;50;;;;12;;;

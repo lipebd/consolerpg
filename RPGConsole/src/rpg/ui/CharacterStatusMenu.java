@@ -4,16 +4,23 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
 
+import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
 import rpg.skills.SkillDefinition;
 
 // Displays the detailed status of one playable character.
 public final class CharacterStatusMenu {
 
+	private final Party party;
+	private final EquipmentMenu equipmentMenu;
 	private final Scanner scanner;
 
-	public CharacterStatusMenu(Scanner scanner) {
+	public CharacterStatusMenu(Party party, Scanner scanner, EquipmentMenu equipmentMenu) {
+		this.party = Objects.requireNonNull(party, "Party cannot be null.");
+
 		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+
+		this.equipmentMenu = Objects.requireNonNull(equipmentMenu, "Equipment menu cannot be null.");
 	}
 
 	public void open(PlayableCharacter character) {
@@ -22,7 +29,7 @@ public final class CharacterStatusMenu {
 		while (true) {
 			displayCharacterStatus(character);
 
-			System.out.println("\n[0] Voltar | [1] Habilidades");
+			System.out.println("\n[0] Voltar | [1] Habilidades | [2] Equipamentos");
 
 			System.out.print("> ");
 
@@ -34,6 +41,8 @@ public final class CharacterStatusMenu {
 			}
 
 			case "1" -> displaySkills(character);
+
+			case "2" -> equipmentMenu.openForCharacter(character);
 
 			default -> System.out.println("Opção inválida.");
 			}
@@ -51,7 +60,7 @@ public final class CharacterStatusMenu {
 
 		System.out.println("Nível: " + character.getLevel());
 
-		System.out.println("EXP: " + character.getExperience() + "/" + character.getExperienceRequiredForNextLevel());
+		System.out.println("EXP: " + formatExperience(character));
 
 		System.out.println(
 				"\nHP: " + character.getCurrentHp() + "/" + character.getMaxHp() + " | MP: " + character.getCurrentMp()
@@ -137,4 +146,16 @@ public final class CharacterStatusMenu {
 			System.out.println("Opção inválida.");
 		}
 	}
+
+	private String formatExperience(PlayableCharacter character) {
+		int temporaryModifierPercent = party.getRewardModifierState().getExperienceModifierPercent();
+
+		int equipmentModifierPercent = character.getEquipment().getExperienceModifierPercent();
+
+		int totalModifierPercent = Math.addExact(temporaryModifierPercent, equipmentModifierPercent);
+
+		return character.getExperience() + "/" + character.getExperienceRequiredForNextLevel() + " | M.EXP: "
+				+ RewardModifierFormatter.formatMultiplier(totalModifierPercent);
+	}
+
 }

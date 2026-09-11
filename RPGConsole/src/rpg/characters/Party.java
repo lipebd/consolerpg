@@ -97,6 +97,16 @@ public final class Party {
 		return true;
 	}
 
+	public int getEquipmentGoldModifierPercent() {
+		int totalModifierPercent = 0;
+
+		for (PlayableCharacter member : members) {
+			totalModifierPercent = Math.addExact(totalModifierPercent, member.getEquipment().getGoldModifierPercent());
+		}
+
+		return totalModifierPercent;
+	}
+
 	public int getGold() {
 		return gold;
 	}

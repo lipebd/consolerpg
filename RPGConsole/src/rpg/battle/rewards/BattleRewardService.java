@@ -72,7 +72,7 @@ public final class BattleRewardService {
 				.calculateModifiedReward(experienceReward, rewardModifiers.getTemporaryExperienceModifierPercent());
 
 		int modifiedGoldReward = rewardCalculator
-				.calculateModifiedReward(goldReward, rewardModifiers.getTemporaryGoldModifierPercent());
+				.calculateModifiedReward(goldReward, rewardModifiers.getTotalGoldModifierPercent());
 
 		List<CharacterProgressionResult> progressionResults = grantExperienceToParty(
 				party,
@@ -104,12 +104,26 @@ public final class BattleRewardService {
 
 		int goldVictoriesRemaining = Math.max(0, modifierState.getGoldVictoriesRemaining() - 1);
 
+		Map<PlayableCharacter, Integer> individualExperienceModifierPercents = new LinkedHashMap<>();
+
+		int equipmentGoldModifierPercent = party.getEquipmentGoldModifierPercent();
+
+		for (PlayableCharacter member : party.getMembers()) {
+			int individualExperienceModifierPercent = member.getEquipment().getExperienceModifierPercent();
+
+			if (individualExperienceModifierPercent > 0) {
+				individualExperienceModifierPercents.put(member, individualExperienceModifierPercent);
+			}
+
+		}
+
 		return new BattleRewardModifiers(
 				modifierState.getExperienceModifierPercent(),
 				experienceVictoriesRemaining,
 				modifierState.getGoldModifierPercent(),
 				goldVictoriesRemaining,
-				Map.of()
+				equipmentGoldModifierPercent,
+				individualExperienceModifierPercents
 		);
 	}
 

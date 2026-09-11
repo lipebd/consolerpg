@@ -8,6 +8,7 @@ import java.util.Locale;
 
 import rpg.characters.CharacterAttribute;
 import rpg.characters.CharacterStats;
+import rpg.items.equipment.ArmorWeight;
 
 // Loads playable-class definitions from an external text file.
 public final class PlayableClassLoader {
@@ -79,7 +80,7 @@ public final class PlayableClassLoader {
 
 		CharacterAttribute secondaryAttribute = parseAttribute(fields[12], "secondary", id);
 
-		PlayableClassWeight weight = parseWeight(fields[13], id);
+		ArmorWeight armorWeight = parseArmorWeight(fields[13], id);
 
 		String description = fields[14].trim().replace("\\n", System.lineSeparator());
 
@@ -110,7 +111,7 @@ public final class PlayableClassLoader {
 				baseStats,
 				primaryAttribute,
 				secondaryAttribute,
-				weight,
+				armorWeight,
 				description
 		);
 	}
@@ -137,12 +138,12 @@ public final class PlayableClassLoader {
 		}
 	}
 
-	private PlayableClassWeight parseWeight(String value, String classId) {
+	private ArmorWeight parseArmorWeight(String value, String classId) {
 		try {
-			return PlayableClassWeight.valueOf(value.trim().toUpperCase(Locale.ROOT));
+			return ArmorWeight.valueOf(value.trim().toUpperCase(Locale.ROOT));
 		} catch (IllegalArgumentException exception) {
 			throw new IllegalArgumentException(
-					"Invalid playable-class weight for " + classId + ": " + value,
+					"Invalid playable-class armor weight for " + classId + ": " + value,
 					exception
 			);
 		}

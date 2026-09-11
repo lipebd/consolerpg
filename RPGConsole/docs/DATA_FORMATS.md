@@ -346,7 +346,7 @@ Rules:
 - Revival is applied before ordinary HP recovery, allowing both components to affect a defeated ally.
 - Group effects are evaluated independently for every eligible party member.
 - The item is consumed only when at least one component affects at least one target.
-- Purification is represented in the data model, but its runtime effect will be connected after status effects are implemented.
+- Purification removes eligible negative attribute states at runtime.
 
 Definition composition and runtime flow:
 
@@ -366,11 +366,167 @@ RecoveryItemDefinitionCatalog
 
 `ItemCatalog` stores the resulting runtime items and resolves the stable IDs referenced by enemy drops, exploration events and inventories.
 
-## Current item IDs
+## Equipment definitions
+
+Equipment identity and commercial data remain in `data/items.txt`. Each equipment item must also have exactly one specialized row in `data/weapons.txt`, `data/armors.txt` or `data/trinkets.txt` using the same `itemId`.
+
+All three formats support the same nine optional nonnegative bonuses:
+
+```text
+hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus
+```
+
+An empty optional numeric field is interpreted as zero. Required numeric fields must be positive. The loader rejects unknown base IDs, category mismatches, duplicate specializations and malformed enum values during initialization.
+
+Loading flow:
+
+```text
+items.txt -> ItemDefinitionCatalog
+weapons.txt + armors.txt + trinkets.txt
+    -> EquipmentLoader
+    -> EquipmentCatalog
+```
+
+The specialized definition and the runtime `Item` share one stable ID. Equipment items currently remain `BasicItem` objects in `ItemCatalog`; their equippable behavior is resolved through `EquipmentCatalog`.
+
+### Weapon definitions
+
+File:
+
+`data/weapons.txt`
+
+Header:
+
+```text
+# itemId;damageType;weaponType;levelRequirement;normalAttackName;baseWeaponDamage;hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus
+```
+
+Each valid line contains exactly 15 fields:
+
+| Position | Field | Java type | Empty value |
+|---:|---|---|---|
+| 1 | Item ID | `String` | Not allowed |
+| 2 | Damage type | `DamageType` | Not allowed |
+| 3 | Weapon type | `WeaponType` | Not allowed |
+| 4 | Level requirement | `int` | Not allowed |
+| 5 | Normal-attack name | `String` | Not allowed |
+| 6 | Base weapon damage | `int` | Not allowed |
+| 7–15 | HP, MP, SP, ATK, DEF, MAG, RES, VEL and LCK bonuses | `int` | Defaults to `0` |
+
+Supported damage types:
+
+- `PHYSICAL`
+- `MAGICAL`
+
+Supported weapon types:
+
+- `DAGGER`
+- `SCEPTER`
+- `GAUNTLET`
+- `LUTE`
+- `SCYTHE`
+- `PISTOL`
+- `RIFLE`
+- `SWORD`
+- `BOW`
+- `STAFF`
+- `GRIMOIRE`
+
+Rules:
+
+- `itemId` must reference an item with category `WEAPON` in `items.txt`.
+- Level requirement and base weapon damage must be positive.
+- Normal-attack name cannot be empty.
+- Every playable class may use every weapon when the level requirement is met.
+- Damage type selects the offensive and defensive attributes used by the normal attack; it does not change the damage type declared by a skill component.
+- Player-facing screens call `baseWeaponDamage` **Poder**. `DBA` is only an internal design abbreviation.
+
+Example:
+
+```text
+adaga_improvisada;PHYSICAL;DAGGER;1;Corte Rápido;1;;;10;;;;;;
+```
+
+### Armor definitions
+
+File:
+
+`data/armors.txt`
+
+Header:
+
+```text
+# itemId;armorWeight;levelRequirement;hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus
+```
+
+Each valid line contains exactly 12 fields. The final nine positions are the common optional bonuses in their standard order.
+
+Supported armor weights:
+
+- `LIGHT`
+- `MEDIUM`
+- `HEAVY`
+
+Rules:
+
+- `itemId` must reference an item with category `ARMOR` in `items.txt`.
+- Level requirement must be positive.
+- `armorWeight` must match the equipped character's class weight exactly.
+- Armor protection is represented by regular stat bonuses; there is no separate base-armor field.
+
+Example shape:
+
+```text
+armadura_exemplo;MEDIUM;7;25;;;;5;;3;;
+```
+
+### Trinket definitions
+
+File:
+
+`data/trinkets.txt`
+
+Header:
+
+```text
+# itemId;trinketType;levelRequirement;hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus;experienceModifierPercent;goldModifierPercent
+```
+
+Each valid line contains exactly 14 fields. Positions 4–12 are the common optional bonuses.
+
+Supported trinket types:
+
+- `JEWELRY`
+- `AMULET`
+- `TALISMAN`
+
+Rules:
+
+- `itemId` must reference an item with category `TRINKET` in `items.txt`.
+- Level requirement must be positive.
+- EXP and GOLD modifiers are optional nonnegative integer percentages; empty values become zero.
+- A trinket must provide at least one stat or reward bonus.
+- Its EXP modifier applies only to the wearer.
+- Its GOLD modifier joins the party-wide total while the trinket remains equipped.
+- Every class may equip every trinket when the level requirement is met.
+
+Example shape:
+
+```text
+talisma_exemplo;TALISMAN;1;;;;;;;;;;5;10
+```
+
+### Equipment coverage
+
+The current specialized files contain 67 weapons, 25 armors and 22 trinkets, totaling 114 equipment definitions. Their IDs were cross-checked against `items.txt`: every specialized row has one matching base item, and no item ID is specialized twice.
+
+## Representative item IDs
 
 | ID | Name | Category | Runtime type | Effect |
 |---|---|---|---|---|
 | `meruma` | Merumã | `CONSUMABLE` | `RecoveryItem` | Recovers 25 HP from one ally |
+
+Equipment entries are intentionally documented through their schemas and the dedicated creation guide instead of duplicating all 114 rows here.
 
 ## Scenario definitions
 

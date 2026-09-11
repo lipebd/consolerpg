@@ -5,9 +5,9 @@ import java.nio.file.Path;
 import java.util.Random;
 import java.util.Scanner;
 
-import rpg.classes.CharacterGrowthCalculator;
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
+import rpg.classes.CharacterGrowthCalculator;
 import rpg.classes.PlayableClassCatalog;
 import rpg.classes.PlayableClassLoader;
 import rpg.enemies.EnemyCatalog;
@@ -22,6 +22,9 @@ import rpg.items.ItemFactory;
 import rpg.items.ItemLoader;
 import rpg.items.RecoveryItemDefinitionCatalog;
 import rpg.items.RecoveryItemLoader;
+import rpg.items.equipment.EquipmentCatalog;
+import rpg.items.equipment.EquipmentLoader;
+import rpg.items.equipment.EquipmentService;
 import rpg.skills.SkillCatalog;
 import rpg.skills.SkillLoader;
 import rpg.ui.ConsoleUI;
@@ -63,6 +66,11 @@ public class Main {
 
 	public static void main(String[] args) {
 
+		ItemCatalog itemCatalog;
+		ItemDefinitionCatalog itemDefinitionCatalog;
+		RecoveryItemDefinitionCatalog recoveryItemDefinitionCatalog;
+		EquipmentCatalog equipmentCatalog;
+		EquipmentService equipmentService;
 		SkillCatalog skillCatalog;
 		ShopStateCatalog shopStateCatalog;
 		ShopCatalog shopCatalog;
@@ -70,9 +78,6 @@ public class Main {
 		CityTransportCatalog cityTransportCatalog;
 		InnCatalog innCatalog;
 		ExplorationRewardCatalog explorationRewardCatalog;
-		ItemCatalog itemCatalog;
-		RecoveryItemDefinitionCatalog recoveryItemDefinitionCatalog;
-		ItemDefinitionCatalog itemDefinitionCatalog;
 		EnemyCatalog enemyCatalog;
 		EncounterCatalog encounterCatalog;
 		EnemyDropCatalog enemyDropCatalog;
@@ -94,6 +99,14 @@ public class Main {
 			enemyCatalog = enemyLoader.load(Path.of("data", "enemies.txt"));
 			ItemLoader itemLoader = new ItemLoader();
 			itemDefinitionCatalog = itemLoader.load(Path.of("data", "items.txt"));
+			EquipmentLoader equipmentLoader = new EquipmentLoader();
+
+			equipmentCatalog = equipmentLoader.load(
+					Path.of("data", "weapons.txt"),
+					Path.of("data", "armors.txt"),
+					Path.of("data", "trinkets.txt"),
+					itemDefinitionCatalog
+			);
 			RecoveryItemLoader recoveryItemLoader = new RecoveryItemLoader();
 			recoveryItemDefinitionCatalog = recoveryItemLoader
 					.load(Path.of("data", "recovery_items.txt"), itemDefinitionCatalog);
@@ -103,6 +116,7 @@ public class Main {
 				Item item = itemFactory.create(definition, recoveryItemDefinitionCatalog);
 				itemCatalog.register(item);
 			}
+			equipmentService = new EquipmentService(equipmentCatalog, itemCatalog);
 			EnemyDropLoader enemyDropLoader = new EnemyDropLoader();
 			enemyDropCatalog = enemyDropLoader.load(Path.of("data", "enemy_drops.txt"), enemyCatalog, itemCatalog);
 			EncounterLoader encounterLoader = new EncounterLoader();
@@ -167,8 +181,7 @@ public class Main {
 		TitleScreen.show(scanner);
 		ConsoleUI.clearScreen();
 
-		CharacterGrowthCalculator characterGrowthCalculator =
-				new CharacterGrowthCalculator();
+		CharacterGrowthCalculator characterGrowthCalculator = new CharacterGrowthCalculator();
 
 		PlayableCharacter flagelo = new PlayableCharacter(
 				"Flagelo",
@@ -193,6 +206,8 @@ public class Main {
 				currentScenario,
 				scanner,
 				itemCatalog,
+				equipmentCatalog,
+				equipmentService,
 				shopCatalog,
 				shopStateCatalog,
 				enemyCatalog,

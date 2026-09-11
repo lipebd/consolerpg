@@ -6,17 +6,19 @@ import java.util.List;
 
 import rpg.GameCurrency;
 
-// Formats temporary reward modifiers for console screens.
+//Formats reward modifiers for console screens.
 public final class RewardModifierFormatter {
 
 	private RewardModifierFormatter() {
 	}
 
-	public static String formatTemporarySummary(
+	public static String formatSummary(
 			int experienceModifierPercent,
 			int experienceVictoriesRemaining,
+			boolean hasTemporaryExperienceModifier,
 			int goldModifierPercent,
-			int goldVictoriesRemaining
+			int goldVictoriesRemaining,
+			boolean hasTemporaryGoldModifier
 	) {
 		validateValues(experienceModifierPercent, experienceVictoriesRemaining);
 
@@ -24,23 +26,50 @@ public final class RewardModifierFormatter {
 
 		List<String> formattedModifiers = new ArrayList<>();
 
-		if (experienceModifierPercent > 0) {
-			formattedModifiers.add(
-					"M.EXP: " + formatMultiplier(experienceModifierPercent) + " (" + experienceVictoriesRemaining + ")"
-			);
-		}
+		addModifier(
+				formattedModifiers,
+				"M.EXP",
+				experienceModifierPercent,
+				experienceVictoriesRemaining,
+				hasTemporaryExperienceModifier
+		);
 
-		if (goldModifierPercent > 0) {
-			formattedModifiers.add(
-					"M." + GameCurrency.getName() + ": " + formatMultiplier(goldModifierPercent) + " ("
-							+ goldVictoriesRemaining + ")"
-			);
-		}
+		addModifier(
+				formattedModifiers,
+				"M." + GameCurrency.getName(),
+				goldModifierPercent,
+				goldVictoriesRemaining,
+				hasTemporaryGoldModifier
+		);
 
 		return String.join(" | ", formattedModifiers);
 	}
 
-	private static String formatMultiplier(int modifierPercent) {
+	private static void addModifier(
+			List<String> formattedModifiers,
+			String label,
+			int modifierPercent,
+			int victoriesRemaining,
+			boolean hasTemporaryModifier
+	) {
+		if (modifierPercent <= 0) {
+			return;
+		}
+
+		String formattedModifier = label + ": " + formatMultiplier(modifierPercent);
+
+		if (hasTemporaryModifier) {
+			formattedModifier += " (" + victoriesRemaining + ")";
+		}
+
+		formattedModifiers.add(formattedModifier);
+	}
+
+	public static String formatMultiplier(int modifierPercent) {
+		if (modifierPercent < 0) {
+			throw new IllegalArgumentException("Reward modifier percentage cannot be negative.");
+		}
+
 		return BigDecimal.valueOf(100L + modifierPercent).divide(BigDecimal.valueOf(100)).stripTrailingZeros()
 				.toPlainString() + "x";
 	}

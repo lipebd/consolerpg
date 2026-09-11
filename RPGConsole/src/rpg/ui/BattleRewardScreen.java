@@ -42,11 +42,13 @@ public final class BattleRewardScreen {
 	private void displayRewardModifiers(BattleRewards rewards) {
 		BattleRewardModifiers modifiers = rewards.getRewardModifiers();
 
-		String summary = RewardModifierFormatter.formatTemporarySummary(
+		String summary = RewardModifierFormatter.formatSummary(
 				modifiers.getTemporaryExperienceModifierPercent(),
 				modifiers.getExperienceVictoriesRemainingAfterReward(),
-				modifiers.getTemporaryGoldModifierPercent(),
-				modifiers.getGoldVictoriesRemainingAfterReward()
+				modifiers.hasTemporaryExperienceModifier(),
+				modifiers.getTotalGoldModifierPercent(),
+				modifiers.getGoldVictoriesRemainingAfterReward(),
+				modifiers.hasTemporaryGoldModifier()
 		);
 
 		if (!summary.isEmpty()) {

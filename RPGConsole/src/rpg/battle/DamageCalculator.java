@@ -3,7 +3,6 @@ package rpg.battle;
 import java.util.Objects;
 
 import rpg.characters.GameCharacter;
-import rpg.skills.DamageType;
 
 // Calculates damage before defending, rounding and HP limits.
 public final class DamageCalculator {

@@ -16,12 +16,16 @@ public final class PartyStatusMenu {
 	private final Scanner scanner;
 	private final CharacterStatusMenu characterStatusMenu;
 
-	public PartyStatusMenu(Party party, Scanner scanner) {
+	public PartyStatusMenu(Party party, Scanner scanner, EquipmentMenu equipmentMenu) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
 
 		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
 
-		this.characterStatusMenu = new CharacterStatusMenu(scanner);
+		this.characterStatusMenu = new CharacterStatusMenu(
+				this.party,
+				scanner,
+				Objects.requireNonNull(equipmentMenu, "Equipment menu cannot be null.")
+		);
 	}
 
 	public void open() {
@@ -91,11 +95,16 @@ public final class PartyStatusMenu {
 	private void displayRewardModifiers() {
 		PartyRewardModifierState modifierState = party.getRewardModifierState();
 
-		String summary = RewardModifierFormatter.formatTemporarySummary(
+		int totalGoldModifierPercent = Math
+				.addExact(modifierState.getGoldModifierPercent(), party.getEquipmentGoldModifierPercent());
+
+		String summary = RewardModifierFormatter.formatSummary(
 				modifierState.getExperienceModifierPercent(),
 				modifierState.getExperienceVictoriesRemaining(),
-				modifierState.getGoldModifierPercent(),
-				modifierState.getGoldVictoriesRemaining()
+				modifierState.hasActiveExperienceModifier(),
+				totalGoldModifierPercent,
+				modifierState.getGoldVictoriesRemaining(),
+				modifierState.hasActiveGoldModifier()
 		);
 
 		if (!summary.isEmpty()) {

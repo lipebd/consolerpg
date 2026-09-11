@@ -6,7 +6,7 @@ V4 gameplay-systems implementation in progress.
 
 Current stage:
 
-`Combat effects, complete external playable-skill roster and natural character progression completed`
+`Equipment, equipment-aware combat and equipment reward modifiers completed`
 
 Current Git branch:
 
@@ -376,6 +376,8 @@ RecoveryItemDefinitionCatalog
 - `BasicItem` for items without specialized runtime behavior.
 - `RecoveryItem` for items with a recovery definition.
 
+Equipment items remain `BasicItem` runtime objects. Their specialized immutable data is loaded independently from `weapons.txt`, `armors.txt` and `trinkets.txt` into `EquipmentCatalog` using the same stable item IDs.
+
 `ItemCatalog` contains the complete runtime objects used by enemy drops, exploration rewards, shop offers, menus and inventory.
 
 Base item definitions may independently declare:
@@ -510,7 +512,7 @@ The natural-growth and level-based skill-availability block is complete.
 - The primary attribute gains one additional point every two levels; the secondary attribute gains one additional point every three levels.
 - ATK specialization adds SP growth, MAG adds MP growth, and DEF or RES adds HP growth on the same schedules. Defensive specializations are cumulative.
 - Growth is calculated directly from class base stats and final level, avoiding incremental drift when several levels are gained at once.
-- Natural stats remain separate from temporary effects and future equipment bonuses.
+- Natural stats remain separate from temporary effects and implemented equipment bonuses.
 - `PlayableCharacter` keeps its immutable class definition and exposes skills available for its current level dynamically.
 - `BattleRewardService` records natural stats before and after leveling, detects every newly unlocked skill and restores surviving characters only after the new maximums are installed.
 - `BattleRewardScreen` displays compact stat deltas and newly learned skill names; `CharacterStatusMenu` displays the character's class.
@@ -523,6 +525,46 @@ The natural-growth and level-based skill-availability block is complete.
 - The main display component is the first effective component in `PRIMARY`; secondary components remain described by the external narrative text.
 - Character status and battle confirmation reuse the same formatted skill sheet.
 - Narrative descriptions avoid promising final damage or recovery amounts that depend on effective attributes and combat formulas.
+
+## V4 equipment
+
+The equipment block is complete and contains 67 weapons, 25 armors and 22 trinkets, totaling 114 specialized definitions linked to base items.
+
+- `EquipmentLoader` reads all three external files and registers definitions in one `EquipmentCatalog`.
+- `EquipmentDefinition` centralizes level requirements and all nine possible stat bonuses.
+- `WeaponDefinition`, `ArmorDefinition` and `TrinketDefinition` add their category-specific fields.
+- `ArmorWeight` replaced the former `PlayableClassWeight` and is shared by class and armor compatibility.
+- `DamageType` moved to `rpg.battle`, where it serves skills and weapon attacks.
+- `CharacterEquipment` owns one weapon, one armor and one trinket per playable character.
+- `EquipmentService` transfers units between the shared inventory and character slots, including replacement and removal.
+- Equipped units leave inventory, so no `(E)` marker or special sale filtering is required.
+- Every class may use every weapon and trinket after meeting the level requirement; armor requires exact weight compatibility.
+- Every equipment category may grant HP, MP, SP, ATK, DEF, MAG, RES, VEL and LCK bonuses.
+- Natural stats remain unchanged by equipment. Public maximums and attributes add structural equipment bonuses before temporary combat effects.
+- Lower maximums clamp current HP, MP and SP after equipment changes; higher maximums do not heal.
+- One shared `EquipmentMenu` supports equipping from inventory and managing slots from character status.
+- `EquipmentDetailFormatter` presents details and change-only confirmation comparisons with `Poder` as the player-facing weapon-power label.
+
+## Equipment-aware combat
+
+- A player's basic attack uses the equipped weapon's damage type, normal-attack name and base power.
+- An unarmed basic attack falls back to physical damage with zero weapon power.
+- Every damaging skill adds 100% of the equipped weapon's base power.
+- A skill's declared damage type remains independent from the equipped weapon's physical or magical classification.
+- `SkillExecutionContext` captures weapon base power for one skill use.
+- Enemy basic attacks remain physical with zero weapon power.
+- Skill powers and resource costs remain provisional until the general balance pass.
+
+## Reward modifiers
+
+- `PartyRewardModifierState` supports one temporary EXP modifier and one temporary GOLD modifier at the same time.
+- Durations decrease only after a rewarded victory; escape and defeat do not consume them.
+- An equipped trinket's EXP modifier applies only to its wearer.
+- GOLD modifiers from every equipped trinket are summed for the party.
+- Temporary and equipment percentages combine additively before one rounding.
+- Character status displays total individual M.EXP.
+- Party status and battle rewards display temporary global M.EXP and total effective M.GOLD.
+- Battle rewards intentionally do not list every ally's individual M.EXP, preserving readability for a four-member party.
 
 ## Character attributes
 
@@ -578,13 +620,12 @@ Adjacent routes remain free and continue to use `TravelRouteDefinition`, `Travel
 
 ## Centralized currency presentation
 
-`GameCurrency` centralizes the visible currency name and numeric formatting. The current interface uses `GOLD` as the name and `G$ ` as the value prefix.
+`GameCurrency` centralizes the visible currency name and numeric formatting. The current interface uses `GOLD` as the name and the `G` suffix without a separating space, such as `100G`.
 
 Battle rewards, exploration rewards, inventory, party status, INNs, paid city transport and every shop price, total and balance use this shared presentation without moving gold ownership away from `Party`.
 
 ## Current limitations and temporary implementations
 
-- Equipment behavior and specialized equipment data are not implemented.
 - Skill-scroll behavior and specialized skill-scroll data are not implemented.
 - The development party is still assembled in `Main`; normal character and party creation are not implemented.
 - Playable-class definitions, natural growth and the complete approved 30-skill roster are external; skill powers and resource costs remain provisional pending the general balance pass.
@@ -598,9 +639,11 @@ Battle rewards, exploration rewards, inventory, party status, INNs, paid city tr
 
 ## Current next step
 
-The combat-effect, external skill-execution, complete playable-skill roster, natural-progression and learned-skill presentation foundations in V4 roadmap sections 1 and 2 are complete. Remaining unchecked section 2 dependencies are reward modifiers and broader regression coverage.
+The combat-effect, external-skill, natural-progression, reward-modifier and equipment foundations are complete. Remaining unchecked items in those roadmap sections are broader regression coverage rather than missing core architecture.
 
-The next implementation block is global EXP and gold reward modifiers followed by individual character EXP modifiers, completing the remaining section 2 behavior before equipment work begins. Normal character creation, equipment, defeat rescue and save/load remain later V4 blocks. The level-7 class-path decision is tracked as post-V4 work. The temporary development party must not be mistaken for either final flow.
+The next V4 implementation block is normal character and party creation, followed by full-party defeat and rescue. Skill scrolls remain a separate unfinished integration. Save/load and the level-7 class-path decision stay outside V4.
+
+The post-V4 level-7 class-change flow already has one equipment rule fixed: all three equipped items return to inventory, the chosen class NPC grants that class's level-7 starter weapon and armor even when the character remains a Flagelo, and the narration tells the player to open the equipment menu and equip the new set.
 
 ## Important conventions
 

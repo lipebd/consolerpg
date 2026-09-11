@@ -13,6 +13,7 @@ public final class BattleRewardModifiers {
 	private final int experienceVictoriesRemainingAfterReward;
 
 	private final int temporaryGoldModifierPercent;
+	private final int equipmentGoldModifierPercent;
 	private final int goldVictoriesRemainingAfterReward;
 
 	private final Map<PlayableCharacter, Integer> individualExperienceModifierPercents;
@@ -22,6 +23,7 @@ public final class BattleRewardModifiers {
 			int experienceVictoriesRemainingAfterReward,
 			int temporaryGoldModifierPercent,
 			int goldVictoriesRemainingAfterReward,
+			int equipmentGoldModifierPercent,
 			Map<PlayableCharacter, Integer> individualExperienceModifierPercents
 	) {
 		validateTemporaryModifier(
@@ -31,6 +33,10 @@ public final class BattleRewardModifiers {
 		);
 
 		validateTemporaryModifier(temporaryGoldModifierPercent, goldVictoriesRemainingAfterReward, "Gold");
+
+		if (equipmentGoldModifierPercent < 0) {
+			throw new IllegalArgumentException("Equipment gold modifier cannot be negative.");
+		}
 
 		Objects.requireNonNull(individualExperienceModifierPercents, "Individual experience modifiers cannot be null.");
 
@@ -55,6 +61,8 @@ public final class BattleRewardModifiers {
 
 		this.temporaryGoldModifierPercent = temporaryGoldModifierPercent;
 
+		this.equipmentGoldModifierPercent = equipmentGoldModifierPercent;
+
 		this.goldVictoriesRemainingAfterReward = goldVictoriesRemainingAfterReward;
 
 		this.individualExperienceModifierPercents = Map.copyOf(copiedModifiers);
@@ -70,6 +78,14 @@ public final class BattleRewardModifiers {
 
 	public int getTemporaryGoldModifierPercent() {
 		return temporaryGoldModifierPercent;
+	}
+
+	public int getEquipmentGoldModifierPercent() {
+		return equipmentGoldModifierPercent;
+	}
+
+	public int getTotalGoldModifierPercent() {
+		return Math.addExact(temporaryGoldModifierPercent, equipmentGoldModifierPercent);
 	}
 
 	public int getGoldVictoriesRemainingAfterReward() {
@@ -88,6 +104,10 @@ public final class BattleRewardModifiers {
 
 	public boolean hasTemporaryExperienceModifier() {
 		return temporaryExperienceModifierPercent > 0;
+	}
+
+	public boolean hasEquipmentGoldModifier() {
+		return equipmentGoldModifierPercent > 0;
 	}
 
 	public boolean hasTemporaryGoldModifier() {

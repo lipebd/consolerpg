@@ -25,8 +25,8 @@ import rpg.ui.CombatEffectFormatter;
 import rpg.ui.EnemyTargetMenu;
 import rpg.ui.BattleItemMenu;
 import rpg.characters.CharacterAttribute;
-import rpg.skills.DamageType;
 import rpg.ui.SkillDetailFormatter;
+import rpg.items.equipment.WeaponDefinition;
 
 // Controls a battle between a party and an enemy group.
 public class Battle {
@@ -445,9 +445,28 @@ public class Battle {
 
 		Enemy target = targetSlot.getEnemy();
 
-		System.out.println("\n" + actingCharacter.getName() + " atacou " + targetSlot.getDisplayName() + "!");
+		Optional<WeaponDefinition> equippedWeapon = actingCharacter.getEquipment().getWeapon();
 
-		int damage = applyBasicAttackDamage(actingCharacter, target);
+		int damage;
+
+		if (equippedWeapon.isPresent()) {
+			WeaponDefinition weapon = equippedWeapon.get();
+
+			System.out.println(
+					"\n" + actingCharacter.getName() + " executou " + weapon.getNormalAttackName() + " com sua arma!"
+			);
+
+			damage = applyBasicAttackDamage(
+					actingCharacter,
+					target,
+					weapon.getDamageType(),
+					weapon.getBaseWeaponDamage()
+			);
+		} else {
+			System.out.println("\n" + actingCharacter.getName() + " atacou " + targetSlot.getDisplayName() + "!");
+
+			damage = applyBasicAttackDamage(actingCharacter, target);
+		}
 
 		displayDamage(target, targetSlot.getDisplayName(), damage);
 
@@ -580,7 +599,10 @@ public class Battle {
 			targetsByType.put(targetType, selectedTargets.get());
 		}
 
-		return Optional.of(new SkillExecutionContext(actingCharacter, targetsByType, 0));
+		int weaponBaseDamage = actingCharacter.getEquipment().getWeapon().map(WeaponDefinition::getBaseWeaponDamage)
+				.orElse(0);
+
+		return Optional.of(new SkillExecutionContext(actingCharacter, targetsByType, weaponBaseDamage));
 	}
 
 	private Optional<List<GameCharacter>>
@@ -702,7 +724,8 @@ public class Battle {
 
 		case SPECIAL_STATE -> displaySpecialStateResult(target, targetName);
 
-		case DAMAGE_POWER_MODIFIER -> {}
+		case DAMAGE_POWER_MODIFIER -> {
+		}
 		}
 	}
 
@@ -838,9 +861,18 @@ public class Battle {
 	}
 
 	private int applyBasicAttackDamage(GameCharacter attacker, GameCharacter target) {
-		double calculatedDamage = damageCalculator.calculateDamage(attacker, target, DamageType.PHYSICAL, 0, 0, 0);
+		return applyBasicAttackDamage(attacker, target, DamageType.PHYSICAL, 0);
+	}
+
+	private int applyBasicAttackDamage(
+			GameCharacter attacker,
+			GameCharacter target,
+			DamageType damageType,
+			int weaponBaseDamage
+	) {
+		double calculatedDamage = damageCalculator
+				.calculateDamage(attacker, target, damageType, 0, weaponBaseDamage, 0);
 
 		return target.takeDamage(calculatedDamage);
 	}
-
 }

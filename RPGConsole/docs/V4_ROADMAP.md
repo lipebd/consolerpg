@@ -16,7 +16,7 @@ Quests, world flags, access requirements, remaining exploration decisions, save 
 
 The implementation must continue to preserve stable IDs, strict startup validation and separation between immutable definitions and mutable runtime state. Validation and regression testing must accompany each system instead of being postponed to a final generic phase.
 
-Current milestone: the combat-effect foundation, external skill execution and the approved 30-skill playable roster are complete. Remaining unchecked validation items in section 1 represent broader regression coverage, not missing core architecture.
+Current milestone: combat effects, external skills, natural progression, reward modifiers and the complete equipment system are implemented. Remaining unchecked validation items represent broader regression coverage, not missing core architecture.
 
 ---
 
@@ -113,7 +113,7 @@ Current milestone: the combat-effect foundation, external skill execution and th
 * [x] Test skills with multiple components when components are resisted, not triggered or applied in different phases.
 * [x] Test conditional components before and after damage, conditional stage values and self-debuff resistance after a pre-action LCK increase.
 * [x] Test recoil source damage, independent trigger chance, half-up rounding and the non-lethal HP limit.
-* [ ] Test global and individual reward modifiers.
+* [x] Test global and individual reward modifiers.
 
 ## 2. Playable classes, external skills and level progression
 
@@ -148,8 +148,8 @@ Current milestone: the combat-effect foundation, external skill execution and th
 * [x] Use loaded class and skill definitions when assembling the temporary development party.
 * [x] Complete the approved external skill data for all seven playable classes.
 * [x] Redesign the learned-skills screen to display main type, power, targeting, resource cost and the external narrative description.
-* [ ] Add global EXP and gold reward modifiers.
-* [ ] Add individual character EXP modifiers.
+* [x] Add global EXP and gold reward modifiers.
+* [x] Add individual character EXP modifiers.
 
 ### Character progression
 
@@ -164,7 +164,7 @@ Current milestone: the combat-effect foundation, external skill execution and th
 * [x] Apply defensive specialization to HP growth.
 * [x] Apply MAG specialization to MP growth.
 * [x] Apply ATK specialization to SP growth.
-* [x] Keep natural level progression separate from temporary combat effects and future equipment bonuses.
+* [x] Keep natural level progression separate from temporary combat effects and equipment bonuses.
 * [x] Define class-to-skill progression through each skill's class ID and acquisition level.
 * [x] Validate skill class IDs and acquisition levels.
 * [x] Assign a playable-class definition to every current playable character.
@@ -179,7 +179,7 @@ Current milestone: the combat-effect foundation, external skill execution and th
 * [ ] Keep the normal new-game flow restricted to the Flagelo class.
 * [x] Test the base attributes of all seven playable classes.
 * [x] Test attribute and resource growth at levels before, during and after primary and secondary growth thresholds.
-* [ ] Test natural progression independently from equipment bonuses.
+* [x] Test natural progression independently from equipment bonuses.
 * [x] Test initial and level-based availability for the currently externalized skill subset.
 
 ### Skill-scroll integration
@@ -194,79 +194,82 @@ Current milestone: the combat-effect foundation, external skill execution and th
 
 ## 3. Equipment
 
-* [ ] Define the weapon, armor and trinket equipment slots.
-* [ ] Define external weapon data.
-* [ ] Define external armor data.
-* [ ] Define external trinket data.
-* [ ] Create immutable weapon, armor and trinket definitions.
-* [ ] Create the equipment loaders.
-* [ ] Create the equipment catalogs.
-* [ ] Link every equipment definition to a stable item ID.
-* [ ] Validate equipment references against the item catalog.
-* [ ] Prevent the same item ID from defining more than one equipment category.
-* [ ] Store an integer level requirement for every equipment item.
-* [ ] Reject equipment use below its level requirement.
+* [x] Define the weapon, armor and trinket equipment slots.
+* [x] Define external weapon data.
+* [x] Define external armor data.
+* [x] Define external trinket data.
+* [x] Create immutable weapon, armor and trinket definitions.
+* [x] Create the shared equipment loader.
+* [x] Create the shared equipment catalog.
+* [x] Link every equipment definition to a stable item ID.
+* [x] Validate equipment references against the item catalog.
+* [x] Prevent the same item ID from defining more than one equipment category.
+* [x] Store an integer level requirement for every equipment item.
+* [x] Reject equipment use below its level requirement.
 
 ### Weapons
 
-* [ ] Classify every weapon as physical or magical.
-* [ ] Store the weapon type and normal-attack name.
-* [ ] Store a mandatory integer base weapon damage value (`DBA`).
-* [ ] Support optional ATK, MAG, SP, MP, VEL and LCK bonuses.
-* [ ] Reject weapons with missing or invalid base weapon damage.
-* [ ] Use the equipped weapon's category and `DBA` in basic-attack calculations.
-* [ ] Keep weapon `DBA` separate from effective character attributes.
-* [ ] Allow every playable class to equip every weapon that satisfies the level requirement.
+* [x] Classify every weapon as physical or magical.
+* [x] Store the weapon type and normal-attack name.
+* [x] Store a mandatory integer base weapon damage value (`DBA`, displayed as `Poder`).
+* [x] Support optional HP, MP, SP, ATK, DEF, MAG, RES, VEL and LCK bonuses.
+* [x] Reject weapons with missing or invalid base weapon damage.
+* [x] Use the equipped weapon's damage type and `DBA` in basic-attack calculations.
+* [x] Keep weapon `DBA` separate from effective character attributes.
+* [x] Add the equipped weapon's full `DBA` to every damaging skill.
+* [x] Allow every playable class to equip every weapon that satisfies the level requirement.
 
 ### Armor
 
-* [ ] Define light, medium and heavy armor weights.
-* [ ] Support optional HP, DEF, RES, VEL and LCK bonuses.
-* [ ] Require the armor weight to match the playable class's weight exactly.
-* [ ] Keep armor defense entirely attribute-based without introducing a separate base-armor value.
+* [x] Define light, medium and heavy armor weights.
+* [x] Support optional HP, MP, SP, ATK, DEF, MAG, RES, VEL and LCK bonuses.
+* [x] Require the armor weight to match the playable class's weight exactly.
+* [x] Keep armor defense entirely attribute-based without introducing a separate base-armor value.
 
 ### Trinkets
 
-* [ ] Support optional RES and LCK bonuses.
-* [ ] Support an individual EXP reward multiplier for the equipped character.
-* [ ] Support a party-wide gold reward multiplier from an individually equipped trinket.
-* [ ] Keep individual equipment EXP modifiers separate from global EXP modifiers.
-* [ ] Keep equipment-based gold modifiers separate from temporary global gold modifiers.
-* [ ] Additively combine `M.EXP` with other EXP modifiers applicable to the equipped character.
-* [ ] Additively combine all equipped `M.GOLD` bonuses with other global gold modifiers.
-* [ ] Define consistent integer rounding for modified EXP and gold rewards.
+* [x] Support optional HP, MP, SP, ATK, DEF, MAG, RES, VEL and LCK bonuses.
+* [x] Support an individual EXP reward multiplier for the equipped character.
+* [x] Support a party-wide gold reward multiplier from an individually equipped trinket.
+* [x] Keep individual equipment EXP modifiers separate from global EXP modifiers.
+* [x] Keep equipment-based gold modifiers separate from temporary global gold modifiers.
+* [x] Additively combine `M.EXP` with other EXP modifiers applicable to the equipped character.
+* [x] Additively combine all equipped `M.GOLD` bonuses with other global gold modifiers.
+* [x] Define consistent integer rounding for modified EXP and gold rewards.
 
 ### Equipment-data validation
 
-* [ ] Validate equipment IDs, required fields and duplicate definitions.
-* [ ] Validate positive level requirements.
-* [ ] Validate that each equipment type contains only its supported bonuses.
-* [ ] Validate weapon categories, weapon types and normal-attack names.
-* [ ] Validate armor weights.
-* [ ] Validate integer attribute bonuses.
-* [ ] Validate EXP and gold reward multipliers.
+* [x] Validate equipment IDs, required fields and duplicate definitions.
+* [x] Validate positive level requirements.
+* [x] Validate the common nine-stat bonus schema for every equipment type.
+* [x] Validate weapon categories, weapon types and normal-attack names.
+* [x] Validate armor weights.
+* [x] Validate integer attribute bonuses.
+* [x] Validate EXP and gold reward multipliers.
 
 ### Equipment state and interface
 
-* [ ] Equip and unequip one weapon, one armor and one trinket per playable character.
-* [ ] Prevent equipment from being placed in an incompatible slot.
-* [ ] Prevent the party from equipping more copies of an item than the quantity it owns.
-* [ ] Prevent equipped item quantities from being sold.
-* [ ] Recalculate effective attributes safely after equipment changes.
-* [ ] Preserve natural attributes separately from equipment bonuses.
-* [ ] Update the character's basic-attack presentation when its equipped weapon changes.
-* [ ] Display equipped items, requirements, `DBA`, bonuses and multipliers in individual status.
-* [ ] Integrate equipment with shops and exploration rewards.
-* [ ] Test equipping, replacing and removing every equipment type.
-* [ ] Test equipment level requirements.
-* [ ] Test physical and magical basic attacks after weapon changes.
-* [ ] Test effective attributes before and after equipment changes.
-* [ ] Test equipment ownership across multiple party members.
-* [ ] Test equipment purchases, rewards and sale restrictions.
-* [ ] Test exact armor-weight compatibility for light, medium and heavy classes.
-* [ ] Test individual EXP modifiers from equipped trinkets.
-* [ ] Test party-wide gold modifiers from equipped trinkets.
-* [ ] Test additive stacking between multiple reward modifiers.
+* [x] Equip and unequip one weapon, one armor and one trinket per playable character.
+* [x] Prevent equipment from being placed in an incompatible slot.
+* [x] Prevent the party from equipping more copies of an item than the quantity it owns.
+* [x] Prevent equipped item quantities from being sold by transferring equipped units out of inventory.
+* [x] Recalculate effective attributes safely after equipment changes.
+* [x] Preserve natural attributes separately from equipment bonuses.
+* [x] Update the character's basic-attack presentation when its equipped weapon changes.
+* [x] Display equipped items, requirements, `Poder`, bonuses and multipliers in inventory and individual status flows.
+* [x] Integrate equipment base items with shops, drops and exploration rewards.
+* [x] Support equipping from inventory and from a character's status screen through one shared menu.
+* [x] Display a change-only comparison before confirming equipment.
+* [x] Test equipping, replacing and removing every equipment type.
+* [x] Test equipment level requirements.
+* [x] Test physical and magical basic attacks after weapon changes.
+* [x] Test effective attributes before and after equipment changes.
+* [x] Test equipment ownership across multiple party members.
+* [x] Test equipment purchases, rewards and sale restrictions.
+* [x] Test exact armor-weight compatibility for light, medium and heavy classes.
+* [x] Test individual EXP modifiers from equipped trinkets.
+* [x] Test party-wide gold modifiers from equipped trinkets.
+* [x] Test additive stacking between multiple reward modifiers.
 
 ## 4. Character and party creation
 
@@ -338,6 +341,14 @@ Current milestone: the combat-effect foundation, external skill execution and th
 * [ ] Evaluate exploration checkpoints.
 * [ ] Evaluate camps and temporary recovery.
 * [ ] Decide how completed dungeons behave when revisited.
+
+### Level-7 class change
+
+> **Deferred:** The class-path decision remains outside V4, but its equipment consequence is already frozen.
+
+* [ ] Return all three equipped items to inventory before applying the class decision.
+* [ ] Grant the chosen class's level-7 starter weapon and armor, including when the character remains a Flagelo.
+* [ ] Display narrative guidance telling the player to open the equipment menu and equip the new set.
 
 ### World flags and access requirements
 

@@ -18,14 +18,17 @@ public final class InventoryMenu {
 
 	private static final int ITEMS_PER_PAGE = 8;
 
+	private final EquipmentMenu equipmentMenu;
 	private final Party party;
 	private final Scanner scanner;
 	private final RecoveryItemUseMenu recoveryItemUseMenu;
 
-	public InventoryMenu(Party party, Scanner scanner) {
+	public InventoryMenu(Party party, Scanner scanner, EquipmentMenu equipmentMenu) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
 
 		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+
+		this.equipmentMenu = Objects.requireNonNull(equipmentMenu, "Equipment menu cannot be null.");
 
 		this.recoveryItemUseMenu = new RecoveryItemUseMenu(party, scanner);
 	}
@@ -35,9 +38,7 @@ public final class InventoryMenu {
 
 		while (true) {
 			System.out.println("\n[INVENTÁRIO]");
-			System.out.println(
-			GameCurrency.getName() + ": " + GameCurrency.format(party.getGold())
-	);
+			System.out.println(GameCurrency.getName() + ": " + GameCurrency.format(party.getGold()));
 
 			displayCategoryMenu(categories);
 
@@ -82,21 +83,21 @@ public final class InventoryMenu {
 	}
 
 	private boolean openCategory(ItemCategory category) {
-		List<Map.Entry<Item, Integer>> entries = party.getInventory().getContents().entrySet().stream()
-				.filter(entry -> entry.getKey().getCategory() == category)
-				.sorted(Comparator.comparing((Map.Entry<Item, Integer> entry) -> entry.getKey().getName(),
-						String.CASE_INSENSITIVE_ORDER).thenComparing(entry -> entry.getKey().getId()))
-				.toList();
-		
+		List<Map.Entry<Item, Integer>> entries = getCategoryEntries(category);
+
 		if (entries.isEmpty()) {
 			openEmptyCategory(category);
+
 			return false;
-			
 		}
+
 		int currentPage = 0;
-		int totalPages = (entries.size() + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE;
 
 		while (true) {
+			int totalPages = (entries.size() + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE;
+
+			currentPage = Math.min(currentPage, totalPages - 1);
+
 			int firstIndex = currentPage * ITEMS_PER_PAGE;
 
 			int lastIndex = Math.min(firstIndex + ITEMS_PER_PAGE, entries.size());
@@ -111,11 +112,13 @@ public final class InventoryMenu {
 
 			if (choice.equalsIgnoreCase("P") && currentPage < totalPages - 1) {
 				currentPage++;
+
 				continue;
 			}
 
 			if (choice.equalsIgnoreCase("A") && currentPage > 0) {
 				currentPage--;
+
 				continue;
 			}
 
@@ -132,12 +135,21 @@ public final class InventoryMenu {
 
 				Map.Entry<Item, Integer> entry = entries.get(firstIndex + selectedIndex);
 
-				boolean itemUsed = openDetails(entry.getKey(), entry.getValue());
+				boolean inventoryChanged = openDetails(entry.getKey(), entry.getValue());
 
-				if (itemUsed) {
+				if (!inventoryChanged) {
+					continue;
+				}
+
+				if (!isEquipmentCategory(category)) {
 					return true;
 				}
 
+				entries = getCategoryEntries(category);
+
+				if (entries.isEmpty()) {
+					return false;
+				}
 			} catch (NumberFormatException exception) {
 				System.out.println("Comando inválido.");
 			}
@@ -166,11 +178,19 @@ public final class InventoryMenu {
 		}
 	}
 
-	private void displayItemPage(ItemCategory category, List<Map.Entry<Item, Integer>> entries, int firstIndex,
-			int lastIndex, int currentPage, int totalPages) {
+	private void displayItemPage(
+			ItemCategory category,
+			List<Map.Entry<Item, Integer>> entries,
+			int firstIndex,
+			int lastIndex,
+			int currentPage,
+			int totalPages
+	) {
 		System.out.println();
-		System.out.println("[" + getCategoryDisplayName(category).toUpperCase(Locale.ROOT) + " — PÁGINA "
-				+ (currentPage + 1) + "/" + totalPages + "]");
+		System.out.println(
+				"[" + getCategoryDisplayName(category).toUpperCase(Locale.ROOT) + " — PÁGINA " + (currentPage + 1) + "/"
+						+ totalPages + "]"
+		);
 
 		System.out.println();
 		System.out.println("Selecione um item para ver detalhes:");
@@ -184,8 +204,12 @@ public final class InventoryMenu {
 
 			int pageOption = index - firstIndex + 1;
 
-			System.out.printf("[%d]  %-" + ItemMenuFormatter.ITEM_NAME_WIDTH + "s x%d%n", pageOption, displayName,
-					entry.getValue());
+			System.out.printf(
+					"[%d]  %-" + ItemMenuFormatter.ITEM_NAME_WIDTH + "s x%d%n",
+					pageOption,
+					displayName,
+					entry.getValue()
+			);
 		}
 
 		int displayedItemCount = lastIndex - firstIndex;
@@ -207,6 +231,9 @@ public final class InventoryMenu {
 	}
 
 	private boolean openDetails(Item item, int quantity) {
+		if (isEquipmentCategory(item.getCategory())) {
+			return equipmentMenu.openForItem(item);
+		}
 		while (true) {
 			System.out.println();
 			System.out.println("[" + item.getName().toUpperCase(Locale.ROOT) + "]");
@@ -258,4 +285,23 @@ public final class InventoryMenu {
 		case SKILL_SCROLL -> "Pergaminhos";
 		};
 	}
+
+	private List<Map.Entry<Item, Integer>> getCategoryEntries(ItemCategory category) {
+		return party.getInventory().getContents().entrySet().stream()
+				.filter(entry -> entry.getKey().getCategory() == category)
+				.sorted(
+						Comparator.comparing(
+								(Map.Entry<Item, Integer> entry) -> entry.getKey().getName(),
+								String.CASE_INSENSITIVE_ORDER
+						).thenComparing(entry -> entry.getKey().getId())
+				).toList();
+	}
+
+	private boolean isEquipmentCategory(ItemCategory category) {
+		return switch (category) {
+		case WEAPON, ARMOR, TRINKET -> true;
+		default -> false;
+		};
+	}
+
 }

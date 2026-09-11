@@ -18,6 +18,9 @@ import rpg.enemies.EnemyDefinition;
 import rpg.enemies.EnemyDropCatalog;
 import rpg.items.Item;
 import rpg.items.ItemCatalog;
+import rpg.items.equipment.EquipmentCatalog;
+import rpg.items.equipment.EquipmentService;
+import rpg.ui.EquipmentMenu;
 import rpg.ui.BattleRewardScreen;
 import rpg.ui.CityLocationMenu;
 import rpg.ui.CityMenu;
@@ -109,6 +112,8 @@ public class World {
 			Scenario initialScenario,
 			Scanner scanner,
 			ItemCatalog itemCatalog,
+			EquipmentCatalog equipmentCatalog,
+			EquipmentService equipmentService,
 			ShopCatalog shopCatalog,
 			ShopStateCatalog shopStateCatalog,
 			EnemyCatalog enemyCatalog,
@@ -165,8 +170,15 @@ public class World {
 		this.combatScenarioMenu = new CombatScenarioMenu(scanner);
 		this.routeMenu = new RouteMenu(scanner, this.travelProgress);
 		this.scenarioBranchMenu = new ScenarioBranchMenu(scanner);
-		this.inventoryMenu = new InventoryMenu(this.party, scanner);
-		this.partyStatusMenu = new PartyStatusMenu(this.party, scanner);
+		EquipmentMenu equipmentMenu = new EquipmentMenu(
+				this.party,
+				scanner,
+				Objects.requireNonNull(equipmentCatalog, "Equipment catalog cannot be null."),
+				this.itemCatalog,
+				Objects.requireNonNull(equipmentService, "Equipment service cannot be null.")
+		);
+		this.inventoryMenu = new InventoryMenu(this.party, scanner, equipmentMenu);
+		this.partyStatusMenu = new PartyStatusMenu(this.party, scanner, equipmentMenu);
 		this.cityMenu = new CityMenu(scanner);
 		this.cityTransportMenu = new CityTransportMenu(this.party, scanner, this.scenarioCatalog);
 		this.cityLocationMenu = new CityLocationMenu(scanner);

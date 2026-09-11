@@ -23,13 +23,14 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | Package | Responsibility | Main types |
 |---|---|---|
 | `rpg` | Application entry point, dependency construction and shared currency presentation | `Main`, `GameCurrency` |
-| `rpg.characters` | Character state, attributes, party ownership and enemy ranks | `GameCharacter`, `CharacterStats`, `PlayableCharacter`, `Party`, `Enemy`, `EnemyRank` |
-| `rpg.classes` | Immutable playable-class definitions, external loading, lookup and natural-growth calculation | `PlayableClassDefinition`, `PlayableClassLoader`, `PlayableClassCatalog`, `PlayableClassWeight`, `CharacterGrowthCalculator` |
-| `rpg.battle` | Battle coordination, skill execution and centralized combat calculations | `Battle`, `BattleResult`, `BattleCoordinator`, `SkillExecutor`, `SkillExecution`, `SkillExecutionContext`, `SkillEffectResult`, `DamageCalculator`, `RecoveryCalculator`, `EffectResistanceCalculator`, `EnemyBattleGroup`, `BattleTurnOrder`, `BattleEscapeService` |
-| `rpg.battle.rewards` | Reward calculation, temporary modifier state, immutable reward snapshots and individual progression results | `BattleRewardService`, `RewardCalculator`, `PartyRewardModifierState`, `BattleRewardModifiers`, `BattleRewards`, `CharacterProgressionResult` |
+| `rpg.characters` | Character state, natural and equipment-modified attributes, equipped slots, party ownership and enemy ranks | `GameCharacter`, `CharacterStats`, `CharacterEquipment`, `PlayableCharacter`, `Party`, `Enemy`, `EnemyRank` |
+| `rpg.classes` | Immutable playable-class definitions, external loading, lookup and natural-growth calculation | `PlayableClassDefinition`, `PlayableClassLoader`, `PlayableClassCatalog`, `CharacterGrowthCalculator` |
+| `rpg.battle` | Battle coordination, skill execution and centralized combat calculations | `Battle`, `BattleResult`, `BattleCoordinator`, `SkillExecutor`, `SkillExecution`, `SkillExecutionContext`, `SkillEffectResult`, `DamageType`, `DamageCalculator`, `RecoveryCalculator`, `EffectResistanceCalculator`, `EnemyBattleGroup`, `BattleTurnOrder`, `BattleEscapeService` |
+| `rpg.battle.rewards` | Reward calculation, temporary and equipment modifiers, immutable reward snapshots and individual progression results | `BattleRewardService`, `RewardCalculator`, `PartyRewardModifierState`, `BattleRewardModifiers`, `BattleRewards`, `CharacterProgressionResult` |
 | `rpg.effects` | Mutable combat-effect state and reusable attribute-stage rules | `CombatEffectState`, `AttributeStageState`, `AttributeStageRules`, `SpecialBattleStateType` |
-| `rpg.skills` | Immutable skill and component definitions, external loading and closed skill vocabularies | `SkillDefinition`, `SkillEffectDefinition`, `SkillLoader`, `SkillCatalog`, `DamageType`, `SkillTargetType`, `SkillEffectType`, `SkillExecutionPhase`, `SkillConditionType` |
+| `rpg.skills` | Immutable skill and component definitions, external loading and closed skill vocabularies | `SkillDefinition`, `SkillEffectDefinition`, `SkillLoader`, `SkillCatalog`, `SkillTargetType`, `SkillEffectType`, `SkillExecutionPhase`, `SkillConditionType` |
 | `rpg.items` | External item definitions, runtime item behavior, shared inventory and individual drop rules | `ItemDefinition`, `ItemDefinitionCatalog`, `ItemLoader`, `RecoveryItemDefinition`, `RecoveryItemLoader`, `ItemFactory`, `Item`, `BasicItem`, `RecoveryItem`, `ItemCatalog`, `Inventory`, `DropEntry` |
+| `rpg.items.equipment` | Immutable equipment specialization, loading, lookup, compatibility vocabulary and inventory-to-character transfers | `EquipmentDefinition`, `WeaponDefinition`, `ArmorDefinition`, `TrinketDefinition`, `EquipmentLoader`, `EquipmentCatalog`, `EquipmentService`, `WeaponType`, `ArmorWeight`, `TrinketType` |
 | `rpg.enemies` | Enemy definitions and external enemy/drop loading | `EnemyDefinition`, `EnemyCatalog`, `EnemyLoader`, `EnemyDropCatalog`, `EnemyDropLoader` |
 | `rpg.world` | Active world state, scenario discovery and high-level coordination | `World`, `WorldProgress` |
 | `rpg.world.scenarios` | External scenario definitions, runtime scenario hierarchy and scenario creation | `ScenarioDefinition`, `ScenarioDefinitionCatalog`, `ScenarioLoader`, `CombatScenarioDefinition`, `CombatScenarioLoader`, `DungeonDefinition`, `DungeonLoader`, `ScenarioFactory`, `Scenario`, `CombatScenario`, `Field`, `Dungeon`, `City`, `ScenarioCatalog`, `CombatScenarioAction`, `CityAction` |
@@ -40,7 +41,7 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.world.rewards` | External exploration reward pools, validation and weighted selection | `ExplorationRewardEntry`, `ExplorationRewardCatalog`, `ExplorationRewardLoader`, `ExplorationRewardGenerator`, `ExplorationReward`, `ExplorationRewardType` |
 | `rpg.world.travel` | External directed-route definitions, loading and runtime unlock progress | `TravelRouteDefinition`, `TravelCatalog`, `TravelRouteLoader`, `TravelProgress` |
 | `rpg.world.transport` | External paid city-transport definitions, loading and destination lookup | `CityTransportDefinition`, `CityTransportCatalog`, `CityTransportLoader` |
-| `rpg.ui` | Console menus, navigation, target selection, shared formatters and information screens | `TitleScreen`, `GameOverScreen`, `CombatScenarioMenu`, `CityMenu`, `CityLocationMenu`, `InnMenu`, `RouteMenu`, `CityTransportMenu`, `InventoryMenu`, `BattleItemMenu`, `RecoveryItemUseMenu`, `EpicEncounterMenu`, `BattleRewardScreen`, `BattleTurnOrderScreen`, `PartyStatusMenu`, `CharacterStatusMenu`, `SkillDetailFormatter`, `RewardModifierFormatter`, `ShopMenu` |
+| `rpg.ui` | Console menus, navigation, target selection, shared formatters and information screens | `TitleScreen`, `GameOverScreen`, `CombatScenarioMenu`, `CityMenu`, `CityLocationMenu`, `InnMenu`, `RouteMenu`, `CityTransportMenu`, `InventoryMenu`, `EquipmentMenu`, `BattleItemMenu`, `RecoveryItemUseMenu`, `EpicEncounterMenu`, `BattleRewardScreen`, `BattleTurnOrderScreen`, `PartyStatusMenu`, `CharacterStatusMenu`, `EquipmentDetailFormatter`, `SkillDetailFormatter`, `RewardModifierFormatter`, `ShopMenu` |
 
 ## Application initialization
 
@@ -50,7 +51,7 @@ Initialization includes:
 
 1. Creating the shared `Scanner`.
 2. Loading enemy and base item definitions.
-3. Loading specialized recovery-item definitions and creating runtime items.
+3. Loading specialized recovery-item definitions and equipment definitions, then creating runtime items.
 4. Loading enemy drops and encounter definitions.
 5. Loading common scenario definitions.
 6. Loading city-transport, INN and combat-scenario definitions.
@@ -63,8 +64,9 @@ Initialization includes:
 13. Resolving the initial scenario and creating `WorldProgress`.
 14. Loading adjacent travel routes and creating `TravelProgress`.
 15. Creating one shared `CharacterGrowthCalculator` and the temporary playable characters from loaded class and skill definitions.
-16. Creating `World` with the required catalogs, shop states, progress state and shared dependencies.
-17. Starting the world loop.
+16. Creating `EquipmentService` from the item and equipment catalogs.
+17. Creating `World` with the required catalogs, services, shop states, progress state and shared dependencies.
+18. Starting the world loop.
 
 External data is loaded before gameplay. Invalid definitions or unresolved references prevent the game from starting with partially inconsistent catalogs.
 
@@ -109,6 +111,7 @@ Maximum HP and all six regular attributes must be positive. Maximum MP and SP ma
 - Level.
 - EXP.
 - Its playable-class definition.
+- Its three equipment slots.
 - Class skills unlocked at the current level.
 - Natural-stat recalculation through `CharacterGrowthCalculator` after gaining one or more levels.
 
@@ -132,6 +135,7 @@ The calculator derives the complete natural-stat snapshot directly from the clas
 - Shared inventory.
 - Shared gold.
 - Temporary global reward-modifier state.
+- The combined party-wide gold modifier supplied by equipped trinkets.
 - Future party title.
 
 `Enemy` adds:
@@ -159,8 +163,8 @@ Individual state belongs to `PlayableCharacter`:
 - EXP.
 - Playable-class and skill definitions.
 - Defensive state.
-- Future equipment.
-- Future equipment that may contribute an individual EXP modifier.
+- One equipped weapon, armor and trinket.
+- The individual EXP modifier supplied by its equipped trinket.
 - Temporary combat effects.
 
 This separation allows party members to enter and leave the group without duplicating shared resources.
@@ -414,7 +418,7 @@ The battle system is divided into the following responsibilities:
 - `SkillExecution`
   - Preserves the mutable state and accumulated results of one skill use, including deferred `POST_ACTION` components.
 - `SkillExecutionContext`
-  - Stores the user and the targets selected once for the complete skill use.
+  - Stores the user, the targets selected once for the complete skill use and a snapshot of equipped weapon base damage.
 - `SkillEffectResult` and `SkillEffectOutcome`
   - Report `APPLIED`, `RESISTED` or `NOT_TRIGGERED` without requiring the interface to infer what happened.
 - `DamageCalculator`
@@ -568,13 +572,44 @@ Damage, recovery, attribute-stage mutation and resource changes remain owned by 
 
 `DAMAGE_POWER_MODIFIER` affects every later compatible damage component against the same target during the same `SkillExecution`. Multiple modifiers accumulate with overflow protection and never leak into another target or skill use.
 
+Player basic attacks read the equipped weapon's damage type, normal-attack name and base weapon damage. Without a weapon, they fall back to physical damage and zero weapon power. Offensive skill components always add 100% of the equipped weapon's base damage, while the component's own `DamageType` independently selects ATK against DEF or MAG against RES. `DamageType` therefore belongs to `rpg.battle`, where both attacks and skills consume it.
+
+## Equipment architecture
+
+Every equipment item has two linked definitions:
+
+- `items.txt` supplies its stable identity, category, commercial data, name and description.
+- `weapons.txt`, `armors.txt` or `trinkets.txt` supplies its equipment-specific fields.
+
+`EquipmentLoader` validates the specialized files against `ItemDefinitionCatalog` and registers all definitions in one `EquipmentCatalog`, keyed by the same stable item ID. Runtime equipment remains represented by the corresponding `BasicItem` from `ItemCatalog`; equipping transfers one owned unit out of `Inventory` and stores its immutable definition in `CharacterEquipment`.
+
+`CharacterEquipment` owns exactly three optional slots: weapon, armor and trinket. Slot mutation is package-private and is exposed through validated operations on `PlayableCharacter`. `EquipmentService` coordinates transfers between party inventory and character: a replacement returns the previous item to inventory, while unequipping returns the removed item.
+
+Compatibility rules are centralized through `PlayableCharacter.canEquip()`:
+
+- Every class may equip every weapon when its level requirement is met.
+- Armor requires an exact match between the armor's `ArmorWeight` and the class's armor weight.
+- Every class may equip every trinket when its level requirement is met.
+
+The natural values stored by `GameCharacter` remain separate from structural equipment bonuses. Public maximum-resource and attribute getters combine natural values with equipment before applying temporary combat states. Removing or replacing equipment clamps current HP, MP and SP to their new maximums; it does not heal resources when maximums increase.
+
+The same `EquipmentMenu` instance is created by `World` and shared by `InventoryMenu` and `CharacterStatusMenu`. This supports both directions without duplicating rules:
+
+```text
+Inventory -> equipment item -> character -> confirmation
+Status -> character -> equipment slot -> inventory item -> confirmation
+```
+
+`EquipmentDetailFormatter` produces shared details and change-only confirmation comparisons. Player-facing text calls weapon base damage `Poder`; `DBA` remains internal vocabulary. Equipped units are absent from inventory rather than marked with an `(E)` flag.
+
 ## Battle reward architecture
 
 `BattleRewardService` calculates:
 
 - Base EXP and gold after enemy-rank multiplication and aggregation.
-- Globally modified EXP and gold.
-- Final EXP for each character after global and individual modifiers are combined additively.
+- Temporarily modified global EXP and gold.
+- Final EXP for each character after temporary and equipped individual modifiers are combined additively.
+- Final party gold after temporary and all equipped trinket gold modifiers are combined additively.
 - Individual character progression.
 - Independent drop rolls.
 - Consolidated item quantities.
@@ -604,7 +639,7 @@ A surviving character who gains at least one level restores all resources after 
 
 A defeated character still receives EXP and may level up, but remains defeated and receives no resource restoration.
 
-The current individual-modifier input is ready for equipment integration. Reward-modifier potions are intentionally deferred until after the equipment block; they will activate the existing party state rather than introduce another reward formula.
+An equipped trinket's EXP modifier applies only to its wearer. Gold modifiers from every equipped trinket are summed for the party. All applicable percentages are combined before `RewardCalculator` rounds once. Reward-modifier potions remain deferred; they will activate the existing party state rather than introduce another reward formula.
 
 ## Adjacent travel flow
 
@@ -748,6 +783,7 @@ Important UI components include:
 - `RouteMenu`
 - `CityTransportMenu`
 - `InventoryMenu`
+- `EquipmentMenu`
 - `BattleItemMenu`
 - `RecoveryItemUseMenu`
 - `EpicEncounterMenu`
@@ -758,6 +794,7 @@ Important UI components include:
 - `PartyStatusMenu`
 - `CharacterStatusMenu`
 - `SkillDetailFormatter`
+- `EquipmentDetailFormatter`
 - `RewardModifierFormatter`
 - `GameOverScreen`
 - `ShopMenu`
@@ -766,7 +803,7 @@ Important UI components include:
 
 `RouteMenu` selects among unlocked adjacent routes. `CityTransportMenu` separately displays configured discovered cities, validates affordability, requests confirmation and controls payment before returning the selected paid destination.
 
-`InventoryMenu` controls the general inventory flow outside battle. It displays every item category in deterministic enum order, keeps empty categories selectable, reports an empty category only after it is selected, paginates non-empty contents and opens item details. Empty inventory screens remain open until the player explicitly returns or closes the inventory.
+`InventoryMenu` controls the general inventory flow outside battle. It displays every item category in deterministic enum order, keeps empty categories selectable, reports an empty category only after it is selected, paginates non-empty contents and opens item details. Recovery items may be used and equipment items may open the shared equipment flow. Empty inventory screens remain open until the player explicitly returns or closes the inventory.
 
 `ShopMenu` is shared by fixed city shops and exploration merchants. It displays the configured shop identity and party gold, lists active purchase offers with deterministic pagination, organizes owned sellable items by category and keeps the shop open until the player explicitly leaves.
 
@@ -776,13 +813,17 @@ Important UI components include:
 
 `ItemMenuFormatter` contains shared presentation rules such as deterministic column widths, name truncation and recovery-effect summaries. It does not decide item behavior.
 
-`PartyStatusMenu` displays a compact overview of one to four allies, the shared party currency and active temporary reward modifiers.
+`PartyStatusMenu` displays a compact overview of one to four allies, the shared party currency, the active temporary EXP modifier and the total effective party gold modifier.
 
-`CharacterStatusMenu` displays one character's detailed resources, attributes, progression and currently available class skills.
+`CharacterStatusMenu` displays one character's detailed resources, equipment-modified attributes, progression, total effective EXP modifier, currently available class skills and access to equipment slots.
+
+`EquipmentMenu` supports equipping from an inventory item and managing a selected character's three slots. It filters incompatible choices, confirms change-only stat and attack differences and delegates mutations to `EquipmentService`.
+
+`EquipmentDetailFormatter` formats equipment descriptions, requirements, bonuses and comparison previews for both entry routes.
 
 `SkillDetailFormatter` derives one shared player-facing skill sheet from `SkillDefinition` and its ordered components. It uses the first displayable `PRIMARY` component as the main type, power and target, while the external narrative description explains secondary effects. `CharacterStatusMenu` and battle confirmation reuse the same formatted details instead of maintaining separate translations.
 
-`RewardModifierFormatter` produces the shared compact `M.EXP` and `M.GOLD` summary used by party status and the battle-reward screen.
+`RewardModifierFormatter` produces shared multiplier text. Party status and the battle-reward screen show temporary global EXP and total party GOLD; the individual character screen separately shows that character's total EXP multiplier. The battle-reward screen intentionally does not list every ally's individual EXP modifier.
 
 `World` does not store a `Scanner`. Console input is handled by the components that require it.
 
@@ -798,11 +839,11 @@ Menus and screens call `GameCurrency.getName()` when the currency is referenced 
 
 The following implementations remain intentionally temporary:
 
-- Only base item data and recovery-item behavior are currently externalized. Equipment and skill-scroll specialization will be defined when their corresponding systems exist.
-- Reward-modifier potions are deferred until after equipment. Their future item behavior will activate the existing `PartyRewardModifierState` rather than duplicate reward calculation or duration state.
+- Base items, recovery items and equipment specialization are externalized. Skill-scroll specialization remains future work.
+- Reward-modifier potions are deferred. Their future item behavior will activate the existing `PartyRewardModifierState` rather than duplicate reward calculation or duration state.
 - The development party is still assembled in `Main`; the normal character-creation flow has not replaced it yet.
 - Playable-class definitions, natural class growth and the first approved set of skill definitions are integrated, but the complete skill roster remains unfinished.
-- Equipment and skill-scroll behavior are not implemented.
+- Skill-scroll behavior is not implemented.
 - Enemy actions currently use basic attacks; enemy skill selection can reuse the skill executor later but is outside the current scope.
 - Bree currently provides its INN and fixed shop, while tavern functionality remains unavailable.
 - Shop state is regenerated when the application starts; persistence and restocking remain postponed until save and load are implemented.

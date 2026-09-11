@@ -107,6 +107,7 @@ Package names use lowercase letters without underscores:
 rpg.characters
 rpg.battle
 rpg.battle.rewards
+rpg.items.equipment
 rpg.world.encounters
 ```
 
@@ -128,6 +129,8 @@ BattleRewardService
 ShopDefinition
 ShopOfferState
 ShopTransactionService
+EquipmentDefinition
+EquipmentService
 ```
 
 The filename must exactly match the public class name:
@@ -156,12 +159,12 @@ The following suffixes have specific meanings in RPGConsole.
 | `Generator` | Selects or creates results using rules and randomness | `EncounterGenerator`, `ShopStateGenerator` |
 | `Calculator` | Centralizes one domain formula without coordinating the complete flow | `DamageCalculator`, `RecoveryCalculator`, `EffectResistanceCalculator`, `CharacterGrowthCalculator` |
 | `Coordinator` | Orchestrates several existing components without owning all their internal rules | `BattleCoordinator` |
-| `Service` | Applies a cohesive domain operation, usually without console input | `BattleRewardService`, `ShopTransactionService` |
+| `Service` | Applies a cohesive domain operation, usually without console input | `BattleRewardService`, `ShopTransactionService`, `EquipmentService` |
 | `Menu` | Reads player input and manages one player-facing decision flow | `RouteMenu`, `EnemyTargetMenu`, `ShopMenu` |
 | `Screen` | Displays a complete console view or result | `TitleScreen`, `BattleRewardScreen` |
 | `Result` / `Rewards` | Represents the outcome of an operation | `BattleResult`, `BattleRewards`, `ShopPurchaseResult` |
 | `Outcome` | Closed enum describing how an attempted operation concluded | `SkillEffectOutcome` |
-| `Formatter` | Produces shared presentation text without deciding domain behavior | `CombatEffectFormatter`, `ItemMenuFormatter`, `SkillDetailFormatter` |
+| `Formatter` | Produces shared presentation text without deciding domain behavior | `CombatEffectFormatter`, `ItemMenuFormatter`, `SkillDetailFormatter`, `EquipmentDetailFormatter` |
 | `Group` | Owns and queries a collection that acts as one domain unit | `EnemyBattleGroup` |
 | `Slot` | Represents one uniquely identifiable position inside a runtime group | `EnemyBattleSlot` |
 
@@ -470,6 +473,9 @@ shops.txt
 shop_stock.txt
 skills.txt
 skill_effects.txt
+weapons.txt
+armors.txt
+trinkets.txt
 ```
 
 Header field names use `camelCase` and should match the corresponding Java vocabulary:
@@ -480,7 +486,16 @@ Header field names use `camelCase` and should match the corresponding Java vocab
 # id;shopId;itemId;shopSalePricePercent;stock;weight
 # id;classId;acquisitionLevel;mpCost;spCost;name;description
 # skillId;sequence;phase;effectType;targetType;damageType;power;attribute;stages;duration;triggerChancePercent;specialStateType;conditionType;conditionValue
+# itemId;damageType;weaponType;levelRequirement;normalAttackName;baseWeaponDamage;hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus
+# itemId;armorWeight;levelRequirement;hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus
+# itemId;trinketType;levelRequirement;hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus;experienceModifierPercent;goldModifierPercent
 ```
+
+Use `baseWeaponDamage` in Java and external headers. `DBA` may appear in internal design discussion, but the player-facing label is `Poder`.
+
+Use `ArmorWeight` for both class compatibility and armor definitions. The former name `PlayableClassWeight` is obsolete.
+
+`DamageType` belongs to `rpg.battle`, because physical and magical damage are shared by weapon attacks and skills rather than owned by `rpg.skills`.
 
 Enum fields use their exact Java constant names:
 

@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import rpg.characters.CharacterAttribute;
 import rpg.effects.SpecialBattleStateType;
+import rpg.battle.DamageType;
 
 // Stores one immutable ordered component of a skill.
 public final class SkillEffectDefinition {

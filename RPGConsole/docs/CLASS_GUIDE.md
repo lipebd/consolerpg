@@ -109,11 +109,12 @@ BattleCoordinator
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
 | `CharacterStats` | Dados imutáveis validados | Agrupa HP, MP, SP, ataque, defesa, magia, resistência, velocidade e sorte. Exige HP máximo e todos os atributos regulares positivos; MP e SP máximos podem ser zero. É usado na criação de `PlayableCharacter`, `Enemy` e `EnemyDefinition`. |
-| `GameCharacter` | Classe-base de execução | Guarda HP, MP e SP atuais e o estado temporário de combate compartilhado por aliados e inimigos. Fornece operações de dano, defesa, recuperação, ressurreição, gasto de recursos, efeitos temporários e consulta de atributos efetivos. Também expõe uma cópia imutável dos atributos naturais e permite que subclasses substituam esse conjunto de forma protegida. O cálculo de ataques pertence a `DamageCalculator`. |
-| `PlayableCharacter` | Personagem jogável | Estende `GameCharacter` com nível, EXP, definição de classe e acesso dinâmico às habilidades liberadas no nível atual. Ao ganhar níveis, usa `CharacterGrowthCalculator` para substituir os atributos naturais uma única vez pelo resultado do nível final. Seus objetos pertencem a `Party` e participam das batalhas como aliados. |
+| `GameCharacter` | Classe-base de execução | Guarda os atributos naturais, HP, MP e SP atuais e o estado temporário de combate compartilhado por aliados e inimigos. Os getters públicos combinam valores naturais, bônus estruturais fornecidos pela subclasse e efeitos temporários. Também expõe uma cópia imutável apenas dos atributos naturais. O cálculo de ataques pertence a `DamageCalculator`. |
+| `CharacterEquipment` | Estado de equipamentos | Guarda as definições da arma, armadura e berloque equipados por um personagem. Expõe slots opcionais, soma bônus estruturais e fornece os modificadores de recompensa do berloque. A mutação direta é restrita ao pacote de personagens. |
+| `PlayableCharacter` | Personagem jogável | Estende `GameCharacter` com nível, EXP, definição de classe, equipamentos e acesso dinâmico às habilidades liberadas. Valida nível e compatibilidade de peso, equipa e remove definições e limita os recursos atuais quando um máximo diminui. Ao ganhar níveis, substitui somente os atributos naturais pelo resultado final de `CharacterGrowthCalculator`. |
 | `Enemy` | Inimigo de execução | Estende `GameCharacter` e representa uma ocorrência mutável de um inimigo dentro de uma batalha. Recebe seus dados de `EnemyDefinition`, possui rank, descrição e tabela de drops, e é colocado em `EnemyBattleSlot`. Vários objetos `Enemy` podem nascer da mesma definição sem compartilhar HP. |
 | `EnemyRank` | Enum de domínio | Define os ranks válidos dos inimigos, como comum, veterano, líder, boss, épico e lendário. É usado por loaders, definições, recompensas e validações de dungeon. |
-| `Party` | Estado compartilhado do grupo | Armazena de um a quatro `PlayableCharacter`, além do inventário e ouro compartilhados. É consumida por `World`, `Battle`, menus e serviços de recompensa. Recursos e progressão individuais continuam pertencendo a cada personagem. |
+| `Party` | Estado compartilhado do grupo | Armazena de um a quatro `PlayableCharacter`, inventário, ouro e modificadores temporários compartilhados. Também soma os bônus de GOLD dos berloques equipados pelo grupo. É consumida por `World`, `Battle`, menus e serviços de recompensa. |
 
 ---
 
@@ -121,11 +122,10 @@ BattleCoordinator
 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
-| `PlayableClassDefinition` | Definição imutável | Armazena ID, nome, atributos-base, atributos primário e secundário, categoria de peso e descrição de uma classe jogável. É referenciada por `PlayableCharacter` e pelas definições de habilidade. |
+| `PlayableClassDefinition` | Definição imutável | Armazena ID, nome, atributos-base, atributos primário e secundário, peso de armadura compatível e descrição de uma classe jogável. É referenciada por `PlayableCharacter` e pelas definições de habilidade. |
 | `CharacterGrowthCalculator` | Calculador de domínio | Calcula todos os atributos naturais de uma classe em um nível-alvo a partir dos atributos-base e das regras globais de crescimento. Centraliza os intervalos primário e secundário, os bônus de recursos por especialização e a proteção contra overflow. |
 | `PlayableClassLoader` | Carregamento de dados | Lê as sete classes de `playable_classes.txt`, interpreta descrições com `\n`, cria `CharacterStats`, valida os dados e acrescenta linha e ID ao erro quando um cadastro é inválido. |
 | `PlayableClassCatalog` | Catálogo | Registra e localiza `PlayableClassDefinition` por ID estável e permite que `SkillLoader` valide a classe associada a cada habilidade. |
-| `PlayableClassWeight` | Enum de domínio | Define as categorias de peso das classes, usadas agora na validação e futuramente na compatibilidade com armaduras. |
 
 ---
 
@@ -172,6 +172,23 @@ Enemy           -> luta e perde HP durante uma batalha
 | `DropEntry` | Entrada de drop | Define uma possibilidade individual de recompensa: item, chance e quantidades mínima e máxima. É carregada por `EnemyDropLoader`, armazenada em `EnemyDropCatalog` e sorteada por `BattleRewardService`. |
 ---
 
+## Pacote `rpg.items.equipment`
+
+| Classe | Categoria | Finalidade e relações principais |
+|---|---|---|
+| `EquipmentDefinition` | Definição-base imutável | Reúne o ID do item, requisito de nível e os nove bônus comuns a todo equipamento. É especializada por arma, armadura e berloque. |
+| `WeaponDefinition` | Definição de arma | Acrescenta tipo de dano, tipo de arma, nome do ataque normal e poder-base da arma. O ataque básico e as habilidades ofensivas consultam esse poder. |
+| `ArmorDefinition` | Definição de armadura | Acrescenta o peso da armadura. A compatibilidade exige correspondência exata com o peso aceito pela classe. |
+| `TrinketDefinition` | Definição de berloque | Acrescenta o tipo do berloque e os modificadores percentuais de EXP individual e GOLD compartilhado. |
+| `EquipmentLoader` | Carregamento especializado | Lê `weapons.txt`, `armors.txt` e `trinkets.txt`, valida referências, categorias, valores, enums e duplicidades e registra todas as especializações no mesmo catálogo. |
+| `EquipmentCatalog` | Catálogo | Resolve qualquer definição de equipamento pelo ID estável do item e impede que o mesmo ID receba mais de uma especialização. |
+| `EquipmentService` | Serviço de transferência | Coordena equipar, trocar e remover itens entre o inventário da `Party` e os slots de `PlayableCharacter`. Valida pertencimento ao grupo e preserva a unidade anterior em trocas. |
+| `WeaponType` | Enum de domínio | Define as categorias fechadas de arma aceitas pelos dados externos. |
+| `ArmorWeight` | Enum de domínio | Define armaduras `LIGHT`, `MEDIUM` e `HEAVY` e também é usado pela definição da classe jogável. |
+| `TrinketType` | Enum de domínio | Define berloques `JEWELRY`, `AMULET` e `TALISMAN`. |
+
+---
+
 ## Pacote `rpg.skills`
 
 | Classe | Categoria | Finalidade e relações principais |
@@ -184,7 +201,6 @@ Enemy           -> luta e perde HP durante uma batalha
 | `SkillTargetType` | Enum de alvo | Define alvos como usuário, aliado, inimigo, grupos completos ou alvos aleatórios. Orienta a seleção feita uma única vez para a execução. |
 | `SkillExecutionPhase` | Enum de fase | Ordena componentes em `PRE_ACTION`, `PRIMARY` e `POST_ACTION`. |
 | `SkillConditionType` | Enum de condição | Define condições opcionais avaliadas antes da aplicabilidade e dos testes probabilísticos. |
-| `DamageType` | Enum de domínio | Distingue dano físico e mágico para que `DamageCalculator` use o atributo ofensivo, a defesa e o fator adequados. |
 
 ---
 
@@ -216,11 +232,12 @@ Enemy           -> luta e perde HP durante uma batalha
 | `BattleEscapeService` | Serviço de regra | Calcula a tentativa de fuga em duas etapas usando sorte, velocidade e médias dos inimigos vivos. Não encerra a batalha diretamente; devolve `EscapeAttemptResult` para `Battle`. |
 | `EscapeAttemptResult` | Objeto de resultado | Transporta o sucesso ou fracasso da fuga e os valores de chance relevantes para que `Battle` possa aplicar a consequência e apresentar o resultado. |
 | `DamageCalculator` | Calculador de domínio | Centraliza a fórmula de dano físico e mágico usada por habilidades e ataques básicos. Mantém `KF` e `KM` como constantes internas de balanceamento. |
+| `DamageType` | Enum de domínio | Distingue dano físico e mágico para ataques básicos e habilidades, selecionando ATK/DEF ou MAG/RES. Pertence a `rpg.battle` porque não é exclusivo de habilidades. |
 | `RecoveryCalculator` | Calculador de domínio | Calcula recuperação de HP e ressurreição a partir do poder e do ATK ou MAG efetivo indicado pelo componente. MP e SP permanecem fixos. |
 | `EffectResistanceCalculator` | Calculador de domínio | Calcula e sorteia a resistência baseada na LCK efetiva do aplicador e na RES efetiva do alvo. Mantém `KR` e o teto de chance em um único lugar. |
 | `SkillExecutor` | Executor de domínio | Orquestra condições, aplicabilidade, um trigger por componente, resistência individual e aplicação. Reutiliza calculadores e operações de `GameCharacter` sem repetir suas fórmulas. |
 | `SkillExecution` | Estado de uma utilização | Preserva os resultados, modificadores acumulados e componentes `POST_ACTION` de uma única utilização de habilidade. |
-| `SkillExecutionContext` | Contexto imutável | Agrupa o usuário e os alvos selecionados uma única vez para todos os componentes da habilidade. |
+| `SkillExecutionContext` | Contexto imutável | Agrupa o usuário, os alvos selecionados uma única vez e o poder-base da arma equipado no início da habilidade. |
 | `SkillEffectResult` | Resultado imutável | Associa componente, alvo, desfecho e valor produzido para que `Battle` apenas apresente o resultado. |
 | `SkillEffectOutcome` | Enum de resultado | Distingue `APPLIED`, `RESISTED` e `NOT_TRIGGERED`. |
 
@@ -245,8 +262,8 @@ World
 |---|---|---|
 | `RewardCalculator` | Calculador | Soma percentuais globais e individuais de forma aditiva, aplica-os à recompensa-base, arredonda uma única vez em half-up e rejeita overflow. Não concede nem armazena recompensas. |
 | `PartyRewardModifierState` | Estado mutável | Guarda no máximo um modificador temporário de EXP e um de GOLD para a `Party`, com suas durações em vitórias recompensadas. Os dois tipos podem coexistir, mas efeitos do mesmo tipo não acumulam. |
-| `BattleRewardModifiers` | Snapshot imutável | Registra os modificadores usados em uma vitória, incluindo percentuais globais temporários, modificadores individuais e durações restantes após a recompensa. Permite apresentar o resultado sem consultar estado mutável já avançado. |
-| `BattleRewardService` | Serviço de regra | Agrega recompensas-base, cria o snapshot de modificadores, usa `RewardCalculator`, concede EXP individual e GOLD compartilhado, reduz a duração dos efeitos após a vitória, calcula progressão e drops e produz `BattleRewards`. |
+| `BattleRewardModifiers` | Snapshot imutável | Registra os modificadores usados em uma vitória: percentuais globais temporários, GOLD dos equipamentos, EXP individual dos berloques e durações restantes após a recompensa. Permite apresentar o resultado sem consultar estado mutável já avançado. |
+| `BattleRewardService` | Serviço de regra | Agrega recompensas-base, captura modificadores temporários e de equipamento, usa `RewardCalculator`, concede EXP individual e GOLD compartilhado, reduz a duração dos efeitos temporários após a vitória, calcula progressão e drops e produz `BattleRewards`. |
 | `BattleRewards` | Resultado agregado | Agrupa a EXP global apresentada, o GOLD, o snapshot de modificadores, os drops consolidados e os resultados individuais de progressão. É produzido por `BattleRewardService` e exibido por `BattleRewardScreen`. |
 | `CharacterProgressionResult` | Resultado individual | Registra EXP concedida, níveis anterior e atual, cópias dos atributos naturais antes e depois do crescimento, habilidades recém-liberadas e eventual restauração de recursos. Faz parte de `BattleRewards`. |
 
@@ -268,17 +285,19 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 | `ScenarioBranchMenu` | Menu | Recebe as bifurcações disponíveis na posição atual, exibe seus nomes e descrições e devolve a `ScenarioBranchDefinition` escolhida. Não altera o cenário nem o estado da exploração. |
 | `RouteMenu` | Menu | Recebe as rotas adjacentes atualmente disponíveis, exibe nomes e descrições das saídas e devolve a `TravelRouteDefinition` escolhida. Não resolve o destino nem aplica a posição de chegada; essas consequências pertencem a `World`. |
 | `CityTransportMenu` | Menu de transporte pago | Recebe os destinos urbanos descobertos e configurados, exibe preços e saldo por meio de `GameCurrency`, valida seleção e saldo, solicita confirmação, realiza o pagamento e devolve a `CityTransportDefinition` escolhida. Não altera o cenário. |
-| `InventoryMenu` | Menu geral de inventário | Exibe a moeda compartilhada por meio de `GameCurrency` e todas as categorias do inventário em ordem determinística. Categorias vazias permanecem selecionáveis e exibem sua mensagem somente depois da seleção. Categorias preenchidas apresentam uma lista paginada e ordenada de itens, detalhes e ações contextuais, como o uso de `RecoveryItem`. |
+| `InventoryMenu` | Menu geral de inventário | Exibe a moeda compartilhada e todas as categorias do inventário em ordem determinística. Listas são paginadas e ações dependem do tipo: itens de recuperação podem ser usados e equipamentos abrem `EquipmentMenu`. |
+| `EquipmentMenu` | Menu compartilhado de equipamentos | Permite equipar a partir de um item do inventário ou administrar os três slots de um personagem. Filtra escolhas incompatíveis, mostra uma comparação do que realmente muda, pede confirmação e delega a transferência a `EquipmentService`. |
+| `EquipmentDetailFormatter` | Formatador de interface | Produz fichas de arma, armadura e berloque e comparações alinhadas entre equipamento atual e novo. Usa `Poder` como nome visível do poder-base da arma. |
 | `BattleItemMenu` | Menu de itens de batalha | Filtra diretamente os consumíveis utilizáveis em batalha, apresenta uma lista paginada e abre seus detalhes. Devolve sucesso apenas quando o uso produz algum efeito, permitindo que `Battle` decida se a ação do personagem foi consumida. |
 | `RecoveryItemUseMenu` | Fluxo de uso | Centraliza a seleção de alvos, a aplicação de efeitos individuais ou coletivos, a remoção do item somente após um resultado efetivo e a apresentação dos valores recuperados. É compartilhado por `InventoryMenu` e `BattleItemMenu`. |
 | `ItemMenuFormatter` | Formatador de interface | Centraliza a largura das colunas, o truncamento seguro de nomes longos e o resumo dos componentes de recuperação usados pelas telas de inventário. |
-| `PartyStatusMenu` | Menu de consulta | Exibe uma visão resumida dos membros da `Party`, a moeda compartilhada e os modificadores temporários de recompensa ativos. Permite selecionar um integrante para abrir `CharacterStatusMenu`. |
-| `CharacterStatusMenu` | Tela de consulta | Mostra classe, recursos, atributos, nível e EXP de um `PlayableCharacter`. Apresenta suas habilidades disponíveis em uma lista compacta e abre a ficha técnica e narrativa da habilidade selecionada por meio de `SkillDetailFormatter`. |
+| `PartyStatusMenu` | Menu de consulta | Exibe uma visão resumida dos membros, moeda compartilhada, M.EXP temporário e M.GOLD total, incluindo berloques. Permite selecionar um integrante para abrir `CharacterStatusMenu`. |
+| `CharacterStatusMenu` | Tela de consulta | Mostra classe, recursos, atributos efetivos, nível, EXP e M.EXP total do personagem. Abre suas habilidades e seus equipamentos por meio dos menus compartilhados. |
 | `AllyTargetMenu` | Menu de alvo | Exibe aliados vivos ou derrotados conforme o contexto e devolve o `PlayableCharacter` escolhido. Um aliado vivo pode ser selecionado mesmo com HP cheio porque componentes compostos ainda podem purificá-lo ou fortalecê-lo. |
 | `EnemyTargetMenu` | Menu de alvo | Exibe apenas inimigos vivos de `EnemyBattleGroup` e devolve o `EnemyBattleSlot` escolhido. É usado por ataques, habilidades e análise. |
 | `CombatEffectFormatter` | Formatador de interface | Produz a apresentação compartilhada dos estágios ativos e da Distorção Ancestral sem mover regras de duração ou atributo para a interface. |
 | `SkillDetailFormatter` | Formatador de interface | Produz a ficha compartilhada de uma habilidade com nível, tipo principal, poder, alvo, custo e descrição narrativa. Deriva os campos técnicos do primeiro componente efetivo de `PRIMARY` e é reutilizado pelo status e pela confirmação em batalha. |
-| `RewardModifierFormatter` | Formatador de interface | Produz a notação compacta compartilhada de `M.EXP` e `M.GOLD`, incluindo multiplicador e vitórias restantes, sem calcular ou alterar recompensas. |
+| `RewardModifierFormatter` | Formatador de interface | Produz a notação compacta compartilhada de `M.EXP` e `M.GOLD`, combinando fontes permanentes e temporárias para apresentação sem calcular ou alterar recompensas. |
 | `EpicEncounterMenu` | Menu de confirmação | Recebe uma lista de uma a três `EnemyDefinition`, apresenta nomes e descrições do encontro épico e pergunta se o jogador deseja enfrentá-lo. Devolve apenas a decisão; `World` inicia a batalha. |
 | `BattleTurnOrderScreen` | Tela | Mostra o participante atual e uma prévia das próximas ações usando `BattleTurnOrder`. Não gera nem altera a fila. |
 | `BattleRewardScreen` | Tela | Exibe um resumo compacto de `BattleRewards`: modificadores globais usados, EXP global, GOLD, itens consolidados e progressão de nível. Não lista cada EXP individual, nem calcula ou concede recompensas. |
@@ -570,11 +589,14 @@ World                   = mudança efetiva para a cidade escolhida
 | Execução da luta | `Battle` | ordem de turnos → ações → `BattleResult` |
 | Definição de uma habilidade | `SkillDefinition` | `skills.txt` + `skill_effects.txt` → `SkillLoader` → `SkillCatalog` |
 | Uma utilização de habilidade | `SkillExecution` | `Battle` → contexto e alvos → `SkillExecutor` → resultados → `Battle` |
+| Definição de um equipamento | `EquipmentDefinition` | `items.txt` + arquivo especializado → `EquipmentLoader` → `EquipmentCatalog` |
+| Equipar, trocar ou remover item | `EquipmentService` | `Inventory` ↔ `PlayableCharacter` → `CharacterEquipment` |
+| Equipamento na interface | `EquipmentMenu` | inventário ou status → filtro/seleção → comparação → confirmação |
 | Fórmulas de combate | classes `Calculator` | executor ou batalha → calculador especializado → operação em `GameCharacter` |
 | Efeitos temporários | `CombatEffectState` | componente aplicado → estados por atributo → atributo efetivo/formatter |
 | Preparação da luta | `BattleCoordinator` | definições → grupo → `Battle` → recompensas |
 | Recompensas de batalha | `BattleRewardService` | inimigos derrotados + estado de modificadores → `RewardCalculator` → `BattleRewards` |
-| Modificadores temporários de recompensa | `PartyRewardModifierState` | ativação → vitórias recompensadas restantes → snapshot imutável |
+| Modificadores de recompensa | `BattleRewardModifiers` | estado temporário + berloques equipados → snapshot imutável → cálculo/apresentação |
 | Formatação de modificadores | `RewardModifierFormatter` | percentuais + durações → resumo `M.EXP`/`M.GOLD` |
 | Recompensas de exploração | `ExplorationRewardGenerator` | `ExplorationRewardCatalog` → filtros/pesos → `ExplorationReward` → `Party` |
 | Posição no mapa | `ExplorationSession` | posição atual → resolução → avanço/conclusão |

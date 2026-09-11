@@ -13,6 +13,7 @@ import java.util.Objects;
 import rpg.characters.CharacterAttribute;
 import rpg.classes.PlayableClassCatalog;
 import rpg.effects.SpecialBattleStateType;
+import rpg.battle.DamageType;
 
 // Loads complete skill definitions from the skill and effect files.
 public final class SkillLoader {

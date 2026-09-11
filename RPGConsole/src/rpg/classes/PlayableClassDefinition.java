@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import rpg.characters.CharacterAttribute;
 import rpg.characters.CharacterStats;
+import rpg.items.equipment.ArmorWeight;
 
 // Stores the immutable data of a playable class.
 public final class PlayableClassDefinition {
@@ -24,7 +25,7 @@ public final class PlayableClassDefinition {
 	private final CharacterStats baseStats;
 	private final CharacterAttribute primaryAttribute;
 	private final CharacterAttribute secondaryAttribute;
-	private final PlayableClassWeight weight;
+	private final ArmorWeight armorWeight;
 	private final String description;
 
 	public PlayableClassDefinition(
@@ -33,7 +34,7 @@ public final class PlayableClassDefinition {
 			CharacterStats baseStats,
 			CharacterAttribute primaryAttribute,
 			CharacterAttribute secondaryAttribute,
-			PlayableClassWeight weight,
+			ArmorWeight armorWeight,
 			String description
 	) {
 		if (id == null || id.isBlank()) {
@@ -64,7 +65,7 @@ public final class PlayableClassDefinition {
 			);
 		}
 
-		Objects.requireNonNull(weight, "Playable class weight cannot be null.");
+		Objects.requireNonNull(armorWeight, "Playable class armor weight cannot be null.");
 
 		if (description == null || description.isBlank()) {
 			throw new IllegalArgumentException("Playable class description cannot be empty: " + trimmedId);
@@ -78,7 +79,7 @@ public final class PlayableClassDefinition {
 		this.baseStats = baseStats;
 		this.primaryAttribute = primaryAttribute;
 		this.secondaryAttribute = secondaryAttribute;
-		this.weight = weight;
+		this.armorWeight = armorWeight;
 		this.description = description.trim();
 	}
 
@@ -164,8 +165,8 @@ public final class PlayableClassDefinition {
 		return secondaryAttribute;
 	}
 
-	public PlayableClassWeight getWeight() {
-		return weight;
+	public ArmorWeight getArmorWeight() {
+		return armorWeight;
 	}
 
 	public String getDescription() {

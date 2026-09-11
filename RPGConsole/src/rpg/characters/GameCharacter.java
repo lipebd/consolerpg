@@ -119,8 +119,8 @@ public abstract class GameCharacter {
 		if (actualRecoveryAmount < 1) {
 			actualRecoveryAmount = 0;
 		}
-		if (actualRecoveryAmount > maxHp - currentHp) { // The max recovery amount needs to be the missing HP value
-			actualRecoveryAmount = maxHp - currentHp;
+		if (actualRecoveryAmount > getMaxHp() - currentHp) { // The max recovery amount needs to be the missing HP value
+			actualRecoveryAmount = getMaxHp() - currentHp;
 		}
 		currentHp = currentHp + actualRecoveryAmount;
 
@@ -132,7 +132,7 @@ public abstract class GameCharacter {
 			return 0;
 		}
 
-		int actualRecoveryAmount = Math.min(recoveryAmount, maxMp - currentMp);
+		int actualRecoveryAmount = Math.min(recoveryAmount, getMaxMp() - currentMp);
 
 		currentMp += actualRecoveryAmount;
 
@@ -144,7 +144,7 @@ public abstract class GameCharacter {
 			return 0;
 		}
 
-		int actualRecoveryAmount = Math.min(recoveryAmount, maxSp - currentSp);
+		int actualRecoveryAmount = Math.min(recoveryAmount, getMaxSp() - currentSp);
 
 		currentSp += actualRecoveryAmount;
 
@@ -156,7 +156,7 @@ public abstract class GameCharacter {
 			return 0;
 		}
 
-		int actualRecoveryAmount = Math.min(recoveryAmount, maxHp);
+		int actualRecoveryAmount = Math.min(recoveryAmount, getMaxHp());
 
 		currentHp = actualRecoveryAmount;
 		defending = false;
@@ -200,56 +200,99 @@ public abstract class GameCharacter {
 		return currentHp;
 	}
 
-	public int getMaxHp() {
-		return maxHp;
-	}
-
 	public int getCurrentMp() {
 		return currentMp;
-	}
-
-	public int getMaxMp() {
-		return maxMp;
 	}
 
 	public int getCurrentSp() {
 		return currentSp;
 	}
 
+	public int getMaxHp() {
+		return Math.addExact(maxHp, getStructuralMaxHpBonus());
+	}
+
+	public int getMaxMp() {
+		return Math.addExact(maxMp, getStructuralMaxMpBonus());
+	}
+
 	public int getMaxSp() {
-		return maxSp;
+		return Math.addExact(maxSp, getStructuralMaxSpBonus());
 	}
 
 	public int getAttack() {
-		int structuralValue = combatEffectState.hasDistortedAttributes() ? magic : attack;
+		int structuralValue = combatEffectState.hasDistortedAttributes()
+				? getStructuralAttributeValue(CharacterAttribute.MAG)
+				: getStructuralAttributeValue(CharacterAttribute.ATK);
 
 		return calculateEffectiveAttribute(structuralValue, CharacterAttribute.ATK);
 	}
 
 	public int getDefense() {
-		int structuralValue = combatEffectState.hasDistortedAttributes() ? resistance : defense;
+		int structuralValue = combatEffectState.hasDistortedAttributes()
+				? getStructuralAttributeValue(CharacterAttribute.RES)
+				: getStructuralAttributeValue(CharacterAttribute.DEF);
 
 		return calculateEffectiveAttribute(structuralValue, CharacterAttribute.DEF);
 	}
 
 	public int getMagic() {
-		int structuralValue = combatEffectState.hasDistortedAttributes() ? attack : magic;
+		int structuralValue = combatEffectState.hasDistortedAttributes()
+				? getStructuralAttributeValue(CharacterAttribute.ATK)
+				: getStructuralAttributeValue(CharacterAttribute.MAG);
 
 		return calculateEffectiveAttribute(structuralValue, CharacterAttribute.MAG);
 	}
 
 	public int getResistance() {
-		int structuralValue = combatEffectState.hasDistortedAttributes() ? defense : resistance;
+		int structuralValue = combatEffectState.hasDistortedAttributes()
+				? getStructuralAttributeValue(CharacterAttribute.DEF)
+				: getStructuralAttributeValue(CharacterAttribute.RES);
 
 		return calculateEffectiveAttribute(structuralValue, CharacterAttribute.RES);
 	}
 
 	public int getSpeed() {
-		return calculateEffectiveAttribute(speed, CharacterAttribute.VEL);
+		return calculateEffectiveAttribute(getStructuralAttributeValue(CharacterAttribute.VEL), CharacterAttribute.VEL);
 	}
 
 	public int getLuck() {
-		return calculateEffectiveAttribute(luck, CharacterAttribute.LCK);
+		return calculateEffectiveAttribute(getStructuralAttributeValue(CharacterAttribute.LCK), CharacterAttribute.LCK);
+	}
+
+	protected int getStructuralMaxHpBonus() {
+		return 0;
+	}
+
+	protected int getStructuralMaxMpBonus() {
+		return 0;
+	}
+
+	protected int getStructuralMaxSpBonus() {
+		return 0;
+	}
+
+	protected int getStructuralAttributeBonus(CharacterAttribute attribute) {
+		return 0;
+	}
+
+	protected final void clampCurrentResourcesToMaximums() {
+		currentHp = Math.min(currentHp, getMaxHp());
+		currentMp = Math.min(currentMp, getMaxMp());
+		currentSp = Math.min(currentSp, getMaxSp());
+	}
+
+	private int getStructuralAttributeValue(CharacterAttribute attribute) {
+		int naturalValue = switch (attribute) {
+		case ATK -> attack;
+		case DEF -> defense;
+		case MAG -> magic;
+		case RES -> resistance;
+		case VEL -> speed;
+		case LCK -> luck;
+		};
+
+		return Math.addExact(naturalValue, getStructuralAttributeBonus(attribute));
 	}
 
 	public boolean applyTimedAttributeStages(CharacterAttribute attribute, int stageChange, int duration) {

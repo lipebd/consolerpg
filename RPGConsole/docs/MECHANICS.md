@@ -422,7 +422,17 @@ basePower =
     + effectiveOffensiveAttribute
 ```
 
-Basic attacks use the physical formula with zero skill power, zero weapon base damage and no conditional power modifier. Both playable-character and enemy basic attacks use the same centralized calculation.
+Player basic attacks use zero skill power, no conditional power modifier and the equipped weapon's full base damage. The weapon selects physical or magical damage; without a weapon, the attack falls back to physical damage with zero weapon power. Enemy basic attacks currently use physical damage and zero weapon power.
+
+Every offensive skill also adds 100% of the equipped weapon's base damage. A skill remains usable without a weapon, in which case this term is zero. The skill component's own damage type independently selects ATK against DEF or MAG against RES, so a magical weapon may strengthen a physical skill and vice versa.
+
+For the same attacker, target and damage type, the relative power of a damaging skill over a basic attack is:
+
+```text
+skillDamage / basicDamage = 1 + skillPower / (effectiveAttribute + weaponBaseDamage)
+```
+
+This keeps the free basic attack relevant as attributes and weapons grow while allowing skills that consume MP or SP to remain stronger. Skill powers and costs remain subject to later balance testing.
 
 When an applicable conditional power modifier exists:
 
@@ -697,7 +707,7 @@ The general inventory:
 Current and planned detail actions include:
 
 - `RecoveryItem` — use.
-- Equipment — equip or remove after equipment behavior is implemented.
+- Equipment — open details and equip through the shared equipment menu.
 - Materials, quest items and key items — return without a use action.
 - Skill scrolls — learn after skill-scroll behavior is implemented.
 
@@ -741,6 +751,58 @@ Recovery effects follow these rules:
 
 Purification removes eligible negative attribute states. If no selected target has an eligible negative state or another applicable recovery component, the item is not consumed.
 
+## Equipment
+
+Each playable character has exactly three equipment slots:
+
+- One weapon.
+- One armor.
+- One trinket.
+
+An equipped unit leaves the shared inventory and belongs to the character slot until replaced or removed. Replacing it returns the previous unit to inventory; removing it also returns one unit. Because equipped items are no longer inventory entries, the inventory does not need an `(E)` marker and shops cannot sell an equipped copy.
+
+The player may reach the same equipment operation by either route:
+
+```text
+Inventory -> category -> item -> Equip -> character -> confirm
+Status -> character -> Equipment -> slot -> item -> confirm
+```
+
+The confirmation screen displays only values that would change. Maximum-resource rows are labeled `HP máx.`, `MP máx.` and `SP máx.` because equipping a bonus does not restore the current resource. Removing or replacing equipment clamps a current resource when it exceeds the new maximum.
+
+### Equipment compatibility
+
+- Every equipment item requires a positive character level.
+- Every playable class may equip every weapon after meeting its level requirement.
+- Armor weight must exactly match the class's `ArmorWeight`: `LIGHT`, `MEDIUM` or `HEAVY`.
+- Every playable class may equip every trinket after meeting its level requirement.
+
+Weapon, armor and trinket definitions may grant any combination of HP, MP, SP, ATK, DEF, MAG, RES, VEL and LCK bonuses. These are structural bonuses: they are added to natural values before temporary attribute stages are applied.
+
+Natural progression never incorporates equipment into the saved natural-stat snapshot. Level growth recalculates natural values from class and level, while equipped bonuses remain separate and continue to apply afterward.
+
+### Weapon attacks
+
+A weapon defines:
+
+- Physical or magical normal-attack damage.
+- A weapon type.
+- A narrative normal-attack name.
+- Base weapon damage, displayed to the player as `Poder`.
+
+Equipping a weapon changes the player's basic attack. For example, battle narration may report that the character executed `Corte Rápido` with their weapon, distinguishing the free weapon attack from the `usou ...` wording of a skill.
+
+The equipped weapon's base damage contributes fully to both the basic attack and every damaging skill. Its physical or magical classification affects only its own basic attack; a skill continues using the damage type defined by that skill component.
+
+### Equipment reward modifiers
+
+An equipped trinket may provide:
+
+- An individual EXP percentage for its wearer.
+- A party-wide GOLD percentage.
+
+All equipped GOLD bonuses in the party are added together. An individual EXP bonus is never shared with other characters. Equipment percentages and active temporary percentages combine additively before a single reward rounding.
+
 ## Battle rewards
 
 Gold and item drops are granted once to the party.
@@ -754,7 +816,9 @@ Every party member receives the complete experience reward:
 - EXP is not divided by party size.
 - Excess EXP is preserved after leveling up.
 
-Future individual EXP multipliers will be calculated separately for each character.
+Individual EXP multipliers are calculated separately for each character. Temporary party EXP and the wearer's trinket EXP are added before that character's reward is rounded.
+
+Gold is calculated once from the temporary party GOLD modifier plus the GOLD modifiers of every equipped trinket.
 
 The reward screen:
 
@@ -764,6 +828,8 @@ The reward screen:
 - Displays level progression and natural-stat growth compactly.
 - Announces every skill unlocked while crossing the gained level interval.
 - Aggregates equal item drops into one quantity.
+- Displays the temporary global EXP multiplier and total effective GOLD multiplier.
+- Intentionally does not list every ally's individual EXP multiplier; those values remain available in individual character status.
 
 ## Natural character progression
 
@@ -807,7 +873,7 @@ Attribute specialization also increases the associated natural resource:
 
 Resource bonuses are cumulative. A class whose primary and secondary attributes are `DEF` and `RES` receives the defensive HP bonus from both schedules.
 
-Natural stats exclude equipment bonuses, temporary stages and Distorção Ancestral. Combat systems use effective attributes after applicable modifiers, while progression and reward comparison use immutable natural-stat snapshots.
+Natural stats exclude equipment bonuses, temporary stages and Distorção Ancestral. Combat systems use effective attributes after applicable modifiers, while progression and level-up comparison use immutable natural-stat snapshots.
 
 If several levels are gained at once, the final level is determined first and the complete natural-stat set is calculated and installed once. Arithmetic overflow is rejected instead of wrapping silently.
 
@@ -914,6 +980,7 @@ The summary screen displays:
 - Current and maximum SP.
 - Defeated state.
 - Shared party gold.
+- Active temporary M.EXP and total effective party M.GOLD.
 
 A defeated character is displayed compactly as `DERROTADO`.
 
@@ -927,20 +994,21 @@ The individual character screen displays:
 - ATK, DEF and VEL.
 - MAG, RES and LCK.
 - Learned skills.
+- Equipped weapon, armor and trinket through the equipment submenu.
+- Total effective individual M.EXP, including temporary and equipped sources.
 
 Future versions will add:
 
-- Playable class.
-- Equipment.
 - Character history.
-- Individual reward multipliers.
+
+The battle reward screen omits the per-character M.EXP list to remain readable with a full four-character party.
 
 ## Currency presentation
 
 The party owns one shared gold balance. `GameCurrency` centralizes only how that currency is presented:
 
 - The current display name is `GOLD`.
-- Numeric values use the `G$ ` prefix.
+- Numeric values use the `G` suffix without a separating space, such as `100G`.
 - Prices, balances and rewards use `GameCurrency.format(int)`.
 - Screens that name the currency directly use `GameCurrency.getName()`.
 
