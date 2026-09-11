@@ -243,8 +243,11 @@ World
 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
-| `BattleRewardService` | Serviço de regra | Calcula EXP, ouro, progressão individual e drops após uma vitória. Captura os atributos naturais antes e depois do ganho de níveis, identifica habilidades recém-liberadas, restaura sobreviventes somente após instalar os novos máximos e produz `BattleRewards`. |
-| `BattleRewards` | Resultado agregado | Agrupa tudo que foi obtido na batalha: EXP, ouro, drops consolidados e resultados de progressão dos personagens. É produzido por `BattleRewardService` e exibido por `BattleRewardScreen`. |
+| `RewardCalculator` | Calculador | Soma percentuais globais e individuais de forma aditiva, aplica-os à recompensa-base, arredonda uma única vez em half-up e rejeita overflow. Não concede nem armazena recompensas. |
+| `PartyRewardModifierState` | Estado mutável | Guarda no máximo um modificador temporário de EXP e um de GOLD para a `Party`, com suas durações em vitórias recompensadas. Os dois tipos podem coexistir, mas efeitos do mesmo tipo não acumulam. |
+| `BattleRewardModifiers` | Snapshot imutável | Registra os modificadores usados em uma vitória, incluindo percentuais globais temporários, modificadores individuais e durações restantes após a recompensa. Permite apresentar o resultado sem consultar estado mutável já avançado. |
+| `BattleRewardService` | Serviço de regra | Agrega recompensas-base, cria o snapshot de modificadores, usa `RewardCalculator`, concede EXP individual e GOLD compartilhado, reduz a duração dos efeitos após a vitória, calcula progressão e drops e produz `BattleRewards`. |
+| `BattleRewards` | Resultado agregado | Agrupa a EXP global apresentada, o GOLD, o snapshot de modificadores, os drops consolidados e os resultados individuais de progressão. É produzido por `BattleRewardService` e exibido por `BattleRewardScreen`. |
 | `CharacterProgressionResult` | Resultado individual | Registra EXP concedida, níveis anterior e atual, cópias dos atributos naturais antes e depois do crescimento, habilidades recém-liberadas e eventual restauração de recursos. Faz parte de `BattleRewards`. |
 
 ---
@@ -269,15 +272,16 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 | `BattleItemMenu` | Menu de itens de batalha | Filtra diretamente os consumíveis utilizáveis em batalha, apresenta uma lista paginada e abre seus detalhes. Devolve sucesso apenas quando o uso produz algum efeito, permitindo que `Battle` decida se a ação do personagem foi consumida. |
 | `RecoveryItemUseMenu` | Fluxo de uso | Centraliza a seleção de alvos, a aplicação de efeitos individuais ou coletivos, a remoção do item somente após um resultado efetivo e a apresentação dos valores recuperados. É compartilhado por `InventoryMenu` e `BattleItemMenu`. |
 | `ItemMenuFormatter` | Formatador de interface | Centraliza a largura das colunas, o truncamento seguro de nomes longos e o resumo dos componentes de recuperação usados pelas telas de inventário. |
-| `PartyStatusMenu` | Menu de consulta | Exibe uma visão resumida dos membros da `Party` e da moeda compartilhada formatada por `GameCurrency`. Permite selecionar um integrante para abrir `CharacterStatusMenu`. |
+| `PartyStatusMenu` | Menu de consulta | Exibe uma visão resumida dos membros da `Party`, a moeda compartilhada e os modificadores temporários de recompensa ativos. Permite selecionar um integrante para abrir `CharacterStatusMenu`. |
 | `CharacterStatusMenu` | Tela de consulta | Mostra classe, recursos, atributos, nível e EXP de um `PlayableCharacter`. Apresenta suas habilidades disponíveis em uma lista compacta e abre a ficha técnica e narrativa da habilidade selecionada por meio de `SkillDetailFormatter`. |
 | `AllyTargetMenu` | Menu de alvo | Exibe aliados vivos ou derrotados conforme o contexto e devolve o `PlayableCharacter` escolhido. Um aliado vivo pode ser selecionado mesmo com HP cheio porque componentes compostos ainda podem purificá-lo ou fortalecê-lo. |
 | `EnemyTargetMenu` | Menu de alvo | Exibe apenas inimigos vivos de `EnemyBattleGroup` e devolve o `EnemyBattleSlot` escolhido. É usado por ataques, habilidades e análise. |
 | `CombatEffectFormatter` | Formatador de interface | Produz a apresentação compartilhada dos estágios ativos e da Distorção Ancestral sem mover regras de duração ou atributo para a interface. |
 | `SkillDetailFormatter` | Formatador de interface | Produz a ficha compartilhada de uma habilidade com nível, tipo principal, poder, alvo, custo e descrição narrativa. Deriva os campos técnicos do primeiro componente efetivo de `PRIMARY` e é reutilizado pelo status e pela confirmação em batalha. |
+| `RewardModifierFormatter` | Formatador de interface | Produz a notação compacta compartilhada de `M.EXP` e `M.GOLD`, incluindo multiplicador e vitórias restantes, sem calcular ou alterar recompensas. |
 | `EpicEncounterMenu` | Menu de confirmação | Recebe uma lista de uma a três `EnemyDefinition`, apresenta nomes e descrições do encontro épico e pergunta se o jogador deseja enfrentá-lo. Devolve apenas a decisão; `World` inicia a batalha. |
 | `BattleTurnOrderScreen` | Tela | Mostra o participante atual e uma prévia das próximas ações usando `BattleTurnOrder`. Não gera nem altera a fila. |
-| `BattleRewardScreen` | Tela | Exibe `BattleRewards`, incluindo EXP, moeda formatada por `GameCurrency`, níveis, crescimento natural compacto, habilidades recém-aprendidas e itens obtidos. Não calcula nem concede as recompensas. |
+| `BattleRewardScreen` | Tela | Exibe um resumo compacto de `BattleRewards`: modificadores globais usados, EXP global, GOLD, itens consolidados e progressão de nível. Não lista cada EXP individual, nem calcula ou concede recompensas. |
 | `ShopMenu` | Menu comercial | Interface compartilhada por lojas urbanas e mercadores de exploração. Exibe ofertas, categorias vendáveis, confirmações, paginação, preços, estoque e feedback das transações. |
 
 ---
@@ -569,7 +573,9 @@ World                   = mudança efetiva para a cidade escolhida
 | Fórmulas de combate | classes `Calculator` | executor ou batalha → calculador especializado → operação em `GameCharacter` |
 | Efeitos temporários | `CombatEffectState` | componente aplicado → estados por atributo → atributo efetivo/formatter |
 | Preparação da luta | `BattleCoordinator` | definições → grupo → `Battle` → recompensas |
-| Recompensas de batalha | `BattleRewardService` | inimigos derrotados → `BattleRewards` |
+| Recompensas de batalha | `BattleRewardService` | inimigos derrotados + estado de modificadores → `RewardCalculator` → `BattleRewards` |
+| Modificadores temporários de recompensa | `PartyRewardModifierState` | ativação → vitórias recompensadas restantes → snapshot imutável |
+| Formatação de modificadores | `RewardModifierFormatter` | percentuais + durações → resumo `M.EXP`/`M.GOLD` |
 | Recompensas de exploração | `ExplorationRewardGenerator` | `ExplorationRewardCatalog` → filtros/pesos → `ExplorationReward` → `Party` |
 | Posição no mapa | `ExplorationSession` | posição atual → resolução → avanço/conclusão |
 | Chances da exploração | `ExplorationSettings` | carregadas de `combat_scenarios.txt` |

@@ -21,8 +21,12 @@ public final class BattleRewardService {
 
 	private final Random random;
 
+	private final RewardCalculator rewardCalculator;
+
 	public BattleRewardService(Random random) {
 		this.random = Objects.requireNonNull(random, "Random generator cannot be null.");
+
+		this.rewardCalculator = new RewardCalculator();
 	}
 
 	// Overload for a battle against a single enemy.
@@ -51,20 +55,62 @@ public final class BattleRewardService {
 
 			double rankMultiplier = defeatedEnemy.getRank().getRewardMultiplier();
 
-			experienceReward += (int) Math.round(combatScenario.getBaseExperienceReward() * rankMultiplier);
+			int enemyExperienceReward = Math
+					.toIntExact(Math.round(combatScenario.getBaseExperienceReward() * rankMultiplier));
 
-			goldReward += (int) Math.round(combatScenario.getBaseGoldReward() * rankMultiplier);
+			int enemyGoldReward = Math.toIntExact(Math.round(combatScenario.getBaseGoldReward() * rankMultiplier));
+
+			experienceReward = Math.addExact(experienceReward, enemyExperienceReward);
+
+			goldReward = Math.addExact(goldReward, enemyGoldReward);
+
 		}
 
-		List<CharacterProgressionResult> progressionResults = grantExperienceToParty(party, experienceReward);
+		BattleRewardModifiers rewardModifiers = createRewardModifiers(party);
 
-		party.addGold(goldReward);
+		int globalExperienceReward = rewardCalculator
+				.calculateModifiedReward(experienceReward, rewardModifiers.getTemporaryExperienceModifierPercent());
+
+		int modifiedGoldReward = rewardCalculator
+				.calculateModifiedReward(goldReward, rewardModifiers.getTemporaryGoldModifierPercent());
+
+		List<CharacterProgressionResult> progressionResults = grantExperienceToParty(
+				party,
+				experienceReward,
+				rewardModifiers
+		);
+
+		party.addGold(modifiedGoldReward);
 
 		Map<Item, Integer> collectedItems = collectEnemyDrops(defeatedEnemies);
 
 		addCollectedItemsToInventory(party, collectedItems);
 
-		return new BattleRewards(progressionResults, goldReward, collectedItems);
+		party.getRewardModifierState().consumeRewardedVictory();
+
+		return new BattleRewards(
+				progressionResults,
+				globalExperienceReward,
+				modifiedGoldReward,
+				collectedItems,
+				rewardModifiers
+		);
+	}
+
+	private BattleRewardModifiers createRewardModifiers(Party party) {
+		PartyRewardModifierState modifierState = party.getRewardModifierState();
+
+		int experienceVictoriesRemaining = Math.max(0, modifierState.getExperienceVictoriesRemaining() - 1);
+
+		int goldVictoriesRemaining = Math.max(0, modifierState.getGoldVictoriesRemaining() - 1);
+
+		return new BattleRewardModifiers(
+				modifierState.getExperienceModifierPercent(),
+				experienceVictoriesRemaining,
+				modifierState.getGoldModifierPercent(),
+				goldVictoriesRemaining,
+				Map.of()
+		);
 	}
 
 	private Map<Item, Integer> collectEnemyDrops(List<Enemy> defeatedEnemies) {
@@ -95,10 +141,16 @@ public final class BattleRewardService {
 		}
 	}
 
-	private List<CharacterProgressionResult> grantExperienceToParty(Party party, int experienceReward) {
+	private List<CharacterProgressionResult>
+			grantExperienceToParty(Party party, int baseExperienceReward, BattleRewardModifiers rewardModifiers) {
 		List<CharacterProgressionResult> results = new ArrayList<>();
 
 		for (PlayableCharacter member : party.getMembers()) {
+			int experienceReward = rewardCalculator.calculateModifiedReward(
+					baseExperienceReward,
+					rewardModifiers.getTotalExperienceModifierPercent(member)
+			);
+
 			int previousLevel = member.getLevel();
 
 			CharacterStats previousNaturalStats = member.getNaturalStats();

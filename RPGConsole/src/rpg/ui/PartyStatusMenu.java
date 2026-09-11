@@ -7,6 +7,7 @@ import java.util.Scanner;
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
 import rpg.GameCurrency;
+import rpg.battle.rewards.PartyRewardModifierState;
 
 // Displays the party summary and allows character selection.
 public final class PartyStatusMenu {
@@ -68,6 +69,8 @@ public final class PartyStatusMenu {
 		}
 
 		System.out.println("\n" + GameCurrency.getName() + ": " + GameCurrency.format(party.getGold()));
+
+		displayRewardModifiers();
 	}
 
 	private void displayMemberSummary(PlayableCharacter member, int optionNumber) {
@@ -79,10 +82,24 @@ public final class PartyStatusMenu {
 		}
 
 		System.out.println(
-				" | Nv. " + member.getLevel() +
-				" | HP: " + member.getCurrentHp() + "/" + member.getMaxHp() +
-				" | MP: " + member.getCurrentMp() + "/" + member.getMaxMp() +
-				" | SP: " + member.getCurrentSp() + "/"	+ member.getMaxSp()
+				" | Nv. " + member.getLevel() + " | HP: " + member.getCurrentHp() + "/" + member.getMaxHp() + " | MP: "
+						+ member.getCurrentMp() + "/" + member.getMaxMp() + " | SP: " + member.getCurrentSp() + "/"
+						+ member.getMaxSp()
 		);
+	}
+
+	private void displayRewardModifiers() {
+		PartyRewardModifierState modifierState = party.getRewardModifierState();
+
+		String summary = RewardModifierFormatter.formatTemporarySummary(
+				modifierState.getExperienceModifierPercent(),
+				modifierState.getExperienceVictoriesRemaining(),
+				modifierState.getGoldModifierPercent(),
+				modifierState.getGoldVictoriesRemaining()
+		);
+
+		if (!summary.isEmpty()) {
+			System.out.println(summary);
+		}
 	}
 }

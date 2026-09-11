@@ -26,7 +26,7 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.characters` | Character state, attributes, party ownership and enemy ranks | `GameCharacter`, `CharacterStats`, `PlayableCharacter`, `Party`, `Enemy`, `EnemyRank` |
 | `rpg.classes` | Immutable playable-class definitions, external loading, lookup and natural-growth calculation | `PlayableClassDefinition`, `PlayableClassLoader`, `PlayableClassCatalog`, `PlayableClassWeight`, `CharacterGrowthCalculator` |
 | `rpg.battle` | Battle coordination, skill execution and centralized combat calculations | `Battle`, `BattleResult`, `BattleCoordinator`, `SkillExecutor`, `SkillExecution`, `SkillExecutionContext`, `SkillEffectResult`, `DamageCalculator`, `RecoveryCalculator`, `EffectResistanceCalculator`, `EnemyBattleGroup`, `BattleTurnOrder`, `BattleEscapeService` |
-| `rpg.battle.rewards` | Reward calculation and individual progression results | `BattleRewardService`, `BattleRewards`, `CharacterProgressionResult` |
+| `rpg.battle.rewards` | Reward calculation, temporary modifier state, immutable reward snapshots and individual progression results | `BattleRewardService`, `RewardCalculator`, `PartyRewardModifierState`, `BattleRewardModifiers`, `BattleRewards`, `CharacterProgressionResult` |
 | `rpg.effects` | Mutable combat-effect state and reusable attribute-stage rules | `CombatEffectState`, `AttributeStageState`, `AttributeStageRules`, `SpecialBattleStateType` |
 | `rpg.skills` | Immutable skill and component definitions, external loading and closed skill vocabularies | `SkillDefinition`, `SkillEffectDefinition`, `SkillLoader`, `SkillCatalog`, `DamageType`, `SkillTargetType`, `SkillEffectType`, `SkillExecutionPhase`, `SkillConditionType` |
 | `rpg.items` | External item definitions, runtime item behavior, shared inventory and individual drop rules | `ItemDefinition`, `ItemDefinitionCatalog`, `ItemLoader`, `RecoveryItemDefinition`, `RecoveryItemLoader`, `ItemFactory`, `Item`, `BasicItem`, `RecoveryItem`, `ItemCatalog`, `Inventory`, `DropEntry` |
@@ -40,7 +40,7 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.world.rewards` | External exploration reward pools, validation and weighted selection | `ExplorationRewardEntry`, `ExplorationRewardCatalog`, `ExplorationRewardLoader`, `ExplorationRewardGenerator`, `ExplorationReward`, `ExplorationRewardType` |
 | `rpg.world.travel` | External directed-route definitions, loading and runtime unlock progress | `TravelRouteDefinition`, `TravelCatalog`, `TravelRouteLoader`, `TravelProgress` |
 | `rpg.world.transport` | External paid city-transport definitions, loading and destination lookup | `CityTransportDefinition`, `CityTransportCatalog`, `CityTransportLoader` |
-| `rpg.ui` | Console menus, navigation, target selection, shared formatters and information screens | `TitleScreen`, `GameOverScreen`, `CombatScenarioMenu`, `CityMenu`, `CityLocationMenu`, `InnMenu`, `RouteMenu`, `CityTransportMenu`, `InventoryMenu`, `BattleItemMenu`, `RecoveryItemUseMenu`, `EpicEncounterMenu`, `BattleRewardScreen`, `BattleTurnOrderScreen`, `PartyStatusMenu`, `CharacterStatusMenu`, `SkillDetailFormatter`, `ShopMenu` |
+| `rpg.ui` | Console menus, navigation, target selection, shared formatters and information screens | `TitleScreen`, `GameOverScreen`, `CombatScenarioMenu`, `CityMenu`, `CityLocationMenu`, `InnMenu`, `RouteMenu`, `CityTransportMenu`, `InventoryMenu`, `BattleItemMenu`, `RecoveryItemUseMenu`, `EpicEncounterMenu`, `BattleRewardScreen`, `BattleTurnOrderScreen`, `PartyStatusMenu`, `CharacterStatusMenu`, `SkillDetailFormatter`, `RewardModifierFormatter`, `ShopMenu` |
 
 ## Application initialization
 
@@ -131,7 +131,7 @@ The calculator derives the complete natural-stat snapshot directly from the clas
 - One to four playable characters.
 - Shared inventory.
 - Shared gold.
-- Future global reward buffs.
+- Temporary global reward-modifier state.
 - Future party title.
 
 `Enemy` adds:
@@ -146,8 +146,7 @@ Shared state belongs to `Party`:
 
 - Inventory.
 - Gold.
-- Future global EXP multiplier.
-- Future global gold multiplier.
+- Temporary global EXP and gold modifiers together with their remaining rewarded victories.
 - Future party title.
 
 Individual state belongs to `PlayableCharacter`:
@@ -161,7 +160,7 @@ Individual state belongs to `PlayableCharacter`:
 - Playable-class and skill definitions.
 - Defensive state.
 - Future equipment.
-- Future individual EXP multiplier.
+- Future equipment that may contribute an individual EXP modifier.
 - Temporary combat effects.
 
 This separation allows party members to enter and leave the group without duplicating shared resources.
@@ -573,11 +572,18 @@ Damage, recovery, attribute-stage mutation and resource changes remain owned by 
 
 `BattleRewardService` calculates:
 
-- Total EXP.
-- Total gold.
+- Base EXP and gold after enemy-rank multiplication and aggregation.
+- Globally modified EXP and gold.
+- Final EXP for each character after global and individual modifiers are combined additively.
 - Individual character progression.
 - Independent drop rolls.
 - Consolidated item quantities.
+
+`RewardCalculator` is the single owner of additive percentage combination, half-up rounding and reward-result overflow checks.
+
+`PartyRewardModifierState` stores at most one temporary EXP modifier and one temporary gold modifier. Both may coexist, but a second modifier of the same type cannot be activated while the first remains active. Their durations decrease only after a victory grants rewards.
+
+`BattleRewardModifiers` is an immutable snapshot of the modifiers used for one victory. It preserves the applied percentages and post-reward remaining durations for presentation even after the mutable party state advances.
 
 EXP is granted individually to every party member.
 
@@ -597,6 +603,8 @@ Gold and items are granted once to `Party`.
 A surviving character who gains at least one level restores all resources after the new natural maximums are installed.
 
 A defeated character still receives EXP and may level up, but remains defeated and receives no resource restoration.
+
+The current individual-modifier input is ready for equipment integration. Reward-modifier potions are intentionally deferred until after the equipment block; they will activate the existing party state rather than introduce another reward formula.
 
 ## Adjacent travel flow
 
@@ -750,6 +758,7 @@ Important UI components include:
 - `PartyStatusMenu`
 - `CharacterStatusMenu`
 - `SkillDetailFormatter`
+- `RewardModifierFormatter`
 - `GameOverScreen`
 - `ShopMenu`
 
@@ -767,17 +776,19 @@ Important UI components include:
 
 `ItemMenuFormatter` contains shared presentation rules such as deterministic column widths, name truncation and recovery-effect summaries. It does not decide item behavior.
 
-`PartyStatusMenu` displays a compact overview of one to four allies and the shared party currency formatted through `GameCurrency`.
+`PartyStatusMenu` displays a compact overview of one to four allies, the shared party currency and active temporary reward modifiers.
 
 `CharacterStatusMenu` displays one character's detailed resources, attributes, progression and currently available class skills.
 
 `SkillDetailFormatter` derives one shared player-facing skill sheet from `SkillDefinition` and its ordered components. It uses the first displayable `PRIMARY` component as the main type, power and target, while the external narrative description explains secondary effects. `CharacterStatusMenu` and battle confirmation reuse the same formatted details instead of maintaining separate translations.
 
+`RewardModifierFormatter` produces the shared compact `M.EXP` and `M.GOLD` summary used by party status and the battle-reward screen.
+
 `World` does not store a `Scanner`. Console input is handled by the components that require it.
 
 ## Currency presentation
 
-`GameCurrency` centralizes the player-facing currency name and numeric formatting. The current name is `GOLD`, and numeric values are displayed with the `G$ ` prefix.
+`GameCurrency` centralizes the player-facing currency name and numeric formatting. The current name is `GOLD`, and numeric values use the `G` suffix without a separating space, such as `100G`.
 
 It does not own party gold, perform transactions or define prices. Gold remains mutable party state, while prices remain part of the systems that charge or reward currency.
 
@@ -788,6 +799,7 @@ Menus and screens call `GameCurrency.getName()` when the currency is referenced 
 The following implementations remain intentionally temporary:
 
 - Only base item data and recovery-item behavior are currently externalized. Equipment and skill-scroll specialization will be defined when their corresponding systems exist.
+- Reward-modifier potions are deferred until after equipment. Their future item behavior will activate the existing `PartyRewardModifierState` rather than duplicate reward calculation or duration state.
 - The development party is still assembled in `Main`; the normal character-creation flow has not replaced it yet.
 - Playable-class definitions, natural class growth and the first approved set of skill definitions are integrated, but the complete skill roster remains unfinished.
 - Equipment and skill-scroll behavior are not implemented.
