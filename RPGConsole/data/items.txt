@@ -1,6 +1,19 @@
 # id;category;playerTradable;baseShopSalePrice;shopPurchasePrice;name;description
 # Consumíveis
 meruma;CONSUMABLE;true;20;6;Merumã;Uma fruta que recupera 25 pontos de HP.
+jumbuco;CONSUMABLE;true;60;18;Jumbuco;Uma fruta robusta que recupera 75 pontos de HP.
+pocao_de_meruma;CONSUMABLE;true;80;24;Poção de Merumã;Uma poção de vida menor que recupera 100 pontos de HP.
+pocao_de_jumbuco;CONSUMABLE;true;240;72;Poção de Jumbuco;Uma poção de vida que recupera 300 pontos de HP.
+pocao_concentrada_de_fruta;CONSUMABLE;true;400;120;Poção Concentrada de Fruta;Uma poção de vida concentrada que recupera 500 pontos de HP.
+gota_de_vida;CONSUMABLE;true;560;168;Gota de Vida;Uma poderosa poção que recupera 700 pontos de HP.
+aramao;CONSUMABLE;true;25;8;Aramão;Uma fruta que recupera 25 pontos de MP.
+poranjo;CONSUMABLE;true;25;8;Poranjo;Uma fruta que recupera 25 pontos de SP.
+pocao_de_aramao;CONSUMABLE;true;50;15;Poção de Aramão;Uma poção de mana menor que recupera 50 pontos de MP.
+pocao_de_poranjo;CONSUMABLE;true;50;15;Poção de Poranjo;Uma poção de stamina menor que recupera 50 pontos de SP.
+pocao_concentrada_de_aramao;CONSUMABLE;true;200;60;Poção Concentrada de Aramão;Uma poção de mana maior que recupera 200 pontos de MP.
+pocao_concentrada_de_poranjo;CONSUMABLE;true;200;60;Poção Concentrada de Poranjo;Uma poção de stamina maior que recupera 200 pontos de SP.
+pocao_de_frutas_da_montanha;CONSUMABLE;true;150;45;Poção de Frutas da Montanha;Uma poção de recurso que recupera 75 pontos de MP e 75 pontos de SP.
+pocao_concentrada_de_frutas_da_montanha;CONSUMABLE;true;300;90;Poção Concentrada de Frutas da Montanha;Uma poção de recurso concentrada que recupera 150 pontos de MP e 150 pontos de SP.
 
 # Materiais
 pelo_lupino;MATERIAL;true;;15;Pelo Lupino;Um tufo espesso de pelo obtido de um Lobermo.

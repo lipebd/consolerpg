@@ -18,7 +18,7 @@ public final class BattleTurnOrderScreen {
 			throw new IllegalArgumentException("Round number must be positive.");
 		}
 
-		System.out.println("\n[RODADA #" + roundNumber + "]");
+		System.out.println("\n[RODADA #" + roundNumber + "]\n");
 
 		List<BattleTurnEntry> visibleEntries = turnOrder.getVisibleEntries(MAXIMUM_VISIBLE_ENTRIES);
 

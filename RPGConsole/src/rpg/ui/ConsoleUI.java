@@ -16,4 +16,18 @@ public final class ConsoleUI {
             System.out.println();
         }
     }
+
+    public static void pause(long milliseconds) {
+        if (milliseconds < 0) {
+            throw new IllegalArgumentException(
+                    "Pause duration cannot be negative."
+            );
+        }
+
+        try {
+            Thread.sleep(milliseconds);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+        }
+    }
 }
