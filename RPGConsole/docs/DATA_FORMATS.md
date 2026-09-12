@@ -294,7 +294,7 @@ Rules:
 - Every item must have a unique and stable ID.
 - IDs must use lowercase letters, numbers and single underscores, following the stable content ID conventions.
 - `category` must correspond to a valid `ItemCategory`.
-- `playerTradable` is reserved exclusively for future player-to-player trading.
+- `playerTradable` marks whether the item is eligible for the future player-to-player trading system; it does not implement trading behavior by itself.
 - `baseShopSalePrice` is the base amount charged by shops before an offer-specific percentage is applied.
 - `shopPurchasePrice` is the fixed amount paid by any shop when purchasing the item from the player.
 - Either commercial price may remain empty when the corresponding transaction is unavailable.
@@ -350,9 +350,13 @@ Rules:
 
 Definition composition and runtime flow:
 
+Definition composition and runtime flow:
+
 ```text
 ItemDefinitionCatalog
 RecoveryItemDefinitionCatalog
+SkillScrollDefinitionCatalog
+SkillCatalog
     -> ItemFactory
     -> ItemCatalog
     -> Inventory, drops and item menus
@@ -362,9 +366,79 @@ RecoveryItemDefinitionCatalog
 
 `RecoveryItemDefinition` contains only the specialized recovery behavior.
 
-`ItemFactory` combines both definitions and creates the complete runtime object. Items without a recovery definition currently become `BasicItem`; matching specialized definitions become `RecoveryItem`.
+`ItemFactory` receives the base definition and the available specialized catalogs. A matching recovery definition creates `RecoveryItem`; a matching skill-scroll definition creates `SkillScroll`; items without specialized runtime behavior become `BasicItem`. The same item cannot receive both recovery and skill-scroll specialization.
 
 `ItemCatalog` stores the resulting runtime items and resolves the stable IDs referenced by enemy drops, exploration events and inventories.
+
+## Skill-scroll definitions
+
+Skill-scroll specialization is loaded from:
+
+`data/skill_scrolls.txt`
+
+Header:
+
+```text
+# itemId;skillId;classId
+```
+
+Each valid line contains exactly 3 fields:
+
+| Position | Field | Java type | Empty value |
+|---:|---|---|---|
+| 1 | Item ID | `String` | Not allowed |
+| 2 | Skill ID | `String` | Not allowed |
+| 3 | Compatible playable-class ID | `String` | Not allowed |
+
+Example shape:
+
+```text
+pergaminho_habilidade_exemplo;habilidade_exemplo;druida
+```
+
+Rules:
+
+- `itemId` must reference an item defined in `items.txt`.
+- The referenced item must use the `SKILL_SCROLL` category.
+- `skillId` must reference a skill defined in `skills.txt`.
+- The referenced skill must use the `SCROLL` acquisition type.
+- `classId` must reference a class defined in `playable_classes.txt`.
+- The compatible class must match the linked skill's class.
+- One item ID cannot define more than one skill-scroll specialization.
+- One skill ID cannot be linked to more than one scroll item.
+- Every `SKILL_SCROLL` item must have exactly one specialized row.
+- Every `SCROLL` skill must have exactly one linked scroll item.
+- The file may contain only its header while no permanent `SKILL_SCROLL` items or `SCROLL` skills are registered.
+- The scroll's item definition may omit both NPC commercial prices.
+- `playerTradable` remains defined by the linked base item in `items.txt`.
+
+Loading flow:
+
+```text
+items.txt
+    -> ItemDefinitionCatalog
+
+skills.txt + skill_effects.txt
+    -> SkillCatalog
+
+playable_classes.txt
+    -> PlayableClassCatalog
+
+skill_scrolls.txt
+    -> SkillScrollLoader
+    -> SkillScrollDefinitionCatalog
+
+ItemDefinitionCatalog
+SkillScrollDefinitionCatalog
+SkillCatalog
+    -> ItemFactory
+    -> SkillScroll
+    -> ItemCatalog
+```
+
+`SkillScrollDefinition` stores only the stable item, skill and class IDs. `ItemFactory` resolves the canonical `SkillDefinition` from `SkillCatalog` when creating the runtime `SkillScroll`.
+
+The current file contains no permanent definitions. Temporary synthetic rows were used to validate loading and runtime behavior and were removed afterward.
 
 ## Equipment definitions
 
@@ -905,36 +979,60 @@ General skill data is loaded from:
 Header:
 
 ```text
-# id;classId;acquisitionLevel;mpCost;spCost;name;description
+# id;classId;acquisitionType;levelRequirement;mpCost;spCost;name;description
 ```
 
-Each valid line contains exactly 7 fields:
+Each valid line contains exactly 8 fields:
 
 | Position | Field | Java type | Example |
 |---:|---|---|---|
-| 1 | Skill ID | `String` | `quebra_armadura` |
+| 1 | Skill ID | `String` | `investida` |
 | 2 | Playable-class ID | `String` | `flagelo` |
-| 3 | Acquisition level | `int` | `3` |
-| 4 | MP cost | `int` | `0` |
-| 5 | SP cost | `int` | `20` |
-| 6 | Name | `String` | `Quebra-Armadura` |
-| 7 | Description | `String` | `Ataca e reduz a defesa do alvo.` |
+| 3 | Acquisition type | `SkillAcquisitionType` | `STARTER` |
+| 4 | Level requirement | `int` | `1` |
+| 5 | MP cost | `int` | `0` |
+| 6 | SP cost | `int` | `10` |
+| 7 | Name | `String` | `Investida` |
+| 8 | Description | `String` | `Ataca o alvo e pode causar recuo.` |
 
 Rules:
 
 - Skill and class IDs must use stable lowercase IDs.
-- Acquisition level must be positive.
+- `classId` must reference a valid playable class.
+- `acquisitionType` must be `STARTER`, `LEVEL` or `SCROLL`.
+- Level requirement must be positive.
+- For `STARTER` and `LEVEL`, the requirement is the level at which the skill is learned automatically.
+- For `SCROLL`, the requirement is the minimum level for using the linked scroll; reaching it does not grant the skill.
 - MP and SP costs cannot be negative.
 - Name and description cannot be empty.
 - Literal `\n` sequences in descriptions are converted into line breaks.
 - Every skill must receive at least one component from `skill_effects.txt`.
 - Skill IDs must be unique.
+- Every `SCROLL` skill must be linked exactly once in `skill_scrolls.txt`.
 
 Example:
 
 ```text
-quebra_armadura;flagelo;3;0;20;Quebra-Armadura;Ataca o alvo e reduz sua defesa.
+investida;flagelo;STARTER;1;0;10;Investida;Ataca o alvo e pode causar recuo.
 ```
+
+Current acquisition coverage:
+
+- `STARTER`: 2 temporary Flagelo skills.
+- `LEVEL`: 28 permanent class-progression skills.
+- `SCROLL`: no permanent definitions yet.
+
+Loading flow:
+
+```text
+skills.txt + skill_effects.txt
+    -> SkillLoader
+    -> SkillDefinition
+    -> ordered SkillEffectDefinition components
+    -> SkillCatalog
+```
+
+`SkillLoader` creates every canonical `SkillDefinition` regardless of acquisition type. Automatic learning belongs to `PlayableCharacter`; `SCROLL` linkage and specialization completeness belong to `SkillScrollLoader`.
 
 ## Skill-effect definitions
 

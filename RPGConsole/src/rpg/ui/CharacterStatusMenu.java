@@ -96,7 +96,7 @@ public final class CharacterStatusMenu {
 				SkillDefinition skill = skills.get(index);
 
 				System.out.println(
-						"[" + (index + 1) + "] " + skill.getName() + " [Nv. " + skill.getAcquisitionLevel() + "]"
+						"[" + (index + 1) + "] " + skill.getName() + " [Nv. " + skill.getLevelRequirement() + "]"
 				);
 			}
 

@@ -6,18 +6,22 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Scanner;
+import java.util.Optional;
 
 import rpg.GameCurrency;
 import rpg.characters.Party;
+import rpg.characters.PlayableCharacter;
 import rpg.items.Item;
 import rpg.items.ItemCategory;
 import rpg.items.RecoveryItem;
+import rpg.items.SkillScroll;
 
 // Displays the general party inventory.
 public final class InventoryMenu {
 
 	private static final int ITEMS_PER_PAGE = 8;
 
+	private final SkillScrollUseMenu skillScrollUseMenu;
 	private final EquipmentMenu equipmentMenu;
 	private final Party party;
 	private final Scanner scanner;
@@ -31,6 +35,8 @@ public final class InventoryMenu {
 		this.equipmentMenu = Objects.requireNonNull(equipmentMenu, "Equipment menu cannot be null.");
 
 		this.recoveryItemUseMenu = new RecoveryItemUseMenu(party, scanner);
+
+		this.skillScrollUseMenu = new SkillScrollUseMenu(party, scanner);
 	}
 
 	public boolean open() {
@@ -141,6 +147,18 @@ public final class InventoryMenu {
 					continue;
 				}
 
+				if (category == ItemCategory.SKILL_SCROLL) {
+					entries = getCategoryEntries(category);
+
+					if (entries.isEmpty()) {
+						openEmptyCategory(category);
+
+						return false;
+					}
+
+					continue;
+				}
+
 				if (!isEquipmentCategory(category)) {
 					return true;
 				}
@@ -165,7 +183,7 @@ public final class InventoryMenu {
 			System.out.println("Você não possui itens nesta categoria.");
 
 			System.out.println();
-			System.out.println("[0] Voltar às categorias");
+			System.out.println("[0] Voltar");
 			System.out.print("> ");
 
 			String choice = scanner.nextLine().trim();
@@ -226,13 +244,16 @@ public final class InventoryMenu {
 			System.out.println("[P] Próxima página");
 		}
 		System.out.println();
-		System.out.println("[0] Voltar às categorias");
+		System.out.println("[0] Voltar");
 		System.out.print("> ");
 	}
 
 	private boolean openDetails(Item item, int quantity) {
 		if (isEquipmentCategory(item.getCategory())) {
 			return equipmentMenu.openForItem(item);
+		}
+		if (item instanceof SkillScroll skillScroll) {
+			return openSkillScrollDetails(skillScroll);
 		}
 		while (true) {
 			System.out.println();
@@ -252,10 +273,11 @@ public final class InventoryMenu {
 				System.out.println("Efeitos: " + ItemMenuFormatter.getRecoveryEffectSummary(recoveryItem));
 
 				System.out.println();
-				System.out.println("[1] Usar | [0] Voltar à lista");
+				System.out.println("[1] Usar");
+				System.out.println("[0] Voltar");
 			} else {
 				System.out.println();
-				System.out.println("[0] Voltar à lista");
+				System.out.println("[0] Voltar");
 			}
 
 			System.out.print("> ");
@@ -268,6 +290,43 @@ public final class InventoryMenu {
 
 			if (choice.equals("1") && item instanceof RecoveryItem recoveryItem) {
 				return recoveryItemUseMenu.use(recoveryItem, null);
+			}
+
+			System.out.println("Opção inválida.");
+		}
+	}
+
+	private boolean openSkillScrollDetails(SkillScroll skillScroll) {
+		Optional<PlayableCharacter> compatibleCharacter = skillScrollUseMenu.findCompatibleCharacter(skillScroll);
+
+		while (true) {
+			System.out.println();
+			System.out.println("[PERGAMINHO DE HABILIDADE]");
+
+			System.out.println();
+			System.out.println(SkillDetailFormatter.formatDetails(skillScroll.getSkillDefinition()));
+
+			System.out.println();
+			if (compatibleCharacter.isPresent()) {
+				System.out.println("Aprendiz: " + compatibleCharacter.get().getName());
+				System.out.println();
+				System.out.println("[1] Aprender");
+			} else {
+				System.out.println("Nenhum membro do grupo pode aprender esta habilidade.");
+				System.out.println();
+			}
+
+			System.out.println("[0] Voltar");
+			System.out.print("> ");
+
+			String choice = scanner.nextLine().trim();
+
+			if (choice.equals("0")) {
+				return false;
+			}
+
+			if (choice.equals("1") && compatibleCharacter.isPresent()) {
+				return skillScrollUseMenu.use(skillScroll);
 			}
 
 			System.out.println("Opção inválida.");

@@ -25,6 +25,8 @@ import rpg.items.RecoveryItemLoader;
 import rpg.items.equipment.EquipmentCatalog;
 import rpg.items.equipment.EquipmentLoader;
 import rpg.items.equipment.EquipmentService;
+import rpg.items.SkillScrollDefinitionCatalog;
+import rpg.items.SkillScrollLoader;
 import rpg.skills.SkillCatalog;
 import rpg.skills.SkillLoader;
 import rpg.ui.ConsoleUI;
@@ -69,6 +71,7 @@ public class Main {
 		ItemCatalog itemCatalog;
 		ItemDefinitionCatalog itemDefinitionCatalog;
 		RecoveryItemDefinitionCatalog recoveryItemDefinitionCatalog;
+		SkillScrollDefinitionCatalog skillScrollDefinitionCatalog;
 		EquipmentCatalog equipmentCatalog;
 		EquipmentService equipmentService;
 		SkillCatalog skillCatalog;
@@ -110,10 +113,18 @@ public class Main {
 			RecoveryItemLoader recoveryItemLoader = new RecoveryItemLoader();
 			recoveryItemDefinitionCatalog = recoveryItemLoader
 					.load(Path.of("data", "recovery_items.txt"), itemDefinitionCatalog);
+			SkillScrollLoader skillScrollLoader = new SkillScrollLoader();
+			skillScrollDefinitionCatalog = skillScrollLoader.load(
+					Path.of("data", "skill_scrolls.txt"),
+					itemDefinitionCatalog,
+					skillCatalog,
+					playableClassCatalog
+			);
 			itemCatalog = new ItemCatalog();
 			ItemFactory itemFactory = new ItemFactory();
 			for (ItemDefinition definition : itemDefinitionCatalog.getAll()) {
-				Item item = itemFactory.create(definition, recoveryItemDefinitionCatalog);
+				Item item = itemFactory
+						.create(definition, recoveryItemDefinitionCatalog, skillScrollDefinitionCatalog, skillCatalog);
 				itemCatalog.register(item);
 			}
 			equipmentService = new EquipmentService(equipmentCatalog, itemCatalog);

@@ -18,7 +18,7 @@ import rpg.battle.DamageType;
 // Loads complete skill definitions from the skill and effect files.
 public final class SkillLoader {
 
-	private static final int SKILL_FIELD_COUNT = 7;
+	private static final int SKILL_FIELD_COUNT = 8;
 	private static final int EFFECT_FIELD_COUNT = 14;
 
 	public SkillCatalog load(Path skillFilePath, Path effectFilePath, PlayableClassCatalog playableClassCatalog)
@@ -45,7 +45,8 @@ public final class SkillLoader {
 			SkillDefinition skillDefinition = new SkillDefinition(
 					header.id,
 					header.classId,
-					header.acquisitionLevel,
+					header.acquisitionType,
+					header.levelRequirement,
 					header.mpCost,
 					header.spCost,
 					header.name,
@@ -100,19 +101,27 @@ public final class SkillLoader {
 		}
 
 		String id = fields[0].trim();
+
 		String classId = fields[1].trim();
 
-		int acquisitionLevel = parseRequiredInteger(fields[2], "acquisition level", id);
+		SkillAcquisitionType acquisitionType = parseRequiredEnum(
+				fields[2],
+				SkillAcquisitionType.class,
+				"acquisition type",
+				id
+		);
 
-		int mpCost = parseRequiredInteger(fields[3], "MP cost", id);
+		int levelRequirement = parseRequiredInteger(fields[3], "level requirement", id);
 
-		int spCost = parseRequiredInteger(fields[4], "SP cost", id);
+		int mpCost = parseRequiredInteger(fields[4], "MP cost", id);
 
-		String name = fields[5].trim();
+		int spCost = parseRequiredInteger(fields[5], "SP cost", id);
 
-		String description = fields[6].trim().replace("\\n", System.lineSeparator());
+		String name = fields[6].trim();
 
-		return new SkillHeader(id, classId, acquisitionLevel, mpCost, spCost, name, description);
+		String description = fields[7].trim().replace("\\n", System.lineSeparator());
+
+		return new SkillHeader(id, classId, acquisitionType, levelRequirement, mpCost, spCost, name, description);
 	}
 
 	private Map<String, List<SkillEffectDefinition>>
@@ -262,7 +271,8 @@ public final class SkillLoader {
 
 		private final String id;
 		private final String classId;
-		private final int acquisitionLevel;
+		private final SkillAcquisitionType acquisitionType;
+		private final int levelRequirement;
 		private final int mpCost;
 		private final int spCost;
 		private final String name;
@@ -271,7 +281,8 @@ public final class SkillLoader {
 		private SkillHeader(
 				String id,
 				String classId,
-				int acquisitionLevel,
+				SkillAcquisitionType acquisitionType,
+				int levelRequirement,
 				int mpCost,
 				int spCost,
 				String name,
@@ -279,7 +290,8 @@ public final class SkillLoader {
 		) {
 			this.id = id;
 			this.classId = classId;
-			this.acquisitionLevel = acquisitionLevel;
+			this.acquisitionType = acquisitionType;
+			this.levelRequirement = levelRequirement;
 			this.mpCost = mpCost;
 			this.spCost = spCost;
 			this.name = name;

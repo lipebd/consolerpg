@@ -354,6 +354,8 @@ Recovery behavior is loaded separately from `data/recovery_items.txt`, preventin
 
 The current construction flow is:
 
+The current construction flow is:
+
 ```text
 items.txt
     -> ItemLoader
@@ -363,18 +365,27 @@ recovery_items.txt
     -> RecoveryItemLoader
     -> RecoveryItemDefinitionCatalog
 
+skill_scrolls.txt
+SkillCatalog
+PlayableClassCatalog
+    -> SkillScrollLoader
+    -> SkillScrollDefinitionCatalog
+
 ItemDefinitionCatalog
 RecoveryItemDefinitionCatalog
+SkillScrollDefinitionCatalog
+SkillCatalog
     -> ItemFactory
     -> ItemCatalog
 ```
 
-`ItemDefinitionCatalog` and `RecoveryItemDefinitionCatalog` contain immutable data loaded during application initialization.
+`ItemDefinitionCatalog`, `RecoveryItemDefinitionCatalog` and `SkillScrollDefinitionCatalog` contain immutable data loaded during application initialization.
 
 `ItemFactory` combines the base and specialized definitions. It currently creates:
 
 - `BasicItem` for items without specialized runtime behavior.
 - `RecoveryItem` for items with a recovery definition.
+- `SkillScroll` for items with a validated skill-scroll definition.
 
 Equipment items remain `BasicItem` runtime objects. Their specialized immutable data is loaded independently from `weapons.txt`, `armors.txt` and `trinkets.txt` into `EquipmentCatalog` using the same stable item IDs.
 
@@ -385,7 +396,7 @@ Base item definitions may independently declare:
 - `baseShopSalePrice`, used to calculate offers sold by shops.
 - `shopPurchasePrice`, used when shops buy owned items from the party.
 
-The presence of `shopPurchasePrice` determines whether an item is sellable to shops. `playerTradable` remains reserved for future player-to-player trading.
+The presence of `shopPurchasePrice` determines whether an item is sellable to shops. `playerTradable` identifies items eligible for the future player-to-player trading system. Trading-post behavior is not implemented by the local item integration.
 
 The current recovery-item model supports:
 
@@ -457,6 +468,10 @@ The general inventory and battle item selection use separate menus.
 
 `RecoveryItemUseMenu` centralizes target selection, effect application, result display and conditional item removal for both contexts.
 
+`SkillScrollUseMenu` resolves the unique class-compatible learner, reports unavailable learning, handles the two-slot replacement flow and delegates successful mutation and consumption to `SkillScrollService`.
+
+Skill-scroll details reuse `SkillDetailFormatter`, display the compatible learner beside the action and remain available only through the general inventory. Successful learning refreshes the scroll category instead of closing the inventory.
+
 An ineffective item attempt does not consume the item or the acting character's battle action.
 
 The shared inventory has no weight or capacity limit.
@@ -468,13 +483,13 @@ The first V4 gameplay-system block is complete.
 ### External playable-class and skill definitions
 
 - All seven playable classes have stable external definitions and startup validation.
-- `skills.txt` stores immutable skill headers.
+- `skills.txt` stores immutable skill headers with `STARTER`, `LEVEL` or `SCROLL` acquisition types and positive level requirements.
 - `skill_effects.txt` stores ordered effect components.
 - `SkillLoader` combines and validates both files and registers complete `SkillDefinition` objects in `SkillCatalog`.
-- `PlayableCharacter` references its class definition and exposes skills unlocked at its current level.
+- `PlayableCharacter` references its class and skill definitions, stores learned skills through stable IDs and automatically learns eligible non-scroll skills.
 - The old hardcoded `Skill` and `RecoveryType` types were removed.
 - The temporary development party is still assembled in `Main`, but its class and skill content comes from loaded definitions.
-- All 30 approved playable skills across the seven class definitions are registered externally.
+- All 30 approved class-progression skills are registered externally: two temporary Flagelo `STARTER` skills and 28 permanent `LEVEL` skills.
 - Skill powers and resource costs remain provisional until the general balance pass.
 
 ### Skill execution
@@ -513,8 +528,9 @@ The natural-growth and level-based skill-availability block is complete.
 - ATK specialization adds SP growth, MAG adds MP growth, and DEF or RES adds HP growth on the same schedules. Defensive specializations are cumulative.
 - Growth is calculated directly from class base stats and final level, avoiding incremental drift when several levels are gained at once.
 - Natural stats remain separate from temporary effects and implemented equipment bonuses.
-- `PlayableCharacter` keeps its immutable class definition and exposes skills available for its current level dynamically.
-- `BattleRewardService` records natural stats before and after leveling, detects every newly unlocked skill and restores surviving characters only after the new maximums are installed.
+- `PlayableCharacter` keeps its immutable class and skill definitions while storing the stable IDs of skills it has actually learned.
+- Eligible `STARTER` and `LEVEL` skills are learned during construction and after level gains; `SCROLL` skills are never granted automatically.
+- `BattleRewardService` records natural stats before and after leveling, detects every newly learned non-scroll skill and restores surviving characters only after the new maximums are installed.
 - `BattleRewardScreen` displays compact stat deltas and newly learned skill names; `CharacterStatusMenu` displays the character's class.
 - Experience and level arithmetic reject overflow instead of wrapping silently.
 
@@ -525,6 +541,28 @@ The natural-growth and level-based skill-availability block is complete.
 - The main display component is the first effective component in `PRIMARY`; secondary components remain described by the external narrative text.
 - Character status and battle confirmation reuse the same formatted skill sheet.
 - Narrative descriptions avoid promising final damage or recovery amounts that depend on effective attributes and combat formulas.
+- The displayed level represents automatic acquisition for `STARTER` and `LEVEL` skills and the minimum scroll-use requirement for `SCROLL` skills.
+- Skill-scroll details reuse the same formatter instead of maintaining a separate technical presentation.
+
+## V4 skill-scroll integration
+
+The local skill-scroll architecture and behavior are complete.
+
+- `skill_scrolls.txt` links item, skill and playable-class IDs.
+- `SkillScrollLoader` validates item categories, acquisition types, catalog references, class agreement, duplicate links and complete specialization.
+- `SkillScrollDefinition` and `SkillScrollDefinitionCatalog` store immutable specialized data.
+- `ItemFactory` creates the specialized runtime `SkillScroll` using the canonical `SkillDefinition`.
+- `PlayableCharacter` stores learned skill IDs in deterministic order.
+- `SkillLearningResult` reports successful and rejected learning outcomes.
+- `SkillScrollService` consumes one owned scroll only after successful learning or replacement.
+- `SkillScrollUseMenu` supports class and level rejection, duplicate rejection, a maximum of two learned scroll skills, cancellation and confirmed replacement.
+- Only learned `SCROLL` skills may be replaced; `STARTER` and `LEVEL` skills remain protected.
+- Forgotten scroll skills do not return their original item.
+- Scroll-learned skills reuse normal status display, battle selection and skill execution.
+- Skill scrolls remain outside battle inventory and can use the existing enemy-drop system.
+- Temporary synthetic scrolls validated loading, learning, consumption, rejection, replacement and battle execution before being removed.
+
+No permanent scroll item, scroll skill or curated scroll drop is currently registered. The seven initial scroll-skill concepts remain draft content and some require additional combat-effect mechanics.
 
 ## V4 equipment
 
@@ -626,7 +664,9 @@ Battle rewards, exploration rewards, inventory, party status, INNs, paid city tr
 
 ## Current limitations and temporary implementations
 
-- Skill-scroll behavior and specialized skill-scroll data are not implemented.
+- Permanent skill-scroll content and curated scroll drops remain absent while the draft skills await required combat mechanics and final content review.
+- The Flagelo's two temporary `STARTER` skills are not yet retired because the level-7 class-choice flow is not implemented.
+- Learned scroll skills remain runtime-only until save and load persist individual learned-skill IDs.
 - The development party is still assembled in `Main`; normal character and party creation are not implemented.
 - Playable-class definitions, natural growth and the complete approved 30-skill roster are external; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy turns currently use basic attacks; enemy skill selection is deferred.
@@ -639,9 +679,9 @@ Battle rewards, exploration rewards, inventory, party status, INNs, paid city tr
 
 ## Current next step
 
-The combat-effect, external-skill, natural-progression, reward-modifier and equipment foundations are complete. Remaining unchecked items in those roadmap sections are broader regression coverage rather than missing core architecture.
+The combat-effect, external-skill, natural-progression, reward-modifier, equipment and local skill-scroll foundations are complete. The remaining skill-scroll roadmap item depends on retiring the Flagelo's temporary `STARTER` skills during the future level-7 class-choice flow.
 
-The next V4 implementation block is normal character and party creation, followed by full-party defeat and rescue. Skill scrolls remain a separate unfinished integration. Save/load and the level-7 class-path decision stay outside V4.
+The next V4 implementation block is normal character and party creation, followed by full-party defeat and rescue. Save/load and the level-7 class-path decision stay outside V4.
 
 The post-V4 level-7 class-change flow already has one equipment rule fixed: all three equipped items return to inventory, the chosen class NPC grants that class's level-7 starter weapon and armor even when the character remains a Flagelo, and the narration tells the player to open the equipment menu and equip the new set.
 

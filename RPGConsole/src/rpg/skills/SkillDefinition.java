@@ -10,7 +10,8 @@ public final class SkillDefinition {
 
 	private final String id;
 	private final String classId;
-	private final int acquisitionLevel;
+	private final SkillAcquisitionType acquisitionType;
+	private final int levelRequirement;
 	private final int mpCost;
 	private final int spCost;
 	private final String name;
@@ -20,7 +21,8 @@ public final class SkillDefinition {
 	public SkillDefinition(
 			String id,
 			String classId,
-			int acquisitionLevel,
+			SkillAcquisitionType acquisitionType,
+			int levelRequirement,
 			int mpCost,
 			int spCost,
 			String name,
@@ -29,9 +31,10 @@ public final class SkillDefinition {
 	) {
 		this.id = validateId(id, "Skill");
 		this.classId = validateId(classId, "Playable class");
+		this.acquisitionType = Objects.requireNonNull(acquisitionType, "Skill acquisition type cannot be null.");
 
-		if (acquisitionLevel < 1) {
-			throw new IllegalArgumentException("Skill acquisition level must be positive: " + this.id);
+		if (levelRequirement < 1) {
+			throw new IllegalArgumentException("Skill level requirement must be positive: " + this.id);
 		}
 
 		if (mpCost < 0 || spCost < 0) {
@@ -59,7 +62,7 @@ public final class SkillDefinition {
 		validateDamagePowerModifiers();
 		validateRecoilDamageEffects();
 
-		this.acquisitionLevel = acquisitionLevel;
+		this.levelRequirement = levelRequirement;
 		this.mpCost = mpCost;
 		this.spCost = spCost;
 		this.name = name.trim();
@@ -166,8 +169,24 @@ public final class SkillDefinition {
 		return classId;
 	}
 
-	public int getAcquisitionLevel() {
-		return acquisitionLevel;
+	public SkillAcquisitionType getAcquisitionType() {
+		return acquisitionType;
+	}
+
+	public int getLevelRequirement() {
+		return levelRequirement;
+	}
+
+	public boolean isStarterSkill() {
+		return acquisitionType == SkillAcquisitionType.STARTER;
+	}
+
+	public boolean isLevelSkill() {
+		return acquisitionType == SkillAcquisitionType.LEVEL;
+	}
+
+	public boolean isScrollSkill() {
+		return acquisitionType == SkillAcquisitionType.SCROLL;
 	}
 
 	public int getMpCost() {

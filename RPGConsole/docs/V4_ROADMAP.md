@@ -99,17 +99,17 @@ Current milestone: combat effects, external skills, natural progression, reward 
 
 ### Combat-effect and skill validation
 
-* [ ] Test every stage and its attribute multiplier.
+* [x] Test every stage and its attribute multiplier.
 * [x] Test half-up rounding of effective attributes.
 * [x] Test same-polarity accumulation, stage limits and duration renewal.
 * [x] Test independent positive and negative durations on the same attribute.
-* [ ] Test duration changes after consumed and non-consumed actions.
+* [x] Test duration changes after consumed and non-consumed actions.
 * [x] Test pre-action and post-action skill effects.
-* [ ] Test pending VEL application, removal and turn-order generation.
-* [ ] Test purification and dissipation with and without eligible states.
-* [ ] Test immediate character-effect cleanup after defeat and subsequent revival.
-* [ ] Test remaining battle-effect cleanup after victory, full-party defeat and escape.
-* [ ] Complete regression tests for damage, HP/MP/SP recovery, revival and effect skills after externalization.
+* [x] Test pending VEL application, removal and turn-order generation.
+* [x] Test purification and dissipation with and without eligible states.
+* [x] Test immediate character-effect cleanup after defeat and subsequent revival.
+* [x] Test remaining battle-effect cleanup after victory, full-party defeat and escape.
+* [x] Complete regression tests for damage, HP/MP/SP recovery, revival and effect skills after externalization.
 * [x] Test skills with multiple components when components are resisted, not triggered or applied in different phases.
 * [x] Test conditional components before and after damage, conditional stage values and self-debuff resistance after a pre-action LCK increase.
 * [x] Test recoil source damage, independent trigger chance, half-up rounding and the non-lethal HP limit.
@@ -165,8 +165,8 @@ Current milestone: combat effects, external skills, natural progression, reward 
 * [x] Apply MAG specialization to MP growth.
 * [x] Apply ATK specialization to SP growth.
 * [x] Keep natural level progression separate from temporary combat effects and equipment bonuses.
-* [x] Define class-to-skill progression through each skill's class ID and acquisition level.
-* [x] Validate skill class IDs and acquisition levels.
+* [x] Define class-to-skill progression through each skill's class ID, acquisition type and level requirement.
+* [x] Validate skill class IDs, acquisition types and level requirements.
 * [x] Assign a playable-class definition to every current playable character.
 * [x] Calculate a character's natural attributes from class and level.
 * [x] Expose the correct available skills for the character's class and level.
@@ -184,13 +184,35 @@ Current milestone: combat effects, external skills, natural progression, reward 
 
 ### Skill-scroll integration
 
-* [ ] Define external skill-scroll links to skill and class IDs.
-* [ ] Validate skill-scroll references against skill and playable-class catalogs.
-* [ ] Allow a compatible character to learn an unknown skill from a scroll.
-* [ ] Consume a skill scroll only after successful learning.
-* [ ] Reject duplicate or class-incompatible skill learning without consuming the item.
-* [ ] Test successful and rejected skill-scroll use.
-
+* [x] Distinguish `STARTER`, `LEVEL` and `SCROLL` skill acquisition types.
+* [x] Treat a skill's configured level as its automatic acquisition level or minimum scroll-use level according to its acquisition type.
+* [x] Classify the Flagelo's level-1 and level-3 skills as temporary `STARTER` skills.
+* [x] Keep `STARTER` skill retirement deferred to the level-7 class-choice flow.
+* [ ] Keep every post-choice playable class limited to four permanent `LEVEL` skills and two learned `SCROLL` skills.
+* [x] Define external skill-scroll links to item, skill and playable-class IDs.
+* [x] Require skill-scroll items to use the `SKILL_SCROLL` item category.
+* [x] Require scroll-linked skills to use the `SCROLL` acquisition type.
+* [x] Validate skill-scroll references against item, skill and playable-class catalogs.
+* [x] Reject mismatches between a scroll's compatible class and its linked skill class.
+* [x] Create immutable skill-scroll definitions, external loading and catalog lookup.
+* [x] Create the specialized runtime skill-scroll item type.
+* [x] Store learned skills through stable IDs while keeping `SkillDefinition` instances unique.
+* [x] Centralize successful skill acquisition through character-domain learning behavior.
+* [x] Allow skill scrolls to be used only outside battle.
+* [x] Reject scroll use by a class-incompatible or underleveled character.
+* [x] Reject learning an already known skill without consuming the scroll.
+* [x] Allow at most two learned `SCROLL` skills per character.
+* [x] Require replacement of one learned `SCROLL` skill when both scroll slots are occupied.
+* [x] Prevent `STARTER` and `LEVEL` skills from being replaced through scroll use.
+* [x] Preserve the current learned skills and inventory when replacement is cancelled.
+* [x] Consume exactly one skill scroll only after successful learning or confirmed replacement.
+* [x] Keep replaced scroll skills forgotten without returning their original scroll.
+* [x] Display permanent level skills before scroll-learned skills.
+* [x] Preserve scroll-learning order among learned scroll skills.
+* [x] Reuse the existing skill definition, component, detail and execution structures for scroll skills.
+* [x] Support low-chance skill-scroll drops through the existing enemy-drop system.
+* [x] Keep trading-post behavior outside the current integration block.
+* [x] Test successful learning, duplicate rejection, class rejection, level rejection, limit handling, cancelled replacement and confirmed replacement.
 
 ## 3. Equipment
 

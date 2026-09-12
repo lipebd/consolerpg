@@ -701,15 +701,17 @@ The general inventory:
 - Displays at most eight item rows per page.
 - Preserves a fixed list height on partially filled pages.
 - Truncates long names only in the list view.
-- Displays the complete name and description in the details view.
+- Displays complete contextual details according to the runtime item type.
 - Provides contextual actions according to the runtime item type.
 
-Current and planned detail actions include:
+Current detail actions include:
 
 - `RecoveryItem` — use.
 - Equipment — open details and equip through the shared equipment menu.
 - Materials, quest items and key items — return without a use action.
-- Skill scrolls — learn after skill-scroll behavior is implemented.
+- `SkillScroll` — inspect the linked skill and attempt to learn it.
+
+Skill-scroll details use the shared skill sheet instead of repeating the scroll item's name, category and generic description. The compatible learner or the absence of one is displayed beside the learning action. After successful learning, the scroll list is refreshed without closing the inventory; if the consumed scroll was the final one, the empty scroll category remains open until the player returns.
 
 ## Battle inventory
 
@@ -718,6 +720,7 @@ Battle item selection is separate from the general inventory.
 During battle:
 
 - Only consumables currently usable in battle are listed.
+- Skill scrolls are excluded and cannot be used during battle.
 - Equipment, materials, quest items, key items and unrelated categories cannot be browsed.
 - Selecting an item first opens its details.
 - Cancelling returns to the battle item list.
@@ -750,6 +753,43 @@ Recovery effects follow these rules:
 - The result records the effects actually produced instead of inferring them from the item definition.
 
 Purification removes eligible negative attribute states. If no selected target has an eligible negative state or another applicable recovery component, the item is not consumed.
+
+## Skill scrolls
+
+Skill scrolls are rare, stackable and player-tradable items intended for external drops and future asynchronous player trading. They do not require NPC purchase or sale prices.
+
+Each scroll links:
+
+- One `SKILL_SCROLL` item.
+- One `SCROLL` skill.
+- One compatible playable class.
+
+The linked skill uses the same definition, effects, costs, targeting, detail presentation and battle execution as an automatically learned skill. Acquisition source changes how the character learns the skill, not how the skill behaves afterward.
+
+Skill scrolls may be used only from the general inventory outside battle. Because party classes do not repeat, the compatible class identifies at most one learner. If the party has no compatible character, the learning action is unavailable.
+
+Learning follows these rules:
+
+- The character's class must match the scroll's compatible class.
+- The character must meet the skill's minimum level requirement.
+- An already learned skill cannot be learned again.
+- A character may know at most two `SCROLL` skills.
+- A successful first or second scroll-skill acquisition consumes exactly one scroll.
+- Class incompatibility, insufficient level and duplicate learning preserve the scroll.
+- Rejected and cancelled attempts do not change the character's learned skills.
+
+When both scroll slots are occupied:
+
+- The player must select one learned `SCROLL` skill to replace.
+- `STARTER` and `LEVEL` skills cannot be selected or forgotten.
+- The replacement requires explicit confirmation.
+- Returning from either selection or confirmation preserves the inventory and all learned skills.
+- A confirmed replacement forgets the selected skill, learns the new skill and consumes exactly one new scroll.
+- The forgotten skill's original scroll is not returned.
+
+Natural skills are displayed before scroll-learned skills. Learned scroll skills preserve their learning order; a newly learned replacement occupies the newest position.
+
+Skill-scroll items and their linked skills can use the existing enemy-drop system. Specific enemies and low drop chances remain content-curation decisions rather than a separate drop mechanic.
 
 ## Equipment
 
@@ -877,22 +917,48 @@ Natural stats exclude equipment bonuses, temporary stages and Distorção Ancest
 
 If several levels are gained at once, the final level is determined first and the complete natural-stat set is calculated and installed once. Arithmetic overflow is rejected instead of wrapping silently.
 
-## Level-based skill availability
+## Skill acquisition and availability
 
-A playable character's available skills are derived from its class skill definitions and current level. A skill is available when its acquisition level is less than or equal to the character's level.
+Every skill defines one acquisition type and one positive level requirement.
 
-When one reward crosses several levels, every skill whose acquisition level is above the previous level and at or below the new level is reported as newly unlocked. Skill definitions remain unique catalog entries; they are not copied into a mutable learned-skill list.
+The acquisition types are:
+
+- `STARTER` — learned automatically when its requirement is met and used for temporary pre-class-choice progression.
+- `LEVEL` — learned automatically when its requirement is met and retained as a permanent class skill.
+- `SCROLL` — learned only from its linked skill scroll after the minimum level requirement is met.
+
+`PlayableCharacter` stores the stable IDs of learned skills. The corresponding `SkillDefinition` remains unique in `SkillCatalog`; learning does not create or duplicate skill definitions.
+
+Automatically available `STARTER` and `LEVEL` skills are learned during character creation and after level gains. When one reward crosses several levels, every automatically learned skill whose requirement is above the previous level and at or below the new level is reported as newly learned.
+
+`SCROLL` skills are never granted by level alone. Reaching their configured level only makes their linked scroll usable.
+
+The Flagelo currently uses two temporary foundational skills before the level-7 class choice:
+
+- `Investida` — `STARTER`, level 1.
+- `Quebra-Armadura` — `STARTER`, level 3.
+
+Its four permanent level skills are:
+
+- `Golpe Experiente` — `LEVEL`, level 7.
+- `Grito de Guerra` — `LEVEL`, level 10.
+- `Perseverança` — `LEVEL`, level 15.
+- `Lenda Viva` — `LEVEL`, level 20.
+
+Every other playable class has four permanent `LEVEL` skills. Retirement of the Flagelo's two `STARTER` skills remains deferred to the future level-7 class-choice flow.
 
 ### Skill-detail presentation
 
 Available skills are first displayed as a compact selectable list. Selecting one opens a shared detail sheet containing:
 
-- Acquisition level.
+- Level requirement.
 - Main type.
 - Power.
 - Action target.
 - MP and SP cost.
 - External narrative description.
+
+For `STARTER` and `LEVEL` skills, the displayed level is the automatic learning level. For `SCROLL` skills, it is the minimum level required to use the linked scroll.
 
 The first displayable component in `PRIMARY` defines the summary type, power and action target. If a future valid skill has no displayable `PRIMARY` component, the first displayable component in execution order is used as a fallback. Secondary effects remain part of the narrative description and do not replace the main classification.
 
@@ -993,7 +1059,7 @@ The individual character screen displays:
 - HP, MP and SP.
 - ATK, DEF and VEL.
 - MAG, RES and LCK.
-- Learned skills.
+- Learned `STARTER`, `LEVEL` and `SCROLL` skills.
 - Equipped weapon, armor and trinket through the equipment submenu.
 - Total effective individual M.EXP, including temporary and equipped sources.
 

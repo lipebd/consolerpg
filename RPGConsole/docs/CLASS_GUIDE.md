@@ -72,6 +72,9 @@ Scenario           = cenário de execução usado por World
 
 SkillDefinition = conteúdo imutável e reutilizável da habilidade
 SkillExecution  = estado temporário de uma única utilização
+
+SkillScrollDefinition = vínculo imutável entre item, habilidade e classe
+SkillScroll           = item especializado criado para o inventário
 ```
 
 ### Coordenação principal
@@ -111,7 +114,7 @@ BattleCoordinator
 | `CharacterStats` | Dados imutáveis validados | Agrupa HP, MP, SP, ataque, defesa, magia, resistência, velocidade e sorte. Exige HP máximo e todos os atributos regulares positivos; MP e SP máximos podem ser zero. É usado na criação de `PlayableCharacter`, `Enemy` e `EnemyDefinition`. |
 | `GameCharacter` | Classe-base de execução | Guarda os atributos naturais, HP, MP e SP atuais e o estado temporário de combate compartilhado por aliados e inimigos. Os getters públicos combinam valores naturais, bônus estruturais fornecidos pela subclasse e efeitos temporários. Também expõe uma cópia imutável apenas dos atributos naturais. O cálculo de ataques pertence a `DamageCalculator`. |
 | `CharacterEquipment` | Estado de equipamentos | Guarda as definições da arma, armadura e berloque equipados por um personagem. Expõe slots opcionais, soma bônus estruturais e fornece os modificadores de recompensa do berloque. A mutação direta é restrita ao pacote de personagens. |
-| `PlayableCharacter` | Personagem jogável | Estende `GameCharacter` com nível, EXP, definição de classe, equipamentos e acesso dinâmico às habilidades liberadas. Valida nível e compatibilidade de peso, equipa e remove definições e limita os recursos atuais quando um máximo diminui. Ao ganhar níveis, substitui somente os atributos naturais pelo resultado final de `CharacterGrowthCalculator`. |
+| `PlayableCharacter` | Personagem jogável | Estende `GameCharacter` com nível, EXP, definição de classe, equipamentos, definições de habilidade e IDs das habilidades efetivamente aprendidas. Aprende automaticamente habilidades `STARTER` e `LEVEL`, permite aprender ou substituir habilidades `SCROLL`, preserva sua ordem e limita pergaminhos a duas vagas. Ao ganhar níveis, substitui somente os atributos naturais pelo resultado final de `CharacterGrowthCalculator`. |
 | `Enemy` | Inimigo de execução | Estende `GameCharacter` e representa uma ocorrência mutável de um inimigo dentro de uma batalha. Recebe seus dados de `EnemyDefinition`, possui rank, descrição e tabela de drops, e é colocado em `EnemyBattleSlot`. Vários objetos `Enemy` podem nascer da mesma definição sem compartilhar HP. |
 | `EnemyRank` | Enum de domínio | Define os ranks válidos dos inimigos, como comum, veterano, líder, boss, épico e lendário. É usado por loaders, definições, recompensas e validações de dungeon. |
 | `Party` | Estado compartilhado do grupo | Armazena de um a quatro `PlayableCharacter`, inventário, ouro e modificadores temporários compartilhados. Também soma os bônus de GOLD dos berloques equipados pelo grupo. É consumida por `World`, `Battle`, menus e serviços de recompensa. |
@@ -162,10 +165,15 @@ Enemy           -> luta e perde HP durante uma batalha
 | `RecoveryItemDefinition` | Definição especializada imutável | Armazena os componentes de recuperação associados a um item: HP, MP, SP, HP de ressurreição, purificação e tipo de alvo. Exige pelo menos um componente efetivo. |
 | `RecoveryItemDefinitionCatalog` | Catálogo especializado | Registra as definições carregadas de `recovery_items.txt`, rejeita especializações duplicadas e permite que `ItemFactory` encontre o comportamento associado a cada definição básica. |
 | `RecoveryItemLoader` | Carregamento especializado | Lê `recovery_items.txt`, valida valores, alvos e referências em `ItemDefinitionCatalog`, exige a categoria `CONSUMABLE` e registra `RecoveryItemDefinition`. |
-| `ItemFactory` | Fábrica de execução | Combina cada `ItemDefinition` com sua eventual definição especializada. Cria `RecoveryItem` quando existe uma especialização de recuperação e `BasicItem` quando o item ainda não possui comportamento próprio. |
+| `SkillScrollDefinition` | Definição especializada imutável | Liga o ID de um item ao ID de uma habilidade `SCROLL` e ao ID de sua classe compatível. Mantém referências externas estáveis sem duplicar a `SkillDefinition`. |
+| `SkillScrollDefinitionCatalog` | Catálogo especializado | Registra especializações por ID de item e de habilidade, rejeita vínculos duplicados e permite que loaders e fábricas resolvam a relação. |
+| `SkillScrollLoader` | Carregamento especializado | Lê `skill_scrolls.txt`, valida referências nos catálogos de itens, habilidades e classes, exige `SKILL_SCROLL` e `SCROLL`, rejeita divergências de classe e verifica especialização completa. |
+| `ItemFactory` | Fábrica de execução | Combina cada `ItemDefinition` com suas eventuais definições especializadas. Cria `RecoveryItem` para recuperação, `SkillScroll` para pergaminhos vinculados a uma habilidade canônica e `BasicItem` quando o item não possui comportamento próprio. Rejeita especializações incompatíveis simultâneas. |
 | `Item` | Classe-base de domínio | Classe-base dos itens em runtime. Copia da definição a identidade, a categoria, `playerTradable`, `baseShopSalePrice`, `shopPurchasePrice`, nome e descrição. |
 | `BasicItem` | Item básico | Implementação concreta mínima de `Item` para categorias que ainda não possuem comportamento especializado. Pode ser armazenado, exibido e recebido como recompensa, mas não executa uma ação de uso. |
 | `RecoveryItem` | Item de recuperação | Especializa `Item` com efeitos combináveis de HP, MP, SP, ressurreição e purificação. Verifica alvos elegíveis, aplica ressurreição antes da recuperação comum de HP e devolve um `RecoveryItemUseResult`. |
+| `SkillScroll` | Pergaminho de execução | Especializa `Item` com a definição do vínculo e a `SkillDefinition` canônica que será ensinada. Expõe a classe compatível e o requisito mínimo de nível sem duplicar regras de habilidade. |
+| `SkillScrollService` | Serviço de aprendizagem e consumo | Coordena o aprendizado ou a substituição entre `Party`, `PlayableCharacter` e `SkillScroll`. Consome uma unidade somente após `LEARNED` ou `REPLACED`; rejeições preservam o inventário. |
 | `RecoveryItemUseResult` | Resultado imutável | Informa separadamente os efeitos realmente produzidos por um uso, evitando que menus precisem deduzir o resultado comparando estados anteriores e posteriores do personagem. |
 | `ItemCatalog` | Catálogo de execução | Registra os objetos `Item` completos criados por `ItemFactory`, rejeita IDs duplicados e permite resolvê-los por ID. É usado por drops, exploração e demais fluxos que precisam do item de execução, não das definições cruas. |
 | `Inventory` | Estado mutável | Guarda os itens pertencentes à `Party` e suas quantidades compartilhadas. Permite adicionar, remover, consultar e listar itens; não impõe peso nem limite de capacidade. |
@@ -193,10 +201,12 @@ Enemy           -> luta e perde HP durante uma batalha
 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
-| `SkillDefinition` | Definição imutável | Combina identidade, classe, nível de aquisição, custos, nome, descrição e lista ordenada de componentes de uma habilidade. Pode ser referenciada diretamente pelo personagem porque o estado mutável de cada uso fica em `SkillExecution`. |
+| `SkillDefinition` | Definição imutável | Combina identidade, classe, tipo de aquisição, requisito de nível, custos, nome, descrição e lista ordenada de componentes. Pode ser referenciada diretamente pelo personagem porque o estado mutável de cada uso fica em `SkillExecution`. |
 | `SkillEffectDefinition` | Definição imutável de componente | Representa um componente de dano, recuperação, estágio, purificação, dissipação, modificador ou estado especial. Valida quais campos são obrigatórios, opcionais ou proibidos para cada tipo. |
-| `SkillLoader` | Carregamento de dados | Lê `skills.txt` e `skill_effects.txt`, valida IDs de classe, cabeçalhos, componentes, sequência, fases e referências cruzadas e registra habilidades completas. |
+| `SkillLoader` | Carregamento de dados | Lê `skills.txt` e `skill_effects.txt`, interpreta `STARTER`, `LEVEL` e `SCROLL`, valida requisitos de nível, IDs de classe, cabeçalhos, componentes, sequência, fases e referências cruzadas e registra habilidades completas. |
 | `SkillCatalog` | Catálogo | Registra `SkillDefinition` por ID estável e oferece as definições carregadas aos personagens e sistemas consumidores. |
+| `SkillAcquisitionType` | Enum de aquisição | Distingue habilidades temporárias iniciais (`STARTER`), habilidades aprendidas automaticamente por nível (`LEVEL`) e habilidades ensinadas exclusivamente por pergaminho (`SCROLL`). |
+| `SkillLearningResult` | Enum de resultado | Representa aprendizagem, substituição e rejeições por duplicidade, classe incompatível, nível insuficiente ou limite de pergaminhos. Permite que domínio, serviço e interface compartilhem o mesmo resultado sem depender de mensagens. |
 | `SkillEffectType` | Enum de domínio | Define os tipos fechados de componente reconhecidos pelo executor. |
 | `SkillTargetType` | Enum de alvo | Define alvos como usuário, aliado, inimigo, grupos completos ou alvos aleatórios. Orienta a seleção feita uma única vez para a execução. |
 | `SkillExecutionPhase` | Enum de fase | Ordena componentes em `PRE_ACTION`, `PRIMARY` e `POST_ACTION`. |
@@ -265,7 +275,7 @@ World
 | `BattleRewardModifiers` | Snapshot imutável | Registra os modificadores usados em uma vitória: percentuais globais temporários, GOLD dos equipamentos, EXP individual dos berloques e durações restantes após a recompensa. Permite apresentar o resultado sem consultar estado mutável já avançado. |
 | `BattleRewardService` | Serviço de regra | Agrega recompensas-base, captura modificadores temporários e de equipamento, usa `RewardCalculator`, concede EXP individual e GOLD compartilhado, reduz a duração dos efeitos temporários após a vitória, calcula progressão e drops e produz `BattleRewards`. |
 | `BattleRewards` | Resultado agregado | Agrupa a EXP global apresentada, o GOLD, o snapshot de modificadores, os drops consolidados e os resultados individuais de progressão. É produzido por `BattleRewardService` e exibido por `BattleRewardScreen`. |
-| `CharacterProgressionResult` | Resultado individual | Registra EXP concedida, níveis anterior e atual, cópias dos atributos naturais antes e depois do crescimento, habilidades recém-liberadas e eventual restauração de recursos. Faz parte de `BattleRewards`. |
+| `CharacterProgressionResult` | Resultado individual | Registra EXP concedida, níveis anterior e atual, cópias dos atributos naturais antes e depois do crescimento, habilidades automaticamente aprendidas e eventual restauração de recursos. Faz parte de `BattleRewards`. |
 
 ---
 
@@ -285,18 +295,19 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 | `ScenarioBranchMenu` | Menu | Recebe as bifurcações disponíveis na posição atual, exibe seus nomes e descrições e devolve a `ScenarioBranchDefinition` escolhida. Não altera o cenário nem o estado da exploração. |
 | `RouteMenu` | Menu | Recebe as rotas adjacentes atualmente disponíveis, exibe nomes e descrições das saídas e devolve a `TravelRouteDefinition` escolhida. Não resolve o destino nem aplica a posição de chegada; essas consequências pertencem a `World`. |
 | `CityTransportMenu` | Menu de transporte pago | Recebe os destinos urbanos descobertos e configurados, exibe preços e saldo por meio de `GameCurrency`, valida seleção e saldo, solicita confirmação, realiza o pagamento e devolve a `CityTransportDefinition` escolhida. Não altera o cenário. |
-| `InventoryMenu` | Menu geral de inventário | Exibe a moeda compartilhada e todas as categorias do inventário em ordem determinística. Listas são paginadas e ações dependem do tipo: itens de recuperação podem ser usados e equipamentos abrem `EquipmentMenu`. |
+| `InventoryMenu` | Menu geral de inventário | Exibe a moeda compartilhada e todas as categorias em ordem determinística. Listas são paginadas e ações dependem do tipo: recuperação pode ser usada, equipamentos abrem `EquipmentMenu` e pergaminhos exibem a habilidade vinculada e permitem aprendê-la fora de batalha. Após um pergaminho ser consumido, atualiza a categoria sem fechar o inventário. |
 | `EquipmentMenu` | Menu compartilhado de equipamentos | Permite equipar a partir de um item do inventário ou administrar os três slots de um personagem. Filtra escolhas incompatíveis, mostra uma comparação do que realmente muda, pede confirmação e delega a transferência a `EquipmentService`. |
 | `EquipmentDetailFormatter` | Formatador de interface | Produz fichas de arma, armadura e berloque e comparações alinhadas entre equipamento atual e novo. Usa `Poder` como nome visível do poder-base da arma. |
 | `BattleItemMenu` | Menu de itens de batalha | Filtra diretamente os consumíveis utilizáveis em batalha, apresenta uma lista paginada e abre seus detalhes. Devolve sucesso apenas quando o uso produz algum efeito, permitindo que `Battle` decida se a ação do personagem foi consumida. |
 | `RecoveryItemUseMenu` | Fluxo de uso | Centraliza a seleção de alvos, a aplicação de efeitos individuais ou coletivos, a remoção do item somente após um resultado efetivo e a apresentação dos valores recuperados. É compartilhado por `InventoryMenu` e `BattleItemMenu`. |
+| `SkillScrollUseMenu` | Fluxo de aprendizagem | Localiza o único integrante cuja classe é compatível, apresenta impedimentos, coordena seleção e confirmação de substituição e delega aprendizagem e consumo a `SkillScrollService`. Não oferece a ação quando o grupo não possui aprendiz compatível. |
 | `ItemMenuFormatter` | Formatador de interface | Centraliza a largura das colunas, o truncamento seguro de nomes longos e o resumo dos componentes de recuperação usados pelas telas de inventário. |
 | `PartyStatusMenu` | Menu de consulta | Exibe uma visão resumida dos membros, moeda compartilhada, M.EXP temporário e M.GOLD total, incluindo berloques. Permite selecionar um integrante para abrir `CharacterStatusMenu`. |
-| `CharacterStatusMenu` | Tela de consulta | Mostra classe, recursos, atributos efetivos, nível, EXP e M.EXP total do personagem. Abre suas habilidades e seus equipamentos por meio dos menus compartilhados. |
+| `CharacterStatusMenu` | Tela de consulta | Mostra classe, recursos, atributos efetivos, nível, EXP e M.EXP total do personagem. Exibe habilidades naturais e de pergaminho efetivamente aprendidas e abre os equipamentos por meio dos menus compartilhados. |
 | `AllyTargetMenu` | Menu de alvo | Exibe aliados vivos ou derrotados conforme o contexto e devolve o `PlayableCharacter` escolhido. Um aliado vivo pode ser selecionado mesmo com HP cheio porque componentes compostos ainda podem purificá-lo ou fortalecê-lo. |
 | `EnemyTargetMenu` | Menu de alvo | Exibe apenas inimigos vivos de `EnemyBattleGroup` e devolve o `EnemyBattleSlot` escolhido. É usado por ataques, habilidades e análise. |
 | `CombatEffectFormatter` | Formatador de interface | Produz a apresentação compartilhada dos estágios ativos e da Distorção Ancestral sem mover regras de duração ou atributo para a interface. |
-| `SkillDetailFormatter` | Formatador de interface | Produz a ficha compartilhada de uma habilidade com nível, tipo principal, poder, alvo, custo e descrição narrativa. Deriva os campos técnicos do primeiro componente efetivo de `PRIMARY` e é reutilizado pelo status e pela confirmação em batalha. |
+| `SkillDetailFormatter` | Formatador de interface | Produz a ficha compartilhada de uma habilidade com requisito de nível, tipo principal, poder, alvo, custo e descrição narrativa. Deriva os campos técnicos do primeiro componente efetivo de `PRIMARY` e é reutilizado pelo status, pela confirmação em batalha e pelos pergaminhos. |
 | `RewardModifierFormatter` | Formatador de interface | Produz a notação compacta compartilhada de `M.EXP` e `M.GOLD`, combinando fontes permanentes e temporárias para apresentação sem calcular ou alterar recompensas. |
 | `EpicEncounterMenu` | Menu de confirmação | Recebe uma lista de uma a três `EnemyDefinition`, apresenta nomes e descrições do encontro épico e pergunta se o jogador deseja enfrentá-lo. Devolve apenas a decisão; `World` inicia a batalha. |
 | `BattleTurnOrderScreen` | Tela | Mostra o participante atual e uma prévia das próximas ações usando `BattleTurnOrder`. Não gera nem altera a fila. |
@@ -588,6 +599,8 @@ World                   = mudança efetiva para a cidade escolhida
 | Sorteio de inimigos | `EncounterGenerator` | `EncounterCatalog` → filtros/pesos → definições |
 | Execução da luta | `Battle` | ordem de turnos → ações → `BattleResult` |
 | Definição de uma habilidade | `SkillDefinition` | `skills.txt` + `skill_effects.txt` → `SkillLoader` → `SkillCatalog` |
+| Especialização de um pergaminho | `SkillScrollDefinition` | item + habilidade + classe → `SkillScrollLoader` → `SkillScrollDefinitionCatalog` |
+| Aprender por pergaminho | `SkillScrollService` | inventário → `SkillScrollUseMenu` → `PlayableCharacter` → consumo condicional |
 | Uma utilização de habilidade | `SkillExecution` | `Battle` → contexto e alvos → `SkillExecutor` → resultados → `Battle` |
 | Definição de um equipamento | `EquipmentDefinition` | `items.txt` + arquivo especializado → `EquipmentLoader` → `EquipmentCatalog` |
 | Equipar, trocar ou remover item | `EquipmentService` | `Inventory` ↔ `PlayableCharacter` → `CharacterEquipment` |
@@ -626,5 +639,6 @@ Ao criar ou alterar uma classe, faça estas perguntas:
 4. Um menu está tomando uma decisão que deveria pertencer a `World`, `Battle` ou a um serviço?
 5. Um coordenador está calculando uma regra que poderia ser isolada em um serviço?
 6. Um catálogo está guardando objetos de definição ou objetos mutáveis de execução?
+7. Se ela especializa um item, a identidade comum continua em `ItemDefinition` e o comportamento específico está ligado pelo mesmo ID estável?
 
 Se a resposta sobre a responsabilidade não couber em uma frase clara, a classe pode estar acumulando funções demais.

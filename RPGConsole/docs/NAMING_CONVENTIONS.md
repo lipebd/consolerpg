@@ -473,6 +473,7 @@ shops.txt
 shop_stock.txt
 skills.txt
 skill_effects.txt
+skill_scrolls.txt
 weapons.txt
 armors.txt
 trinkets.txt
@@ -484,7 +485,8 @@ Header field names use `camelCase` and should match the corresponding Java vocab
 # enemyId;itemId;dropChance;minQuantity;maxQuantity
 # id;scenarioId;accessType;offerSlots;name;description
 # id;shopId;itemId;shopSalePricePercent;stock;weight
-# id;classId;acquisitionLevel;mpCost;spCost;name;description
+# id;classId;acquisitionType;levelRequirement;mpCost;spCost;name;description
+# itemId;skillId;classId
 # skillId;sequence;phase;effectType;targetType;damageType;power;attribute;stages;duration;triggerChancePercent;specialStateType;conditionType;conditionValue
 # itemId;damageType;weaponType;levelRequirement;normalAttackName;baseWeaponDamage;hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus
 # itemId;armorWeight;levelRequirement;hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus
@@ -503,6 +505,16 @@ Enum fields use their exact Java constant names:
 COMMON
 SPECIAL_ONLY
 ```
+
+Skill acquisition data uses the exact `SkillAcquisitionType` constants:
+
+```text
+STARTER
+LEVEL
+SCROLL
+```
+
+`levelRequirement` is the automatic learning level for `STARTER` and `LEVEL`, and the minimum scroll-use level for `SCROLL`.
 
 Do not rename or reorder fields without updating:
 

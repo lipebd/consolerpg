@@ -50,23 +50,24 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 Initialization includes:
 
 1. Creating the shared `Scanner`.
-2. Loading enemy and base item definitions.
-3. Loading specialized recovery-item definitions and equipment definitions, then creating runtime items.
-4. Loading enemy drops and encounter definitions.
-5. Loading common scenario definitions.
-6. Loading city-transport, INN and combat-scenario definitions.
-7. Loading shop definitions and their possible stock entries.
-8. Generating one runtime state for every shop through `ShopStateGenerator`.
-9. Loading exploration-reward, dungeon and scenario-branch definitions.
-10. Loading playable-class definitions.
-11. Loading skill headers and ordered skill-effect components and creating `SkillCatalog`.
-12. Creating and registering runtime scenarios through `ScenarioFactory`.
-13. Resolving the initial scenario and creating `WorldProgress`.
-14. Loading adjacent travel routes and creating `TravelProgress`.
-15. Creating one shared `CharacterGrowthCalculator` and the temporary playable characters from loaded class and skill definitions.
-16. Creating `EquipmentService` from the item and equipment catalogs.
-17. Creating `World` with the required catalogs, services, shop states, progress state and shared dependencies.
-18. Starting the world loop.
+2. Loading playable-class definitions.
+3. Loading skill headers and ordered skill-effect components and creating `SkillCatalog`.
+4. Loading enemy and base item definitions.
+5. Loading equipment, recovery-item and skill-scroll specialized definitions.
+6. Creating the runtime `ItemCatalog` through `ItemFactory`.
+7. Creating `EquipmentService` from the item and equipment catalogs.
+8. Loading enemy drops and encounter definitions.
+9. Loading common scenario definitions.
+10. Loading city-transport, INN and combat-scenario definitions.
+11. Loading shop definitions and their possible stock entries.
+12. Generating one runtime state for every shop through `ShopStateGenerator`.
+13. Loading exploration-reward, dungeon and scenario-branch definitions.
+14. Creating and registering runtime scenarios through `ScenarioFactory`.
+15. Resolving the initial scenario and creating `WorldProgress`.
+16. Loading adjacent travel routes and creating `TravelProgress`.
+17. Creating one shared `CharacterGrowthCalculator` and the temporary playable characters from loaded class and skill definitions.
+18. Creating `World` with the required catalogs, services, shop states, progress state and shared dependencies.
+19. Starting the world loop.
 
 External data is loaded before gameplay. Invalid definitions or unresolved references prevent the game from starting with partially inconsistent catalogs.
 
@@ -112,7 +113,10 @@ Maximum HP and all six regular attributes must be positive. Maximum MP and SP ma
 - EXP.
 - Its playable-class definition.
 - Its three equipment slots.
-- Class skills unlocked at the current level.
+- Immutable class skill definitions.
+- Learned skill IDs stored in acquisition order.
+- Automatic `STARTER` and `LEVEL` skill acquisition.
+- Explicit `SCROLL` skill learning and replacement.
 - Natural-stat recalculation through `CharacterGrowthCalculator` after gaining one or more levels.
 
 Natural growth has one formula owner:
@@ -161,7 +165,7 @@ Individual state belongs to `PlayableCharacter`:
 - Attributes.
 - Level.
 - EXP.
-- Playable-class and skill definitions.
+- Playable-class definition, class skill definitions and learned skill IDs.
 - Defensive state.
 - One equipped weapon, armor and trinket.
 - The individual EXP modifier supplied by its equipped trinket.
@@ -533,12 +537,44 @@ A revived ally does not exist in the current queue snapshot and therefore acts o
 
 Skill content is split between two external files and two immutable definition types:
 
-- `skills.txt` defines the skill identity, class, acquisition level, resource costs, name and description.
+- `skills.txt` defines the skill identity, class, acquisition type, level requirement, resource costs, name and description.
 - `skill_effects.txt` defines ordered components, execution phase, effect type, target type and effect-specific data.
 - `SkillDefinition` combines one header with its validated ordered components.
 - `SkillEffectDefinition` validates the fields permitted and required by each component type.
 
-`SkillLoader` reads both files, validates cross-references and component ordering and registers complete definitions in `SkillCatalog`. `PlayableCharacter` exposes the definitions unlocked by its class and current level.
+`SkillLoader` reads both files, validates cross-references and component ordering and registers complete definitions in `SkillCatalog`.
+
+`SkillAcquisitionType` distinguishes:
+
+- `STARTER` skills, which temporarily support the Flagelo before the level-7 class choice.
+- `LEVEL` skills, which are learned automatically when their configured level requirement is reached.
+- `SCROLL` skills, whose configured level is a minimum requirement and which must be learned explicitly from an item.
+
+`PlayableCharacter` stores learned skills through stable IDs while continuing to reference the unique definitions owned by `SkillCatalog`. Automatically available skills are learned during character construction and after level gains. Available skills are displayed with non-scroll skills first, followed by learned scroll skills in learning order.
+
+A character may learn at most two `SCROLL` skills. Once both slots are occupied, a new scroll skill can replace only another learned `SCROLL` skill; `STARTER` and `LEVEL` skills cannot be replaced through this flow.
+
+Skill-scroll specialization uses a separate external link:
+
+```text
+items.txt
+skills.txt
+playable_classes.txt
+        ↓
+skill_scrolls.txt
+        ↓
+SkillScrollLoader
+        ↓
+SkillScrollDefinitionCatalog
+        ↓
+ItemFactory
+        ↓
+SkillScroll
+```
+
+`skill_scrolls.txt` links one `SKILL_SCROLL` item ID to one `SCROLL` skill ID and its compatible class ID. `SkillScrollLoader` validates all three catalogs, rejects class mismatches and requires complete one-to-one specialization for every scroll item and scroll skill.
+
+`SkillScrollService` coordinates character learning with party-inventory consumption. It removes exactly one scroll only after `PlayableCharacter` reports successful learning or replacement. Rejected and cancelled attempts preserve both the inventory and the character's learned skills.
 
 One use follows this lifecycle:
 
@@ -786,6 +822,7 @@ Important UI components include:
 - `EquipmentMenu`
 - `BattleItemMenu`
 - `RecoveryItemUseMenu`
+- `SkillScrollUseMenu`
 - `EpicEncounterMenu`
 - `EnemyTargetMenu`
 - `AllyTargetMenu`
@@ -803,7 +840,7 @@ Important UI components include:
 
 `RouteMenu` selects among unlocked adjacent routes. `CityTransportMenu` separately displays configured discovered cities, validates affordability, requests confirmation and controls payment before returning the selected paid destination.
 
-`InventoryMenu` controls the general inventory flow outside battle. It displays every item category in deterministic enum order, keeps empty categories selectable, reports an empty category only after it is selected, paginates non-empty contents and opens item details. Recovery items may be used and equipment items may open the shared equipment flow. Empty inventory screens remain open until the player explicitly returns or closes the inventory.
+`InventoryMenu` controls the general inventory flow outside battle. It displays every item category in deterministic enum order, keeps empty categories selectable, reports an empty category only after it is selected, paginates non-empty contents and opens contextual item details. Recovery items may be used, equipment items may open the shared equipment flow and skill scrolls may teach their linked skill to the unique compatible party member. Empty inventory screens remain open until the player explicitly returns or closes the inventory.
 
 `ShopMenu` is shared by fixed city shops and exploration merchants. It displays the configured shop identity and party gold, lists active purchase offers with deterministic pagination, organizes owned sellable items by category and keeps the shop open until the player explicitly leaves.
 
@@ -811,11 +848,13 @@ Important UI components include:
 
 `RecoveryItemUseMenu` contains the shared recovery-item execution flow, including target selection, effect application and conditional consumption. This prevents the general and battle menus from duplicating item-use rules.
 
+`SkillScrollUseMenu` resolves the unique party member whose class matches a scroll, reports learning restrictions and controls cancelled or confirmed scroll-skill replacement. Domain mutation and conditional consumption remain delegated to `PlayableCharacter` and `SkillScrollService`.
+
 `ItemMenuFormatter` contains shared presentation rules such as deterministic column widths, name truncation and recovery-effect summaries. It does not decide item behavior.
 
 `PartyStatusMenu` displays a compact overview of one to four allies, the shared party currency, the active temporary EXP modifier and the total effective party gold modifier.
 
-`CharacterStatusMenu` displays one character's detailed resources, equipment-modified attributes, progression, total effective EXP modifier, currently available class skills and access to equipment slots.
+`CharacterStatusMenu` displays one character's detailed resources, equipment-modified attributes, progression, total effective EXP modifier, currently learned natural and scroll skills and access to equipment slots.
 
 `EquipmentMenu` supports equipping from an inventory item and managing a selected character's three slots. It filters incompatible choices, confirms change-only stat and attack differences and delegates mutations to `EquipmentService`.
 
@@ -839,16 +878,16 @@ Menus and screens call `GameCurrency.getName()` when the currency is referenced 
 
 The following implementations remain intentionally temporary:
 
-- Base items, recovery items and equipment specialization are externalized. Skill-scroll specialization remains future work.
 - Reward-modifier potions are deferred. Their future item behavior will activate the existing `PartyRewardModifierState` rather than duplicate reward calculation or duration state.
 - The development party is still assembled in `Main`; the normal character-creation flow has not replaced it yet.
-- Playable-class definitions, natural class growth and the first approved set of skill definitions are integrated, but the complete skill roster remains unfinished.
-- Skill-scroll behavior is not implemented.
+- Playable-class definitions, natural class growth and the complete approved 30-skill class-progression roster are integrated; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy actions currently use basic attacks; enemy skill selection can reuse the skill executor later but is outside the current scope.
 - Bree currently provides its INN and fixed shop, while tavern functionality remains unavailable.
 - Shop state is regenerated when the application starts; persistence and restocking remain postponed until save and load are implemented.
 - Defeat opens `GameOverScreen` instead of rescuing the party in Bree.
 - Save and load are not implemented.
 - `Battle` remains large and may later be divided into more focused action services.
+- Permanent skill-scroll items, skills and curated enemy drops remain deferred until their draft effects receive the required combat mechanics and final content review.
+- The Flagelo's temporary `STARTER` skills remain learned until their retirement is implemented as part of the future level-7 class-choice flow.
 
 These limitations are tracked in `V4_ROADMAP.md` and should be replaced incrementally instead of through one large rewrite.

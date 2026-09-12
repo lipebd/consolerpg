@@ -3,6 +3,12 @@ package rpg.characters;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 import rpg.classes.CharacterGrowthCalculator;
 import rpg.classes.PlayableClassDefinition;
@@ -11,16 +17,19 @@ import rpg.items.equipment.EquipmentDefinition;
 import rpg.items.equipment.TrinketDefinition;
 import rpg.items.equipment.WeaponDefinition;
 import rpg.skills.SkillDefinition;
+import rpg.skills.SkillLearningResult;
 
 // Represents a character controlled by the player.
 public class PlayableCharacter extends GameCharacter {
 
 	private static final int BASE_EXPERIENCE_REQUIREMENT = 50;
+	private static final int MAXIMUM_LEARNED_SCROLL_SKILLS = 2;
 
 	private final CharacterEquipment equipment;
 	private final PlayableClassDefinition classDefinition;
 	private final CharacterGrowthCalculator growthCalculator;
 	private final List<SkillDefinition> classSkillDefinitions;
+	private final Set<String> learnedSkillIds;
 
 	private int experience;
 	private int level;
@@ -40,16 +49,114 @@ public class PlayableCharacter extends GameCharacter {
 
 		this.classSkillDefinitions = List
 				.copyOf(Objects.requireNonNull(classSkillDefinitions, "Class skill definitions cannot be null."));
-
+		this.learnedSkillIds = new LinkedHashSet<>();
 		this.growthCalculator = Objects.requireNonNull(growthCalculator, "Character growth calculator cannot be null.");
 		this.equipment = new CharacterEquipment();
 		this.level = 1;
 		this.experience = 0;
+		learnAutomaticallyAvailableSkills();
 	}
 
 	public List<SkillDefinition> getUnlockedSkillDefinitions() {
-		return classSkillDefinitions.stream().filter(skillDefinition -> level >= skillDefinition.getAcquisitionLevel())
+		List<SkillDefinition> learnedSkillDefinitions = new ArrayList<>();
+
+		for (SkillDefinition skillDefinition : classSkillDefinitions) {
+			if (!skillDefinition.isScrollSkill() && learnedSkillIds.contains(skillDefinition.getId())) {
+				learnedSkillDefinitions.add(skillDefinition);
+			}
+		}
+
+		for (String skillId : learnedSkillIds) {
+			SkillDefinition skillDefinition = getClassSkillDefinition(skillId);
+
+			if (skillDefinition.isScrollSkill()) {
+				learnedSkillDefinitions.add(skillDefinition);
+			}
+		}
+
+		return List.copyOf(learnedSkillDefinitions);
+	}
+
+	public SkillLearningResult learnSkill(SkillDefinition skillDefinition) {
+		Objects.requireNonNull(skillDefinition, "Skill definition cannot be null.");
+
+		if (!skillDefinition.getClassId().equals(classDefinition.getId())) {
+			return SkillLearningResult.INCOMPATIBLE_CLASS;
+		}
+
+		SkillDefinition canonicalSkillDefinition = getClassSkillDefinition(skillDefinition.getId());
+
+		if (learnedSkillIds.contains(canonicalSkillDefinition.getId())) {
+			return SkillLearningResult.ALREADY_LEARNED;
+		}
+
+		if (level < canonicalSkillDefinition.getLevelRequirement()) {
+			return SkillLearningResult.LEVEL_TOO_LOW;
+		}
+
+		if (canonicalSkillDefinition.isScrollSkill() && getLearnedScrollSkillCount() >= MAXIMUM_LEARNED_SCROLL_SKILLS) {
+			return SkillLearningResult.SCROLL_LIMIT_REACHED;
+		}
+
+		learnedSkillIds.add(canonicalSkillDefinition.getId());
+
+		return SkillLearningResult.LEARNED;
+	}
+
+	public SkillLearningResult
+			replaceLearnedScrollSkill(SkillDefinition replacedSkillDefinition, SkillDefinition newSkillDefinition) {
+		Objects.requireNonNull(replacedSkillDefinition, "Replaced skill definition cannot be null.");
+
+		Objects.requireNonNull(newSkillDefinition, "New skill definition cannot be null.");
+
+		if (!newSkillDefinition.getClassId().equals(classDefinition.getId())) {
+			return SkillLearningResult.INCOMPATIBLE_CLASS;
+		}
+
+		SkillDefinition canonicalReplacedSkill = getClassSkillDefinition(replacedSkillDefinition.getId());
+
+		SkillDefinition canonicalNewSkill = getClassSkillDefinition(newSkillDefinition.getId());
+
+		if (!canonicalReplacedSkill.isScrollSkill() || !canonicalNewSkill.isScrollSkill()) {
+			throw new IllegalArgumentException("Only scroll skills can participate in scroll-skill replacement.");
+		}
+
+		if (!learnedSkillIds.contains(canonicalReplacedSkill.getId())) {
+			throw new IllegalArgumentException(
+					"Replaced scroll skill is not currently learned: " + canonicalReplacedSkill.getId()
+			);
+		}
+
+		if (learnedSkillIds.contains(canonicalNewSkill.getId())) {
+			return SkillLearningResult.ALREADY_LEARNED;
+		}
+
+		if (level < canonicalNewSkill.getLevelRequirement()) {
+			return SkillLearningResult.LEVEL_TOO_LOW;
+		}
+
+		learnedSkillIds.remove(canonicalReplacedSkill.getId());
+
+		learnedSkillIds.add(canonicalNewSkill.getId());
+
+		return SkillLearningResult.REPLACED;
+	}
+
+	public boolean hasLearnedSkill(String skillId) {
+		if (skillId == null || skillId.isBlank()) {
+			throw new IllegalArgumentException("Skill ID cannot be empty.");
+		}
+
+		return learnedSkillIds.contains(skillId);
+	}
+
+	public List<SkillDefinition> getLearnedScrollSkillDefinitions() {
+		return learnedSkillIds.stream().map(this::getClassSkillDefinition).filter(SkillDefinition::isScrollSkill)
 				.toList();
+	}
+
+	public int getLearnedScrollSkillCount() {
+		return getLearnedScrollSkillDefinitions().size();
 	}
 
 	public int gainExperience(int amount) {
@@ -72,9 +179,35 @@ public class PlayableCharacter extends GameCharacter {
 			CharacterStats naturalStats = growthCalculator.calculateNaturalStats(classDefinition, level);
 
 			replaceNaturalStats(naturalStats);
+			learnAutomaticallyAvailableSkills();
 		}
 
 		return levelsGained;
+	}
+
+	private void learnAutomaticallyAvailableSkills() {
+		for (SkillDefinition skillDefinition : classSkillDefinitions) {
+			if (skillDefinition.isScrollSkill() || level < skillDefinition.getLevelRequirement()) {
+				continue;
+			}
+
+			SkillLearningResult result = learnSkill(skillDefinition);
+
+			if (result != SkillLearningResult.LEARNED && result != SkillLearningResult.ALREADY_LEARNED) {
+				throw new IllegalStateException(
+						"Automatically available skill could not be learned: " + skillDefinition.getId()
+				);
+			}
+		}
+	}
+
+	private SkillDefinition getClassSkillDefinition(String skillId) {
+		return classSkillDefinitions.stream().filter(skillDefinition -> skillDefinition.getId().equals(skillId))
+				.findFirst().orElseThrow(
+						() -> new IllegalArgumentException(
+								"Skill does not belong to the character's class definitions: " + skillId
+						)
+				);
 	}
 
 	public boolean canEquip(EquipmentDefinition definition) {

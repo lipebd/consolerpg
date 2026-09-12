@@ -112,7 +112,7 @@ public final class SkillDetailFormatter {
 
 		String lineSeparator = System.lineSeparator();
 
-		return skill.getName() + " [Nv. " + skill.getAcquisitionLevel() + "]" + lineSeparator + lineSeparator + "Tipo: "
+		return skill.getName() + " [Nv. " + skill.getLevelRequirement() + "]" + lineSeparator + lineSeparator + "Tipo: "
 				+ formatType(skill) + lineSeparator + "Poder: " + formatPower(skill) + lineSeparator + "Alvo: "
 				+ formatTarget(skill) + lineSeparator + "Custo: " + formatCost(skill) + lineSeparator + lineSeparator
 				+ "Descrição:" + lineSeparator + skill.getDescription();

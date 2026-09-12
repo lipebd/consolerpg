@@ -176,8 +176,9 @@ public final class BattleRewardService {
 			CharacterStats currentNaturalStats = member.getNaturalStats();
 
 			List<SkillDefinition> newlyUnlockedSkillDefinitions = member.getUnlockedSkillDefinitions().stream()
-					.filter(skillDefinition -> skillDefinition.getAcquisitionLevel() > previousLevel)
-					.filter(skillDefinition -> skillDefinition.getAcquisitionLevel() <= currentLevel).toList();
+					.filter(skillDefinition -> !skillDefinition.isScrollSkill())
+					.filter(skillDefinition -> skillDefinition.getLevelRequirement() > previousLevel)
+					.filter(skillDefinition -> skillDefinition.getLevelRequirement() <= currentLevel).toList();
 
 			boolean resourcesRestored = false;
 
