@@ -51,12 +51,12 @@ public final class CharacterStatusMenu {
 
 	private void displayCharacterStatus(PlayableCharacter character) {
 		System.out.println("\n[" + character.getName().toUpperCase() + "]");
-
+		System.out.println();
 		if (!character.isAlive()) {
 			System.out.println("Estado: DERROTADO");
 		}
 
-		System.out.println("Classe: " + character.getPlayableClassDefinition().getName());
+		System.out.println("Classe: " + character.getPlayableClassDefinition().getSymbol() + " " + character.getPlayableClassDefinition().getName());
 
 		System.out.println("Nível: " + character.getLevel());
 

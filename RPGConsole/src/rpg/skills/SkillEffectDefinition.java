@@ -50,7 +50,7 @@ public final class SkillEffectDefinition {
 		this.effectType = Objects.requireNonNull(effectType, "Skill effect type cannot be null.");
 		this.targetType = Objects.requireNonNull(targetType, "Skill effect target type cannot be null.");
 		if (triggerChancePercent < 1 || triggerChancePercent > 100) {
-			throw new IllegalArgumentException("Skill effect trigger chance " + "must be between 1 and 100.");
+			throw new IllegalArgumentException("Skill effect trigger chance must be between 1 and 100.");
 		}
 		this.conditionType = Objects.requireNonNull(conditionType, "Skill condition type cannot be null.");
 
@@ -71,7 +71,7 @@ public final class SkillEffectDefinition {
 		if (conditionType == SkillConditionType.NONE) {
 			if (conditionValue != null) {
 				throw new IllegalArgumentException(
-						"An unconditional skill effect cannot define " + "a condition value."
+						"An unconditional skill effect cannot define a condition value."
 				);
 			}
 
@@ -79,7 +79,7 @@ public final class SkillEffectDefinition {
 		}
 
 		if (conditionValue == null || conditionValue < 1 || conditionValue > 100) {
-			throw new IllegalArgumentException("Conditional HP percentage must be between " + "1 and 100.");
+			throw new IllegalArgumentException("Conditional HP percentage must be between 1 and 100.");
 		}
 	}
 
@@ -203,12 +203,12 @@ public final class SkillEffectDefinition {
 		}
 
 		if (stages == null || stages < MINIMUM_STAGE || stages > MAXIMUM_STAGE || stages == 0) {
-			throw new IllegalArgumentException("Attribute stages must be between -3 and 3 " + "and cannot be zero.");
+			throw new IllegalArgumentException("Attribute stages must be between -3 and 3 and cannot be zero.");
 		}
 
 		if (attribute == CharacterAttribute.VEL) {
 			if (duration != null) {
-				throw new IllegalArgumentException("VEL stage effects cannot define " + "a conventional duration.");
+				throw new IllegalArgumentException("VEL stage effects cannot define a conventional duration.");
 			}
 
 			return;
@@ -216,7 +216,7 @@ public final class SkillEffectDefinition {
 
 		if (duration == null || duration < 1) {
 			throw new IllegalArgumentException(
-					"A non-VEL attribute-stage effect must define " + "a positive duration."
+					"A non-VEL attribute-stage effect must define a positive duration."
 			);
 		}
 	}
@@ -243,12 +243,12 @@ public final class SkillEffectDefinition {
 		rejectAttributeData();
 
 		if (specialStateType == null) {
-			throw new IllegalArgumentException("A special-state effect must define " + "a special state type.");
+			throw new IllegalArgumentException("A special-state effect must define a special state type.");
 		}
 
 		if (specialStateType == SpecialBattleStateType.DISTORTED_ATTRIBUTES
 				&& targetType != SkillTargetType.SINGLE_ENEMY) {
-			throw new IllegalArgumentException("DISTORTED_ATTRIBUTES must target " + "a single enemy.");
+			throw new IllegalArgumentException("DISTORTED_ATTRIBUTES must target a single enemy.");
 		}
 	}
 

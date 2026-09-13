@@ -22,6 +22,7 @@ public final class PlayableClassDefinition {
 
 	private final String id;
 	private final String name;
+	private final String symbol;
 	private final CharacterStats baseStats;
 	private final CharacterAttribute primaryAttribute;
 	private final CharacterAttribute secondaryAttribute;
@@ -31,6 +32,7 @@ public final class PlayableClassDefinition {
 	public PlayableClassDefinition(
 			String id,
 			String name,
+			String symbol,
 			CharacterStats baseStats,
 			CharacterAttribute primaryAttribute,
 			CharacterAttribute secondaryAttribute,
@@ -45,12 +47,33 @@ public final class PlayableClassDefinition {
 
 		if (!trimmedId.matches(ID_PATTERN)) {
 			throw new IllegalArgumentException(
-					"Playable class ID must use lowercase letters, " + "numbers and single underscores: " + trimmedId
+					"Playable class ID must use lowercase letters, numbers and single underscores: " + trimmedId
 			);
 		}
 
 		if (name == null || name.isBlank()) {
 			throw new IllegalArgumentException("Playable class name cannot be empty: " + trimmedId);
+		}
+
+		String trimmedSymbol = symbol.trim();
+
+		if (trimmedSymbol.isBlank()) {
+		        throw new IllegalArgumentException("Playable class symbol cannot be empty: " + trimmedId);
+		}
+
+		int symbolCodePoint = trimmedSymbol.codePointAt(0);
+		int symbolType = Character.getType(symbolCodePoint);
+
+		if (trimmedSymbol.codePointCount(0, trimmedSymbol.length()) != 1
+		                || !Character.isDefined(symbolCodePoint)
+		                || Character.isISOControl(symbolCodePoint)
+		                || Character.isWhitespace(symbolCodePoint)
+		                || Character.isIdentifierIgnorable(symbolCodePoint)
+		                || symbolType == Character.FORMAT
+		                || symbolType == Character.SURROGATE) {
+		        throw new IllegalArgumentException(
+		                        "Playable class symbol must contain exactly one visible Unicode code point: " + trimmedId
+		        );
 		}
 
 		Objects.requireNonNull(baseStats, "Playable class base stats cannot be null.");
@@ -61,7 +84,7 @@ public final class PlayableClassDefinition {
 
 		if (primaryAttribute == secondaryAttribute) {
 			throw new IllegalArgumentException(
-					"Playable class primary and secondary attributes " + "must be different: " + trimmedId
+					"Playable class primary and secondary attributes must be different: " + trimmedId
 			);
 		}
 
@@ -76,6 +99,7 @@ public final class PlayableClassDefinition {
 
 		this.id = trimmedId;
 		this.name = name.trim();
+		this.symbol = trimmedSymbol;
 		this.baseStats = baseStats;
 		this.primaryAttribute = primaryAttribute;
 		this.secondaryAttribute = secondaryAttribute;
@@ -151,6 +175,10 @@ public final class PlayableClassDefinition {
 
 	public String getName() {
 		return name;
+	}
+
+	public String getSymbol() {
+		return symbol;
 	}
 
 	public CharacterStats getBaseStats() {

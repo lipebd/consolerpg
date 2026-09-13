@@ -24,7 +24,7 @@ public final class ShopStockEntry {
 
 		if (!trimmedId.matches(ID_PATTERN)) {
 			throw new IllegalArgumentException(
-					"Shop stock entry ID must use lowercase letters, numbers " + "and single underscores: " + trimmedId
+					"Shop stock entry ID must use lowercase letters, numbers and single underscores: " + trimmedId
 			);
 		}
 

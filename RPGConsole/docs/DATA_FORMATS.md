@@ -16,6 +16,124 @@ This document describes the external text files used to load game data.
 - Content IDs are written in Brazilian Portuguese without accents.
 - Invalid references or malformed lines stop game initialization instead of creating partially invalid data.
 
+## Character-name definitions
+
+Names available for random playable-character naming are loaded from:
+
+`data/character_names.txt`
+
+Header:
+
+```text
+# name
+```
+
+Each non-comment line contains one complete character name:
+
+```text
+Ari
+Lina
+Nilo
+Yara
+```
+
+Rules:
+
+- The entire active line represents one name.
+- Names are normalized to Unicode NFC.
+- Outer ordinary spaces are removed.
+- Repeated ordinary spaces are collapsed into one.
+- A normalized name may contain at most 16 Unicode code points.
+- Unicode letters are allowed.
+- Single spaces, hyphens and apostrophes may appear only between letters.
+- Blank names, numbers, controls, tabs, unrelated punctuation and malformed separators are rejected.
+- Names must be unique without regard to letter case after normalization.
+- Accents remain significant, so `Jose` and `José` are different names.
+- At least four valid unique names are required to support a complete party.
+- The current four entries are temporary placeholders pending creative-team curation.
+
+Loading flow:
+
+```text
+character_names.txt
+    -> CharacterNameLoader
+    -> CharacterNameCatalog
+    -> CharacterNameSelector
+    -> CharacterCreationMenu
+```
+
+`CharacterNameRules` is shared by external loading and runtime `PlayableCharacter` construction. `CharacterNameSelector` chooses uniformly after excluding names supplied by the caller.
+
+## Playable-class definitions
+
+Playable-class data is loaded from:
+
+`data/playable_classes.txt`
+
+Header:
+
+```text
+# id;name;symbol;baseHp;baseMp;baseSp;baseAttack;baseDefense;baseMagic;baseResistance;baseSpeed;baseLuck;primaryAttribute;secondaryAttribute;armorWeight;description
+```
+
+Each valid line contains exactly 16 fields:
+
+| Position | Field | Java type | Example |
+|---:|---|---|---|
+| 1 | Class ID | `String` | `flagelo` |
+| 2 | Display name | `String` | `Flagelo` |
+| 3 | Presentation symbol | `String` | `◆` |
+| 4 | Base maximum HP | `int` | `120` |
+| 5 | Base maximum MP | `int` | `25` |
+| 6 | Base maximum SP | `int` | `115` |
+| 7 | Base ATK | `int` | `15` |
+| 8 | Base DEF | `int` | `15` |
+| 9 | Base MAG | `int` | `8` |
+| 10 | Base RES | `int` | `15` |
+| 11 | Base VEL | `int` | `9` |
+| 12 | Base LCK | `int` | `8` |
+| 13 | Primary attribute | `CharacterAttribute` | `ATK` |
+| 14 | Secondary attribute | `CharacterAttribute` | `DEF` |
+| 15 | Compatible armor weight | `ArmorWeight` | `HEAVY` |
+| 16 | Description | `String` | `Descrição da classe.` |
+
+Example shape:
+
+```text
+classe_exemplo;Classe Exemplo;◆;120;25;115;15;15;8;15;9;8;ATK;DEF;HEAVY;Descrição da classe.
+```
+
+Rules:
+
+- Class IDs must be unique and stable.
+- IDs use lowercase letters, numbers and single underscores.
+- Display names cannot be empty.
+- `symbol` must contain exactly one Unicode code point.
+- Blank symbols and ISO control characters are rejected.
+- Symbols are presentation data and do not affect class mechanics.
+- Base HP must be at least `50`.
+- Base MP and SP must each be at least `25`.
+- Base HP, MP and SP must total exactly `260`.
+- ATK, DEF, MAG, RES, VEL and LCK must each be between `8` and `15`.
+- The six regular base attributes must total exactly `70`.
+- `primaryAttribute` and `secondaryAttribute` must be valid `CharacterAttribute` values.
+- Primary and secondary attributes must be different.
+- `armorWeight` must be `LIGHT`, `MEDIUM` or `HEAVY`.
+- Descriptions cannot be empty.
+- Literal `\n` sequences in descriptions are converted into line breaks.
+- Invalid definitions report the source file, line and relevant class ID during initialization.
+
+Loading flow:
+
+```text
+playable_classes.txt
+    -> PlayableClassLoader
+    -> PlayableClassDefinition
+    -> PlayableClassCatalog
+```
+
+`PlayableClassDefinition` stores the immutable class data. `CharacterGrowthCalculator` uses its base stats and primary and secondary attributes, while console interfaces use its name, symbol and description.
+
 ## Enemy definitions
 
 File:

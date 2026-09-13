@@ -49,7 +49,7 @@ public final class BattleRewardModifiers {
 					.requireNonNull(entry.getValue(), "Individual experience modifier cannot be null.");
 
 			if (modifierPercent < 0) {
-				throw new IllegalArgumentException("Individual experience modifier " + "cannot be negative.");
+				throw new IllegalArgumentException("Individual experience modifier cannot be negative.");
 			}
 
 			copiedModifiers.put(character, modifierPercent);
@@ -124,12 +124,12 @@ public final class BattleRewardModifiers {
 		}
 
 		if (victoriesRemaining < 0) {
-			throw new IllegalArgumentException(modifierName + " reward modifier duration " + "cannot be negative.");
+			throw new IllegalArgumentException(modifierName + " reward modifier duration cannot be negative.");
 		}
 
 		if (modifierPercent == 0 && victoriesRemaining != 0) {
 			throw new IllegalArgumentException(
-					modifierName + " reward modifier cannot have " + "duration without a percentage."
+					modifierName + " reward modifier cannot have duration without a percentage."
 			);
 		}
 	}

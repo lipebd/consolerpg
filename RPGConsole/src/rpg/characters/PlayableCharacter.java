@@ -1,8 +1,5 @@
 package rpg.characters;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -41,7 +38,7 @@ public class PlayableCharacter extends GameCharacter {
 			CharacterGrowthCalculator growthCalculator
 	) {
 		super(
-				name,
+				CharacterNameRules.requireValid(name),
 				Objects.requireNonNull(classDefinition, "Playable class definition cannot be null.").getBaseStats()
 		);
 

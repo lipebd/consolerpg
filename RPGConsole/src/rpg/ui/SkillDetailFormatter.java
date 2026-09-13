@@ -42,7 +42,7 @@ public final class SkillDetailFormatter {
 		case SPECIAL_STATE -> "Status";
 
 		case DAMAGE_POWER_MODIFIER ->
-			throw new IllegalStateException("A damage-power modifier cannot be " + "the main skill effect.");
+			throw new IllegalStateException("A damage-power modifier cannot be the main skill effect.");
 		};
 	}
 
@@ -103,7 +103,7 @@ public final class SkillDetailFormatter {
 						() -> skill.getEffects().stream()
 								.filter(effect -> effect.getEffectType() != SkillEffectType.DAMAGE_POWER_MODIFIER)
 								.findFirst()
-								.orElseThrow(() -> new IllegalStateException("Skill has no " + "displayable effect."))
+								.orElseThrow(() -> new IllegalStateException("Skill has no displayable effect."))
 				);
 	}
 

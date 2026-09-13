@@ -20,7 +20,7 @@ public final class PlayableClassCatalog {
 		String classId = classDefinition.getId();
 
 		if (classesById.containsKey(classId)) {
-			throw new IllegalArgumentException("Playable class definition ID is already " + "registered: " + classId);
+			throw new IllegalArgumentException("Playable class definition ID is already registered: " + classId);
 		}
 
 		classesById.put(classId, classDefinition);

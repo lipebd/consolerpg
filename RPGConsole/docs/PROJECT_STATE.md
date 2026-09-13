@@ -482,13 +482,12 @@ The first V4 gameplay-system block is complete.
 
 ### External playable-class and skill definitions
 
-- All seven playable classes have stable external definitions and startup validation.
+- All seven playable classes have stable external definitions, one validated Unicode presentation symbol and startup validation.
 - `skills.txt` stores immutable skill headers with `STARTER`, `LEVEL` or `SCROLL` acquisition types and positive level requirements.
 - `skill_effects.txt` stores ordered effect components.
 - `SkillLoader` combines and validates both files and registers complete `SkillDefinition` objects in `SkillCatalog`.
 - `PlayableCharacter` references its class and skill definitions, stores learned skills through stable IDs and automatically learns eligible non-scroll skills.
 - The old hardcoded `Skill` and `RecoveryType` types were removed.
-- The temporary development party is still assembled in `Main`, but its class and skill content comes from loaded definitions.
 - All 30 approved class-progression skills are registered externally: two temporary Flagelo `STARTER` skills and 28 permanent `LEVEL` skills.
 - Skill powers and resource costs remain provisional until the general balance pass.
 
@@ -531,7 +530,7 @@ The natural-growth and level-based skill-availability block is complete.
 - `PlayableCharacter` keeps its immutable class and skill definitions while storing the stable IDs of skills it has actually learned.
 - Eligible `STARTER` and `LEVEL` skills are learned during construction and after level gains; `SCROLL` skills are never granted automatically.
 - `BattleRewardService` records natural stats before and after leveling, detects every newly learned non-scroll skill and restores surviving characters only after the new maximums are installed.
-- `BattleRewardScreen` displays compact stat deltas and newly learned skill names; `CharacterStatusMenu` displays the character's class.
+- `BattleRewardScreen` displays compact stat deltas and newly learned skill names; `CharacterStatusMenu` displays the character's complete class name and symbol.
 - Experience and level arithmetic reject overflow instead of wrapping silently.
 
 ## V4 skill-detail presentation
@@ -626,6 +625,33 @@ Temporary attribute stages and special battle states belong to each character's 
 
 Recovery power is not a character attribute. Recovery values belong to skill components or items. `RecoveryCalculator` calculates scaled skill recovery, while `GameCharacter.recoverHp()`, `recoverMp()`, `recoverSp()` and `revive()` apply changes to character resources.
 
+## V4 initial character and party creation
+
+The initial character-creation block is complete.
+
+- `CharacterNameRules` centralizes normalization, validation, the 16-code-point limit and case-insensitive comparison.
+- Valid names use Unicode letters separated only by single spaces, hyphens or apostrophes.
+- Names are normalized to NFC, outer spaces are removed and repeated ordinary spaces are collapsed.
+- `PlayableCharacter` accepts only normalized valid names.
+- `Party` rejects a new member whose name duplicates an existing member without regard to letter case.
+- `character_names.txt` provides external names for random selection.
+- `CharacterNameLoader` validates every external name, rejects case-insensitive duplicates and requires at least four valid entries.
+- `CharacterNameCatalog` stores the validated names and `CharacterNameSelector` selects uniformly after exclusions.
+- `CharacterCreationMenu` supports manual naming, random naming, repeated randomization, name changes, confirmation and cancellation.
+- Character creation displays the Flagelo's complete class name, primary and secondary specializations and external description.
+- Cancelling returns to `TitleScreen` without constructing partial character or party state.
+- A confirmed normal new game creates only one level-1 Flagelo with full resources.
+- The confirmed protagonist becomes the first member and leader of the new `Party`.
+- `Main` no longer contains a hardcoded normal party.
+- The `--dev-party` argument bypasses normal creation and delegates to `DevelopmentPartyFactory`.
+- `DevelopmentPartyFactory` supports one to four configured members with distinct classes, positive levels and fully restored resources.
+- Every playable class defines one visible Unicode symbol for compact interface identification.
+- `PartyStatusMenu` displays complete names and symbols in a two-line layout.
+- `CharacterStatusMenu` displays the complete character name together with the class symbol and name.
+- Character names are not truncated in character interfaces.
+
+The four current entries in `character_names.txt` are temporary placeholders. Final name curation belongs to the creative team.
+
 ## Scenario discovery and paid city transport
 
 V3 roadmap section 10 is complete.
@@ -667,7 +693,6 @@ Battle rewards, exploration rewards, inventory, party status, INNs, paid city tr
 - Permanent skill-scroll content and curated scroll drops remain absent while the draft skills await required combat mechanics and final content review.
 - The Flagelo's two temporary `STARTER` skills are not yet retired because the level-7 class-choice flow is not implemented.
 - Learned scroll skills remain runtime-only until save and load persist individual learned-skill IDs.
-- The development party is still assembled in `Main`; normal character and party creation are not implemented.
 - Playable-class definitions, natural growth and the complete approved 30-skill roster are external; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy turns currently use basic attacks; enemy skill selection is deferred.
 - Tavern functionality remains unavailable.
@@ -676,12 +701,16 @@ Battle rewards, exploration rewards, inventory, party status, INNs, paid city tr
 - Shop state is regenerated when the program starts and is not persisted.
 - Shops do not restock during the current execution.
 - Items sold by the player cannot be bought back.
+- Normal new games currently begin with only the protagonist; story-based recruitment of three distinct-class allies remains future work.
+- Random ally naming will reuse the implemented external-name selection after recruitment is added.
+- The four current random character names remain temporary pending creative-team curation.
+- Party-title acquisition and character-history presentation remain future narrative work.
 
 ## Current next step
 
-The combat-effect, external-skill, natural-progression, reward-modifier, equipment and local skill-scroll foundations are complete. The remaining skill-scroll roadmap item depends on retiring the Flagelo's temporary `STARTER` skills during the future level-7 class-choice flow.
+The combat-effect, external-skill, natural-progression, reward-modifier, equipment, local skill-scroll and initial character-creation foundations are complete. The remaining skill-scroll roadmap item depends on retiring the Flagelo's temporary `STARTER` skills during the future level-7 class-choice flow.
 
-The next V4 implementation block is normal character and party creation, followed by full-party defeat and rescue. Save/load and the level-7 class-path decision stay outside V4.
+The next V4 implementation block is full-party defeat and rescue. Save/load, story-based ally recruitment, party-title acquisition and the level-7 class-path decision stay outside the current implementation block.
 
 The post-V4 level-7 class-change flow already has one equipment rule fixed: all three equipped items return to inventory, the chosen class NPC grants that class's level-7 starter weapon and armor even when the character remains a Flagelo, and the narration tells the player to open the equipment menu and equip the new set.
 

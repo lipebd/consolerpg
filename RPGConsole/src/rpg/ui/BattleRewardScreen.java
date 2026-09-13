@@ -159,7 +159,7 @@ public final class BattleRewardScreen {
 						+ formatGrowth("DEF", previousStats.getDefense(), currentStats.getDefense()) + " | "
 						+ formatGrowth("MAG", previousStats.getMagic(), currentStats.getMagic()) + " | "
 						+ formatGrowth("RES", previousStats.getResistance(), currentStats.getResistance()) + " | "
-						+ formatGrowth("VEL", previousStats.getSpeed(), currentStats.getSpeed()) + " | " + " | "
+						+ formatGrowth("VEL", previousStats.getSpeed(), currentStats.getSpeed()) + " | "
 						+ formatGrowth("LCK", previousStats.getLuck(), currentStats.getLuck()) + "]"
 		);
 	}

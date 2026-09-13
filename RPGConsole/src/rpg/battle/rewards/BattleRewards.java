@@ -35,7 +35,7 @@ public final class BattleRewards {
 		this.characterProgressionResults = List.copyOf(
 				Objects.requireNonNull(
 						characterProgressionResults,
-						"Character progression results " + "cannot be null."
+						"Character progression results cannot be null."
 				)
 		);
 		this.globalExperience = globalExperience;

@@ -145,7 +145,7 @@ Current milestone: combat effects, external skills, natural progression, reward 
 * [x] Support reversible special battle states required by individual skills.
 * [x] Externalize all 30 approved playable skills across the seven class definitions.
 * [x] Replace hardcoded skill creation in `Main`.
-* [x] Use loaded class and skill definitions when assembling the temporary development party.
+* [x] Use loaded class and skill definitions when assembling development parties.
 * [x] Complete the approved external skill data for all seven playable classes.
 * [x] Redesign the learned-skills screen to display main type, power, targeting, resource cost and the external narrative description.
 * [x] Add global EXP and gold reward modifiers.
@@ -293,21 +293,35 @@ Current milestone: combat effects, external skills, natural progression, reward 
 * [x] Test party-wide gold modifiers from equipped trinkets.
 * [x] Test additive stacking between multiple reward modifiers.
 
-## 4. Character and party creation
+## 4. Initial character and party creation
 
-* [ ] Create the initial character-creation flow.
-* [ ] Allow the player to choose a character name.
-* [ ] Create every new-game playable character as a Flagelo.
-* [ ] Display the Flagelo's description and initial attributes before character confirmation.
-* [ ] Replace temporary hardcoded party creation in `Main`.
-* [ ] Define party-title rules.
-* [ ] Use the party title in world narration.
-* [ ] Display character history and lore.
-* [ ] Preserve a temporary development-party shortcut for testing arbitrary classes, levels and party compositions.
-* [ ] Define the maximum character-name length.
-* [ ] Reject character names exceeding the supported length.
-* [ ] Align party and individual status layouts using the supported name length.
-* [ ] Display complete character names without truncation.
+* [x] Centralize playable-character name normalization and validation.
+* [x] Limit playable-character names to 16 complete characters.
+* [x] Allow Unicode letters, single spaces, hyphens and apostrophes in character names.
+* [x] Reject blank, malformed, control-containing or overlong character names.
+* [x] Compare party-member names case-insensitively for duplication.
+* [x] Define external random character names.
+* [x] Load and validate unique random names through the shared character-name rules.
+* [x] Require enough valid external names to support a complete party.
+* [x] Select random character names uniformly after excluding names already in use.
+* [x] Create the initial character-creation flow.
+* [x] Allow the player to type the protagonist's name or ask the game to choose one.
+* [x] Allow repeated random-name selection before confirmation.
+* [x] Allow character creation to be cancelled back to the title screen.
+* [x] Display the Flagelo's class name, primary and secondary specializations and description before character confirmation.
+* [x] Allow the player to change the proposed name before confirmation.
+* [x] Create the confirmed protagonist as a level-1 Flagelo with full resources.
+* [x] Create the initial `Party` with only the protagonist.
+* [x] Keep the protagonist as the party leader.
+* [x] Replace temporary hardcoded party creation in `Main`.
+* [x] Preserve a `--dev-party` shortcut through a separate `DevelopmentPartyFactory`.
+* [x] Allow the development factory to configure distinct classes, levels and party sizes from one to four.
+* [x] Use the centralized maximum name length in naming instructions and keep character interfaces compatible with it.
+* [x] Display complete valid character names without truncation.
+* [x] Store one validated Unicode symbol for every playable class.
+* [x] Display playable-class symbols in compact party and individual status views.
+* [x] Test manual naming, random naming, repeated randomization, invalid input, cancellation and confirmation.
+* [x] Test initial-party creation and configurable development parties.
 
 ## 5. Full-party defeat and rescue
 
@@ -390,7 +404,7 @@ Current milestone: combat effects, external skills, natural progression, reward 
 * [ ] Test battles after skill, effect, class and equipment integration.
 * [x] Test party rewards and level-ups after class progression is implemented.
 * [ ] Test equipment changes during normal progression.
-* [ ] Test character creation.
+* [x] Test character creation.
 * [ ] Test full-party rescue.
 * [ ] Test save and load after restarting the application.
 * [ ] Test world flags and access requirements when their supporting systems exist.

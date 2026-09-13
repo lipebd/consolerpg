@@ -427,6 +427,9 @@ Examples:
 | Item | `meruma` | `Merumã` |
 | Shop | `mercado_bree` | `Mercado de Bree` |
 | Shop stock entry | `bree_meruma_discount` | Not displayed directly |
+| Playable class | `flagelo` | `Flagelo` |
+
+A playable-class symbol is presentation data, not a stable ID. Code must never use the symbol for catalog lookup, equality, class compatibility or progression rules. Different internal definitions may intentionally share a symbol when they represent the same player-facing class.
 
 A shop-stock entry ID identifies one possible commercial offer, not merely an item. It should remain meaningful when the same shop contains multiple offers for the same item with different prices or quantities.
 
@@ -461,6 +464,25 @@ Passavento 2
 
 They must not change the enemy's stable ID or canonical display name.
 
+### Playable-character names
+
+Playable-character names are mutable runtime identity, not stable content IDs.
+
+`CharacterNameRules` is the single owner of their normalization, validation, maximum length and case-insensitive comparison. Menus, loaders and party operations must reuse it instead of defining local regular expressions or length constants.
+
+Valid names:
+
+- Contain at most 16 Unicode code points after normalization.
+- Use Unicode letters.
+- May use an ordinary space (` `), hyphen (`-`) or straight apostrophe (`'`) only between letters.
+- Are normalized to Unicode NFC.
+- Have outer ordinary spaces removed.
+- Collapse repeated ordinary spaces.
+
+Names containing numbers, controls, tabs, unrelated punctuation or malformed separators are invalid.
+
+`CharacterNameLoader`, `CharacterNameCatalog` and `CharacterNameSelector` keep their shared `CharacterName` prefix because they participate in the same narrowly defined naming subsystem. Their suffixes continue to describe distinct responsibilities: loading, storage and random selection.
+
 ## External data fields
 
 Data filenames use lowercase `snake_case` and normally describe plural content:
@@ -477,6 +499,8 @@ skill_scrolls.txt
 weapons.txt
 armors.txt
 trinkets.txt
+character_names.txt
+playable_classes.txt
 ```
 
 Header field names use `camelCase` and should match the corresponding Java vocabulary:
@@ -491,7 +515,13 @@ Header field names use `camelCase` and should match the corresponding Java vocab
 # itemId;damageType;weaponType;levelRequirement;normalAttackName;baseWeaponDamage;hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus
 # itemId;armorWeight;levelRequirement;hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus
 # itemId;trinketType;levelRequirement;hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus;experienceModifierPercent;goldModifierPercent
+# name
+# id;name;symbol;baseHp;baseMp;baseSp;baseAttack;baseDefense;baseMagic;baseResistance;baseSpeed;baseLuck;primaryAttribute;secondaryAttribute;armorWeight;description
 ```
+
+`character_names.txt` is intentionally different from semicolon-based definition files: each active line is one complete name.
+
+Use `symbol` for the single Unicode presentation marker stored by a playable class. Do not call it `icon`, because it is console text rather than an image or graphical asset. A symbol must not replace the class ID in code or the complete class name where detailed identification is required.
 
 Use `baseWeaponDamage` in Java and external headers. `DBA` may appear in internal design discussion, but the player-facing label is `Poder`.
 
@@ -561,6 +591,10 @@ Prefer: Físico
 ```
 
 Developer-facing exception messages remain in English because they describe programming or data configuration errors rather than game events.
+
+Valid playable-character names are displayed completely and are not truncated.
+
+Playable-class symbols should use broadly supported Unicode characters. Their precise appearance may vary according to the terminal, operating system and fallback font, so interfaces must not rely on exact glyph shape, color or visual width for correctness.
 
 ## Comments and Javadoc
 
@@ -668,6 +702,8 @@ Before introducing a new name, verify:
 - [ ] Is a stable ID separate from its display name?
 - [ ] Is a content variant modeled with its own ID when its rules differ?
 - [ ] Does the name remain meaningful if the internal implementation changes?
+- [ ] Does playable-character naming reuse `CharacterNameRules`?
+- [ ] Is a playable-class symbol treated only as presentation data?
 - [ ] Have related documentation and data headers been updated?
 
 When a convention does not clearly cover a new case, the team should agree on the vocabulary before several competing names enter the codebase.

@@ -29,7 +29,7 @@ public final class ItemDefinition {
 
 		if (!trimmedId.matches(ID_PATTERN)) {
 			throw new IllegalArgumentException(
-					"Item ID must use lowercase letters, numbers " + "and single underscores: " + trimmedId
+					"Item ID must use lowercase letters, numbers and single underscores: " + trimmedId
 			);
 		}
 

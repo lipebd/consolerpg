@@ -32,7 +32,10 @@ public final class Party {
 	public boolean addMember(PlayableCharacter newMember) {
 		Objects.requireNonNull(newMember, "Party member cannot be null.");
 
-		if (members.size() >= MAXIMUM_SIZE || members.contains(newMember)) {
+		boolean nameAlreadyUsed = members.stream()
+				.anyMatch(member -> CharacterNameRules.areEquivalent(member.getName(), newMember.getName()));
+
+		if (members.size() >= MAXIMUM_SIZE || members.contains(newMember) || nameAlreadyUsed) {
 			return false;
 		}
 

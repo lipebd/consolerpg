@@ -78,7 +78,7 @@ public final class SkillDefinition {
 
 		if (!trimmedValue.matches(ID_PATTERN)) {
 			throw new IllegalArgumentException(
-					fieldName + " ID must use lowercase letters, " + "numbers and single underscores: " + trimmedValue
+					fieldName + " ID must use lowercase letters, numbers and single underscores: " + trimmedValue
 			);
 		}
 
@@ -92,7 +92,7 @@ public final class SkillDefinition {
 		for (SkillEffectDefinition effect : effects) {
 			if (effect.getSequence() <= previousSequence) {
 				throw new IllegalArgumentException(
-						"Skill effect sequences must be positive, " + "unique and declared in ascending order: " + id
+						"Skill effect sequences must be positive, unique and declared in ascending order: " + id
 				);
 			}
 
@@ -119,7 +119,7 @@ public final class SkillDefinition {
 
 		if (!hasEffectiveComponent) {
 			throw new IllegalArgumentException(
-					"Skill must contain an effect capable of " + "affecting a target: " + id
+					"Skill must contain an effect capable of affecting a target: " + id
 			);
 		}
 	}
@@ -146,7 +146,7 @@ public final class SkillDefinition {
 
 			if (!hasCompatibleLaterDamage) {
 				throw new IllegalArgumentException(
-						"Damage-power modifier must precede " + "a damage effect with the same target: " + id
+						"Damage-power modifier must precede a damage effect with the same target: " + id
 				);
 			}
 		}
@@ -227,7 +227,7 @@ public final class SkillDefinition {
 
 		if (recoilIndex < 1) {
 			throw new IllegalArgumentException(
-					"Recoil damage must immediately follow " + "its source damage effect: " + id
+					"Recoil damage must immediately follow its source damage effect: " + id
 			);
 		}
 
@@ -239,7 +239,7 @@ public final class SkillDefinition {
 
 		if (!isCompatibleSource) {
 			throw new IllegalArgumentException(
-					"Recoil damage must immediately follow " + "a single-enemy damage effect " + "in the same phase: "
+					"Recoil damage must immediately follow a single-enemy damage effect in the same phase: "
 							+ id
 			);
 		}

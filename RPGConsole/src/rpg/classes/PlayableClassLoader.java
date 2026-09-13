@@ -13,7 +13,7 @@ import rpg.items.equipment.ArmorWeight;
 // Loads playable-class definitions from an external text file.
 public final class PlayableClassLoader {
 
-	private static final int EXPECTED_FIELD_COUNT = 15;
+	private static final int EXPECTED_FIELD_COUNT = 16;
 
 	public PlayableClassCatalog load(Path filePath) throws IOException {
 		PlayableClassCatalog catalog = new PlayableClassCatalog();
@@ -57,32 +57,33 @@ public final class PlayableClassLoader {
 
 		String id = fields[0].trim();
 		String name = fields[1].trim();
+		String symbol = fields[2].trim();
 
-		int baseHp = parseInteger(fields[2], "base HP", id);
+		int baseHp = parseInteger(fields[3], "base HP", id);
 
-		int baseMp = parseInteger(fields[3], "base MP", id);
+		int baseMp = parseInteger(fields[4], "base MP", id);
 
-		int baseSp = parseInteger(fields[4], "base SP", id);
+		int baseSp = parseInteger(fields[5], "base SP", id);
 
-		int baseAttack = parseInteger(fields[5], "base ATK", id);
+		int baseAttack = parseInteger(fields[6], "base ATK", id);
 
-		int baseDefense = parseInteger(fields[6], "base DEF", id);
+		int baseDefense = parseInteger(fields[7], "base DEF", id);
 
-		int baseMagic = parseInteger(fields[7], "base MAG", id);
+		int baseMagic = parseInteger(fields[8], "base MAG", id);
 
-		int baseResistance = parseInteger(fields[8], "base RES", id);
+		int baseResistance = parseInteger(fields[9], "base RES", id);
 
-		int baseSpeed = parseInteger(fields[9], "base VEL", id);
+		int baseSpeed = parseInteger(fields[10], "base VEL", id);
 
-		int baseLuck = parseInteger(fields[10], "base LCK", id);
+		int baseLuck = parseInteger(fields[11], "base LCK", id);
 
-		CharacterAttribute primaryAttribute = parseAttribute(fields[11], "primary", id);
+		CharacterAttribute primaryAttribute = parseAttribute(fields[12], "primary", id);
 
-		CharacterAttribute secondaryAttribute = parseAttribute(fields[12], "secondary", id);
+		CharacterAttribute secondaryAttribute = parseAttribute(fields[13], "secondary", id);
 
-		ArmorWeight armorWeight = parseArmorWeight(fields[13], id);
+		ArmorWeight armorWeight = parseArmorWeight(fields[14], id);
 
-		String description = fields[14].trim().replace("\\n", System.lineSeparator());
+		String description = fields[15].trim().replace("\\n", System.lineSeparator());
 
 		CharacterStats baseStats;
 
@@ -108,6 +109,7 @@ public final class PlayableClassLoader {
 		return new PlayableClassDefinition(
 				id,
 				name,
+				symbol,
 				baseStats,
 				primaryAttribute,
 				secondaryAttribute,

@@ -4,12 +4,18 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.Optional;
 
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
+import rpg.characters.CharacterNameCatalog;
+import rpg.characters.CharacterNameLoader;
+import rpg.characters.CharacterNameSelector;
 import rpg.classes.CharacterGrowthCalculator;
 import rpg.classes.PlayableClassCatalog;
 import rpg.classes.PlayableClassLoader;
+import rpg.classes.PlayableClassDefinition;
+import rpg.development.DevelopmentPartyFactory;
 import rpg.enemies.EnemyCatalog;
 import rpg.enemies.EnemyDropCatalog;
 import rpg.enemies.EnemyDropLoader;
@@ -31,6 +37,7 @@ import rpg.skills.SkillCatalog;
 import rpg.skills.SkillLoader;
 import rpg.ui.ConsoleUI;
 import rpg.ui.TitleScreen;
+import rpg.ui.CharacterCreationMenu;
 import rpg.world.World;
 import rpg.world.WorldProgress;
 import rpg.world.branches.ScenarioBranchCatalog;
@@ -65,9 +72,11 @@ import rpg.world.travel.TravelRouteLoader;
 
 // Starts the game and controls its initial execution.
 public class Main {
+	private static final String DEVELOPMENT_PARTY_ARGUMENT = "--dev-party";
 
 	public static void main(String[] args) {
 
+		CharacterNameCatalog characterNameCatalog;
 		ItemCatalog itemCatalog;
 		ItemDefinitionCatalog itemDefinitionCatalog;
 		RecoveryItemDefinitionCatalog recoveryItemDefinitionCatalog;
@@ -93,6 +102,8 @@ public class Main {
 		Scanner scanner = new Scanner(System.in);
 
 		try {
+			CharacterNameLoader characterNameLoader = new CharacterNameLoader();
+			characterNameCatalog = characterNameLoader.load(Path.of("data", "character_names.txt"));
 			PlayableClassLoader playableClassLoader = new PlayableClassLoader();
 			playableClassCatalog = playableClassLoader.load(Path.of("data", "playable_classes.txt"));
 			SkillLoader skillLoader = new SkillLoader();
@@ -189,28 +200,27 @@ public class Main {
 			return;
 		}
 
-		TitleScreen.show(scanner);
-		ConsoleUI.clearScreen();
-
 		CharacterGrowthCalculator characterGrowthCalculator = new CharacterGrowthCalculator();
 
-		PlayableCharacter flagelo = new PlayableCharacter(
-				"Flagelo",
-				playableClassCatalog.getById("flagelo"),
-				skillCatalog.getByClassId("flagelo"),
-				characterGrowthCalculator
-		);
+		Party party;
 
-		Party party = new Party(flagelo);
+		if (usesDevelopmentParty(args)) {
+			DevelopmentPartyFactory developmentPartyFactory = new DevelopmentPartyFactory(
+					playableClassCatalog,
+					skillCatalog,
+					characterGrowthCalculator
+			);
 
-		PlayableCharacter bardo = new PlayableCharacter(
-				"Bardo",
-				playableClassCatalog.getById("bardo"),
-				skillCatalog.getByClassId("bardo"),
-				characterGrowthCalculator
-		);
-
-		party.addMember(bardo);
+			party = developmentPartyFactory.create();
+		} else {
+			party = createNewGameParty(
+					scanner,
+					characterNameCatalog,
+					playableClassCatalog,
+					skillCatalog,
+					characterGrowthCalculator
+			);
+		}
 
 		World world = new World(
 				party,
@@ -237,5 +247,49 @@ public class Main {
 
 		scanner.close();
 
+	}
+
+	private static Party createNewGameParty(
+			Scanner scanner,
+			CharacterNameCatalog characterNameCatalog,
+			PlayableClassCatalog playableClassCatalog,
+			SkillCatalog skillCatalog,
+			CharacterGrowthCalculator characterGrowthCalculator
+	) {
+		CharacterNameSelector characterNameSelector = new CharacterNameSelector(characterNameCatalog, new Random());
+
+		CharacterCreationMenu characterCreationMenu = new CharacterCreationMenu(scanner, characterNameSelector);
+
+		PlayableClassDefinition flageloDefinition = playableClassCatalog.getById("flagelo");
+
+		Optional<String> protagonistName = Optional.empty();
+
+		while (protagonistName.isEmpty()) {
+			TitleScreen.show(scanner);
+			ConsoleUI.clearScreen();
+
+			protagonistName = characterCreationMenu.open(flageloDefinition);
+
+			ConsoleUI.clearScreen();
+		}
+
+		PlayableCharacter protagonist = new PlayableCharacter(
+				protagonistName.get(),
+				flageloDefinition,
+				skillCatalog.getByClassId(flageloDefinition.getId()),
+				characterGrowthCalculator
+		);
+
+		return new Party(protagonist);
+	}
+
+	private static boolean usesDevelopmentParty(String[] arguments) {
+		for (String argument : arguments) {
+			if (DEVELOPMENT_PARTY_ARGUMENT.equals(argument)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

@@ -24,7 +24,7 @@ public final class SkillScrollDefinition {
 
 		if (!trimmedValue.matches(ID_PATTERN)) {
 			throw new IllegalArgumentException(
-					fieldName + " ID must use lowercase letters, " + "numbers and single underscores: " + trimmedValue
+					fieldName + " ID must use lowercase letters, numbers and single underscores: " + trimmedValue
 			);
 		}
 

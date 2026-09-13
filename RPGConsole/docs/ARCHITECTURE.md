@@ -23,8 +23,9 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | Package | Responsibility | Main types |
 |---|---|---|
 | `rpg` | Application entry point, dependency construction and shared currency presentation | `Main`, `GameCurrency` |
-| `rpg.characters` | Character state, natural and equipment-modified attributes, equipped slots, party ownership and enemy ranks | `GameCharacter`, `CharacterStats`, `CharacterEquipment`, `PlayableCharacter`, `Party`, `Enemy`, `EnemyRank` |
-| `rpg.classes` | Immutable playable-class definitions, external loading, lookup and natural-growth calculation | `PlayableClassDefinition`, `PlayableClassLoader`, `PlayableClassCatalog`, `CharacterGrowthCalculator` |
+| `rpg.characters` | Character state, name validation and selection, natural and equipment-modified attributes, equipped slots, party ownership and enemy ranks | `GameCharacter`, `CharacterStats`, `CharacterEquipment`, `PlayableCharacter`, `Party`, `Enemy`, `EnemyRank`, `CharacterNameRules`, `CharacterNameCatalog`, `CharacterNameLoader`, `CharacterNameSelector` |
+| `rpg.classes` | Immutable playable-class definitions, symbols, external loading, lookup and natural-growth calculation | `PlayableClassDefinition`, `PlayableClassLoader`, `PlayableClassCatalog`, `CharacterGrowthCalculator` |
+| `rpg.development` | Isolated configurable party construction for development runs | `DevelopmentPartyFactory` |
 | `rpg.battle` | Battle coordination, skill execution and centralized combat calculations | `Battle`, `BattleResult`, `BattleCoordinator`, `SkillExecutor`, `SkillExecution`, `SkillExecutionContext`, `SkillEffectResult`, `DamageType`, `DamageCalculator`, `RecoveryCalculator`, `EffectResistanceCalculator`, `EnemyBattleGroup`, `BattleTurnOrder`, `BattleEscapeService` |
 | `rpg.battle.rewards` | Reward calculation, temporary and equipment modifiers, immutable reward snapshots and individual progression results | `BattleRewardService`, `RewardCalculator`, `PartyRewardModifierState`, `BattleRewardModifiers`, `BattleRewards`, `CharacterProgressionResult` |
 | `rpg.effects` | Mutable combat-effect state and reusable attribute-stage rules | `CombatEffectState`, `AttributeStageState`, `AttributeStageRules`, `SpecialBattleStateType` |
@@ -41,7 +42,7 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.world.rewards` | External exploration reward pools, validation and weighted selection | `ExplorationRewardEntry`, `ExplorationRewardCatalog`, `ExplorationRewardLoader`, `ExplorationRewardGenerator`, `ExplorationReward`, `ExplorationRewardType` |
 | `rpg.world.travel` | External directed-route definitions, loading and runtime unlock progress | `TravelRouteDefinition`, `TravelCatalog`, `TravelRouteLoader`, `TravelProgress` |
 | `rpg.world.transport` | External paid city-transport definitions, loading and destination lookup | `CityTransportDefinition`, `CityTransportCatalog`, `CityTransportLoader` |
-| `rpg.ui` | Console menus, navigation, target selection, shared formatters and information screens | `TitleScreen`, `GameOverScreen`, `CombatScenarioMenu`, `CityMenu`, `CityLocationMenu`, `InnMenu`, `RouteMenu`, `CityTransportMenu`, `InventoryMenu`, `EquipmentMenu`, `BattleItemMenu`, `RecoveryItemUseMenu`, `EpicEncounterMenu`, `BattleRewardScreen`, `BattleTurnOrderScreen`, `PartyStatusMenu`, `CharacterStatusMenu`, `EquipmentDetailFormatter`, `SkillDetailFormatter`, `RewardModifierFormatter`, `ShopMenu` |
+| `rpg.ui` | Console menus, character creation, navigation, target selection, shared formatters and information screens | `TitleScreen`, `CharacterCreationMenu`, `GameOverScreen`, `CombatScenarioMenu`, `CityMenu`, `CityLocationMenu`, `InnMenu`, `RouteMenu`, `CityTransportMenu`, `InventoryMenu`, `EquipmentMenu`, `BattleItemMenu`, `RecoveryItemUseMenu`, `EpicEncounterMenu`, `BattleRewardScreen`, `BattleTurnOrderScreen`, `PartyStatusMenu`, `CharacterStatusMenu`, `PlayableClassDetailFormatter`, `EquipmentDetailFormatter`, `SkillDetailFormatter`, `RewardModifierFormatter`, `ShopMenu` |
 
 ## Application initialization
 
@@ -50,28 +51,32 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 Initialization includes:
 
 1. Creating the shared `Scanner`.
-2. Loading playable-class definitions.
-3. Loading skill headers and ordered skill-effect components and creating `SkillCatalog`.
-4. Loading enemy and base item definitions.
-5. Loading equipment, recovery-item and skill-scroll specialized definitions.
-6. Creating the runtime `ItemCatalog` through `ItemFactory`.
-7. Creating `EquipmentService` from the item and equipment catalogs.
-8. Loading enemy drops and encounter definitions.
-9. Loading common scenario definitions.
-10. Loading city-transport, INN and combat-scenario definitions.
-11. Loading shop definitions and their possible stock entries.
-12. Generating one runtime state for every shop through `ShopStateGenerator`.
-13. Loading exploration-reward, dungeon and scenario-branch definitions.
-14. Creating and registering runtime scenarios through `ScenarioFactory`.
-15. Resolving the initial scenario and creating `WorldProgress`.
-16. Loading adjacent travel routes and creating `TravelProgress`.
-17. Creating one shared `CharacterGrowthCalculator` and the temporary playable characters from loaded class and skill definitions.
-18. Creating `World` with the required catalogs, services, shop states, progress state and shared dependencies.
-19. Starting the world loop.
+2. Loading and validating external random character names.
+3. Loading playable-class definitions.
+4. Loading skill headers and ordered skill-effect components and creating `SkillCatalog`.
+5. Loading enemy and base item definitions.
+6. Loading equipment, recovery-item and skill-scroll specialized definitions.
+7. Creating the runtime `ItemCatalog` through `ItemFactory`.
+8. Creating `EquipmentService` from the item and equipment catalogs.
+9. Loading enemy drops and encounter definitions.
+10. Loading common scenario definitions.
+11. Loading city-transport, INN and combat-scenario definitions.
+12. Loading shop definitions and their possible stock entries.
+13. Generating one runtime state for every shop through `ShopStateGenerator`.
+14. Loading exploration-reward, dungeon and scenario-branch definitions.
+15. Creating and registering runtime scenarios through `ScenarioFactory`.
+16. Resolving the initial scenario and creating `WorldProgress`.
+17. Loading adjacent travel routes and creating `TravelProgress`.
+18. Creating one shared `CharacterGrowthCalculator`.
+19. Creating either the confirmed new-game protagonist or an isolated development party according to the application arguments.
+20. Creating `World` with the required catalogs, services, shop states, progress state and shared dependencies.
+21. Starting the world loop.
 
 External data is loaded before gameplay. Invalid definitions or unresolved references prevent the game from starting with partially inconsistent catalogs.
 
-The temporary development party is still assembled in `Main`, but playable-class and skill content comes from external definitions. Scenarios, exploration settings, dungeons, branches, adjacent travel routes, paid city transport, INNs, shops and possible shop offers are also loaded from external data.
+During a normal run, `Main` repeatedly opens `TitleScreen` and `CharacterCreationMenu` until the player confirms a protagonist. The confirmed character is created as a level-1 Flagelo and becomes the only initial member and leader of the new `Party`. Cancelling character creation returns to the title screen without creating partial character state.
+
+When the `--dev-party` argument is present, `Main` bypasses the normal title and creation flow and delegates party construction to `DevelopmentPartyFactory`. This development-only path supports one to four configured members with distinct classes and arbitrary positive levels while remaining isolated from normal new-game behavior.
 
 `WorldProgress`, `TravelProgress` and `ShopStateCatalog` represent separate runtime concerns. `WorldProgress` records discovered scenarios, `TravelProgress` records unlocked adjacent routes, and `ShopStateCatalog` preserves every shop's selected offers and remaining stock for the current program execution.
 
@@ -133,6 +138,8 @@ PlayableClassDefinition + target level
 
 The calculator derives the complete natural-stat snapshot directly from the class definition and target level. It does not increment the character's previous values, which prevents accumulated drift and allows a multi-level gain to replace natural stats once after the final level is known.
 
+`PlayableClassDefinition` also stores one visible Unicode code point as the class symbol. Symbols provide compact class identification in interfaces without replacing the complete class name in detailed views. Primary and secondary attributes remain domain data, while `PlayableClassDetailFormatter` translates their growth priority into the `↑↑` and `↑` presentation used during character creation.
+
 `Party` stores:
 
 - One to four playable characters.
@@ -172,6 +179,44 @@ Individual state belongs to `PlayableCharacter`:
 - Temporary combat effects.
 
 This separation allows party members to enter and leave the group without duplicating shared resources.
+
+## Initial character creation
+
+Playable-character naming is centralized in `CharacterNameRules`. It normalizes names to Unicode NFC, removes outer spaces, collapses repeated ordinary spaces and limits the result to 16 Unicode code points. Valid names contain Unicode letters separated only by single spaces, hyphens or apostrophes. Blank names, controls, malformed separators, numbers, unrelated punctuation and overlong values are rejected.
+
+Every `PlayableCharacter` validates and stores its normalized name during construction. `Party` additionally rejects a new member whose normalized name matches an existing member without regard to letter case. Accents remain significant.
+
+External random names follow this flow:
+
+```text
+character_names.txt
+        ↓
+CharacterNameLoader
+        ↓
+CharacterNameCatalog
+        ↓
+CharacterNameSelector
+        ↓
+CharacterCreationMenu
+```
+
+`CharacterNameLoader` applies the same domain rules, rejects case-insensitive duplicates and requires at least four valid names so that a complete party can eventually receive distinct names. `CharacterNameSelector` chooses uniformly from the names remaining after caller-provided exclusions.
+
+`CharacterCreationMenu` allows the player to enter the protagonist's name or request a random one. Random selection may be repeated before confirmation, and the current proposal is excluded from the next roll. The confirmation view displays the proposed name, the Flagelo's complete class name, its primary and secondary specializations and its external description.
+
+The menu returns only the confirmed name. `Main` creates the `PlayableCharacter` and initial `Party` afterward, so cancellation returns to `TitleScreen` without leaving partially created domain state.
+
+Development construction remains a separate path:
+
+```text
+--dev-party
+      ↓
+DevelopmentPartyFactory
+      ↓
+Party with one to four configured members
+```
+
+`DevelopmentPartyFactory` validates party size, positive levels and distinct class IDs. It creates each character through the normal domain constructor, advances configured levels through normal progression and restores resources to the resulting maximums. The first configured member becomes the leader.
 
 ## Scenario model
 
@@ -830,11 +875,17 @@ Important UI components include:
 - `BattleRewardScreen`
 - `PartyStatusMenu`
 - `CharacterStatusMenu`
+- `CharacterCreationMenu`
+- `PlayableClassDetailFormatter`
 - `SkillDetailFormatter`
 - `EquipmentDetailFormatter`
 - `RewardModifierFormatter`
 - `GameOverScreen`
 - `ShopMenu`
+
+`CharacterCreationMenu` controls manual or random protagonist naming, name changes, cancellation and confirmation. It does not create partial character state: the confirmed name returns to `Main`, which constructs the protagonist and `Party`.
+
+`PlayableClassDetailFormatter` presents a class's primary and secondary attribute specializations using shared arrow notation. It derives the displayed attributes from `PlayableClassDefinition` and does not own growth rules.
 
 `World` selects the appropriate menu according to the runtime scenario type. Combat actions are built incrementally from exploration progress, available branches, unlocked routes and paid-transport availability, then displayed by `CombatScenarioMenu`. City actions are built from functional locations, unlocked exits and paid-transport availability, then displayed by `CityMenu`. Both menus preserve continuous numbering, omit unavailable actions and separate action groups through whitespace.
 
@@ -852,9 +903,9 @@ Important UI components include:
 
 `ItemMenuFormatter` contains shared presentation rules such as deterministic column widths, name truncation and recovery-effect summaries. It does not decide item behavior.
 
-`PartyStatusMenu` displays a compact overview of one to four allies, the shared party currency, the active temporary EXP modifier and the total effective party gold modifier.
+`PartyStatusMenu` displays a compact two-line overview of one to four allies, including each complete character name, class symbol, level and current resources. It also displays the shared party currency, active temporary EXP modifier and total effective party gold modifier.
 
-`CharacterStatusMenu` displays one character's detailed resources, equipment-modified attributes, progression, total effective EXP modifier, currently learned natural and scroll skills and access to equipment slots.
+`CharacterStatusMenu` displays one character's complete name, class symbol and class name, detailed resources, equipment-modified attributes, progression, total effective EXP modifier, currently learned natural and scroll skills and access to equipment slots.
 
 `EquipmentMenu` supports equipping from an inventory item and managing a selected character's three slots. It filters incompatible choices, confirms change-only stat and attack differences and delegates mutations to `EquipmentService`.
 
@@ -879,7 +930,8 @@ Menus and screens call `GameCurrency.getName()` when the currency is referenced 
 The following implementations remain intentionally temporary:
 
 - Reward-modifier potions are deferred. Their future item behavior will activate the existing `PartyRewardModifierState` rather than duplicate reward calculation or duration state.
-- The development party is still assembled in `Main`; the normal character-creation flow has not replaced it yet.
+- New games currently begin with only the confirmed protagonist. Story-based ally recruitment, random ally classes and party-title acquisition remain future work.
+- `character_names.txt` currently contains only temporary entries pending creative-team curation.
 - Playable-class definitions, natural class growth and the complete approved 30-skill class-progression roster are integrated; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy actions currently use basic attacks; enemy skill selection can reuse the skill executor later but is outside the current scope.
 - Bree currently provides its INN and fixed shop, while tavern functionality remains unavailable.

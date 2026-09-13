@@ -43,7 +43,7 @@ public final class InventoryMenu {
 		List<ItemCategory> categories = List.of(ItemCategory.values());
 
 		while (true) {
-			System.out.println("\n[INVENTÁRIO]");
+			System.out.println("\n[INVENTÁRIO]\n");
 			System.out.println(GameCurrency.getName() + ": " + GameCurrency.format(party.getGold()));
 
 			displayCategoryMenu(categories);

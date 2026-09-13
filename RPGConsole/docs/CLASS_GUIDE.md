@@ -59,6 +59,13 @@ enemies.txt
     -> EnemyCatalog
     -> BattleCoordinator
     -> Enemy
+character_names.txt
+    -> CharacterNameLoader
+    -> CharacterNameCatalog
+    -> CharacterNameSelector
+    -> CharacterCreationMenu
+    -> PlayableCharacter
+    -> Party
 ```
 
 ### Definição e objeto de execução
@@ -82,6 +89,8 @@ SkillScroll           = item especializado criado para o inventário
 ```text
 Main
     -> carrega e conecta dependências
+    -> escolhe criação normal ou `--dev-party`
+    -> cria a Party somente após confirmação ou configuração
     -> cria World
 
 World
@@ -102,7 +111,7 @@ BattleCoordinator
 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
-| `Main` | Ponto de entrada / composição | Inicia a aplicação. Cria o `Scanner`, carrega os arquivos externos, monta os catálogos, cria os serviços, personagens e a `Party`, conecta todas as dependências e inicia `World`. Deve concentrar montagem, não regras de jogo. |
+| `Main` | Ponto de entrada / composição | Inicia a aplicação, cria o `Scanner`, carrega os arquivos externos, monta catálogos e serviços e escolhe entre criação normal e `--dev-party`. No fluxo normal, cria o protagonista e a `Party` somente depois da confirmação devolvida por `CharacterCreationMenu`; por fim, conecta as dependências e inicia `World`. Deve concentrar montagem, não regras de jogo. |
 | `GameCurrency` | Utilitário de apresentação | Centraliza o nome visível da moeda e a formatação de valores numéricos. Não armazena ouro, define preços ou executa transações; essas responsabilidades pertencem aos respectivos estados e sistemas. |
 
 ---
@@ -114,10 +123,14 @@ BattleCoordinator
 | `CharacterStats` | Dados imutáveis validados | Agrupa HP, MP, SP, ataque, defesa, magia, resistência, velocidade e sorte. Exige HP máximo e todos os atributos regulares positivos; MP e SP máximos podem ser zero. É usado na criação de `PlayableCharacter`, `Enemy` e `EnemyDefinition`. |
 | `GameCharacter` | Classe-base de execução | Guarda os atributos naturais, HP, MP e SP atuais e o estado temporário de combate compartilhado por aliados e inimigos. Os getters públicos combinam valores naturais, bônus estruturais fornecidos pela subclasse e efeitos temporários. Também expõe uma cópia imutável apenas dos atributos naturais. O cálculo de ataques pertence a `DamageCalculator`. |
 | `CharacterEquipment` | Estado de equipamentos | Guarda as definições da arma, armadura e berloque equipados por um personagem. Expõe slots opcionais, soma bônus estruturais e fornece os modificadores de recompensa do berloque. A mutação direta é restrita ao pacote de personagens. |
-| `PlayableCharacter` | Personagem jogável | Estende `GameCharacter` com nível, EXP, definição de classe, equipamentos, definições de habilidade e IDs das habilidades efetivamente aprendidas. Aprende automaticamente habilidades `STARTER` e `LEVEL`, permite aprender ou substituir habilidades `SCROLL`, preserva sua ordem e limita pergaminhos a duas vagas. Ao ganhar níveis, substitui somente os atributos naturais pelo resultado final de `CharacterGrowthCalculator`. |
 | `Enemy` | Inimigo de execução | Estende `GameCharacter` e representa uma ocorrência mutável de um inimigo dentro de uma batalha. Recebe seus dados de `EnemyDefinition`, possui rank, descrição e tabela de drops, e é colocado em `EnemyBattleSlot`. Vários objetos `Enemy` podem nascer da mesma definição sem compartilhar HP. |
 | `EnemyRank` | Enum de domínio | Define os ranks válidos dos inimigos, como comum, veterano, líder, boss, épico e lendário. É usado por loaders, definições, recompensas e validações de dungeon. |
-| `Party` | Estado compartilhado do grupo | Armazena de um a quatro `PlayableCharacter`, inventário, ouro e modificadores temporários compartilhados. Também soma os bônus de GOLD dos berloques equipados pelo grupo. É consumida por `World`, `Battle`, menus e serviços de recompensa. |
+| `PlayableCharacter` | Personagem jogável | Estende `GameCharacter` com nome normalizado validado, nível, EXP, definição de classe, equipamentos, definições de habilidade e IDs das habilidades efetivamente aprendidas. Aprende automaticamente habilidades `STARTER` e `LEVEL`, permite aprender ou substituir habilidades `SCROLL`, preserva sua ordem e limita pergaminhos a duas vagas. Ao ganhar níveis, substitui somente os atributos naturais pelo resultado final de `CharacterGrowthCalculator`. |
+| `Party` | Estado compartilhado do grupo | Armazena de um a quatro `PlayableCharacter`, inventário, ouro e modificadores temporários compartilhados. Rejeita integrantes repetidos e nomes equivalentes sem diferenciar maiúsculas e minúsculas; o primeiro integrante é o líder. Também soma os bônus de GOLD dos berloques equipados pelo grupo. |
+| `CharacterNameRules` | Regras de domínio | Centraliza normalização NFC, limite de 16 pontos de código Unicode, caracteres permitidos, validação e comparação sem diferenciação de maiúsculas e minúsculas para nomes de personagens jogáveis. |
+| `CharacterNameCatalog` | Catálogo | Armazena os nomes externos já normalizados e validados, preservando sua ordem e rejeitando duplicatas sem diferenciar maiúsculas e minúsculas. |
+| `CharacterNameLoader` | Carregamento de dados | Lê `character_names.txt`, ignora comentários e linhas vazias, aplica `CharacterNameRules`, acrescenta arquivo e linha aos erros e exige nomes suficientes para uma `Party` completa. |
+| `CharacterNameSelector` | Seletor aleatório | Seleciona uniformemente um nome de `CharacterNameCatalog` depois de excluir os nomes informados pelo fluxo consumidor. Não conhece menus nem modifica personagens. |
 
 ---
 
@@ -125,10 +138,18 @@ BattleCoordinator
 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
-| `PlayableClassDefinition` | Definição imutável | Armazena ID, nome, atributos-base, atributos primário e secundário, peso de armadura compatível e descrição de uma classe jogável. É referenciada por `PlayableCharacter` e pelas definições de habilidade. |
+| `PlayableClassDefinition` | Definição imutável | Armazena ID, nome, um símbolo de apresentação com exatamente um ponto de código Unicode visível, atributos-base, atributos primário e secundário, peso de armadura compatível e descrição de uma classe jogável. É referenciada por `PlayableCharacter`, pelas definições de habilidade e pelas interfaces de criação e status. |
 | `CharacterGrowthCalculator` | Calculador de domínio | Calcula todos os atributos naturais de uma classe em um nível-alvo a partir dos atributos-base e das regras globais de crescimento. Centraliza os intervalos primário e secundário, os bônus de recursos por especialização e a proteção contra overflow. |
-| `PlayableClassLoader` | Carregamento de dados | Lê as sete classes de `playable_classes.txt`, interpreta descrições com `\n`, cria `CharacterStats`, valida os dados e acrescenta linha e ID ao erro quando um cadastro é inválido. |
+| `PlayableClassLoader` | Carregamento de dados | Lê as sete classes de `playable_classes.txt`, interpreta o símbolo e descrições com `\n`, cria `CharacterStats`, valida os dados e acrescenta linha e ID ao erro quando um cadastro é inválido. |
 | `PlayableClassCatalog` | Catálogo | Registra e localiza `PlayableClassDefinition` por ID estável e permite que `SkillLoader` valide a classe associada a cada habilidade. |
+
+---
+
+## Pacote `rpg.development`
+
+| Classe | Categoria | Finalidade e relações principais |
+|---|---|---|
+| `DevelopmentPartyFactory` | Fábrica de desenvolvimento | Cria a `Party` usada quando `Main` recebe `--dev-party`. Mantém a configuração temporária fora do fluxo normal, exige de um a quatro integrantes com classes distintas e níveis positivos, usa a progressão normal para alcançar cada nível e restaura os recursos ao final. O primeiro integrante configurado torna-se o líder. |
 
 ---
 
@@ -287,6 +308,7 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 |---|---|---|
 | `ConsoleUI` | Utilitário de interface | Centraliza operações gerais do console, como limpeza da tela ou pausa para continuação. É reutilizada por telas e fluxos que precisam do mesmo comportamento visual. |
 | `TitleScreen` | Tela | Exibe a apresentação inicial do jogo e controla a entrada necessária para começar. É chamada durante a inicialização antes de `World`. |
+| `CharacterCreationMenu` | Menu de criação | Permite digitar ou sortear o nome do protagonista, repetir o sorteio, alterar a proposta, confirmar ou cancelar. Exibe nome, classe Flagelo, especializações e descrição, mas devolve apenas o nome confirmado; `Main` cria o personagem e a `Party` posteriormente. |
 | `GameOverScreen` | Tela | Exibe a derrota definitiva temporária e informações finais da `Party`. É acionada por `World` quando `BattleResult` indica derrota. |
 | `CombatScenarioMenu` | Menu de cenário de combate | Recebe as ações de `CombatScenarioAction` permitidas no campo ou dungeon atual, mantém numeração contínua, separa grupos visualmente e devolve a escolha. Não é usado por cidades. |
 | `CityMenu` | Menu de cidade | Recebe o nome da cidade e as ações de `CityAction` atualmente disponíveis. Omite ações sem destino funcional, preserva numeração contínua e separa navegação dos recursos do grupo. |
@@ -302,11 +324,12 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 | `RecoveryItemUseMenu` | Fluxo de uso | Centraliza a seleção de alvos, a aplicação de efeitos individuais ou coletivos, a remoção do item somente após um resultado efetivo e a apresentação dos valores recuperados. É compartilhado por `InventoryMenu` e `BattleItemMenu`. |
 | `SkillScrollUseMenu` | Fluxo de aprendizagem | Localiza o único integrante cuja classe é compatível, apresenta impedimentos, coordena seleção e confirmação de substituição e delega aprendizagem e consumo a `SkillScrollService`. Não oferece a ação quando o grupo não possui aprendiz compatível. |
 | `ItemMenuFormatter` | Formatador de interface | Centraliza a largura das colunas, o truncamento seguro de nomes longos e o resumo dos componentes de recuperação usados pelas telas de inventário. |
-| `PartyStatusMenu` | Menu de consulta | Exibe uma visão resumida dos membros, moeda compartilhada, M.EXP temporário e M.GOLD total, incluindo berloques. Permite selecionar um integrante para abrir `CharacterStatusMenu`. |
-| `CharacterStatusMenu` | Tela de consulta | Mostra classe, recursos, atributos efetivos, nível, EXP e M.EXP total do personagem. Exibe habilidades naturais e de pergaminho efetivamente aprendidas e abre os equipamentos por meio dos menus compartilhados. |
+| `PartyStatusMenu` | Menu de consulta | Exibe cada integrante em duas linhas, preservando o nome completo e mostrando símbolo da classe, nível, recursos, moeda compartilhada, M.EXP temporário e M.GOLD total. Permite selecionar um integrante para abrir `CharacterStatusMenu`. |
+| `CharacterStatusMenu` | Tela de consulta | Mostra nome completo, símbolo e nome da classe, recursos, atributos efetivos, nível, EXP e M.EXP total do personagem. Exibe habilidades naturais e de pergaminho efetivamente aprendidas e abre os equipamentos por meio dos menus compartilhados. |
 | `AllyTargetMenu` | Menu de alvo | Exibe aliados vivos ou derrotados conforme o contexto e devolve o `PlayableCharacter` escolhido. Um aliado vivo pode ser selecionado mesmo com HP cheio porque componentes compostos ainda podem purificá-lo ou fortalecê-lo. |
 | `EnemyTargetMenu` | Menu de alvo | Exibe apenas inimigos vivos de `EnemyBattleGroup` e devolve o `EnemyBattleSlot` escolhido. É usado por ataques, habilidades e análise. |
 | `CombatEffectFormatter` | Formatador de interface | Produz a apresentação compartilhada dos estágios ativos e da Distorção Ancestral sem mover regras de duração ou atributo para a interface. |
+| `PlayableClassDetailFormatter` | Formatador de interface | Produz a notação compartilhada das especializações de uma classe, exibindo o atributo primário com `↑↑` e o secundário com `↑`. Consulta `PlayableClassDefinition`, mas não calcula crescimento. |
 | `SkillDetailFormatter` | Formatador de interface | Produz a ficha compartilhada de uma habilidade com requisito de nível, tipo principal, poder, alvo, custo e descrição narrativa. Deriva os campos técnicos do primeiro componente efetivo de `PRIMARY` e é reutilizado pelo status, pela confirmação em batalha e pelos pergaminhos. |
 | `RewardModifierFormatter` | Formatador de interface | Produz a notação compacta compartilhada de `M.EXP` e `M.GOLD`, combinando fontes permanentes e temporárias para apresentação sem calcular ou alterar recompensas. |
 | `EpicEncounterMenu` | Menu de confirmação | Recebe uma lista de uma a três `EnemyDefinition`, apresenta nomes e descrições do encontro épico e pergunta se o jogador deseja enfrentá-lo. Devolve apenas a decisão; `World` inicia a batalha. |
@@ -591,9 +614,14 @@ World                   = mudança efetiva para a cidade escolhida
 | Se você está procurando... | Comece por... | Caminho principal |
 |---|---|---|
 | Inicialização e montagem | `Main` | loaders → catálogos → serviços → `World` |
+| Validação de nome jogável | `CharacterNameRules` | entrada ou arquivo externo → normalização → validação → nome canônico |
+| Nomes aleatórios | `CharacterNameSelector` | `character_names.txt` → loader → catálogo → exclusões → sorteio uniforme |
+| Criação inicial | `CharacterCreationMenu` | tela inicial → nome manual/aleatório → confirmação → `Main` → protagonista → `Party` |
+| Party de desenvolvimento | `DevelopmentPartyFactory` | `--dev-party` → configuração isolada → progressão → recursos completos → `Party` |
 | Fluxo geral do jogo | `World` | cenário → exploração/rotas/transporte → batalha |
 | Dados de um inimigo | `EnemyDefinition` | `EnemyLoader` → `EnemyCatalog` → `EnemyDefinition` |
 | Dados de uma classe jogável | `PlayableClassDefinition` | `playable_classes.txt` → `PlayableClassLoader` → `PlayableClassCatalog` |
+| Apresentação de uma classe | `PlayableClassDetailFormatter` | `PlayableClassDefinition` → símbolo e especializações → criação/status |
 | Crescimento natural de um personagem | `CharacterGrowthCalculator` | definição de classe + nível → `CharacterStats` → `PlayableCharacter` |
 | Inimigo perdendo HP | `Enemy` | `EnemyDefinition` → `BattleCoordinator` → `Enemy` |
 | Sorteio de inimigos | `EncounterGenerator` | `EncounterCatalog` → filtros/pesos → definições |

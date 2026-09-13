@@ -873,7 +873,7 @@ The reward screen:
 
 ## Natural character progression
 
-Every playable class defines its level-1 natural stats in `playable_classes.txt` together with one primary and one secondary regular attribute.
+Every playable class defines its level-1 natural stats in `playable_classes.txt` together with one primary regular attribute, one secondary regular attribute and one presentation symbol. The symbol identifies the class compactly in console interfaces and has no mechanical effect.
 
 Natural growth is calculated directly from the class definition and the target level. It is not applied incrementally to the character's previous values.
 
@@ -1033,13 +1033,53 @@ After a successful stay, the player remains inside the INN. Feedback from succes
 
 City locations and city exits remain separate navigation paths. Adjacent exits reuse unlocked `TravelRouteDefinition` entries, preserve their display names and descriptions, and do not charge the party. Fixed city shops are available through the same location-selection flow as INNs, while paid transport remains a separate city action.
 
+## Initial character creation
+
+A normal new game creates only the protagonist. The protagonist:
+
+- Is always created as a level-1 Flagelo.
+- Begins with full HP, MP and SP.
+- Becomes the first member and leader of the `Party`.
+- Receives the Flagelo skills automatically available at level 1.
+- Is the only initial party member.
+
+The player may either enter the protagonist's name or ask the game to select one uniformly from `character_names.txt`.
+
+Playable-character names follow these rules:
+
+- The normalized name may contain at most 16 Unicode code points.
+- Unicode letters are allowed.
+- Single spaces, hyphens and apostrophes may separate letters.
+- Outer spaces are removed.
+- Repeated ordinary spaces are collapsed.
+- Unicode text is normalized to NFC.
+- Blank names, numbers, controls, unrelated punctuation and malformed separators are rejected.
+- Party-member names cannot repeat without regard to letter case.
+- Accented and unaccented names remain distinct.
+
+When random naming is selected, names already supplied by the caller are excluded. During protagonist creation, requesting another random name excludes the currently proposed name so that the next result is different.
+
+Before confirmation, the interface displays:
+
+- The proposed character name.
+- The complete Flagelo class name.
+- The primary specialization marked with `↑↑`.
+- The secondary specialization marked with `↑`.
+- The external Flagelo description.
+
+The player may confirm the character, change the proposed name or cancel. Changing the name returns to the manual-or-random choice. Cancelling returns to the title screen. No `PlayableCharacter` or `Party` is created until confirmation succeeds.
+
+Story-based ally recruitment, random ally classes and party-title acquisition are not part of the initial creation flow.
+
+The `--dev-party` argument activates a separate development-only shortcut. It bypasses the title and normal creation interface and produces one to four configured characters with distinct classes, positive levels and fully restored resources. This shortcut is not a player-facing game mechanic.
+
 ## Party status
 
 The party status interface is available outside battle.
 
 The summary screen displays:
 
-- Every current party member.
+- Every current party member's complete name and class symbol.
 - Level.
 - Current and maximum HP.
 - Current and maximum MP.
@@ -1048,12 +1088,14 @@ The summary screen displays:
 - Shared party gold.
 - Active temporary M.EXP and total effective party M.GOLD.
 
-A defeated character is displayed compactly as `DERROTADO`.
+Each member uses a two-line summary: the complete name and class symbol appear first, while level and resources appear on the indented line below. Names are never truncated. A defeated character uses the same layout but replaces level and resource information with `DERROTADO`.
 
 Every party member, including a defeated member, may be selected for individual inspection.
 
 The individual character screen displays:
 
+- Complete character name.
+- Class symbol and complete class name.
 - Level.
 - Current EXP and next-level requirement.
 - HP, MP and SP.
