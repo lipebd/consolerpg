@@ -32,7 +32,7 @@ import rpg.ui.SkillDetailFormatter;
 // Controls a battle between a party and an enemy group.
 public class Battle {
 
-	private static final long TURN_RESULT_PAUSE_MILLISECONDS = 750L;
+	private static final long PACING_PAUSE_MILLISECONDS = 1500L;
 	private static final int MINIMUM_STATUS_NAME_WIDTH = 8;
 	private static final int SLOT_LABEL_WIDTH = 4;
 	private static final int ACTION_MENU_COLUMN_WIDTH = 15;
@@ -86,10 +86,14 @@ public class Battle {
 
 		displayBattleIntroduction();
 
+		ConsoleUI.pause(PACING_PAUSE_MILLISECONDS);
+
 		while (!party.isDefeated() && !enemyGroup.isDefeated() && !partyFled) {
 			System.out.println("\n[BATALHA — RODADA " + currentRoundNumber + "]");
 
 			displayCurrentBattleStatus();
+
+			ConsoleUI.pause(PACING_PAUSE_MILLISECONDS);
 
 			List<BattleTurnEntry> turnEntries = turnOrderGenerator.generate(party, enemyGroup);
 
@@ -107,6 +111,8 @@ public class Battle {
 		BattleResult result = determineBattleResult();
 
 		displayBattleResult(result);
+		
+		ConsoleUI.pause(PACING_PAUSE_MILLISECONDS);
 
 		return result;
 	}
@@ -315,13 +321,15 @@ public class Battle {
 
 	private void displayBattleIntroduction() {
 		System.out.println("\nO grupo foi atacado!");
-
-		System.out.println("Batalha contra:");
+		
+		ConsoleUI.pause(PACING_PAUSE_MILLISECONDS);
+		
+		/*System.out.println("\nBatalha contra:");
 
 		for (EnemyBattleSlot slot : enemyGroup.getSlots()) {
 
 			System.out.println("- " + slot.getDisplayName());
-		}
+		}*/
 	}
 
 	private void executeEnemyTurn(BattleTurnEntry actingEntry) {
@@ -630,6 +638,7 @@ public class Battle {
 			BattleTurnEntry actingEntry = currentEntry.get();
 
 			displayCurrentTurn(actingEntry);
+			ConsoleUI.pause(PACING_PAUSE_MILLISECONDS);
 			pendingPostActionExecution = null;
 			executeTurn(actingEntry);
 
@@ -642,7 +651,7 @@ public class Battle {
 				updateFinishingCharacter(pendingPostActionExecution);
 			}
 
-			ConsoleUI.pause(TURN_RESULT_PAUSE_MILLISECONDS);
+			ConsoleUI.pause(PACING_PAUSE_MILLISECONDS);
 
 			currentTurnOrder.advance();
 		}

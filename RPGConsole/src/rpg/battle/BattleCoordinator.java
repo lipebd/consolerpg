@@ -53,8 +53,6 @@ public final class BattleCoordinator {
 
 		List<Enemy> enemies = createEnemies(enemyDefinitions);
 
-		displayEncounterMessage(enemies);
-
 		EnemyBattleGroup enemyGroup = new EnemyBattleGroup(enemies);
 
 		Battle battle = new Battle(party, enemyGroup, scanner, random);
@@ -91,15 +89,5 @@ public final class BattleCoordinator {
 		BattleRewards rewards = rewardService.grantRewards(party, defeatedEnemies, combatScenario);
 
 		rewardScreen.show(rewards);
-	}
-
-	private void displayEncounterMessage(List<Enemy> enemies) {
-		if (enemies.size() == 1) {
-			System.out.println("\nUm " + enemies.get(0).getName() + " apareceu!");
-
-			return;
-		}
-
-		System.out.println("\nUm grupo de inimigos apareceu!");
 	}
 }
