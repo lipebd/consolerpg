@@ -568,7 +568,7 @@ All three formats support the same nine optional nonnegative bonuses:
 hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus
 ```
 
-An empty optional numeric field is interpreted as zero. Required numeric fields must be positive. The loader rejects unknown base IDs, category mismatches, duplicate specializations and malformed enum values during initialization.
+An empty optional numeric field is interpreted as zero. Equipment level requirements must remain within the supported playable-character range, currently levels 1 through 20. Other required numeric fields must be positive. The loader rejects unknown base IDs, category mismatches, duplicate specializations and malformed enum values during initialization.
 
 Loading flow:
 
@@ -662,7 +662,7 @@ Supported armor weights:
 Rules:
 
 - `itemId` must reference an item with category `ARMOR` in `items.txt`.
-- Level requirement must be positive.
+- Level requirement must remain within the supported playable-character range, currently levels 1 through 20.
 - `armorWeight` must match the equipped character's class weight exactly.
 - Armor protection is represented by regular stat bonuses; there is no separate base-armor field.
 

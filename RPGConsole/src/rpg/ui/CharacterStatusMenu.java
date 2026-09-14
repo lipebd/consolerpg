@@ -154,8 +154,11 @@ public final class CharacterStatusMenu {
 
 		int totalModifierPercent = Math.addExact(temporaryModifierPercent, equipmentModifierPercent);
 
-		return character.getExperience() + "/" + character.getExperienceRequiredForNextLevel() + " | M.EXP: "
-				+ RewardModifierFormatter.formatMultiplier(totalModifierPercent);
+		String experienceProgress = character.isMaximumLevel()
+				? "Nível máximo"
+				: character.getExperience() + "/" + character.getExperienceRequiredForNextLevel();
+
+		return experienceProgress + " | M.EXP: " + RewardModifierFormatter.formatMultiplier(totalModifierPercent);
 	}
 
 }

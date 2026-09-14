@@ -3,6 +3,8 @@ package rpg.skills;
 import java.util.List;
 import java.util.Objects;
 
+import rpg.characters.PlayableCharacterLevelRules;
+
 // Stores the complete immutable definition of a playable skill.
 public final class SkillDefinition {
 
@@ -33,9 +35,7 @@ public final class SkillDefinition {
 		this.classId = validateId(classId, "Playable class");
 		this.acquisitionType = Objects.requireNonNull(acquisitionType, "Skill acquisition type cannot be null.");
 
-		if (levelRequirement < 1) {
-			throw new IllegalArgumentException("Skill level requirement must be positive: " + this.id);
-		}
+		PlayableCharacterLevelRules.validateLevel(levelRequirement);
 
 		if (mpCost < 0 || spCost < 0) {
 			throw new IllegalArgumentException("Skill resource costs cannot be negative: " + this.id);

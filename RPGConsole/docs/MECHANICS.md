@@ -812,7 +812,7 @@ The confirmation screen displays only values that would change. Maximum-resource
 
 ### Equipment compatibility
 
-- Every equipment item requires a positive character level.
+- Every equipment level requirement must remain within the supported playable-character range, currently levels 1 through 20.
 - Every playable class may equip every weapon after meeting its level requirement.
 - Armor weight must exactly match the class's `ArmorWeight`: `LIGHT`, `MEDIUM` or `HEAVY`.
 - Every playable class may equip every trinket after meeting its level requirement.
@@ -917,9 +917,15 @@ Natural stats exclude equipment bonuses, temporary stages and Distorção Ancest
 
 If several levels are gained at once, the final level is determined first and the complete natural-stat set is calculated and installed once. Arithmetic overflow is rejected instead of wrapping silently.
 
+Playable-character progression currently supports levels 1 through 20. `PlayableCharacterLevelRules` is the single source of truth for the supported range and next-level experience requirements.
+
+A character below level 20 retains only EXP lower than the requirement for the next level. When one reward reaches level 20, only the EXP required to reach that level is applied, remaining EXP is discarded and current EXP becomes zero. Further EXP gains are ignored while the character remains at the maximum level. Intermediate addition uses `long` arithmetic before the final valid state is installed.
+
+At level 20, character status displays `Nível máximo` instead of progress toward an unavailable level 21.
+
 ## Skill acquisition and availability
 
-Every skill defines one acquisition type and one positive level requirement.
+Every skill defines one acquisition type and a level requirement within the supported playable-character range, currently levels 1 through 20.
 
 The acquisition types are:
 

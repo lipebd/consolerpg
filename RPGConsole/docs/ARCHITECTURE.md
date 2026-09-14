@@ -23,7 +23,7 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | Package | Responsibility | Main types |
 |---|---|---|
 | `rpg` | Application entry point, dependency construction and shared currency presentation | `Main`, `GameCurrency` |
-| `rpg.characters` | Character state, name validation and selection, natural and equipment-modified attributes, equipped slots, party ownership and enemy ranks | `GameCharacter`, `CharacterStats`, `CharacterEquipment`, `PlayableCharacter`, `Party`, `Enemy`, `EnemyRank`, `CharacterNameRules`, `CharacterNameCatalog`, `CharacterNameLoader`, `CharacterNameSelector` |
+| `rpg.characters` | Character state, name validation and selection, playable-character level boundaries, natural and equipment-modified attributes, equipped slots, party ownership and enemy ranks | `GameCharacter`, `CharacterStats`, `CharacterEquipment`, `PlayableCharacter`, `PlayableCharacterLevelRules`, `Party`, `Enemy`, `EnemyRank`, `CharacterNameRules`, `CharacterNameCatalog`, `CharacterNameLoader`, `CharacterNameSelector` |
 | `rpg.classes` | Immutable playable-class definitions, symbols, external loading, lookup and natural-growth calculation | `PlayableClassDefinition`, `PlayableClassLoader`, `PlayableClassCatalog`, `CharacterGrowthCalculator` |
 | `rpg.development` | Isolated configurable party construction for development runs | `DevelopmentPartyFactory` |
 | `rpg.battle` | Battle coordination, skill execution and centralized combat calculations | `Battle`, `BattleResult`, `BattleCoordinator`, `SkillExecutor`, `SkillExecution`, `SkillExecutionContext`, `SkillEffectResult`, `DamageType`, `DamageCalculator`, `RecoveryCalculator`, `EffectResistanceCalculator`, `EnemyBattleGroup`, `BattleTurnOrder`, `BattleEscapeService` |
@@ -125,6 +125,10 @@ Maximum HP and all six regular attributes must be positive. Maximum MP and SP ma
 - Automatic `STARTER` and `LEVEL` skill acquisition.
 - Explicit `SCROLL` skill learning and replacement.
 - Natural-stat recalculation through `CharacterGrowthCalculator` after gaining one or more levels.
+
+`PlayableCharacterLevelRules` owns the supported level range and next-level experience formula. The current range is level 1 through level 20. `PlayableCharacter` delegates boundary checks and experience requirements to that rule, uses `long` intermediate arithmetic when receiving EXP and keeps current EXP at zero after reaching the maximum level.
+
+`SkillDefinition` and `EquipmentDefinition` reuse the same range validation, preventing external content from requiring an unreachable character level.
 
 Natural growth has one formula owner:
 

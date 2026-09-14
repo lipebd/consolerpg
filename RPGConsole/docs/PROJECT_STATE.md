@@ -490,7 +490,7 @@ The first V4 gameplay-system block is complete.
 ### External playable-class and skill definitions
 
 - All seven playable classes have stable external definitions, one validated Unicode presentation symbol and startup validation.
-- `skills.txt` stores immutable skill headers with `STARTER`, `LEVEL` or `SCROLL` acquisition types and positive level requirements.
+- `skills.txt` stores immutable skill headers with `STARTER`, `LEVEL` or `SCROLL` acquisition types and level requirements validated against the supported playable-character range.
 - `skill_effects.txt` stores ordered effect components.
 - `SkillLoader` combines and validates both files and registers complete `SkillDefinition` objects in `SkillCatalog`.
 - `PlayableCharacter` references its class and skill definitions, stores learned skills through stable IDs and automatically learns eligible non-scroll skills.
@@ -539,6 +539,21 @@ The natural-growth and level-based skill-availability block is complete.
 - `BattleRewardService` records natural stats before and after leveling, detects every newly learned non-scroll skill and restores surviving characters only after the new maximums are installed.
 - `BattleRewardScreen` displays compact stat deltas and newly learned skill names; `CharacterStatusMenu` displays the character's complete class name and symbol.
 - Experience and level arithmetic reject overflow instead of wrapping silently.
+
+## V5 playable-character level boundary
+
+The playable-character progression boundary required for save validation is implemented.
+
+- `PlayableCharacterLevelRules` centralizes the minimum level 1, current maximum level 20 and next-level experience formula.
+- `CharacterGrowthCalculator` rejects target levels outside the supported range.
+- `DevelopmentPartyFactory` rejects invalid configured levels before constructing a partial party.
+- `PlayableCharacter` stops at level 20, keeps maximum-level EXP at zero and ignores later EXP gains.
+- EXP crossing the maximum is partially accepted only up to level 20; the remainder is discarded.
+- EXP addition uses `long` intermediate arithmetic to prevent integer overflow before progression is updated.
+- `CharacterStatusMenu` displays `Nível máximo` instead of requesting progress toward level 21.
+- Normal progression, exact arrival at level 20, excess EXP, later maximum-level rewards, invalid development level 21 and out-of-range skill and equipment requirements were manually validated.
+- `SkillDefinition` and `EquipmentDefinition` reject level requirements outside the shared supported range.
+- Seven final armor definitions inherited from the earlier level-25 progression were aligned with the current level-20 ceiling.
 
 ## V4 skill-detail presentation
 

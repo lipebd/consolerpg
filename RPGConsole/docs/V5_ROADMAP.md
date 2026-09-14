@@ -215,14 +215,14 @@ The implementation should continue to favor:
 * [x] Discard EXP exceeding the amount required to reach level 20.
 * [x] Ignore further EXP gains while a character remains at the maximum level.
 * [x] Allow saves created at the previous maximum to remain valid when the maximum level is increased.
-* [ ] Centralize the minimum and maximum playable-character levels in one domain rule.
-* [ ] Make `PlayableCharacter` stop progression at the shared maximum level.
-* [ ] Prevent EXP arithmetic overflow before it mutates character progression.
-* [ ] Display `Nível máximo` instead of next-level progress at the maximum level.
-* [ ] Reject skill and equipment definitions whose level requirements exceed the supported maximum.
+* [x] Centralize the minimum and maximum playable-character levels in one domain rule.
+* [x] Make `PlayableCharacter` stop progression at the shared maximum level.
+* [x] Prevent EXP arithmetic overflow before it mutates character progression.
+* [x] Display `Nível máximo` instead of next-level progress at the maximum level.
+* [x] Reject skill and equipment definitions whose level requirements exceed the supported maximum.
 * [ ] Validate saved level and current EXP against the shared progression rules.
-* [ ] Test reaching level 20 with exact and excess EXP.
-* [ ] Test additional EXP rewards at level 20.
+* [x] Test reaching level 20 with exact and excess EXP.
+* [x] Test additional EXP rewards at level 20.
 * [ ] Test save and load at levels 1, 19 and 20.
 
 ### Numeric resource boundaries

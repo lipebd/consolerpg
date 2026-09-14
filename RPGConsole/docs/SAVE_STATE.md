@@ -347,7 +347,9 @@ When a reward reaches level 20:
 * Later EXP gains are ignored while level 20 remains the maximum.
 * Player-facing progression displays `Nível máximo`.
 
-The maximum level must have one shared domain source of truth. Raising that value in the future must not require changes to save-property names or the save-format version.
+`PlayableCharacterLevelRules` is the shared domain source of truth for the minimum level, current maximum level and next-level experience formula. Runtime progression already enforces these boundaries. Save reconstruction must reuse the same rule instead of defining an independent valid range.
+
+Raising the maximum level in the future must not require changes to save-property names or the save-format version.
 
 A level-20 save remains valid if a later version raises the maximum. The character resumes future progression from zero current EXP.
 

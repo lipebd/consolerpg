@@ -169,7 +169,7 @@ public final class BattleRewardService {
 
 			CharacterStats previousNaturalStats = member.getNaturalStats();
 
-			member.gainExperience(experienceReward);
+			int experienceReceived = member.gainExperience(experienceReward);
 
 			int currentLevel = member.getLevel();
 
@@ -189,7 +189,7 @@ public final class BattleRewardService {
 			results.add(
 					new CharacterProgressionResult(
 							member,
-							experienceReward,
+							experienceReceived,
 							previousLevel,
 							currentLevel,
 							resourcesRestored,
