@@ -52,22 +52,22 @@ Current milestone: planning and integration of the approved crafting contributio
 
 ### Crafter NPCs
 
-* [ ] Define external crafter data in `crafters.txt`.
-* [ ] Create stable IDs for crafter NPCs.
-* [ ] Create immutable `CrafterDefinition` instances.
-* [ ] Store the scenario ID, name, description and ordered recipe IDs for every crafter.
-* [ ] Keep crafter terminology generic instead of restricting the system to blacksmiths.
-* [ ] Allow multiple crafter definitions in the same city.
-* [ ] Allow each crafter to expose an independent set of recipes.
-* [ ] Reject invalid and duplicated crafter IDs.
-* [ ] Reject unknown or non-city scenario IDs in the initial crafting block.
-* [ ] Reject empty names and descriptions.
-* [ ] Reject crafters without recipes.
-* [ ] Reject unknown or duplicated recipe IDs within one crafter definition.
-* [ ] Create `CrafterLoader`.
-* [ ] Create `CrafterCatalog`.
-* [ ] Support crafter lookup by stable ID.
-* [ ] Support ordered lookup of all crafters available in one scenario.
+* [x] Define external crafter data in `crafters.txt`.
+* [x] Create stable IDs for crafter NPCs.
+* [x] Create immutable `CrafterDefinition` instances.
+* [x] Store the scenario ID, name, description and ordered recipe IDs for every crafter.
+* [x] Keep crafter terminology generic instead of restricting the system to blacksmiths.
+* [x] Allow multiple crafter definitions in the same city.
+* [x] Allow each crafter to expose an independent set of recipes.
+* [x] Reject invalid and duplicated crafter IDs.
+* [x] Reject unknown or non-city scenario IDs in the initial crafting block.
+* [x] Reject empty names and descriptions.
+* [x] Reject crafters without recipes.
+* [x] Reject unknown or duplicated recipe IDs within one crafter definition.
+* [x] Create `CrafterLoader`.
+* [x] Create `CrafterCatalog`.
+* [x] Support crafter lookup by stable ID.
+* [x] Support ordered lookup of all crafters available in one scenario.
 
 ---
 
@@ -126,7 +126,7 @@ Current milestone: planning and integration of the approved crafting contributio
 ## 4. World integration
 
 * [ ] Load crafting recipes after the item catalog is available.
-* [ ] Load crafter definitions after the recipe and scenario catalogs are available.
+* [x] Load crafter definitions after the recipe and scenario catalogs are available.
 * [ ] Integrate the crafting catalogs and service into the current V4 startup flow.
 * [ ] Adapt only the required sections of the contributed `Main` implementation.
 * [ ] Adapt only the required sections of the contributed `World` implementation.
@@ -142,14 +142,14 @@ Current milestone: planning and integration of the approved crafting contributio
 
 ## 5. Initial content
 
-* [ ] Define the first approved crafter NPCs.
-* [ ] Define an initial representative recipe set.
-* [ ] Include at least one recipe with multiple ingredients.
-* [ ] Include at least one recipe that consumes a `CONSUMABLE`.
-* [ ] Include at least one recipe that produces a recovery item.
-* [ ] Include at least one recipe that produces equipment.
-* [ ] Confirm that every recipe output has all required specialized data when applicable.
-* [ ] Keep placeholder and joke content out of definitive game data.
+* [x] Define the first approved crafter NPCs.
+* [x] Define an initial representative recipe set.
+* [x] Include at least one recipe with multiple ingredients.
+* [x] Include at least one recipe that consumes a `CONSUMABLE`.
+* [x] Include at least one recipe that produces a recovery item.
+* [x] Include at least one recipe that produces equipment.
+* [x] Confirm that every recipe output has all required specialized data when applicable.
+* [x] Keep placeholder and joke content out of definitive game data.
 * [ ] Review names, descriptions and recipe requirements against the project's canonical setting and balance.
 
 ---
