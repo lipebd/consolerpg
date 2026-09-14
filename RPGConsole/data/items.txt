@@ -1,3 +1,139 @@
 # id;category;playerTradable;baseShopSalePrice;shopPurchasePrice;name;description
+# Consumíveis
 meruma;CONSUMABLE;true;20;6;Merumã;Uma fruta que recupera 25 pontos de HP.
+jumbuco;CONSUMABLE;true;60;18;Jumbuco;Uma fruta robusta que recupera 75 pontos de HP.
+pocao_de_meruma;CONSUMABLE;true;80;24;Poção de Merumã;Uma poção de vida menor que recupera 100 pontos de HP.
+pocao_de_jumbuco;CONSUMABLE;true;240;72;Poção de Jumbuco;Uma poção de vida que recupera 300 pontos de HP.
+pocao_concentrada_de_fruta;CONSUMABLE;true;400;120;Poção Concentrada de Fruta;Uma poção de vida concentrada que recupera 500 pontos de HP.
+gota_de_vida;CONSUMABLE;true;560;168;Gota de Vida;Uma poderosa poção que recupera 700 pontos de HP.
+aramao;CONSUMABLE;true;25;8;Aramão;Uma fruta que recupera 25 pontos de MP.
+poranjo;CONSUMABLE;true;25;8;Poranjo;Uma fruta que recupera 25 pontos de SP.
+pocao_de_aramao;CONSUMABLE;true;50;15;Poção de Aramão;Uma poção de mana menor que recupera 50 pontos de MP.
+pocao_de_poranjo;CONSUMABLE;true;50;15;Poção de Poranjo;Uma poção de stamina menor que recupera 50 pontos de SP.
+pocao_concentrada_de_aramao;CONSUMABLE;true;200;60;Poção Concentrada de Aramão;Uma poção de mana maior que recupera 200 pontos de MP.
+pocao_concentrada_de_poranjo;CONSUMABLE;true;200;60;Poção Concentrada de Poranjo;Uma poção de stamina maior que recupera 200 pontos de SP.
+pocao_de_frutas_da_montanha;CONSUMABLE;true;150;45;Poção de Frutas da Montanha;Uma poção de recurso que recupera 75 pontos de MP e 75 pontos de SP.
+pocao_concentrada_de_frutas_da_montanha;CONSUMABLE;true;300;90;Poção Concentrada de Frutas da Montanha;Uma poção de recurso concentrada que recupera 150 pontos de MP e 150 pontos de SP.
+
+# Materiais
 pelo_lupino;MATERIAL;true;;15;Pelo Lupino;Um tufo espesso de pelo obtido de um Lobermo.
+
+# Armas
+adaga_improvisada;WEAPON;false;;;Adaga Improvisada;Uma lâmina simples e desgastada, adequada para golpes rápidos.
+adaga_comum;WEAPON;false;;;Adaga Comum;Uma adaga equilibrada e confiável para combates próximos.
+adaga_pesada;WEAPON;false;;;Adaga Pesada;Uma lâmina curta de peso incomum, feita para produzir talhos profundos.
+adaga_do_heroi;WEAPON;false;;;Adaga do Herói;Uma adaga associada às façanhas de um herói de identidade esquecida.
+pequena_inquisidora;WEAPON;false;;;Pequena Inquisidora;Uma lâmina severa criada para marcar aqueles considerados culpados.
+grande_inquisidora;WEAPON;false;;;Grande Inquisidora;Uma adaga solene cuja presença parece exigir silêncio e confissão.
+aureate;WEAPON;false;;;Aureate;Uma lâmina dourada que irradia uma autoridade quase sagrada.
+memento_mori;WEAPON;false;;;Memento Mori;Uma adaga fúnebre que recorda a inevitabilidade do último suspiro.
+cetro_comum;WEAPON;false;;;Cetro Comum;Um foco arcano simples usado por conjuradores em formação.
+cetro_do_erudito;WEAPON;false;;;Cetro do Erudito;Um cetro gravado com símbolos destinados ao estudo disciplinado da magia.
+o_sabio;WEAPON;false;;;O Sábio;Um antigo foco arcano que parece responder apenas a mãos experientes.
+o_oraculo;WEAPON;false;;;O Oráculo;Um cetro capaz de fazer o futuro ecoar por um breve instante.
+aurora;WEAPON;false;;;Aurora;Um foco luminoso que concentra a magia como a primeira luz do dia.
+regia_umbra;WEAPON;false;;;Regia Umbra;Um cetro régio envolto por uma sombra que nenhuma luz consegue dissipar.
+luvas_de_couro;WEAPON;false;;;Luvas de Couro;Luvas reforçadas que protegem as mãos durante o combate corporal.
+manoplas_de_ferro;WEAPON;false;;;Manoplas de Ferro;Manoplas pesadas feitas para transformar cada punho em uma arma.
+punhos_do_discipulo;WEAPON;false;;;Punhos do Discípulo;Manoplas austeras que recompensam disciplina e domínio dos fundamentos.
+oblivio;WEAPON;false;;;Oblívio;Uma manopla ancestral capaz de fazer a dor apagar qualquer outro pensamento.
+anatema;WEAPON;false;;;Anátema;Uma manopla marcada por inscrições de condenação contra usuários de magia.
+anatema_e_oblivio;WEAPON;false;;;Anátema e Oblívio;O par lendário de manoplas que une condenação e esquecimento.
+alaude_de_madeira;WEAPON;false;;;Alaúde de Madeira;Um instrumento modesto cujas notas hesitantes ainda carregam poder.
+alaude_profissional;WEAPON;false;;;Alaúde Profissional;Um alaúde de sonoridade refinada construído para grandes apresentações.
+eco_dos_ancestrais;WEAPON;false;;;Eco dos Ancestrais;Um instrumento cujas cordas parecem repetir melodias de outras eras.
+sinfonia_do_crepusculo;WEAPON;false;;;Sinfonia do Crepúsculo;Um alaúde encantado que transforma o fim do dia em música e magia.
+requiem;WEAPON;false;;;Réquiem;Um instrumento lendário cujo canto faz até os vivos recordarem os mortos.
+foice_comum;WEAPON;false;;;Foice Comum;Uma ferramenta agrícola adaptada para cortes largos em combate.
+foice_do_ceifador;WEAPON;false;;;Foice do Ceifador;Uma foice sombria moldada para mãos que não temem a morte.
+lamina_do_ocaso;WEAPON;false;;;Lâmina do Ocaso;Uma foice que combina aço e magia na fronteira entre luz e sombra.
+eclipse_penumbral;WEAPON;false;;;Eclipse Penumbral;Uma arma envolvida por uma penumbra que devora lentamente a claridade.
+ceifa_almas;WEAPON;false;;;Ceifa-Almas;Uma foice arcana que parece arrancar algo além da vida de suas vítimas.
+sentenca_do_vazio;WEAPON;false;;;Sentença do Vazio;Uma lâmina impossível cujo corte parece conduzir diretamente ao nada.
+pistola_comum;WEAPON;false;;;Pistola Comum;Uma arma de fogo simples e confiável para confrontos rápidos.
+pistola_de_repeticao;WEAPON;false;;;Pistola de Repetição;Uma pistola preparada para disparos sucessivos sem perder estabilidade.
+pistola_do_duelista;WEAPON;false;;;Pistola do Duelista;Uma arma elegante construída para decidir confrontos em um único instante.
+estrela_de_sanguemar;WEAPON;false;;;Estrela de Sanguemar;Uma pistola rubra associada aos mais infames duelistas de Sanguemar.
+olho_do_falcao;WEAPON;false;;;Olho do Falcão;Uma arma precisa que parece encontrar o alvo antes mesmo do atirador.
+ultimo_argumento;WEAPON;false;;;Último Argumento;Uma pistola lendária reservada para quando todas as palavras falharam.
+rifle_de_caca;WEAPON;false;;;Rifle de Caça;Um rifle resistente criado para acompanhar longas jornadas pela natureza.
+rifle_de_precisao;WEAPON;false;;;Rifle de Precisão;Uma arma de longo alcance construída para disparos cuidadosamente calculados.
+vigilia;WEAPON;false;;;Vigília;Um rifle que recompensa aqueles capazes de esperar pelo momento perfeito.
+horizonte_partido;WEAPON;false;;;Horizonte Partido;Uma arma cujo estampido parece dividir a paisagem ao meio.
+olho_do_carrasco;WEAPON;false;;;Olho do Carrasco;Um rifle temido por oferecer às vítimas apenas um breve veredito.
+longa_noite;WEAPON;false;;;Longa Noite;Um rifle lendário cujo disparo anuncia uma escuridão sem fim.
+espada_de_ferro;WEAPON;false;;;Espada de Ferro;Uma espada simples e resistente para guerreiros em treinamento.
+espada_de_aco;WEAPON;false;;;Espada de Aço;Uma lâmina bem forjada que equilibra alcance, peso e precisão.
+lamina_do_cavaleiro;WEAPON;false;;;Lâmina do Cavaleiro;Uma espada criada para liderar avanços e proteger companheiros.
+juramento;WEAPON;false;;;Juramento;Uma lâmina cerimonial vinculada à palavra de quem a empunha.
+caliburn;WEAPON;false;;;Caliburn;Uma espada ancestral cuja luz reconhece a grandeza de seu portador.
+excalibur;WEAPON;false;;;Excalibur;A lâmina soberana que transforma cada golpe em uma sentença real.
+arco_de_caca;WEAPON;false;;;Arco de Caça;Um arco leve e resistente utilizado por caçadores e viajantes.
+arco_recurvo;WEAPON;false;;;Arco Recurvo;Um arco compacto capaz de lançar flechas com grande tensão.
+arco_do_patrulheiro;WEAPON;false;;;Arco do Patrulheiro;Uma arma confiável para quem protege caminhos e fronteiras distantes.
+sussurro_verde;WEAPON;false;;;Sussurro Verde;Um arco silencioso que parece respirar junto às florestas.
+lua_crescente;WEAPON;false;;;Lua Crescente;Um arco elegante cuja curvatura reflete a forma da lua.
+arco_de_artemis;WEAPON;false;;;Arco de Ártemis;Uma arma lendária cujas flechas parecem buscar os céus antes do alvo.
+cajado_comum;WEAPON;false;;;Cajado Comum;Um cajado simples capaz de canalizar pequenas correntes de magia.
+cajado_do_adepto;WEAPON;false;;;Cajado do Adepto;Um foco arcano preparado para acompanhar o progresso de um conjurador.
+coracao_da_floresta;WEAPON;false;;;Coração da Floresta;Um cajado vivo que pulsa com a energia profunda da natureza.
+bastao_das_estacoes;WEAPON;false;;;Bastão das Estações;Um foco elemental que muda sutilmente conforme o ciclo do mundo.
+raiz_primordial;WEAPON;false;;;Raiz Primordial;Um cajado formado por madeira mais antiga do que qualquer floresta conhecida.
+axis_mundi;WEAPON;false;;;Axis Mundi;Um bastão lendário que parece sustentar a ligação entre terra e firmamento.
+grimorio_comum;WEAPON;false;;;Grimório Comum;Um livro introdutório contendo fórmulas e selos arcanos fundamentais.
+compendio_arcano;WEAPON;false;;;Compêndio Arcano;Uma coletânea extensa de fórmulas reunidas por gerações de estudiosos.
+codice_hermetico;WEAPON;false;;;Códice Hermético;Um volume selado cujos teoremas desafiam os limites da razão.
+livro_das_mil_vozes;WEAPON;false;;;Livro das Mil Vozes;Um tomo inquietante cujas páginas parecem recitar palavras em coro.
+evangelho_do_abismo;WEAPON;false;;;Evangelho do Abismo;Um livro proibido que descreve verdades encontradas além da realidade.
+o_livro_inacabado;WEAPON;false;;;O Livro Inacabado;Um grimório lendário cuja última página continua escrevendo a si mesma.
+
+# Armaduras
+vestes_comuns;ARMOR;false;;;Vestes Comuns;Vestes leves que oferecem proteção básica sem limitar os movimentos.
+vestes_reforcadas;ARMOR;false;;;Vestes Reforçadas;Vestes leves reforçadas para resistir melhor aos perigos da estrada.
+robe_de_brim;ARMOR;false;;;Robe de Brim;Um robe resistente cuja trama espessa amortece golpes e energias hostis.
+traje_do_assassino;ARMOR;false;;;Traje do Assassino;Um conjunto discreto moldado para proteger sem comprometer movimentos rápidos.
+traje_do_arcano;ARMOR;false;;;Traje do Arcano;Vestes encantadas que conciliam mobilidade e proteção contra forças mágicas.
+regalia_de_merlin;ARMOR;false;;;Regália de Merlin;Uma indumentária lendária bordada com símbolos de uma tradição arcana esquecida.
+uniforme_comum;ARMOR;false;;;Uniforme Comum;Um conjunto prático que oferece proteção sem sacrificar a mobilidade.
+uniforme_reforcado;ARMOR;false;;;Uniforme Reforçado;Um uniforme fortalecido nos pontos mais expostos durante o combate.
+macacao_de_couro;ARMOR;false;;;Macacão de Couro;Uma proteção flexível de couro preparada para viagens e confrontos prolongados.
+conjunto_do_vigilante;ARMOR;false;;;Conjunto do Vigilante;Uma indumentária criada para aqueles que permanecem atentos enquanto outros descansam.
+conjunto_do_rastreador;ARMOR;false;;;Conjunto do Rastreador;Um traje resistente e silencioso adequado para perseguir qualquer tipo de presa.
+indumentaria_de_robin;ARMOR;false;;;Indumentária de Robin;Um conjunto lendário associado a um arqueiro que jamais aceitava uma vantagem injusta.
+gibao_comum;ARMOR;false;;;Gibão Comum;Uma proteção pesada e simples feita para suportar impactos diretos.
+gibao_reforcado;ARMOR;false;;;Gibão Reforçado;Um gibão fortalecido com placas adicionais sobre as regiões mais vulneráveis.
+cota_de_aco;ARMOR;false;;;Cota de Aço;Uma armadura de elos metálicos que distribui a força dos golpes recebidos.
+armadura_do_barbaro;ARMOR;false;;;Armadura do Bárbaro;Uma proteção robusta marcada por incontáveis confrontos vencidos pela força.
+armadura_do_templario;ARMOR;false;;;Armadura do Templário;Uma armadura solene construída para resistir tanto ao aço quanto à magia.
+arnes_de_arthur;ARMOR;false;;;Arnês de Arthur;Uma armadura lendária digna daqueles que carregam o peso de um reino.
+veu_da_sombra;ARMOR;false;;;Véu da Sombra;Um traje que envolve seu portador em uma escuridão veloz e quase intangível.
+manto_do_menestrel;ARMOR;false;;;Manto do Menestrel;Um manto extravagante que transforma movimento, música e sorte em um único espetáculo.
+pele_dos_mil_rostos;ARMOR;false;;;Pele dos Mil Rostos;Uma vestimenta mutável cuja superfície parece recordar incontáveis formas.
+tunica_das_estacoes;ARMOR;false;;;Túnica das Estações;Uma túnica viva que manifesta o equilíbrio entre os diferentes ciclos da natureza.
+jaqueta_do_falcao;ARMOR;false;;;Jaqueta do Falcão;Uma jaqueta aerodinâmica criada para reagir antes que o perigo consiga se aproximar.
+panoplia_do_invicto;ARMOR;false;;;Panóplia do Invicto;Uma armadura colossal marcada pela determinação daqueles que se recusaram a cair.
+cota_do_silencio;ARMOR;false;;;Cota do Silêncio;Uma armadura austera capaz de sufocar o estrondo das forças mágicas ao redor.
+
+# Berloques
+anel_arcano;TRINKET;false;;;Anel Arcano;Um pequeno anel impregnado com energia capaz de fortalecer a resistência mágica.
+trevo_ressecado;TRINKET;false;;;Trevo Ressecado;Um trevo antigo que preserva uma parcela improvável de sua boa sorte.
+chaveiro_de_capivara;TRINKET;false;;;Chaveiro de Capivara;Uma pequena capivara de madeira cuja tranquilidade torna cada jornada mais proveitosa.
+relogio_do_pai;TRINKET;false;;;Relógio do pai;Um relógio antigo preservado com carinho, capaz de lembrar o verdadeiro valor de cada instante.
+colar_da_mae;TRINKET;false;;;Colar da mãe;Um colar familiar que transmite proteção e a certeza reconfortante de não estar sozinho.
+origami_de_flor;TRINKET;false;;;Origami de flor;Uma flor delicadamente dobrada que permanece intacta mesmo sob chuva e batalha.
+trevo_murcho;TRINKET;false;;;Trevo Murcho;Um trevo sem vida cuja sorte parece ter se recusado a desaparecer com ele.
+broche_do_flagelo;TRINKET;false;;;Broche do Flagelo;Um broche que representa a coragem necessária para continuar avançando contra qualquer provação.
+mini_goblin_de_madeira;TRINKET;false;;;Mini Goblin de Madeira;Uma pequena escultura de goblin que parece atrair oportunidades de riqueza.
+dente_de_goblin;TRINKET;false;;;Dente de Goblin;Um dente amarelado carregado como lembrança, ameaça e promessa de lucro.
+eletrorrocha_redonda;TRINKET;false;;;Eletrorrocha Redonda;Uma pedra perfeitamente arredondada que vibra suavemente com energia elétrica.
+insignia_do_veterano;TRINKET;false;;;Insígnia do Veterano;Uma condecoração marcada pelo tempo e pelas batalhas de alguém que sempre retornou.
+talisma_do_espirito;TRINKET;false;;;Talismã do Espírito;Um talismã que fortalece as fronteiras entre a vontade de seu portador e as forças externas.
+pe_de_coelho;TRINKET;false;;;Pé de coelho;Um amuleto tradicional procurado por aqueles que preferem contar com a sorte.
+talisma_do_erudito;TRINKET;false;;;Talismã do Erudito;Um símbolo de estudo constante que torna cada experiência mais valiosa.
+talisma_da_ganancia;TRINKET;false;;;Talismã da Ganância;Um ornamento dourado que parece tornar qualquer recompensa insuficiente.
+talisma_do_aprendiz;TRINKET;false;;;Talismã do Aprendiz;Um talismã protetor criado para quem ainda transforma cada desafio em aprendizado.
+talisma_do_discipulo;TRINKET;false;;;Talismã do Discípulo;Um símbolo de disciplina que equilibra aprendizado e resistência espiritual.
+talisma_da_prosperidade;TRINKET;false;;;Talismã da Prosperidade;Um talismã auspicioso que promete conhecimento e fortuna em medidas generosas.
+talisma_do_cacador;TRINKET;false;;;Talismã do Caçador;Um troféu discreto que recompensa a experiência de perseguir presas valiosas.
+talisma_do_ladrao;TRINKET;false;;;Talismã do Ladrão;Um pequeno símbolo protetor cuja origem ninguém parece disposto a explicar.
+talisma_da_perseveranca;TRINKET;false;;;Talismã da Perseverança;Um talismã austero que promete pequenas fortunas àqueles que resistem até o fim.

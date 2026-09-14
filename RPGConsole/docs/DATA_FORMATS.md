@@ -16,6 +16,124 @@ This document describes the external text files used to load game data.
 - Content IDs are written in Brazilian Portuguese without accents.
 - Invalid references or malformed lines stop game initialization instead of creating partially invalid data.
 
+## Character-name definitions
+
+Names available for random playable-character naming are loaded from:
+
+`data/character_names.txt`
+
+Header:
+
+```text
+# name
+```
+
+Each non-comment line contains one complete character name:
+
+```text
+Ari
+Lina
+Nilo
+Yara
+```
+
+Rules:
+
+- The entire active line represents one name.
+- Names are normalized to Unicode NFC.
+- Outer ordinary spaces are removed.
+- Repeated ordinary spaces are collapsed into one.
+- A normalized name may contain at most 16 Unicode code points.
+- Unicode letters are allowed.
+- Single spaces, hyphens and apostrophes may appear only between letters.
+- Blank names, numbers, controls, tabs, unrelated punctuation and malformed separators are rejected.
+- Names must be unique without regard to letter case after normalization.
+- Accents remain significant, so `Jose` and `José` are different names.
+- At least four valid unique names are required to support a complete party.
+- The current four entries are temporary placeholders pending creative-team curation.
+
+Loading flow:
+
+```text
+character_names.txt
+    -> CharacterNameLoader
+    -> CharacterNameCatalog
+    -> CharacterNameSelector
+    -> CharacterCreationMenu
+```
+
+`CharacterNameRules` is shared by external loading and runtime `PlayableCharacter` construction. `CharacterNameSelector` chooses uniformly after excluding names supplied by the caller.
+
+## Playable-class definitions
+
+Playable-class data is loaded from:
+
+`data/playable_classes.txt`
+
+Header:
+
+```text
+# id;name;symbol;baseHp;baseMp;baseSp;baseAttack;baseDefense;baseMagic;baseResistance;baseSpeed;baseLuck;primaryAttribute;secondaryAttribute;armorWeight;description
+```
+
+Each valid line contains exactly 16 fields:
+
+| Position | Field | Java type | Example |
+|---:|---|---|---|
+| 1 | Class ID | `String` | `flagelo` |
+| 2 | Display name | `String` | `Flagelo` |
+| 3 | Presentation symbol | `String` | `◆` |
+| 4 | Base maximum HP | `int` | `120` |
+| 5 | Base maximum MP | `int` | `25` |
+| 6 | Base maximum SP | `int` | `115` |
+| 7 | Base ATK | `int` | `15` |
+| 8 | Base DEF | `int` | `15` |
+| 9 | Base MAG | `int` | `8` |
+| 10 | Base RES | `int` | `15` |
+| 11 | Base VEL | `int` | `9` |
+| 12 | Base LCK | `int` | `8` |
+| 13 | Primary attribute | `CharacterAttribute` | `ATK` |
+| 14 | Secondary attribute | `CharacterAttribute` | `DEF` |
+| 15 | Compatible armor weight | `ArmorWeight` | `HEAVY` |
+| 16 | Description | `String` | `Descrição da classe.` |
+
+Example shape:
+
+```text
+classe_exemplo;Classe Exemplo;◆;120;25;115;15;15;8;15;9;8;ATK;DEF;HEAVY;Descrição da classe.
+```
+
+Rules:
+
+- Class IDs must be unique and stable.
+- IDs use lowercase letters, numbers and single underscores.
+- Display names cannot be empty.
+- `symbol` must contain exactly one Unicode code point.
+- Blank symbols and ISO control characters are rejected.
+- Symbols are presentation data and do not affect class mechanics.
+- Base HP must be at least `50`.
+- Base MP and SP must each be at least `25`.
+- Base HP, MP and SP must total exactly `260`.
+- ATK, DEF, MAG, RES, VEL and LCK must each be between `8` and `15`.
+- The six regular base attributes must total exactly `70`.
+- `primaryAttribute` and `secondaryAttribute` must be valid `CharacterAttribute` values.
+- Primary and secondary attributes must be different.
+- `armorWeight` must be `LIGHT`, `MEDIUM` or `HEAVY`.
+- Descriptions cannot be empty.
+- Literal `\n` sequences in descriptions are converted into line breaks.
+- Invalid definitions report the source file, line and relevant class ID during initialization.
+
+Loading flow:
+
+```text
+playable_classes.txt
+    -> PlayableClassLoader
+    -> PlayableClassDefinition
+    -> PlayableClassCatalog
+```
+
+`PlayableClassDefinition` stores the immutable class data. `CharacterGrowthCalculator` uses its base stats and primary and secondary attributes, while console interfaces use its name, symbol and description.
+
 ## Enemy definitions
 
 File:
@@ -29,14 +147,14 @@ Each valid enemy line contains exactly 13 fields:
 | 1 | ID | `String` | `lobermo` |
 | 2 | Name | `String` | `Lobermo` |
 | 3 | Maximum HP | `int` | `50` |
-| 4 | Maximum MP | `int` | `0` |
-| 5 | Maximum SP | `int` | `0` |
+| 4 | Maximum MP | `int` | `1` |
+| 5 | Maximum SP | `int` | `1` |
 | 6 | Attack | `int` | `8` |
 | 7 | Defense | `int` | `5` |
-| 8 | Magic | `int` | `0` |
-| 9 | Resistance | `int` | `0` |
+| 8 | Magic | `int` | `1` |
+| 9 | Resistance | `int` | `1` |
 | 10 | Speed | `int` | `5` |
-| 11 | Luck | `int` | `0` |
+| 11 | Luck | `int` | `1` |
 | 12 | Enemy rank | `EnemyRank` | `COMMON` |
 | 13 | Description | `String` | `Uma criatura lupina...` |
 
@@ -49,7 +167,7 @@ Header:
 Example:
 
 ```text
-lobermo;Lobermo;50;0;0;8;5;0;0;5;0;COMMON;Uma criatura lupina que percorre os Verdes Ermos em busca de presas.
+lobermo;Lobermo;50;1;1;8;5;1;1;5;1;COMMON;Uma criatura lupina que percorre os Verdes Ermos em busca de presas.
 ```
 
 Supported enemy ranks:
@@ -70,6 +188,14 @@ enemies.txt
     -> EnemyDefinition
     -> Enemy
 ```
+
+Rules:
+
+- Maximum HP must be positive.
+- Maximum MP and SP cannot be negative.
+- ATK, DEF, MAG, RES, VEL and LCK must be positive.
+- Literal `\n` sequences in descriptions are converted into line breaks.
+- Invalid definitions report their source line and enemy ID.
 
 `EnemyLoader` ignores blank lines and comments, requires exactly 13 fields, converts numeric values and `EnemyRank`, creates `CharacterStats`, and registers an `EnemyDefinition`.
 
@@ -286,7 +412,7 @@ Rules:
 - Every item must have a unique and stable ID.
 - IDs must use lowercase letters, numbers and single underscores, following the stable content ID conventions.
 - `category` must correspond to a valid `ItemCategory`.
-- `playerTradable` is reserved exclusively for future player-to-player trading.
+- `playerTradable` marks whether the item is eligible for the future player-to-player trading system; it does not implement trading behavior by itself.
 - `baseShopSalePrice` is the base amount charged by shops before an offer-specific percentage is applied.
 - `shopPurchasePrice` is the fixed amount paid by any shop when purchasing the item from the player.
 - Either commercial price may remain empty when the corresponding transaction is unavailable.
@@ -338,13 +464,17 @@ Rules:
 - Revival is applied before ordinary HP recovery, allowing both components to affect a defeated ally.
 - Group effects are evaluated independently for every eligible party member.
 - The item is consumed only when at least one component affects at least one target.
-- Purification is represented in the data model, but its runtime effect will be connected after status effects are implemented.
+- Purification removes eligible negative attribute states at runtime.
+
+Definition composition and runtime flow:
 
 Definition composition and runtime flow:
 
 ```text
 ItemDefinitionCatalog
 RecoveryItemDefinitionCatalog
+SkillScrollDefinitionCatalog
+SkillCatalog
     -> ItemFactory
     -> ItemCatalog
     -> Inventory, drops and item menus
@@ -354,15 +484,241 @@ RecoveryItemDefinitionCatalog
 
 `RecoveryItemDefinition` contains only the specialized recovery behavior.
 
-`ItemFactory` combines both definitions and creates the complete runtime object. Items without a recovery definition currently become `BasicItem`; matching specialized definitions become `RecoveryItem`.
+`ItemFactory` receives the base definition and the available specialized catalogs. A matching recovery definition creates `RecoveryItem`; a matching skill-scroll definition creates `SkillScroll`; items without specialized runtime behavior become `BasicItem`. The same item cannot receive both recovery and skill-scroll specialization.
 
 `ItemCatalog` stores the resulting runtime items and resolves the stable IDs referenced by enemy drops, exploration events and inventories.
 
-## Current item IDs
+## Skill-scroll definitions
+
+Skill-scroll specialization is loaded from:
+
+`data/skill_scrolls.txt`
+
+Header:
+
+```text
+# itemId;skillId;classId
+```
+
+Each valid line contains exactly 3 fields:
+
+| Position | Field | Java type | Empty value |
+|---:|---|---|---|
+| 1 | Item ID | `String` | Not allowed |
+| 2 | Skill ID | `String` | Not allowed |
+| 3 | Compatible playable-class ID | `String` | Not allowed |
+
+Example shape:
+
+```text
+pergaminho_habilidade_exemplo;habilidade_exemplo;druida
+```
+
+Rules:
+
+- `itemId` must reference an item defined in `items.txt`.
+- The referenced item must use the `SKILL_SCROLL` category.
+- `skillId` must reference a skill defined in `skills.txt`.
+- The referenced skill must use the `SCROLL` acquisition type.
+- `classId` must reference a class defined in `playable_classes.txt`.
+- The compatible class must match the linked skill's class.
+- One item ID cannot define more than one skill-scroll specialization.
+- One skill ID cannot be linked to more than one scroll item.
+- Every `SKILL_SCROLL` item must have exactly one specialized row.
+- Every `SCROLL` skill must have exactly one linked scroll item.
+- The file may contain only its header while no permanent `SKILL_SCROLL` items or `SCROLL` skills are registered.
+- The scroll's item definition may omit both NPC commercial prices.
+- `playerTradable` remains defined by the linked base item in `items.txt`.
+
+Loading flow:
+
+```text
+items.txt
+    -> ItemDefinitionCatalog
+
+skills.txt + skill_effects.txt
+    -> SkillCatalog
+
+playable_classes.txt
+    -> PlayableClassCatalog
+
+skill_scrolls.txt
+    -> SkillScrollLoader
+    -> SkillScrollDefinitionCatalog
+
+ItemDefinitionCatalog
+SkillScrollDefinitionCatalog
+SkillCatalog
+    -> ItemFactory
+    -> SkillScroll
+    -> ItemCatalog
+```
+
+`SkillScrollDefinition` stores only the stable item, skill and class IDs. `ItemFactory` resolves the canonical `SkillDefinition` from `SkillCatalog` when creating the runtime `SkillScroll`.
+
+The current file contains no permanent definitions. Temporary synthetic rows were used to validate loading and runtime behavior and were removed afterward.
+
+## Equipment definitions
+
+Equipment identity and commercial data remain in `data/items.txt`. Each equipment item must also have exactly one specialized row in `data/weapons.txt`, `data/armors.txt` or `data/trinkets.txt` using the same `itemId`.
+
+All three formats support the same nine optional nonnegative bonuses:
+
+```text
+hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus
+```
+
+An empty optional numeric field is interpreted as zero. Required numeric fields must be positive. The loader rejects unknown base IDs, category mismatches, duplicate specializations and malformed enum values during initialization.
+
+Loading flow:
+
+```text
+items.txt -> ItemDefinitionCatalog
+weapons.txt + armors.txt + trinkets.txt
+    -> EquipmentLoader
+    -> EquipmentCatalog
+```
+
+The specialized definition and the runtime `Item` share one stable ID. Equipment items currently remain `BasicItem` objects in `ItemCatalog`; their equippable behavior is resolved through `EquipmentCatalog`.
+
+### Weapon definitions
+
+File:
+
+`data/weapons.txt`
+
+Header:
+
+```text
+# itemId;damageType;weaponType;levelRequirement;normalAttackName;baseWeaponDamage;hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus
+```
+
+Each valid line contains exactly 15 fields:
+
+| Position | Field | Java type | Empty value |
+|---:|---|---|---|
+| 1 | Item ID | `String` | Not allowed |
+| 2 | Damage type | `DamageType` | Not allowed |
+| 3 | Weapon type | `WeaponType` | Not allowed |
+| 4 | Level requirement | `int` | Not allowed |
+| 5 | Normal-attack name | `String` | Not allowed |
+| 6 | Base weapon damage | `int` | Not allowed |
+| 7–15 | HP, MP, SP, ATK, DEF, MAG, RES, VEL and LCK bonuses | `int` | Defaults to `0` |
+
+Supported damage types:
+
+- `PHYSICAL`
+- `MAGICAL`
+
+Supported weapon types:
+
+- `DAGGER`
+- `SCEPTER`
+- `GAUNTLET`
+- `LUTE`
+- `SCYTHE`
+- `PISTOL`
+- `RIFLE`
+- `SWORD`
+- `BOW`
+- `STAFF`
+- `GRIMOIRE`
+
+Rules:
+
+- `itemId` must reference an item with category `WEAPON` in `items.txt`.
+- Level requirement and base weapon damage must be positive.
+- Normal-attack name cannot be empty.
+- Every playable class may use every weapon when the level requirement is met.
+- Damage type selects the offensive and defensive attributes used by the normal attack; it does not change the damage type declared by a skill component.
+- Player-facing screens call `baseWeaponDamage` **Poder**. `DBA` is only an internal design abbreviation.
+
+Example:
+
+```text
+adaga_improvisada;PHYSICAL;DAGGER;1;Corte Rápido;1;;;10;;;;;;
+```
+
+### Armor definitions
+
+File:
+
+`data/armors.txt`
+
+Header:
+
+```text
+# itemId;armorWeight;levelRequirement;hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus
+```
+
+Each valid line contains exactly 12 fields. The final nine positions are the common optional bonuses in their standard order.
+
+Supported armor weights:
+
+- `LIGHT`
+- `MEDIUM`
+- `HEAVY`
+
+Rules:
+
+- `itemId` must reference an item with category `ARMOR` in `items.txt`.
+- Level requirement must be positive.
+- `armorWeight` must match the equipped character's class weight exactly.
+- Armor protection is represented by regular stat bonuses; there is no separate base-armor field.
+
+Example shape:
+
+```text
+armadura_exemplo;MEDIUM;7;25;;;;5;;3;;
+```
+
+### Trinket definitions
+
+File:
+
+`data/trinkets.txt`
+
+Header:
+
+```text
+# itemId;trinketType;levelRequirement;hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus;experienceModifierPercent;goldModifierPercent
+```
+
+Each valid line contains exactly 14 fields. Positions 4–12 are the common optional bonuses.
+
+Supported trinket types:
+
+- `JEWELRY`
+- `AMULET`
+- `TALISMAN`
+
+Rules:
+
+- `itemId` must reference an item with category `TRINKET` in `items.txt`.
+- Level requirement must be positive.
+- EXP and GOLD modifiers are optional nonnegative integer percentages; empty values become zero.
+- A trinket must provide at least one stat or reward bonus.
+- Its EXP modifier applies only to the wearer.
+- Its GOLD modifier joins the party-wide total while the trinket remains equipped.
+- Every class may equip every trinket when the level requirement is met.
+
+Example shape:
+
+```text
+talisma_exemplo;TALISMAN;1;;;;;;;;;;5;10
+```
+
+### Equipment coverage
+
+The current specialized files contain 67 weapons, 25 armors and 22 trinkets, totaling 114 equipment definitions. Their IDs were cross-checked against `items.txt`: every specialized row has one matching base item, and no item ID is specialized twice.
+
+## Representative item IDs
 
 | ID | Name | Category | Runtime type | Effect |
 |---|---|---|---|---|
 | `meruma` | Merumã | `CONSUMABLE` | `RecoveryItem` | Recovers 25 HP from one ally |
+
+Equipment entries are intentionally documented through their schemas and the dedicated creation guide instead of duplicating all 114 rows here.
 
 ## Scenario definitions
 
@@ -398,10 +754,16 @@ File:
 
 `data/combat_scenarios.txt`
 
-Each active combat-scenario line contains exactly 13 fields:
+Each active combat-scenario line contains exactly 16 fields:
 
 ```text
-# scenarioId;baseExperienceReward;baseGoldReward;explorationLength;battleChance;rewardChance;merchantChance;epicEncounterChance;specialAreaChance;minEnemies;maxEnemies;normalAreaMessage;specialAreaMessage
+# scenarioId;baseExperienceReward;baseGoldReward;explorationLength;battleChance;rewardChance;merchantChance;epicEncounterChance;specialAreaChance;minEnemies;maxEnemies;normalAreaMessage;specialAreaMessage;preferredRescueScenarioId;fallbackRescueScenarioId;rescueDescription
+```
+
+Example:
+
+```text
+verdes_ermos;25;5;5;70;15;15;0;30;1;2;Você avança pelos vastos campos verdes.;Você encontrou uma área especial de mini-floresta!;setegalhos;bree;Uma caravana encontrou os feridos e providenciou seu resgate.
 ```
 
 Rules:
@@ -415,6 +777,14 @@ Rules:
 - Normal and special area messages cannot be empty.
 - Area messages support literal `\n`.
 - Base EXP and gold rewards belong to the combat scenario rather than the common scenario definition.
+- `preferredRescueScenarioId` is optional and must be represented by an empty field when absent.
+- `fallbackRescueScenarioId` is required and cannot be empty.
+- Every configured rescue scenario ID must reference an existing `CITY` with a registered INN.
+- Preferred and fallback rescue scenario IDs must be different when a preferred destination is present.
+- `rescueDescription` is required and cannot be empty.
+- Rescue descriptions support literal `\n`.
+- Rescue descriptions must remain appropriate for any party size.
+- `CombatScenarioLoader` reports invalid definitions with their source file, line number and scenario ID whenever available.
 
 ## Dungeon definitions
 
@@ -565,7 +935,7 @@ Each active INN line contains exactly 5 fields:
 Example:
 
 ```text
-bree_inn;bree;INN de Bree;Uma estalagem simples e acolhedora.\nSeus quartos oferecem o descanso necessário antes da próxima jornada.;25
+bree_inn;bree;Pensão da Dona Fábula;Uma estalagem simples e acolhedora.\nSeus quartos oferecem o descanso necessário antes da próxima jornada.;25
 ```
 
 Rules:
@@ -576,7 +946,9 @@ Rules:
 - INN IDs must be unique.
 - Descriptions support literal `\n`.
 - `price` must be a valid integer greater than zero.
-- At most one INN may be registered for each city.
+- Every registered city must have exactly one INN.
+- `InnCatalog` rejects multiple INNs for the same city.
+- `InnLoader` rejects game initialization when any registered city has no INN.
 - The price applies to the whole party and is independent of party size.
 - Prices remain externally configurable for future balancing.
 - `InnLoader` produces immutable `InnDefinition` entries registered in `InnCatalog`.
@@ -732,26 +1104,168 @@ shop_stock.txt
     -> ShopStockCatalog
 ```
 
-## Planned future data files
-### Skill definitions
+## Skill definitions
 
-Planned file:
+General skill data is loaded from:
 
 `data/skills.txt`
 
-Recovery effect and target must use separate fields.
+Header:
 
-Planned fields include:
+```text
+# id;classId;acquisitionType;levelRequirement;mpCost;spCost;name;description
+```
 
-- Stable skill ID.
-- Display name.
-- Required level.
-- Playable class ID.
-- Damage type.
-- Base damage.
-- Base healing.
-- Recovery type.
-- Recovery target type.
-- MP cost.
-- SP cost.
-- Description.
+Each valid line contains exactly 8 fields:
+
+| Position | Field | Java type | Example |
+|---:|---|---|---|
+| 1 | Skill ID | `String` | `investida` |
+| 2 | Playable-class ID | `String` | `flagelo` |
+| 3 | Acquisition type | `SkillAcquisitionType` | `STARTER` |
+| 4 | Level requirement | `int` | `1` |
+| 5 | MP cost | `int` | `0` |
+| 6 | SP cost | `int` | `10` |
+| 7 | Name | `String` | `Investida` |
+| 8 | Description | `String` | `Ataca o alvo e pode causar recuo.` |
+
+Rules:
+
+- Skill and class IDs must use stable lowercase IDs.
+- `classId` must reference a valid playable class.
+- `acquisitionType` must be `STARTER`, `LEVEL` or `SCROLL`.
+- Level requirement must be positive.
+- For `STARTER` and `LEVEL`, the requirement is the level at which the skill is learned automatically.
+- For `SCROLL`, the requirement is the minimum level for using the linked scroll; reaching it does not grant the skill.
+- MP and SP costs cannot be negative.
+- Name and description cannot be empty.
+- Literal `\n` sequences in descriptions are converted into line breaks.
+- Every skill must receive at least one component from `skill_effects.txt`.
+- Skill IDs must be unique.
+- Every `SCROLL` skill must be linked exactly once in `skill_scrolls.txt`.
+
+Example:
+
+```text
+investida;flagelo;STARTER;1;0;10;Investida;Ataca o alvo e pode causar recuo.
+```
+
+Current acquisition coverage:
+
+- `STARTER`: 2 temporary Flagelo skills.
+- `LEVEL`: 28 permanent class-progression skills.
+- `SCROLL`: no permanent definitions yet.
+
+Loading flow:
+
+```text
+skills.txt + skill_effects.txt
+    -> SkillLoader
+    -> SkillDefinition
+    -> ordered SkillEffectDefinition components
+    -> SkillCatalog
+```
+
+`SkillLoader` creates every canonical `SkillDefinition` regardless of acquisition type. Automatic learning belongs to `PlayableCharacter`; `SCROLL` linkage and specialization completeness belong to `SkillScrollLoader`.
+
+## Skill-effect definitions
+
+Ordered skill components are loaded from:
+
+`data/skill_effects.txt`
+
+Header:
+
+```text
+# skillId;sequence;phase;effectType;targetType;damageType;power;attribute;stages;duration;triggerChancePercent;specialStateType;conditionType;conditionValue
+```
+
+Each valid line contains exactly 14 fields:
+
+| Position | Field | Java type | Empty value |
+|---:|---|---|---|
+| 1 | Skill ID | `String` | Not allowed |
+| 2 | Sequence | `int` | Not allowed |
+| 3 | Execution phase | `SkillExecutionPhase` | Not allowed |
+| 4 | Effect type | `SkillEffectType` | Not allowed |
+| 5 | Target type | `SkillTargetType` | Not allowed |
+| 6 | Damage type | `DamageType` | Allowed when inapplicable |
+| 7 | Power | `Integer` | Allowed when inapplicable |
+| 8 | Attribute | `CharacterAttribute` | Allowed when inapplicable |
+| 9 | Stages | `Integer` | Allowed when inapplicable |
+| 10 | Duration | `Integer` | Allowed when inapplicable |
+| 11 | Trigger chance | `int` | Defaults to `100` |
+| 12 | Special state type | `SpecialBattleStateType` | Allowed when inapplicable |
+| 13 | Condition type | `SkillConditionType` | Not allowed |
+| 14 | Condition value | `Integer` | Allowed when inapplicable |
+
+Execution phases:
+
+- `PRE_ACTION`
+- `PRIMARY`
+- `POST_ACTION`
+
+Effect types:
+
+- `DAMAGE`
+- `RECOIL_DAMAGE`
+- `DAMAGE_POWER_MODIFIER`
+- `HP_RECOVERY`
+- `MP_RECOVERY`
+- `SP_RECOVERY`
+- `REVIVE`
+- `ATTRIBUTE_STAGE`
+- `PURIFICATION`
+- `DISSIPATION`
+- `SPECIAL_STATE`
+
+Target types:
+
+- `SELF`
+- `SINGLE_ALLY`
+- `ALL_ALLIES`
+- `ALL_BUT_SELF`
+- `RANDOM_ALLY`
+- `SINGLE_ENEMY`
+- `ALL_ENEMIES`
+- `RANDOM_ENEMY`
+
+Rules:
+
+- Sequences must be positive, unique and declared in ascending order within each skill.
+- Phases cannot move backwards from `PRE_ACTION` to `PRIMARY` to `POST_ACTION`.
+- Empty `triggerChancePercent` means `100`; explicit values must be between `1` and `100`.
+- Trigger chance is configured per component and rolled once for all of that component's applicable targets.
+- Damage requires `PHYSICAL` or `MAGICAL` damage type and positive power.
+- Recoil damage uses `PRIMARY`, targets `SELF`, leaves `damageType` empty and defines a percentage from `1` to `100` in `power`.
+- A `RECOIL_DAMAGE` component must immediately follow a `SINGLE_ENEMY` damage component in the same phase. It uses the actual HP damage dealt by that component and cannot defeat the user.
+- HP recovery and revival require positive power and an `ATK` or `MAG` scaling attribute.
+- MP and SP recovery use fixed positive power and leave the attribute field empty.
+- Attribute-stage components require an attribute and stages from `-3` to `3`, excluding zero.
+- Non-VEL stages require a positive duration; VEL stages leave duration empty.
+- `DISTORTED_ATTRIBUTES` uses `SPECIAL_STATE` and currently targets `SINGLE_ENEMY`.
+- `DAMAGE_POWER_MODIFIER` must precede a compatible damage component with the same target type.
+- Condition type `NONE` leaves `conditionValue` empty.
+- HP-percentage conditions require a value between `1` and `100`.
+
+Examples:
+
+```text
+investida;1;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;5;;;;;;NONE;
+investida;2;PRIMARY;RECOIL_DAMAGE;SELF;;50;;;;25;;NONE;
+quebra_armadura;1;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;10;;;;;;NONE;
+quebra_armadura;2;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ENEMY;;;DEF;-1;2;;;NONE;
+perseveranca;2;POST_ACTION;HP_RECOVERY;SELF;;20;ATK;;;;;NONE;
+abraco_da_floresta;1;PRIMARY;HP_RECOVERY;SINGLE_ALLY;;30;MAG;;;;;NONE;
+distorcao_ancestral;1;PRIMARY;SPECIAL_STATE;SINGLE_ENEMY;;;;;;;DISTORTED_ATTRIBUTES;NONE;
+```
+
+Loading flow:
+
+```text
+skills.txt + skill_effects.txt
+    -> SkillLoader
+    -> SkillDefinition
+    -> ordered SkillEffectDefinition components
+    -> SkillCatalog
+```

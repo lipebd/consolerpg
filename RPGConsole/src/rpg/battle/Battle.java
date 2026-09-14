@@ -1,27 +1,43 @@
 package rpg.battle;
 
 import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Scanner;
 
+import rpg.characters.CharacterAttribute;
 import rpg.characters.Enemy;
 import rpg.characters.GameCharacter;
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
-import rpg.skills.RecoveryType;
-import rpg.skills.Skill;
+import rpg.items.equipment.WeaponDefinition;
+import rpg.skills.SkillDefinition;
+import rpg.skills.SkillEffectDefinition;
+import rpg.skills.SkillEffectType;
+import rpg.skills.SkillExecutionPhase;
+import rpg.skills.SkillTargetType;
 import rpg.ui.AllyTargetMenu;
-import rpg.ui.BattleTurnOrderScreen;
-import rpg.ui.EnemyTargetMenu;
 import rpg.ui.BattleItemMenu;
+import rpg.ui.BattleTurnOrderScreen;
+import rpg.ui.CombatEffectFormatter;
+import rpg.ui.ConsoleUI;
+import rpg.ui.EnemyTargetMenu;
+import rpg.ui.SkillDetailFormatter;
 
 // Controls a battle between a party and an enemy group.
 public class Battle {
 
+	private static final long PACING_PAUSE_MILLISECONDS = 1500L;
 	private static final int MINIMUM_STATUS_NAME_WIDTH = 8;
+	private static final int SLOT_LABEL_WIDTH = 4;
+	private static final int ACTION_MENU_COLUMN_WIDTH = 15;
+
+	private static final String EFFECTS_LABEL = "Efeitos:";
 
 	private BattleEscapeService escapeService;
 	private BattleTurnOrderGenerator turnOrderGenerator;
@@ -36,6 +52,10 @@ public class Battle {
 	private EnemyTargetMenu enemyTargetMenu;
 	private EnemyBattleGroup enemyGroup;
 	private Scanner scanner;
+	private final Random random;
+	private final DamageCalculator damageCalculator;
+	private final SkillExecutor skillExecutor;
+	private SkillExecution pendingPostActionExecution;
 	private boolean partyFled;
 	private final BattleItemMenu battleItemMenu;
 
@@ -43,7 +63,15 @@ public class Battle {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
 		this.enemyGroup = Objects.requireNonNull(enemyGroup, "Enemy battle group cannot be null.");
 		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
-		Objects.requireNonNull(random, "Random generator cannot be null.");
+		this.random = Objects.requireNonNull(random, "Random generator cannot be null.");
+		this.damageCalculator = new DamageCalculator();
+		this.skillExecutor = new SkillExecutor(
+				damageCalculator,
+				new RecoveryCalculator(),
+				new EffectResistanceCalculator(),
+				random
+		);
+		this.pendingPostActionExecution = null;
 		this.enemyTargetMenu = new EnemyTargetMenu(scanner);
 		this.partyFled = false;
 		this.battleItemMenu = new BattleItemMenu(party, scanner);
@@ -58,19 +86,18 @@ public class Battle {
 
 		displayBattleIntroduction();
 
+		ConsoleUI.pause(PACING_PAUSE_MILLISECONDS);
+
 		while (!party.isDefeated() && !enemyGroup.isDefeated() && !partyFled) {
 			System.out.println("\n[BATALHA — RODADA " + currentRoundNumber + "]");
 
-			int statusNameColumnWidth = calculateStatusNameColumnWidth();
-			int hpValueColumnWidth = calculateHpValueColumnWidth();
-			int mpValueColumnWidth = calculateMpValueColumnWidth();
-			int spValueColumnWidth = calculateSpValueColumnWidth();
+			displayCurrentBattleStatus();
 
-			displayEnemyStatuses(statusNameColumnWidth, hpValueColumnWidth);
-
-			displayPartyStatus(statusNameColumnWidth, hpValueColumnWidth, mpValueColumnWidth, spValueColumnWidth);
+			ConsoleUI.pause(PACING_PAUSE_MILLISECONDS);
 
 			List<BattleTurnEntry> turnEntries = turnOrderGenerator.generate(party, enemyGroup);
+
+			consumePendingSpeedStages();
 
 			currentTurnOrder = new BattleTurnOrder(turnEntries);
 
@@ -79,9 +106,13 @@ public class Battle {
 			currentRoundNumber++;
 		}
 
+		clearTemporaryCharacterEffects();
+
 		BattleResult result = determineBattleResult();
 
 		displayBattleResult(result);
+
+		ConsoleUI.pause(PACING_PAUSE_MILLISECONDS);
 
 		return result;
 	}
@@ -92,8 +123,10 @@ public class Battle {
 	}
 
 	private void displayDamage(GameCharacter target, String displayName, int damage) {
-		System.out.println(displayName + " sofreu " + damage + " de dano. HP atual: " + target.getCurrentHp() + "/"
-				+ target.getMaxHp() + ".");
+		System.out.println(
+				displayName + " sofreu " + damage + " de dano. HP: " + target.getCurrentHp() + "/" + target.getMaxHp()
+						+ "."
+		);
 	}
 
 	private int calculateStatusNameColumnWidth() {
@@ -134,10 +167,22 @@ public class Battle {
 				.orElse(0);
 	}
 
+	private void displayCurrentBattleStatus() {
+		int nameColumnWidth = calculateStatusNameColumnWidth();
+		int hpValueColumnWidth = calculateHpValueColumnWidth();
+		int mpValueColumnWidth = calculateMpValueColumnWidth();
+		int spValueColumnWidth = calculateSpValueColumnWidth();
+
+		displayEnemyStatuses(nameColumnWidth, hpValueColumnWidth);
+
+		displayPartyStatus(nameColumnWidth, hpValueColumnWidth, mpValueColumnWidth, spValueColumnWidth);
+	}
+
 	private void displayEnemyStatuses(int nameColumnWidth, int hpValueColumnWidth) {
 		System.out.println("\n[INIMIGOS]");
 
-		String rowFormat = "%-4s %-" + nameColumnWidth + "s HP %" + hpValueColumnWidth + "s%s%n";
+		String rowFormat = "%-" + SLOT_LABEL_WIDTH + "s %-" + nameColumnWidth + "s  HP: %-" + hpValueColumnWidth
+				+ "s%s%n";
 
 		List<EnemyBattleSlot> slots = enemyGroup.getSlots();
 
@@ -148,17 +193,28 @@ public class Battle {
 			String slotLabel = "[E" + (index + 1) + "]";
 			String condition = slot.isAlive() ? "" : "  DERROTADO";
 
-			System.out.printf(rowFormat, slotLabel, slot.getDisplayName(),
-					formatResourceValue(enemy.getCurrentHp(), enemy.getMaxHp()), condition);
+			System.out.printf(
+					rowFormat,
+					slotLabel,
+					slot.getDisplayName(),
+					formatResourceValue(enemy.getCurrentHp(), enemy.getMaxHp()),
+					condition
+			);
+
+			displayActiveEffects(enemy);
 		}
 	}
 
-	private void displayPartyStatus(int nameColumnWidth, int hpValueColumnWidth, int mpValueColumnWidth,
-			int spValueColumnWidth) {
+	private void displayPartyStatus(
+			int nameColumnWidth,
+			int hpValueColumnWidth,
+			int mpValueColumnWidth,
+			int spValueColumnWidth
+	) {
 		System.out.println("\n[GRUPO]");
 
-		String rowFormat = "%-4s %-" + nameColumnWidth + "s HP %" + hpValueColumnWidth + "s  MP %" + mpValueColumnWidth
-				+ "s  SP %" + spValueColumnWidth + "s%s%n";
+		String rowFormat = "%-" + SLOT_LABEL_WIDTH + "s %-" + nameColumnWidth + "s  HP: %-" + hpValueColumnWidth
+				+ "s  MP: %-" + mpValueColumnWidth + "s  SP: %-" + spValueColumnWidth + "s%s%n";
 
 		List<PlayableCharacter> members = party.getMembers();
 
@@ -168,10 +224,33 @@ public class Battle {
 			String slotLabel = "[A" + (index + 1) + "]";
 			String condition = member.isAlive() ? "" : "  DERROTADO";
 
-			System.out.printf(rowFormat, slotLabel, member.getName(),
+			System.out.printf(
+					rowFormat,
+					slotLabel,
+					member.getName(),
 					formatResourceValue(member.getCurrentHp(), member.getMaxHp()),
 					formatResourceValue(member.getCurrentMp(), member.getMaxMp()),
-					formatResourceValue(member.getCurrentSp(), member.getMaxSp()), condition);
+					formatResourceValue(member.getCurrentSp(), member.getMaxSp()),
+					condition
+			);
+
+			displayActiveEffects(member);
+		}
+	}
+
+	private void displayActiveEffects(GameCharacter character) {
+		List<String> effectLines = CombatEffectFormatter.formatActiveEffectLines(character);
+
+		String statusIndent = " ".repeat(SLOT_LABEL_WIDTH + 1);
+
+		String firstLinePrefix = statusIndent + EFFECTS_LABEL + " ";
+
+		String continuationIndent = " ".repeat(firstLinePrefix.length());
+
+		for (int index = 0; index < effectLines.size(); index++) {
+			String prefix = index == 0 ? firstLinePrefix : continuationIndent;
+
+			System.out.println(prefix + effectLines.get(index));
 		}
 	}
 
@@ -212,16 +291,20 @@ public class Battle {
 	private void displayEnemyAnalysis(EnemyBattleSlot slot) {
 		Enemy analyzedEnemy = slot.getEnemy();
 
-		System.out.println(
-				"\n[" + slot.getDisplayName().toUpperCase() + "] " + analyzedEnemy.getRank().toString().toUpperCase());
+		System.out.println("\n[ANÁLISE — " + slot.getDisplayName().toUpperCase() + "]");
 
+		System.out.println();
+		System.out.println("Rank: " + analyzedEnemy.getRank());
+
+		System.out.println();
 		System.out.println(analyzedEnemy.getDescription());
 
-		System.out.println("HP: " + analyzedEnemy.getCurrentHp() + "/" + analyzedEnemy.getMaxHp());
+		System.out.println();
+		System.out
+				.printf("%-5s%s%n", "HP:", formatResourceValue(analyzedEnemy.getCurrentHp(), analyzedEnemy.getMaxHp()));
 
-		System.out.println("ATK: " + analyzedEnemy.getAttack());
-
-		System.out.println("DEF: " + analyzedEnemy.getDefense());
+		System.out.printf("%-5s%d%n", "ATK:", analyzedEnemy.getAttack());
+		System.out.printf("%-5s%d%n", "DEF:", analyzedEnemy.getDefense());
 	}
 
 	private void displayCurrentTurn(BattleTurnEntry actingEntry) {
@@ -239,39 +322,16 @@ public class Battle {
 	private void displayBattleIntroduction() {
 		System.out.println("\nO grupo foi atacado!");
 
-		System.out.println("Batalha contra:");
+		ConsoleUI.pause(PACING_PAUSE_MILLISECONDS);
 
-		for (EnemyBattleSlot slot : enemyGroup.getSlots()) {
-
-			System.out.println("- " + slot.getDisplayName());
-		}
-	}
-
-	private void displayNoRecoveryTargetMessage(Skill skill, boolean excludesSelf) {
-		if (skill.getRecoveryType() == RecoveryType.REVIVE) {
-			System.out.println("Não há aliados derrotados para reviver.");
-
-			return;
-		}
-
-		if (excludesSelf) {
-			System.out.println("Não há outros aliados disponíveis para receber esta cura.");
-
-			return;
-		}
-
-		System.out.println("Nenhum aliado precisa de cura.");
-	}
-
-	private void displayRecovery(PlayableCharacter target, int recoveredHp, RecoveryType recoveryType) {
-		if (recoveryType == RecoveryType.REVIVE) {
-			System.out.println(target.getName() + " foi revivido com " + recoveredHp + " HP!");
-
-			return;
-		}
-
-		System.out.println(target.getName() + " recuperou " + recoveredHp + " de HP. HP atual: " + target.getCurrentHp()
-				+ "/" + target.getMaxHp() + ".");
+		// Temporarily commented to test battle flow. Might remove this method entirely.
+		/*
+		 * System.out.println("\nBatalha contra:");
+		 * 
+		 * for (EnemyBattleSlot slot : enemyGroup.getSlots()) {
+		 * 
+		 * System.out.println("- " + slot.getDisplayName()); }
+		 */
 	}
 
 	private void executeEnemyTurn(BattleTurnEntry actingEntry) {
@@ -279,7 +339,7 @@ public class Battle {
 
 		PlayableCharacter target = selectEnemyTarget();
 
-		int damage = attackingEnemy.attack(target);
+		int damage = applyBasicAttackDamage(attackingEnemy, target);
 
 		System.out.println("\n" + actingEntry.getDisplayName() + " atacou " + target.getName() + "!");
 
@@ -290,18 +350,24 @@ public class Battle {
 		}
 	}
 
-	private void executeCharacterTurn(PlayableCharacter actingCharacter) {
+	private void executeCharacterTurn(BattleTurnEntry actingEntry) {
+		PlayableCharacter actingCharacter = (PlayableCharacter) actingEntry.getCharacter();
 		boolean validAction = false;
 
 		while (!validAction) {
-			System.out.println("\n[1] Atacar | [2] Defender | [3] Especial | [4] Analisar "
-					+ "| [5] Itens | [6] Rodada | [7] Fugir");
-			System.out.print("> ");
+			displayCharacterActionMenu();
 
-			String choice = scanner.nextLine();
+			String choice = scanner.nextLine().trim();
 
 			switch (choice) {
-			case "1" -> validAction = executeBasicAttack(actingCharacter);
+			case "1" -> {
+				validAction = executeBasicAttack(actingCharacter);
+
+				if (!validAction) {
+					displayCurrentTurn(actingEntry);
+				}
+			}
+
 			case "2" -> {
 				actingCharacter.defend();
 
@@ -309,15 +375,29 @@ public class Battle {
 
 				validAction = true;
 			}
-			case "3" -> validAction = executeSkillMenu(actingCharacter);
 
-			case "4" -> executeEnemyAnalysis();
+			case "3" -> {
+				validAction = executeSkillMenu(actingCharacter);
 
-			case "5" -> validAction = battleItemMenu.open(actingCharacter);
+				if (!validAction) {
+					displayCurrentTurn(actingEntry);
+				}
+			}
 
-			case "6" -> turnOrderScreen.show(currentTurnOrder, currentRoundNumber);
+			case "4" -> {
+				validAction = battleItemMenu.open(actingCharacter);
 
-			case "7" -> {
+				if (!validAction) {
+					displayCurrentTurn(actingEntry);
+				}
+			}
+
+			case "5" -> {
+				openTacticalMenu();
+				displayCurrentTurn(actingEntry);
+			}
+
+			case "6" -> {
 				executeEscapeAttempt(actingCharacter);
 				validAction = true;
 			}
@@ -327,8 +407,80 @@ public class Battle {
 		}
 	}
 
+	private void displayCharacterActionMenu() {
+		String rowFormat = "%-" + ACTION_MENU_COLUMN_WIDTH + "s%-" + ACTION_MENU_COLUMN_WIDTH + "s%s%n";
+
+		System.out.println();
+
+		System.out.printf(rowFormat, "[1] Atacar", "[2] Defender", "[3] Especial");
+
+		System.out.printf(rowFormat, "[4] Itens", "[5] Tática", "[6] Fugir");
+
+		System.out.print("> ");
+	}
+
+	private void openTacticalMenu() {
+		while (true) {
+			displayTacticalMenu();
+
+			String choice = scanner.nextLine().trim();
+
+			switch (choice) {
+			case "0" -> {
+				return;
+			}
+
+			case "1" -> {
+				displayCurrentBattleStatus();
+				waitForBattleScreenBack();
+			}
+
+			case "2" -> {
+				if (executeEnemyAnalysis()) {
+					waitForBattleScreenBack();
+				}
+			}
+
+			case "3" -> {
+				turnOrderScreen.show(currentTurnOrder, currentRoundNumber);
+				waitForBattleScreenBack();
+			}
+
+			default -> System.out.println("Opção inválida.");
+			}
+		}
+	}
+
+	private void displayTacticalMenu() {
+		System.out.println("\n[TÁTICA]");
+
+		System.out.println();
+		System.out.println("[1] Situação da batalha");
+		System.out.println("[2] Analisar inimigo");
+		System.out.println("[3] Ordem da rodada");
+
+		System.out.println();
+		System.out.println("[0] Voltar");
+		System.out.print("> ");
+	}
+
+	private void waitForBattleScreenBack() {
+		while (true) {
+			System.out.println("\n[0] Voltar");
+			System.out.print("> ");
+
+			String choice = scanner.nextLine().trim();
+
+			if (choice.equals("0")) {
+				return;
+			}
+
+			System.out.println("Opção inválida.");
+		}
+	}
+
 	private boolean executeSkillMenu(PlayableCharacter actingCharacter) {
-		List<Skill> skills = actingCharacter.getSkills();
+		List<SkillDefinition> skills = actingCharacter.getUnlockedSkillDefinitions();
 
 		if (skills.isEmpty()) {
 			System.out.println("Nenhuma habilidade disponível.");
@@ -337,21 +489,21 @@ public class Battle {
 
 		while (true) {
 			System.out.println("\nEscolha uma habilidade:");
-			System.out.println("\n[" + actingCharacter.getName().toUpperCase() + "] MP: "
-					+ actingCharacter.getCurrentMp() + "/" + actingCharacter.getMaxMp() + " | SP: "
-					+ actingCharacter.getCurrentSp() + "/" + actingCharacter.getMaxSp() + "\n");
+			System.out.println(
+					"\n[" + actingCharacter.getName().toUpperCase() + "] MP: " + actingCharacter.getCurrentMp() + "/"
+							+ actingCharacter.getMaxMp() + " | SP: " + actingCharacter.getCurrentSp() + "/"
+							+ actingCharacter.getMaxSp() + "\n"
+			);
 			for (int index = 0; index < skills.size(); index++) {
-				Skill skill = skills.get(index);
+				SkillDefinition skill = skills.get(index);
 
-				String typeDisplayName = getSkillTypeDisplayName(skill);
-
-				String powerDescription = getSkillPowerDescription(skill);
-
-				System.out.println("[" + (index + 1) + "] " + skill.getName() + " [" + typeDisplayName + "] | "
-						+ powerDescription + " | MP: " + skill.getMpCost() + " | SP: " + skill.getSpCost());
+				System.out.println(
+						"[" + (index + 1) + "] " + skill.getName() + " | Custo: "
+								+ SkillDetailFormatter.formatCost(skill)
+				);
 			}
 
-			System.out.println("[0] Voltar");
+			System.out.println("\n[0] Voltar");
 			System.out.print("> ");
 
 			String choice = scanner.nextLine();
@@ -368,7 +520,7 @@ public class Battle {
 					continue;
 				}
 
-				Skill selectedSkill = skills.get(selectedIndex);
+				SkillDefinition selectedSkill = skills.get(selectedIndex);
 
 				if (!confirmSkillUse(selectedSkill)) {
 					continue;
@@ -404,9 +556,28 @@ public class Battle {
 
 		Enemy target = targetSlot.getEnemy();
 
-		System.out.println("\n" + actingCharacter.getName() + " atacou " + targetSlot.getDisplayName() + "!");
+		Optional<WeaponDefinition> equippedWeapon = actingCharacter.getEquipment().getWeapon();
 
-		int damage = actingCharacter.attack(target);
+		int damage;
+
+		if (equippedWeapon.isPresent()) {
+			WeaponDefinition weapon = equippedWeapon.get();
+
+			System.out.println(
+					"\n" + actingCharacter.getName() + " executou " + weapon.getNormalAttackName() + " com sua arma!"
+			);
+
+			damage = applyBasicAttackDamage(
+					actingCharacter,
+					target,
+					weapon.getDamageType(),
+					weapon.getBaseWeaponDamage()
+			);
+		} else {
+			System.out.println("\n" + actingCharacter.getName() + " atacou " + targetSlot.getDisplayName() + "!");
+
+			damage = applyBasicAttackDamage(actingCharacter, target);
+		}
 
 		displayDamage(target, targetSlot.getDisplayName(), damage);
 
@@ -419,11 +590,7 @@ public class Battle {
 
 	private void executeTurn(BattleTurnEntry actingEntry) {
 		switch (actingEntry.getSide()) {
-		case PARTY -> {
-			PlayableCharacter actingCharacter = (PlayableCharacter) actingEntry.getCharacter();
-
-			executeCharacterTurn(actingCharacter);
-		}
+		case PARTY -> executeCharacterTurn(actingEntry);
 
 		case ENEMY -> executeEnemyTurn(actingEntry);
 		}
@@ -445,19 +612,21 @@ public class Battle {
 			completeEscape(actingCharacter);
 		}
 
-		case FAILURE -> System.out.println(
-				"\n" + actingCharacter.getName() + " tentou fugir, mas os inimigos bloquearam o caminho!");
+		case FAILURE -> System.out
+				.println("\n" + actingCharacter.getName() + " tentou fugir, mas os inimigos bloquearam o caminho!");
 		}
 	}
 
-	private void executeEnemyAnalysis() {
-		Optional<EnemyBattleSlot> selectedSlot = enemyTargetMenu.selectTarget(enemyGroup);
+	private boolean executeEnemyAnalysis() {
+		Optional<EnemyBattleSlot> selectedSlot = enemyTargetMenu.selectTarget(enemyGroup, "Analisar inimigo");
 
 		if (selectedSlot.isEmpty()) {
-			return;
+			return false;
 		}
 
 		displayEnemyAnalysis(selectedSlot.get());
+
+		return true;
 	}
 
 	private void executeCurrentRound() {
@@ -471,74 +640,256 @@ public class Battle {
 			BattleTurnEntry actingEntry = currentEntry.get();
 
 			displayCurrentTurn(actingEntry);
+			ConsoleUI.pause(PACING_PAUSE_MILLISECONDS);
+			pendingPostActionExecution = null;
 			executeTurn(actingEntry);
+
+			actingEntry.getCharacter().finishConsumedTurn();
+
+			if (pendingPostActionExecution != null) {
+				List<SkillEffectResult> postActionResults = skillExecutor.executePostAction(pendingPostActionExecution);
+
+				displaySkillEffectResults(postActionResults);
+				updateFinishingCharacter(pendingPostActionExecution);
+			}
+
+			ConsoleUI.pause(PACING_PAUSE_MILLISECONDS);
 
 			currentTurnOrder.advance();
 		}
 	}
 
-	private boolean executeSelectedSkill(PlayableCharacter actingCharacter, Skill skill) {
-		if (skill.getRecoveryType() != RecoveryType.NONE) {
-			return executeRecoverySkill(actingCharacter, skill);
-		}
+	private boolean executeSelectedSkill(PlayableCharacter actingCharacter, SkillDefinition skill) {
+		Optional<SkillExecutionContext> selectedContext = selectSkillTargets(actingCharacter, skill);
 
-		return executeDamageSkill(actingCharacter, skill);
-	}
-
-	private boolean executeDamageSkill(PlayableCharacter actingCharacter, Skill skill) {
-		Optional<EnemyBattleSlot> selectedSlot = enemyTargetMenu.selectTarget(enemyGroup);
-
-		if (selectedSlot.isEmpty()) {
+		if (selectedContext.isEmpty()) {
 			return false;
 		}
 
-		EnemyBattleSlot targetSlot = selectedSlot.get();
+		SkillExecution execution = skillExecutor.beginExecution(skill, selectedContext.get());
 
-		Enemy target = targetSlot.getEnemy();
+		if (!execution.canConsumeTurn()) {
+			System.out.println("A habilidade não pode afetar nenhum dos alvos selecionados.");
+
+			return false;
+		}
 
 		spendSkillResources(actingCharacter, skill);
 
 		System.out.println("\n" + actingCharacter.getName() + " usou " + skill.getName() + "!");
 
-		int damage = actingCharacter.usePhysicalSkill(skill, target);
+		displaySkillEffectResults(execution.getEffectResults());
 
-		displayDamage(target, targetSlot.getDisplayName(), damage);
+		if (!skill.getEffectsByPhase(SkillExecutionPhase.POST_ACTION).isEmpty()) {
+			pendingPostActionExecution = execution;
+		}
 
+		updateFinishingCharacter(execution);
+
+		return true;
+	}
+
+	private Optional<SkillExecutionContext>
+			selectSkillTargets(PlayableCharacter actingCharacter, SkillDefinition skill) {
+		Map<SkillTargetType, List<GameCharacter>> targetsByType = new EnumMap<>(SkillTargetType.class);
+
+		EnumSet<SkillTargetType> selectedTargetTypes = EnumSet.noneOf(SkillTargetType.class);
+
+		for (SkillEffectDefinition effect : skill.getEffects()) {
+			SkillTargetType targetType = effect.getTargetType();
+
+			if (targetType == SkillTargetType.SELF || !selectedTargetTypes.add(targetType)) {
+				continue;
+			}
+
+			Optional<List<GameCharacter>> selectedTargets = selectTargetsForType(actingCharacter, skill, targetType);
+
+			if (selectedTargets.isEmpty()) {
+				return Optional.empty();
+			}
+
+			targetsByType.put(targetType, selectedTargets.get());
+		}
+
+		int weaponBaseDamage = actingCharacter.getEquipment().getWeapon().map(WeaponDefinition::getBaseWeaponDamage)
+				.orElse(0);
+
+		return Optional.of(new SkillExecutionContext(actingCharacter, targetsByType, weaponBaseDamage));
+	}
+
+	private Optional<List<GameCharacter>>
+			selectTargetsForType(PlayableCharacter actingCharacter, SkillDefinition skill, SkillTargetType targetType) {
+		return switch (targetType) {
+		case SELF -> throw new IllegalArgumentException("SELF targets are supplied automatically.");
+
+		case SINGLE_ALLY -> selectSingleAllyTarget(skill);
+
+		case ALL_ALLIES -> Optional.of(party.getMembers().stream().map(member -> (GameCharacter) member).toList());
+
+		case ALL_BUT_SELF -> Optional.of(
+				party.getMembers().stream().filter(member -> member != actingCharacter)
+						.map(member -> (GameCharacter) member).toList()
+		);
+
+		case RANDOM_ALLY -> selectRandomAllyTarget(skill);
+
+		case SINGLE_ENEMY ->
+			enemyTargetMenu.selectTarget(enemyGroup).map(slot -> List.<GameCharacter>of(slot.getEnemy()));
+
+		case ALL_ENEMIES ->
+			Optional.of(enemyGroup.getLivingSlots().stream().map(slot -> (GameCharacter) slot.getEnemy()).toList());
+
+		case RANDOM_ENEMY -> selectRandomEnemyTarget();
+		};
+	}
+
+	private Optional<List<GameCharacter>> selectSingleAllyTarget(SkillDefinition skill) {
+		Optional<PlayableCharacter> selectedTarget;
+
+		if (targetsDefeatedAlly(skill, SkillTargetType.SINGLE_ALLY)) {
+			selectedTarget = allyTargetMenu.selectDefeatedTarget(party);
+		} else {
+			selectedTarget = allyTargetMenu.selectLivingTarget(party);
+		}
+
+		return selectedTarget.map(target -> List.<GameCharacter>of(target));
+	}
+
+	private Optional<List<GameCharacter>> selectRandomAllyTarget(SkillDefinition skill) {
+		List<PlayableCharacter> candidates = targetsDefeatedAlly(skill, SkillTargetType.RANDOM_ALLY)
+				? party.getDefeatedMembers()
+				: party.getLivingMembers();
+
+		if (candidates.isEmpty()) {
+			System.out.println("Não há aliados disponíveis para essa habilidade.");
+
+			return Optional.empty();
+		}
+
+		PlayableCharacter selectedTarget = candidates.get(random.nextInt(candidates.size()));
+
+		return Optional.of(List.of(selectedTarget));
+	}
+
+	private Optional<List<GameCharacter>> selectRandomEnemyTarget() {
+		List<EnemyBattleSlot> candidates = enemyGroup.getLivingSlots();
+
+		if (candidates.isEmpty()) {
+			throw new IllegalStateException("No living enemy is available.");
+		}
+
+		Enemy selectedTarget = candidates.get(random.nextInt(candidates.size())).getEnemy();
+
+		return Optional.of(List.of(selectedTarget));
+	}
+
+	private boolean targetsDefeatedAlly(SkillDefinition skill, SkillTargetType targetType) {
+		return skill.getEffects().stream().anyMatch(
+				effect -> effect.getTargetType() == targetType && effect.getEffectType() == SkillEffectType.REVIVE
+		);
+	}
+
+	private void displaySkillEffectResults(List<SkillEffectResult> results) {
+		for (SkillEffectResult result : results) {
+			GameCharacter target = result.getTarget();
+
+			String targetName = getCharacterDisplayName(target);
+
+			switch (result.getOutcome()) {
+			case RESISTED -> System.out.println(targetName + " resistiu ao efeito!");
+
+			case NOT_TRIGGERED -> System.out.println("O efeito adicional sobre " + targetName + " não foi ativado.");
+
+			case APPLIED -> displayAppliedSkillEffectResult(result, target, targetName);
+			}
+		}
+	}
+
+	private void displayAppliedSkillEffectResult(SkillEffectResult result, GameCharacter target, String targetName) {
+		switch (result.getEffect().getEffectType()) {
+		case DAMAGE -> displayDamage(target, targetName, result.getAmount());
+
+		case RECOIL_DAMAGE -> displayDamage(target, targetName, result.getAmount());
+
+		case HP_RECOVERY -> System.out.println(
+				targetName + " recuperou " + result.getAmount() + " de HP. HP atual: " + target.getCurrentHp() + "/"
+						+ target.getMaxHp() + "."
+		);
+
+		case MP_RECOVERY -> System.out.println(
+				targetName + " recuperou " + result.getAmount() + " de MP. MP atual: " + target.getCurrentMp() + "/"
+						+ target.getMaxMp() + "."
+		);
+
+		case SP_RECOVERY -> System.out.println(
+				targetName + " recuperou " + result.getAmount() + " de SP. SP atual: " + target.getCurrentSp() + "/"
+						+ target.getMaxSp() + "."
+		);
+
+		case REVIVE -> System.out.println(targetName + " foi revivido com " + result.getAmount() + " HP!");
+
+		case ATTRIBUTE_STAGE -> displayAttributeStageResult(result, targetName);
+
+		case PURIFICATION -> System.out.println("Os efeitos negativos de " + targetName + " foram purificados.");
+
+		case DISSIPATION -> System.out.println("Os efeitos positivos de " + targetName + " foram dissipados.");
+
+		case SPECIAL_STATE -> displaySpecialStateResult(target, targetName);
+
+		case DAMAGE_POWER_MODIFIER -> {
+		}
+		}
+	}
+
+	private void displayAttributeStageResult(SkillEffectResult result, String targetName) {
+		SkillEffectDefinition effect = result.getEffect();
+
+		String direction = effect.getStages() > 0 ? " aumentou." : " diminuiu.";
+
+		System.out.println(getAttributeDisplayName(effect.getAttribute()) + " de " + targetName + direction);
+	}
+
+	private String getAttributeDisplayName(CharacterAttribute attribute) {
+		return switch (attribute) {
+		case ATK -> "O Ataque";
+		case DEF -> "A Defesa";
+		case MAG -> "A Magia";
+		case RES -> "A Resistência";
+		case VEL -> "A Velocidade";
+		case LCK -> "A Sorte";
+		};
+	}
+
+	private void displaySpecialStateResult(GameCharacter target, String targetName) {
+		if (target.hasDistortedAttributes()) {
+			System.out.println("Os atributos de " + targetName + " foram distorcidos.");
+		} else {
+			System.out.println("Os atributos de " + targetName + " voltaram ao normal.");
+		}
+	}
+
+	private String getCharacterDisplayName(GameCharacter character) {
+		for (EnemyBattleSlot slot : enemyGroup.getSlots()) {
+			if (slot.getEnemy() == character) {
+				return slot.getDisplayName();
+			}
+		}
+
+		return character.getName();
+	}
+
+	private void updateFinishingCharacter(SkillExecution execution) {
 		if (enemyGroup.isDefeated()) {
-			finishingCharacter = actingCharacter;
+			finishingCharacter = execution.getContext().getActingCharacter();
 		}
-
-		return true;
 	}
 
-	private boolean executeRecoverySkill(PlayableCharacter actingCharacter, Skill skill) {
-		Optional<List<PlayableCharacter>> selectedTargets = selectRecoveryTargets(actingCharacter, skill);
-
-		if (selectedTargets.isEmpty()) {
-			return false;
-		}
-
-		spendSkillResources(actingCharacter, skill);
-
-		System.out.println("\n" + actingCharacter.getName() + " usou " + skill.getName() + "!");
-
-		for (PlayableCharacter target : selectedTargets.get()) {
-
-			int recoveredHp = actingCharacter.useRecoverySkill(skill, target);
-
-			displayRecovery(target, recoveredHp, skill.getRecoveryType());
-		}
-
-		return true;
-	}
-
-	private boolean confirmSkillUse(Skill skill) {
-		System.out.println("\n[" + skill.getName().toUpperCase() + "]");
-
-		System.out.println(skill.getDescription());
+	private boolean confirmSkillUse(SkillDefinition skill) {
+		System.out.println("\n" + SkillDetailFormatter.formatDetails(skill));
 
 		while (true) {
 			System.out.println("\n[1] Usar | [0] Voltar");
+
 			System.out.print("> ");
 
 			String confirmation = scanner.nextLine();
@@ -578,73 +929,7 @@ public class Battle {
 		return party.size() > 1;
 	}
 
-	private Optional<List<PlayableCharacter>> selectRecoveryTargets(PlayableCharacter actingCharacter, Skill skill) {
-
-		return switch (skill.getRecoveryTargetType()) {
-		case SELF -> selectSelfRecoveryTarget(actingCharacter, skill);
-
-		case SINGLE_ALLY -> selectSingleRecoveryTarget(skill);
-
-		case ALL_ALLIES -> selectMultipleRecoveryTargets(actingCharacter, skill, true);
-
-		case ALL_BUT_SELF -> selectMultipleRecoveryTargets(actingCharacter, skill, false);
-
-		case NONE, SINGLE_ENEMY, ALL_ENEMIES, RANDOM_ALLY, RANDOM_ENEMY ->
-			throw new IllegalArgumentException("Invalid recovery target type.");
-		};
-	}
-
-	private Optional<List<PlayableCharacter>> selectSelfRecoveryTarget(PlayableCharacter actingCharacter, Skill skill) {
-
-		if (!canReceiveRecovery(actingCharacter, skill.getRecoveryType())) {
-			displayNoRecoveryTargetMessage(skill, false);
-
-			return Optional.empty();
-		}
-
-		return Optional.of(List.of(actingCharacter));
-	}
-
-	private Optional<List<PlayableCharacter>> selectSingleRecoveryTarget(Skill skill) {
-
-		Optional<PlayableCharacter> selectedTarget;
-
-		if (skill.getRecoveryType() == RecoveryType.HEAL) {
-			selectedTarget = allyTargetMenu.selectInjuredTarget(party);
-		} else {
-			selectedTarget = allyTargetMenu.selectDefeatedTarget(party);
-		}
-
-		return selectedTarget.map(target -> List.of(target));
-	}
-
-	private Optional<List<PlayableCharacter>> selectMultipleRecoveryTargets(PlayableCharacter actingCharacter,
-			Skill skill, boolean includeSelf) {
-
-		List<PlayableCharacter> targets = party.getMembers().stream()
-				.filter(member -> includeSelf || member != actingCharacter)
-				.filter(member -> canReceiveRecovery(member, skill.getRecoveryType())).toList();
-
-		if (targets.isEmpty()) {
-			displayNoRecoveryTargetMessage(skill, !includeSelf);
-
-			return Optional.empty();
-		}
-
-		return Optional.of(targets);
-	}
-
-	private boolean canReceiveRecovery(PlayableCharacter target, RecoveryType recoveryType) {
-		return switch (recoveryType) {
-		case HEAL -> target.isAlive() && target.getCurrentHp() < target.getMaxHp();
-
-		case REVIVE -> !target.isAlive();
-
-		case NONE -> false;
-		};
-	}
-
-	private void spendSkillResources(PlayableCharacter actingCharacter, Skill skill) {
+	private void spendSkillResources(PlayableCharacter actingCharacter, SkillDefinition skill) {
 		if (skill.getMpCost() > 0) {
 			actingCharacter.spendMp(skill.getMpCost());
 		}
@@ -659,24 +944,6 @@ public class Battle {
 		partyFled = true;
 	}
 
-	private String getSkillTypeDisplayName(Skill skill) {
-		if (skill.getRecoveryType() != RecoveryType.NONE) {
-			return skill.getRecoveryType().getDisplayName();
-		}
-
-		return skill.getDamageType().toString();
-	}
-
-	private String getSkillPowerDescription(Skill skill) {
-		return switch (skill.getRecoveryType()) {
-		case HEAL -> "Cura: " + skill.getBaseHealing();
-
-		case REVIVE -> "Poder: " + skill.getBaseHealing();
-
-		case NONE -> "Poder: " + skill.getBaseDamage();
-		};
-	}
-
 	private String getBattleResultSubject(PlayableCharacter character) {
 		if (party.size() == 1) {
 			return character.getName();
@@ -685,4 +952,39 @@ public class Battle {
 		return character.getName() + " e seus companheiros";
 	}
 
+	private void consumePendingSpeedStages() {
+		for (PlayableCharacter member : party.getMembers()) {
+			member.consumePendingSpeedStages();
+		}
+
+		for (EnemyBattleSlot slot : enemyGroup.getSlots()) {
+			slot.getEnemy().consumePendingSpeedStages();
+		}
+	}
+
+	private void clearTemporaryCharacterEffects() {
+		for (PlayableCharacter member : party.getMembers()) {
+			member.clearTemporaryBattleEffects();
+		}
+
+		for (EnemyBattleSlot slot : enemyGroup.getSlots()) {
+			slot.getEnemy().clearTemporaryBattleEffects();
+		}
+	}
+
+	private int applyBasicAttackDamage(GameCharacter attacker, GameCharacter target) {
+		return applyBasicAttackDamage(attacker, target, DamageType.PHYSICAL, 0);
+	}
+
+	private int applyBasicAttackDamage(
+			GameCharacter attacker,
+			GameCharacter target,
+			DamageType damageType,
+			int weaponBaseDamage
+	) {
+		double calculatedDamage = damageCalculator
+				.calculateDamage(attacker, target, damageType, 0, weaponBaseDamage, 0);
+
+		return target.takeDamage(calculatedDamage);
+	}
 }

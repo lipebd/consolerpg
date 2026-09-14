@@ -107,6 +107,7 @@ Package names use lowercase letters without underscores:
 rpg.characters
 rpg.battle
 rpg.battle.rewards
+rpg.items.equipment
 rpg.world.encounters
 ```
 
@@ -128,6 +129,8 @@ BattleRewardService
 ShopDefinition
 ShopOfferState
 ShopTransactionService
+EquipmentDefinition
+EquipmentService
 ```
 
 The filename must exactly match the public class name:
@@ -151,17 +154,28 @@ The following suffixes have specific meanings in RPGConsole.
 | `Settings` | Immutable configuration values controlling a feature | `ExplorationSettings`, `DungeonSettings` |
 | `Session` | Mutable progress that lasts for one execution of a feature | `ExplorationSession` |
 | `State` | Mutable runtime data preserved for the lifetime of a domain object or the current program execution | `ShopState`, `ShopOfferState` |
+| `Execution` | Mutable state limited to one execution of a composite action | `SkillExecution` |
+| `Context` | Inputs and shared selections used throughout one execution | `SkillExecutionContext` |
 | `Generator` | Selects or creates results using rules and randomness | `EncounterGenerator`, `ShopStateGenerator` |
+| `Calculator` | Centralizes one domain formula without coordinating the complete flow | `DamageCalculator`, `RecoveryCalculator`, `EffectResistanceCalculator`, `CharacterGrowthCalculator` |
 | `Coordinator` | Orchestrates several existing components without owning all their internal rules | `BattleCoordinator` |
-| `Service` | Applies a cohesive domain operation, usually without console input | `BattleRewardService`, `ShopTransactionService` |
+| `Service` | Applies a cohesive domain operation, usually without console input | `BattleRewardService`, `ShopTransactionService`, `EquipmentService` |
 | `Menu` | Reads player input and manages one player-facing decision flow | `RouteMenu`, `EnemyTargetMenu`, `ShopMenu` |
 | `Screen` | Displays a complete console view or result | `TitleScreen`, `BattleRewardScreen` |
 | `Result` / `Rewards` | Represents the outcome of an operation | `BattleResult`, `BattleRewards`, `ShopPurchaseResult` |
+| `Outcome` | Closed enum describing how an attempted operation concluded | `SkillEffectOutcome` |
+| `Formatter` | Produces shared presentation text without deciding domain behavior | `CombatEffectFormatter`, `ItemMenuFormatter`, `SkillDetailFormatter`, `EquipmentDetailFormatter` |
 | `Group` | Owns and queries a collection that acts as one domain unit | `EnemyBattleGroup` |
 | `Slot` | Represents one uniquely identifiable position inside a runtime group | `EnemyBattleSlot` |
 
 - `Session` represents the temporary progress of a bounded execution of a mechanic, such as an exploration.
 - `State` represents mutable data linked to an entity over a broader lifecycle, such as a shop's current inventory.
+- `Execution` is narrower than `Session`: it exists for one composite action and is discarded when that action finishes.
+- `Calculator` owns a formula; its caller owns sequencing, mutation and presentation.
+
+Use `naturalStats` for the character values produced by class and level before equipment bonuses and temporary combat effects. Use `effective` only for values after every currently applicable modifier has been considered.
+
+A `Definition` does not require a parallel mutable class with the same root name. Create a runtime counterpart only when the concept has persistent instance state. For example, `SkillDefinition` can be referenced directly by a character because per-use state belongs to `SkillExecution`; an otherwise empty `Skill` wrapper would add no responsibility.
 
 Before creating a new class, check whether its intended role matches one of these established terms.
 
@@ -413,6 +427,9 @@ Examples:
 | Item | `meruma` | `Merumã` |
 | Shop | `mercado_bree` | `Mercado de Bree` |
 | Shop stock entry | `bree_meruma_discount` | Not displayed directly |
+| Playable class | `flagelo` | `Flagelo` |
+
+A playable-class symbol is presentation data, not a stable ID. Code must never use the symbol for catalog lookup, equality, class compatibility or progression rules. Different internal definitions may intentionally share a symbol when they represent the same player-facing class.
 
 A shop-stock entry ID identifies one possible commercial offer, not merely an item. It should remain meaningful when the same shop contains multiple offers for the same item with different prices or quantities.
 
@@ -447,6 +464,25 @@ Passavento 2
 
 They must not change the enemy's stable ID or canonical display name.
 
+### Playable-character names
+
+Playable-character names are mutable runtime identity, not stable content IDs.
+
+`CharacterNameRules` is the single owner of their normalization, validation, maximum length and case-insensitive comparison. Menus, loaders and party operations must reuse it instead of defining local regular expressions or length constants.
+
+Valid names:
+
+- Contain at most 16 Unicode code points after normalization.
+- Use Unicode letters.
+- May use an ordinary space (` `), hyphen (`-`) or straight apostrophe (`'`) only between letters.
+- Are normalized to Unicode NFC.
+- Have outer ordinary spaces removed.
+- Collapse repeated ordinary spaces.
+
+Names containing numbers, controls, tabs, unrelated punctuation or malformed separators are invalid.
+
+`CharacterNameLoader`, `CharacterNameCatalog` and `CharacterNameSelector` keep their shared `CharacterName` prefix because they participate in the same narrowly defined naming subsystem. Their suffixes continue to describe distinct responsibilities: loading, storage and random selection.
+
 ## External data fields
 
 Data filenames use lowercase `snake_case` and normally describe plural content:
@@ -457,6 +493,14 @@ encounters.txt
 enemy_drops.txt
 shops.txt
 shop_stock.txt
+skills.txt
+skill_effects.txt
+skill_scrolls.txt
+weapons.txt
+armors.txt
+trinkets.txt
+character_names.txt
+playable_classes.txt
 ```
 
 Header field names use `camelCase` and should match the corresponding Java vocabulary:
@@ -465,7 +509,25 @@ Header field names use `camelCase` and should match the corresponding Java vocab
 # enemyId;itemId;dropChance;minQuantity;maxQuantity
 # id;scenarioId;accessType;offerSlots;name;description
 # id;shopId;itemId;shopSalePricePercent;stock;weight
+# id;classId;acquisitionType;levelRequirement;mpCost;spCost;name;description
+# itemId;skillId;classId
+# skillId;sequence;phase;effectType;targetType;damageType;power;attribute;stages;duration;triggerChancePercent;specialStateType;conditionType;conditionValue
+# itemId;damageType;weaponType;levelRequirement;normalAttackName;baseWeaponDamage;hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus
+# itemId;armorWeight;levelRequirement;hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus
+# itemId;trinketType;levelRequirement;hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus;experienceModifierPercent;goldModifierPercent
+# name
+# id;name;symbol;baseHp;baseMp;baseSp;baseAttack;baseDefense;baseMagic;baseResistance;baseSpeed;baseLuck;primaryAttribute;secondaryAttribute;armorWeight;description
 ```
+
+`character_names.txt` is intentionally different from semicolon-based definition files: each active line is one complete name.
+
+Use `symbol` for the single Unicode presentation marker stored by a playable class. Do not call it `icon`, because it is console text rather than an image or graphical asset. A symbol must not replace the class ID in code or the complete class name where detailed identification is required.
+
+Use `baseWeaponDamage` in Java and external headers. `DBA` may appear in internal design discussion, but the player-facing label is `Poder`.
+
+Use `ArmorWeight` for both class compatibility and armor definitions. The former name `PlayableClassWeight` is obsolete.
+
+`DamageType` belongs to `rpg.battle`, because physical and magical damage are shared by weapon attacks and skills rather than owned by `rpg.skills`.
 
 Enum fields use their exact Java constant names:
 
@@ -473,6 +535,16 @@ Enum fields use their exact Java constant names:
 COMMON
 SPECIAL_ONLY
 ```
+
+Skill acquisition data uses the exact `SkillAcquisitionType` constants:
+
+```text
+STARTER
+LEVEL
+SCROLL
+```
+
+`levelRequirement` is the automatic learning level for `STARTER` and `LEVEL`, and the minimum scroll-use level for `SCROLL`.
 
 Do not rename or reorder fields without updating:
 
@@ -519,6 +591,10 @@ Prefer: Físico
 ```
 
 Developer-facing exception messages remain in English because they describe programming or data configuration errors rather than game events.
+
+Valid playable-character names are displayed completely and are not truncated.
+
+Playable-class symbols should use broadly supported Unicode characters. Their precise appearance may vary according to the terminal, operating system and fallback font, so interfaces must not rely on exact glyph shape, color or visual width for correctness.
 
 ## Comments and Javadoc
 
@@ -569,15 +645,17 @@ Recommended categories:
 - `docs/`: documentation-only work;
 - `test/`: tests and test infrastructure.
 
-Commit messages use concise English imperative descriptions:
+Commit messages use a concise conventional prefix followed by an English imperative description:
 
 ```text
-Add external enemy drop tables
-Refactor battle reward flow
-Support weighted enemy groups
-Fix boss position after fleeing
-Update V2 architecture documentation
+feat: add external enemy drop tables
+refactor: simplify battle reward flow
+feat: support weighted enemy groups
+fix: preserve boss position after fleeing
+docs: update V4 architecture documentation
 ```
+
+Use `feat`, `fix`, `refactor`, `docs` or `test` according to the primary purpose of the commit.
 
 Do not use the commit subject as a complete patch note. Detailed context can be placed in the commit body when necessary.
 
@@ -624,6 +702,8 @@ Before introducing a new name, verify:
 - [ ] Is a stable ID separate from its display name?
 - [ ] Is a content variant modeled with its own ID when its rules differ?
 - [ ] Does the name remain meaningful if the internal implementation changes?
+- [ ] Does playable-character naming reuse `CharacterNameRules`?
+- [ ] Is a playable-class symbol treated only as presentation data?
 - [ ] Have related documentation and data headers been updated?
 
 When a convention does not clearly cover a new case, the team should agree on the vocabulary before several competing names enter the codebase.

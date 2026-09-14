@@ -3,71 +3,87 @@ package rpg.characters;
 // Stores the initial attributes of a game character.
 public final class CharacterStats {
 
-    private final int maxHp;
-    private final int maxMp;
-    private final int maxSp;
-    private final int attack;
-    private final int defense;
-    private final int magic;
-    private final int resistance;
-    private final int speed;
-    private final int luck;
+	private final int maxHp;
+	private final int maxMp;
+	private final int maxSp;
+	private final int attack;
+	private final int defense;
+	private final int magic;
+	private final int resistance;
+	private final int speed;
+	private final int luck;
 
-    public CharacterStats(
-            int maxHp,
-            int maxMp,
-            int maxSp,
-            int attack,
-            int defense,
-            int magic,
-            int resistance,
-            int speed,
-            int luck
-    ) {
-        this.maxHp = maxHp;
-        this.maxMp = maxMp;
-        this.maxSp = maxSp;
-        this.attack = attack;
-        this.defense = defense;
-        this.magic = magic;
-        this.resistance = resistance;
-        this.speed = speed;
-        this.luck = luck;
-    }
+	public CharacterStats(
+			int maxHp,
+			int maxMp,
+			int maxSp,
+			int attack,
+			int defense,
+			int magic,
+			int resistance,
+			int speed,
+			int luck
+	) {
+		this.maxHp = requirePositive(maxHp, "Maximum HP");
+		this.maxMp = requireNonNegative(maxMp, "Maximum MP");
+		this.maxSp = requireNonNegative(maxSp, "Maximum SP");
+		this.attack = requirePositive(attack, "ATK");
+		this.defense = requirePositive(defense, "DEF");
+		this.magic = requirePositive(magic, "MAG");
+		this.resistance = requirePositive(resistance, "RES");
+		this.speed = requirePositive(speed, "VEL");
+		this.luck = requirePositive(luck, "LCK");
+	}
 
-    public int getMaxHp() {
-        return maxHp;
-    }
+	private static int requirePositive(int value, String fieldName) {
+		if (value <= 0) {
+			throw new IllegalArgumentException(fieldName + " must be positive.");
+		}
 
-    public int getMaxMp() {
-        return maxMp;
-    }
+		return value;
+	}
 
-    public int getMaxSp() {
-        return maxSp;
-    }
+	private static int requireNonNegative(int value, String fieldName) {
+		if (value < 0) {
+			throw new IllegalArgumentException(fieldName + " cannot be negative.");
+		}
 
-    public int getAttack() {
-        return attack;
-    }
+		return value;
+	}
 
-    public int getDefense() {
-        return defense;
-    }
+	public int getMaxHp() {
+		return maxHp;
+	}
 
-    public int getMagic() {
-        return magic;
-    }
+	public int getMaxMp() {
+		return maxMp;
+	}
 
-    public int getResistance() {
-        return resistance;
-    }
+	public int getMaxSp() {
+		return maxSp;
+	}
 
-    public int getSpeed() {
-        return speed;
-    }
+	public int getAttack() {
+		return attack;
+	}
 
-    public int getLuck() {
-        return luck;
-    }
+	public int getDefense() {
+		return defense;
+	}
+
+	public int getMagic() {
+		return magic;
+	}
+
+	public int getResistance() {
+		return resistance;
+	}
+
+	public int getSpeed() {
+		return speed;
+	}
+
+	public int getLuck() {
+		return luck;
+	}
 }

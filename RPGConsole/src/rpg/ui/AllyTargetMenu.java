@@ -1,13 +1,14 @@
 package rpg.ui;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Scanner;
 
-import rpg.items.RecoveryItem;
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
+import rpg.items.RecoveryItem;
 
 //Controls party-member selection according to the current target context.
 public final class AllyTargetMenu {
@@ -21,14 +22,23 @@ public final class AllyTargetMenu {
 	public Optional<PlayableCharacter> selectLivingTarget(Party party) {
 		Objects.requireNonNull(party, "Party cannot be null.");
 
-		return selectTarget(party.getLivingMembers(), "Escolha um aliado:", "Não há aliados vivos disponíveis.");
+		return selectTarget(
+				party.getLivingMembers(),
+				"Selecionar aliado",
+				"Escolha um aliado:",
+				"Não há aliados vivos disponíveis."
+		);
 	}
 
 	public Optional<PlayableCharacter> selectDefeatedTarget(Party party) {
 		Objects.requireNonNull(party, "Party cannot be null.");
 
-		return selectTarget(party.getDefeatedMembers(), "Escolha um aliado para reviver:",
-				"Não há aliados derrotados para reviver.");
+		return selectTarget(
+				party.getDefeatedMembers(),
+				"Reviver aliado",
+				"Escolha um aliado para reviver:",
+				"Não há aliados derrotados para reviver."
+		);
 	}
 
 	public Optional<PlayableCharacter> selectRecoveryTarget(Party party, RecoveryItem recoveryItem) {
@@ -38,11 +48,20 @@ public final class AllyTargetMenu {
 
 		List<PlayableCharacter> availableMembers = party.getMembers().stream().filter(recoveryItem::canAffect).toList();
 
-		return selectTarget(availableMembers, "Escolha um aliado:", "Nenhum aliado pode ser afetado por este item.");
+		return selectTarget(
+				availableMembers,
+				"Selecionar aliado",
+				"Escolha um aliado:",
+				"Nenhum aliado pode ser afetado por este item."
+		);
 	}
 
-	private Optional<PlayableCharacter> selectTarget(List<PlayableCharacter> availableMembers, String prompt,
-			String emptyMessage) {
+	private Optional<PlayableCharacter> selectTarget(
+			List<PlayableCharacter> availableMembers,
+			String menuTitle,
+			String prompt,
+			String emptyMessage
+	) {
 		if (availableMembers.isEmpty()) {
 			System.out.println(emptyMessage);
 			return Optional.empty();
@@ -52,26 +71,36 @@ public final class AllyTargetMenu {
 			return Optional.of(availableMembers.get(0));
 		}
 
+		int nameColumnWidth = availableMembers.stream().mapToInt(member -> member.getName().length()).max().orElse(0);
+
+		String rowFormat = "[%d] %-" + nameColumnWidth + "s | %s%n";
+
 		while (true) {
-			System.out.println("\n" + prompt);
+			System.out.println("\n[" + menuTitle.toUpperCase(Locale.ROOT) + "]");
+
+			System.out.println();
+			System.out.println(prompt);
+			System.out.println();
 
 			for (int index = 0; index < availableMembers.size(); index++) {
-
 				PlayableCharacter member = availableMembers.get(index);
 
-				System.out.print("[" + (index + 1) + "] " + member.getName());
+				String condition;
 
 				if (member.isAlive()) {
-					System.out.println(" | HP: " + member.getCurrentHp() + "/" + member.getMaxHp());
+					condition = "HP: " + member.getCurrentHp() + "/" + member.getMaxHp();
 				} else {
-					System.out.println(" | DERROTADO");
+					condition = "DERROTADO";
 				}
+
+				System.out.printf(rowFormat, index + 1, member.getName(), condition);
 			}
 
+			System.out.println();
 			System.out.println("[0] Voltar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine();
+			String choice = scanner.nextLine().trim();
 
 			if (choice.equals("0")) {
 				return Optional.empty();
@@ -86,19 +115,9 @@ public final class AllyTargetMenu {
 				}
 
 				return Optional.of(availableMembers.get(selectedIndex));
-
 			} catch (NumberFormatException exception) {
 				System.out.println("Comando inválido.");
 			}
 		}
-	}
-
-	public Optional<PlayableCharacter> selectInjuredTarget(Party party) {
-		Objects.requireNonNull(party, "Party cannot be null.");
-
-		List<PlayableCharacter> injuredMembers = party.getLivingMembers().stream()
-				.filter(member -> member.getCurrentHp() < member.getMaxHp()).toList();
-
-		return selectTarget(injuredMembers, "Escolha um aliado para curar:", "Nenhum aliado precisa de cura.");
 	}
 }

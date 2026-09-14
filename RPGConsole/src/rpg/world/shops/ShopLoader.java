@@ -125,7 +125,7 @@ public final class ShopLoader {
 
 			if (!hasExplorationMerchant) {
 				throw new IllegalArgumentException(
-						"Combat scenario with a positive merchant chance " + "must have at least one EXPLORATION shop: "
+						"Combat scenario with a positive merchant chance must have at least one EXPLORATION shop: "
 								+ combatScenarioDefinition.getScenarioId()
 				);
 			}

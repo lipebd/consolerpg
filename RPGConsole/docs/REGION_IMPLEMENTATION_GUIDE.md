@@ -26,7 +26,7 @@ ID estável: ruinas_sanguemar
 
 | Tipo | Constante | Arquivos obrigatórios |
 |---|---|---|
-| Cidade | `CITY` | `scenarios.txt` e `travel_routes.txt` |
+| Cidade | `CITY` | `scenarios.txt`, `inns.txt` e `travel_routes.txt` |
 | Campo | `FIELD` | `scenarios.txt`, `combat_scenarios.txt`, `encounters.txt` e `travel_routes.txt` |
 | Masmorra | `DUNGEON` | `scenarios.txt`, `combat_scenarios.txt`, `dungeons.txt`, `encounters.txt` e `travel_routes.txt` |
 
@@ -45,7 +45,7 @@ Arquivo: `data/enemies.txt`
 Exemplo:
 
 ```text
-marcego;Marcego;60;0;0;10;5;5;5;20;0;COMMON;Monstrinho nadador e agressivo que se assemelha a um animal voador.
+marcego;Marcego;60;0;0;10;5;5;5;20;1;COMMON;Monstrinho nadador e agressivo que se assemelha a um animal voador.
 ```
 
 Ranks aceitos:
@@ -58,6 +58,8 @@ Ranks aceitos:
 - `LEGENDARY`
 
 Use `\n` dentro da descrição quando quiser uma quebra de linha na exibição. Não insira `;` nos textos, pois o ponto e vírgula separa os campos.
+
+`maxHp`, ATK, DEF, MAG, RES, VEL e LCK devem ser maiores que zero. `maxMp` e `maxSp` podem ser zero, mas nunca negativos. Quando um atributo é inválido, `EnemyLoader` informa a linha e o ID do inimigo para que o cadastro seja localizado rapidamente.
 
 Os inimigos comuns, veteranos e líderes podem ser usados em `encounters.txt`. Inimigos `BOSS` e `EPIC` de masmorras são associados em `dungeons.txt` e não precisam entrar na tabela de encontros aleatórios.
 
@@ -79,6 +81,29 @@ O tipo deve ser exatamente `CITY`, `FIELD` ou `DUNGEON`.
 
 Todas as regiões precisam aparecer neste arquivo. Os demais arquivos apenas complementam a definição criada aqui.
 
+### INN obrigatório das cidades
+
+Toda região `CITY` precisa possuir exatamente um INN em `data/inns.txt`.
+
+```text
+# id;scenarioId;name;description;price
+```
+
+Exemplo:
+
+```text
+nova_cidade_inn;nova_cidade;Estalagem da Nova Cidade;Um local seguro para descanso e recuperação.;50
+```
+
+Regras:
+
+- `scenarioId` deve referenciar uma região `CITY` existente em `scenarios.txt`.
+- O ID, o nome e a descrição não podem estar vazios.
+- O preço deve ser um inteiro maior que zero e se aplica à party inteira.
+- Uma cidade não pode possuir mais de um INN.
+- `InnLoader` rejeita a inicialização quando qualquer cidade registrada não possui um INN.
+- Descrições aceitam sequências literais `\n`.
+
 ## 5. Configure a exploração da região de combate
 
 Esta etapa vale apenas para `FIELD` e `DUNGEON`.
@@ -86,13 +111,13 @@ Esta etapa vale apenas para `FIELD` e `DUNGEON`.
 Arquivo: `data/combat_scenarios.txt`
 
 ```text
-# scenarioId;baseExperienceReward;baseGoldReward;explorationLength;battleChance;rewardChance;merchantChance;epicEncounterChance;specialAreaChance;minEnemies;maxEnemies;normalAreaMessage;specialAreaMessage
+# scenarioId;baseExperienceReward;baseGoldReward;explorationLength;battleChance;rewardChance;merchantChance;epicEncounterChance;specialAreaChance;minEnemies;maxEnemies;normalAreaMessage;specialAreaMessage;preferredRescueScenarioId;fallbackRescueScenarioId;rescueDescription
 ```
 
 Exemplo:
 
 ```text
-ruinas_sanguemar;100;100;11;70;20;0;10;30;2;2;Você avança pela entrada submersa das Ruínas de Sanguemar.;Você desce pelas paredes da fossa e alcança uma região abissal.
+ruinas_sanguemar;100;100;11;70;20;0;10;30;2;2;Você avança pela entrada submersa das Ruínas de Sanguemar.;Você desce pelas paredes da fossa e alcança uma região abissal.;deep_valley;entrelugar;A mudança da maré arrastou os feridos para longe das profundezas, onde foram encontrados junto à entrada submersa.
 ```
 
 Significado dos campos principais:
@@ -108,6 +133,9 @@ Significado dos campos principais:
 | `minEnemies` / `maxEnemies` | Tamanho permitido para grupos inimigos |
 | `normalAreaMessage` | Texto exibido na área normal |
 | `specialAreaMessage` | Texto exibido na área especial |
+| `preferredRescueScenarioId` | Cidade preferencial de resgate, usada apenas quando já foi descoberta |
+| `fallbackRescueScenarioId` | Cidade obrigatória usada quando o destino preferencial está ausente ou ainda não foi descoberto |
+| `rescueDescription` | Narrativa exibida após a derrota completa da party |
 
 Regras importantes:
 
@@ -117,6 +145,13 @@ Regras importantes:
 - `minEnemies` deve ser pelo menos 1.
 - `maxEnemies` não pode ser menor que `minEnemies` nem maior que o limite suportado pela batalha, atualmente 3.
 - Cidades não recebem uma linha neste arquivo.
+- `preferredRescueScenarioId` é opcional e deve manter o campo vazio quando não existir.
+- `fallbackRescueScenarioId` é obrigatório e não pode estar vazio.
+- Todo destino de resgate deve referenciar uma região `CITY` que possua um INN registrado.
+- Os destinos preferencial e fallback devem ser diferentes quando o preferencial estiver presente.
+- O destino fallback pode ser usado e descoberto pelo resgate mesmo que ainda não tenha sido visitado.
+- Descobrir uma cidade por resgate não desbloqueia automaticamente rotas relacionadas.
+- `rescueDescription` é obrigatória, aceita sequências literais `\n` e deve funcionar para qualquer tamanho de party.
 
 ## 6. Configure lojas e mercadores, se houver
 
@@ -423,14 +458,15 @@ Para evitar referências quebradas, siga esta ordem:
 1. Defina o ID e o tipo da região.
 2. Cadastre novos inimigos e itens, quando necessários, em seus arquivos correspondentes.
 3. Cadastre a região em `scenarios.txt`.
-4. Se for uma região de combate, adicione `combat_scenarios.txt`.
-5. Se a região possuir lojas ou mercadores, adicione suas definições em `shops.txt` e suas possíveis ofertas em `shop_stock.txt`.
-6. Se `rewardChance` for maior que zero, adicione as entradas necessárias em `exploration_rewards.txt`.
-7. Se for uma masmorra, adicione `dungeons.txt`.
-8. Adicione os encontros em `encounters.txt`.
-9. Adicione drops opcionais em `enemy_drops.txt`.
-10. Por último, conecte a região em `travel_routes.txt` e `scenario_branches.txt`, quando aplicável.
-11. Inicialize o jogo e realize o teste manual.
+4. Se for uma cidade, adicione exatamente um INN em `inns.txt`.
+5. Se for uma região de combate, confirme primeiro que suas cidades de resgate e os respectivos INNs já estão cadastrados e então adicione `combat_scenarios.txt`.
+6. Se a região possuir lojas ou mercadores, adicione suas definições em `shops.txt` e suas possíveis ofertas em `shop_stock.txt`.
+7. Se `rewardChance` for maior que zero, adicione as entradas necessárias em `exploration_rewards.txt`.
+8. Se for uma masmorra, adicione `dungeons.txt`.
+9. Adicione os encontros em `encounters.txt`.
+10. Adicione drops opcionais em `enemy_drops.txt`.
+11. Por último, conecte a região em `travel_routes.txt` e `scenario_branches.txt`, quando aplicável.
+12. Inicialize o jogo e realize o teste manual.
 
 Se precisar interromper o trabalho antes de concluir todas as etapas, não inicialize o jogo enquanto houver arquivos que referenciem dados ainda inexistentes.
 
@@ -450,9 +486,18 @@ Se precisar interromper o trabalho antes de concluir todas as etapas, não inici
 - [ ] Percentuais de preço, estoques e pesos são positivos.
 - [ ] Não existem ofertas comercialmente duplicadas na mesma loja.
 
+### Cidades
+
+- [ ] A cidade possui exatamente um INN em `inns.txt`.
+- [ ] O ID, o nome e a descrição do INN não estão vazios.
+- [ ] O preço do INN é maior que zero.
+
 ### Campos e masmorras
 
 - [ ] A região existe em `combat_scenarios.txt`.
+- [ ] O destino fallback de resgate referencia uma cidade com INN.
+- [ ] O destino preferencial está vazio ou referencia uma cidade diferente do fallback que também possui INN.
+- [ ] A descrição de resgate não está vazia e funciona para parties de qualquer tamanho.
 - [ ] Todas as posições dos encontros são válidas.
 - [ ] Todos os inimigos dos encontros existem em `enemies.txt`.
 - [ ] Há candidatos suficientes para formar os grupos configurados.
@@ -467,7 +512,7 @@ Se precisar interromper o trabalho antes de concluir todas as etapas, não inici
 
 - [ ] A masmorra existe em `dungeons.txt`.
 - [ ] Existe de 1 a 3 bosses de rank `BOSS`.
-- [ ] Existe de 1 a 3 épicos de rank `EPIC`.
+- [ ] Quando houver encontro épico, existe de 1 a 3 inimigos de rank `EPIC`.
 - [ ] A posição final foi reservada para o boss.
 - [ ] Bosses e épicos não foram incluídos nos encontros aleatórios.
 
@@ -488,8 +533,12 @@ Se precisar interromper o trabalho antes de concluir todas as etapas, não inici
 - [ ] As ofertas respeitam slots, pesos, preços e estoques configurados.
 - [ ] Reabrir uma loja preserva suas ofertas ativas e quantidades restantes.
 - [ ] Uma oferta esgotada desaparece sem ser substituída.
+- [ ] A derrota completa exibe a narrativa e o destino de resgate configurados.
+- [ ] O destino preferencial é usado somente quando já foi descoberto.
+- [ ] O fallback funciona mesmo quando ainda não foi descoberto.
+- [ ] O resgate não avança a posição derrotada nem desbloqueia rotas não relacionadas.
 
-## 13. Diagnóstico rápido
+## 14. Diagnóstico rápido
 
 Para localizar todas as referências de uma região:
 

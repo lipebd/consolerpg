@@ -1,0 +1,5 @@
+# One character name per line. Single space allowed.
+Ari
+Lina
+Nilo
+Yara

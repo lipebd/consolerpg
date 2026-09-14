@@ -129,7 +129,9 @@ The current battle menu contains:
 
 Analyzing, inspecting the round, cancelling target selection and returning from a submenu do not consume the current action.
 
-An action is consumed only when its effect is successfully executed or when a failed flee attempt explicitly consumes the acting character's turn.
+Basic attacks, defending, successfully used items and flee attempts consume the acting character's action.
+
+A skill consumes its resources and action when at least one component constitutes a valid attempt. Applied, resisted and not-triggered components are valid attempts. Components whose condition does not match or that cannot affect any selected target are not attempts.
 
 ## Defending
 
@@ -232,25 +234,413 @@ These references prevent collective battle results from depending on a permanent
 
 Future party titles will be reserved primarily for collective narrative events rather than individual combat actions.
 
+## Temporary attribute effects
+
+Temporary buffs and debuffs modify effective combat attributes without changing base, natural or equipment values.
+
+Character statistics observe these structural invariants:
+
+- Maximum HP must be positive.
+- Maximum MP and SP cannot be negative.
+- ATK, DEF, MAG, RES, VEL and LCK must be positive.
+
+Invalid statistics prevent game-data initialization. File loaders identify the affected definition and source line.
+
+The stage-modifiable attributes are:
+
+- ATK
+- DEF
+- MAG
+- RES
+- VEL
+- LCK
+
+HP, MP and SP do not use temporary stages.
+
+### Attribute stages
+
+Positive and negative stages are stored independently for each attribute.
+
+Each polarity is limited between `0` and `3`.
+
+The effective stage is calculated as:
+
+```text
+effectiveStage = positiveStages - negativeStages
+```
+
+Opposite polarities therefore cancel only in the effective result. They do not remove one another because their durations remain independent.
+
+Stage multipliers:
+
+| Effective stage | Multiplier |
+| ---: | ---: |
+| `+3` | `1.50` |
+| `+2` | `1.30` |
+| `+1` | `1.15` |
+| `0` | `1.00` |
+| `-1` | `0.85` |
+| `-2` | `0.70` |
+| `-3` | `0.50` |
+
+The effective attribute is calculated as:
+
+```text
+effectiveAttribute =
+    roundHalfUp(structuralAttribute × stageMultiplier)
+```
+
+Half-up rounding converts only the fractional result to the nearest integer. Integer results remain unchanged.
+
+Stage multipliers are internal balance rules and are not exposed through external data files.
+
+### Stage accumulation and duration
+
+Applications of the same polarity add their stages up to the limit of `3`.
+
+When same-polarity effects accumulate, the state preserves the greatest remaining duration.
+
+Example:
+
+```text
+ATK +1 for 4 turns
+ATK +2 for 2 turns
+Result: ATK +3 for 4 turns
+```
+
+An application produces an effect when it increases the stored stage or remaining duration. An application that changes neither is ineffective.
+
+Positive and negative states of the same attribute preserve independent durations.
+
+### Turn-based duration
+
+Except for VEL, effect duration is measured in consumed turns of the affected character.
+
+The duration decreases only after that character completes an action that consumes its turn.
+
+The following do not decrease duration:
+
+- Opening or cancelling menus.
+- Viewing the turn order.
+- Analyzing an enemy.
+- Cancelling a target selection.
+- Attempting an action for which no component can produce an effect.
+- Actions consumed by other battle participants.
+
+A character with multiple actions in the same round may decrease its durations multiple times during that round.
+
+### Ordered skill effects
+
+A skill may apply components before or after its primary damage or recovery component.
+
+Pre-action effects are applied before the primary component and participate in its calculations. Their duration is decreased at the end of that same consumed turn when they affect the acting character.
+
+Post-action effects are applied after the acting character's duration decrease. They do not lose duration immediately and remain active until the affected character completes a later consumed turn.
+
+Effects applied to another participant are decreased only when that affected participant completes one of its own consumed turns.
+
+### Composite skill attempts
+
+Every attempted component-target pair produces one explicit result:
+
+- `APPLIED`: the component affected the target.
+- `RESISTED`: the component triggered, but the target resisted it.
+- `NOT_TRIGGERED`: the component was applicable, but its configured trigger roll failed.
+
+A component whose condition does not match or that cannot affect its target produces no result and does not constitute an attempt.
+
+A skill consumes its resources and the acting character's turn once when at least one component is attempted. A resisted component and a component that does not trigger still count as valid attempts.
+
+If no component can be attempted, the skill consumes neither resources nor the turn.
+
+### Speed stages
+
+VEL stages do not use conventional turn duration.
+
+A VEL buff or debuff applied during the current round remains pending for the next turn-order calculation.
+
+The current order is never reorganized retroactively.
+
+At the start of the following round:
+
+1. The complete turn order is generated using effective VEL.
+2. The VEL states used by the calculation are removed.
+3. The generated order remains unchanged for the entire round.
+4. Any VEL state applied after that generation remains pending for the subsequent round.
+
+Pending positive VEL stages may be dissipated before order generation.
+
+Pending negative VEL stages may be purified before order generation.
+
+If removed before generation, they do not affect the next round.
+
+### Purification and dissipation
+
+Purification removes all negative attribute states from the target.
+
+Dissipation removes all positive attribute states from the target.
+
+Pending VEL states are eligible for these operations.
+
+Purification or dissipation is ineffective when the target has no state of the corresponding polarity.
+
+Special battle states are not automatically treated as positive or negative attribute states.
+
+### Effect cleanup
+
+When a character is defeated, all of that character's temporary attribute states and special temporary battle states are removed immediately.
+
+Revival does not restore removed effects.
+
+At the end of a battle, all remaining temporary battle states are removed from every participant.
+
+Temporary effects cannot persist into an unrelated battle.
+
+## Damage calculation
+
+Physical and magical damage use internal balance factors that are not exposed through external data files.
+
+Current factors:
+
+```text
+KF = 20
+KM = 20
+```
+
+Physical damage uses effective ATK against effective DEF.
+
+Magical damage uses effective MAG against effective RES.
+
+Effective attributes include all applicable natural values, equipment bonuses and temporary attribute stages.
+
+Damage power is calculated as:
+
+```text
+basePower =
+    skillPower
+    + weaponBaseDamage
+    + effectiveOffensiveAttribute
+```
+
+Player basic attacks use zero skill power, no conditional power modifier and the equipped weapon's full base damage. The weapon selects physical or magical damage; without a weapon, the attack falls back to physical damage with zero weapon power. Enemy basic attacks currently use physical damage and zero weapon power.
+
+Every offensive skill also adds 100% of the equipped weapon's base damage. A skill remains usable without a weapon, in which case this term is zero. The skill component's own damage type independently selects ATK against DEF or MAG against RES, so a magical weapon may strengthen a physical skill and vice versa.
+
+For the same attacker, target and damage type, the relative power of a damaging skill over a basic attack is:
+
+```text
+skillDamage / basicDamage = 1 + skillPower / (effectiveAttribute + weaponBaseDamage)
+```
+
+This keeps the free basic attack relevant as attributes and weapons grow while allowing skills that consume MP or SP to remain stronger. Skill powers and costs remain subject to later balance testing.
+
+When an applicable conditional power modifier exists:
+
+```text
+modifiedPower =
+    basePower
+    × (1 + powerModifierPercent / 100)
+```
+
+A `DAMAGE_POWER_MODIFIER` affects every later compatible damage component:
+
+- within the same skill execution;
+- against the same selected target;
+- until that skill use ends.
+
+It does not affect earlier damage, other targets or future skill uses. Multiple compatible modifiers add their percentages using overflow-safe arithmetic.
+
+Physical damage before defending is:
+
+```text
+physicalDamage =
+    modifiedPower
+    × KF
+    / (effectiveDefense + KF)
+```
+
+Magical damage before defending is:
+
+```text
+magicalDamage =
+    modifiedPower
+    × KM
+    / (effectiveResistance + KM)
+```
+
+Defending divides the calculated damage by two before rounding.
+
+The final result is rounded to the nearest integer using half-up rounding, with a minimum of 1 damage and a maximum equal to the target's current HP.
+
+The defending state is consumed when the character receives damage.
+
+## Recoil damage
+
+`RECOIL_DAMAGE` applies direct non-lethal damage to the skill user based on the actual HP damage dealt by the immediately preceding `SINGLE_ENEMY` damage component.
+
+```text
+recoilDamage =
+    ROUND_HALF_UP(
+        actualDamageDealt
+        × recoilPercent
+        / 100
+    )
+```
+
+The damage actually received by the user is limited to:
+
+```text
+actualRecoilDamage =
+    MIN(
+        recoilDamage,
+        userCurrentHp - 1
+    )
+```
+
+Recoil damage:
+
+- uses the source component's actual damage after defense, defending, rounding and current-HP limits;
+- ignores the user's DEF, RES and defending state;
+- does not consume the user's defending state;
+- cannot reduce the user below 1 HP;
+- is inapplicable when the user has only 1 HP or when its source dealt no damage;
+- may have its own component trigger chance;
+- cannot be resisted.
+
+## Skill execution
+
+Skills are immutable external definitions composed of one or more ordered effects.
+
+Each use creates one mutable execution. Targets are selected once for each target type used by the skill and are reused by all compatible effects.
+
+Effects are executed in this order:
+
+```text
+PRE_ACTION
+PRIMARY
+end-of-turn duration reduction
+POST_ACTION
+```
+
+`PRE_ACTION` effects are fully applied before `PRIMARY` effects. Therefore, an attribute change applied during `PRE_ACTION` can affect damage, recovery or resistance calculations performed later in the same skill.
+
+`POST_ACTION` effects are executed only after the acting character finishes the consumed turn and all conventional effect durations are reduced.
+
+Skill resources are consumed only after target selection and when the execution is able to consume the turn.
+
+Components are evaluated in this order:
+
+```text
+condition
+applicability
+trigger chance
+resistance, when applicable
+application
+```
+
+An applicable component that is resisted or does not trigger still counts as an attempted component and consumes the turn. A component whose condition does not match or that cannot affect any selected target does not constitute an attempt.
+
+## Skill-effect trigger chance
+
+Each skill component may define its own `triggerChancePercent` in `skill_effects.txt`.
+
+An empty trigger field means `100%`. Explicit values must be integers between `1` and `100`.
+
+Trigger chance is rolled once per component execution, after condition and applicability checks. The result is shared by every applicable target of that component.
+
+When the trigger fails:
+
+- the component is recorded as `NOT_TRIGGERED` for its applicable targets;
+- no target performs a resistance check;
+- the component still constitutes a valid attempt.
+
+A guaranteed component does not consume a random value for its trigger.
+
+## Resistible effect application
+
+The following effects can be resisted:
+
+- negative attribute stages;
+- dissipation of positive attribute stages.
+
+Negative attribute stages remain resistible when the user applies them to itself. In that case, the same character provides both the effective LCK used to apply the effect and the effective RES used to resist it.
+
+Damage, recovery, revival, positive attribute stages, purification and ancestral distortion do not perform a resistance check.
+
+Application chance uses the effective LCK of the applying character and the effective RES of each receiving character at the moment the component is executed.
+
+```text
+applicationChance =
+    MIN(
+        0.85,
+        ROUND(
+            applyingLCK
+            / (
+                applyingLCK
+                + targetRES / KR
+            ),
+            2
+        )
+    )
+```
+
+Current resistance balance factor:
+
+```text
+KR = 1
+```
+
+The maximum application chance is 85%.
+
+After a component triggers, each applicable target performs an independent resistance check. A component may therefore trigger once and still be applied to some targets while being resisted by others.
+
+Every negative attribute-stage component performs its own resistance check. Because effective attributes are read when each component executes, a `PRE_ACTION` LCK increase can improve the application chance of later hostile or self-inflicted stages in the same skill.
+
+Application chance against resistance is calculated at runtime and is independent from the component's externally configured trigger chance.
+
+## Distorted attributes
+
+Ancestral distortion swaps the structural values used by these effective attributes:
+
+```text
+ATK ↔ MAG
+DEF ↔ RES
+```
+
+Attribute stages remain attached to their original attributes. For example, an ATK stage continues modifying effective ATK even when its structural value comes from MAG.
+
+Applying ancestral distortion again to the same target restores the original structural arrangement.
+
+Ancestral distortion cannot be resisted. Purification and dissipation do not remove it. It remains active until toggled again or until temporary battle effects are cleared at the end of battle.
+
 ## Skill recovery
 
-Recovery skills separate the recovery effect from their target.
+HP recovery and revival components define their scaling attribute directly. They currently accept effective ATK or effective MAG.
 
-Recovery types:
+The calculated amount is:
 
-- `NONE`
-- `HEAL`
-- `REVIVE`
+```text
+recovery =
+    power
+    × (1 + (effectiveAttribute - 10) / 100)
+```
+
+The result is rounded once using half-up rounding. An applicable recovery has a minimum calculated value of 1.
+
+Effective attributes include temporary stages and ancestral distortion. HP recovery is then limited by the target's missing HP. Revival is limited by the target's maximum HP.
+
+MP and SP recovery currently use fixed component power and do not define a scaling attribute.
 
 Skill target types currently include:
 
-- `NONE`
 - `SELF`
 - `SINGLE_ALLY`
 - `ALL_ALLIES`
 - `ALL_BUT_SELF`
+- `RANDOM_ALLY`
 - `SINGLE_ENEMY`
 - `ALL_ENEMIES`
+- `RANDOM_ENEMY`
 
 ### Healing
 
@@ -267,7 +657,7 @@ Regular healing:
 Revive effects:
 
 - Affect only defeated allies.
-- Restore HP according to the skill's base healing value.
+- Restore HP according to the component's scaled recovery value.
 - Cannot target living allies.
 - Do not restore removed temporary battle effects.
 - Add the revived ally to the turn order only in the following round.
@@ -311,15 +701,17 @@ The general inventory:
 - Displays at most eight item rows per page.
 - Preserves a fixed list height on partially filled pages.
 - Truncates long names only in the list view.
-- Displays the complete name and description in the details view.
+- Displays complete contextual details according to the runtime item type.
 - Provides contextual actions according to the runtime item type.
 
-Current and planned detail actions include:
+Current detail actions include:
 
 - `RecoveryItem` — use.
-- Equipment — equip or remove after equipment behavior is implemented.
+- Equipment — open details and equip through the shared equipment menu.
 - Materials, quest items and key items — return without a use action.
-- Skill scrolls — learn after skill-scroll behavior is implemented.
+- `SkillScroll` — inspect the linked skill and attempt to learn it.
+
+Skill-scroll details use the shared skill sheet instead of repeating the scroll item's name, category and generic description. The compatible learner or the absence of one is displayed beside the learning action. After successful learning, the scroll list is refreshed without closing the inventory; if the consumed scroll was the final one, the empty scroll category remains open until the player returns.
 
 ## Battle inventory
 
@@ -328,6 +720,7 @@ Battle item selection is separate from the general inventory.
 During battle:
 
 - Only consumables currently usable in battle are listed.
+- Skill scrolls are excluded and cannot be used during battle.
 - Equipment, materials, quest items, key items and unrelated categories cannot be browsed.
 - Selecting an item first opens its details.
 - Cancelling returns to the battle item list.
@@ -359,7 +752,96 @@ Recovery effects follow these rules:
 - An individual item is consumed only when its selected target is affected.
 - The result records the effects actually produced instead of inferring them from the item definition.
 
-Purification is already represented by item data but remains inactive until status effects are implemented.
+Purification removes eligible negative attribute states. If no selected target has an eligible negative state or another applicable recovery component, the item is not consumed.
+
+## Skill scrolls
+
+Skill scrolls are rare, stackable and player-tradable items intended for external drops and future asynchronous player trading. They do not require NPC purchase or sale prices.
+
+Each scroll links:
+
+- One `SKILL_SCROLL` item.
+- One `SCROLL` skill.
+- One compatible playable class.
+
+The linked skill uses the same definition, effects, costs, targeting, detail presentation and battle execution as an automatically learned skill. Acquisition source changes how the character learns the skill, not how the skill behaves afterward.
+
+Skill scrolls may be used only from the general inventory outside battle. Because party classes do not repeat, the compatible class identifies at most one learner. If the party has no compatible character, the learning action is unavailable.
+
+Learning follows these rules:
+
+- The character's class must match the scroll's compatible class.
+- The character must meet the skill's minimum level requirement.
+- An already learned skill cannot be learned again.
+- A character may know at most two `SCROLL` skills.
+- A successful first or second scroll-skill acquisition consumes exactly one scroll.
+- Class incompatibility, insufficient level and duplicate learning preserve the scroll.
+- Rejected and cancelled attempts do not change the character's learned skills.
+
+When both scroll slots are occupied:
+
+- The player must select one learned `SCROLL` skill to replace.
+- `STARTER` and `LEVEL` skills cannot be selected or forgotten.
+- The replacement requires explicit confirmation.
+- Returning from either selection or confirmation preserves the inventory and all learned skills.
+- A confirmed replacement forgets the selected skill, learns the new skill and consumes exactly one new scroll.
+- The forgotten skill's original scroll is not returned.
+
+Natural skills are displayed before scroll-learned skills. Learned scroll skills preserve their learning order; a newly learned replacement occupies the newest position.
+
+Skill-scroll items and their linked skills can use the existing enemy-drop system. Specific enemies and low drop chances remain content-curation decisions rather than a separate drop mechanic.
+
+## Equipment
+
+Each playable character has exactly three equipment slots:
+
+- One weapon.
+- One armor.
+- One trinket.
+
+An equipped unit leaves the shared inventory and belongs to the character slot until replaced or removed. Replacing it returns the previous unit to inventory; removing it also returns one unit. Because equipped items are no longer inventory entries, the inventory does not need an `(E)` marker and shops cannot sell an equipped copy.
+
+The player may reach the same equipment operation by either route:
+
+```text
+Inventory -> category -> item -> Equip -> character -> confirm
+Status -> character -> Equipment -> slot -> item -> confirm
+```
+
+The confirmation screen displays only values that would change. Maximum-resource rows are labeled `HP máx.`, `MP máx.` and `SP máx.` because equipping a bonus does not restore the current resource. Removing or replacing equipment clamps a current resource when it exceeds the new maximum.
+
+### Equipment compatibility
+
+- Every equipment item requires a positive character level.
+- Every playable class may equip every weapon after meeting its level requirement.
+- Armor weight must exactly match the class's `ArmorWeight`: `LIGHT`, `MEDIUM` or `HEAVY`.
+- Every playable class may equip every trinket after meeting its level requirement.
+
+Weapon, armor and trinket definitions may grant any combination of HP, MP, SP, ATK, DEF, MAG, RES, VEL and LCK bonuses. These are structural bonuses: they are added to natural values before temporary attribute stages are applied.
+
+Natural progression never incorporates equipment into the saved natural-stat snapshot. Level growth recalculates natural values from class and level, while equipped bonuses remain separate and continue to apply afterward.
+
+### Weapon attacks
+
+A weapon defines:
+
+- Physical or magical normal-attack damage.
+- A weapon type.
+- A narrative normal-attack name.
+- Base weapon damage, displayed to the player as `Poder`.
+
+Equipping a weapon changes the player's basic attack. For example, battle narration may report that the character executed `Corte Rápido` with their weapon, distinguishing the free weapon attack from the `usou ...` wording of a skill.
+
+The equipped weapon's base damage contributes fully to both the basic attack and every damaging skill. Its physical or magical classification affects only its own basic attack; a skill continues using the damage type defined by that skill component.
+
+### Equipment reward modifiers
+
+An equipped trinket may provide:
+
+- An individual EXP percentage for its wearer.
+- A party-wide GOLD percentage.
+
+All equipped GOLD bonuses in the party are added together. An individual EXP bonus is never shared with other characters. Equipment percentages and active temporary percentages combine additively before a single reward rounding.
 
 ## Battle rewards
 
@@ -374,19 +856,119 @@ Every party member receives the complete experience reward:
 - EXP is not divided by party size.
 - Excess EXP is preserved after leveling up.
 
-Future individual EXP multipliers will be calculated separately for each character.
+Individual EXP multipliers are calculated separately for each character. Temporary party EXP and the wearer's trinket EXP are added before that character's reward is rounded.
+
+Gold is calculated once from the temporary party GOLD modifier plus the GOLD modifiers of every equipped trinket.
 
 The reward screen:
 
 - Condenses equal EXP values into `EXP recebida por aliado`.
 - Lists individual values when character multipliers produce different rewards.
 - Displays every character who gained one or more levels.
-- Displays level progression compactly.
+- Displays level progression and natural-stat growth compactly.
+- Announces every skill unlocked while crossing the gained level interval.
 - Aggregates equal item drops into one quantity.
+- Displays the temporary global EXP multiplier and total effective GOLD multiplier.
+- Intentionally does not list every ally's individual EXP multiplier; those values remain available in individual character status.
+
+## Natural character progression
+
+Every playable class defines its level-1 natural stats in `playable_classes.txt` together with one primary regular attribute, one secondary regular attribute and one presentation symbol. The symbol identifies the class compactly in console interfaces and has no mechanical effect.
+
+Natural growth is calculated directly from the class definition and the target level. It is not applied incrementally to the character's previous values.
+
+For a target level:
+
+```text
+gainedLevels = level - 1
+primaryGrowthOccurrences = floor(level / 2)
+secondaryGrowthOccurrences = floor(level / 3)
+```
+
+Every level after level 1 grants:
+
+```text
+HP  +25
+MP  +10
+SP  +10
+ATK +1
+DEF +1
+MAG +1
+RES +1
+VEL +1
+LCK +1
+```
+
+The primary attribute gains one additional point at levels 2, 4, 6 and every two levels thereafter.
+
+The secondary attribute gains one additional point at levels 3, 6, 9 and every three levels thereafter.
+
+Attribute specialization also increases the associated natural resource:
+
+| Specialized attribute | Additional resource growth |
+|---|---|
+| `ATK` | `SP +10` per corresponding primary or secondary occurrence |
+| `MAG` | `MP +10` per corresponding primary or secondary occurrence |
+| `DEF` or `RES` | `HP +25` per corresponding primary or secondary occurrence |
+
+Resource bonuses are cumulative. A class whose primary and secondary attributes are `DEF` and `RES` receives the defensive HP bonus from both schedules.
+
+Natural stats exclude equipment bonuses, temporary stages and Distorção Ancestral. Combat systems use effective attributes after applicable modifiers, while progression and level-up comparison use immutable natural-stat snapshots.
+
+If several levels are gained at once, the final level is determined first and the complete natural-stat set is calculated and installed once. Arithmetic overflow is rejected instead of wrapping silently.
+
+## Skill acquisition and availability
+
+Every skill defines one acquisition type and one positive level requirement.
+
+The acquisition types are:
+
+- `STARTER` — learned automatically when its requirement is met and used for temporary pre-class-choice progression.
+- `LEVEL` — learned automatically when its requirement is met and retained as a permanent class skill.
+- `SCROLL` — learned only from its linked skill scroll after the minimum level requirement is met.
+
+`PlayableCharacter` stores the stable IDs of learned skills. The corresponding `SkillDefinition` remains unique in `SkillCatalog`; learning does not create or duplicate skill definitions.
+
+Automatically available `STARTER` and `LEVEL` skills are learned during character creation and after level gains. When one reward crosses several levels, every automatically learned skill whose requirement is above the previous level and at or below the new level is reported as newly learned.
+
+`SCROLL` skills are never granted by level alone. Reaching their configured level only makes their linked scroll usable.
+
+The Flagelo currently uses two temporary foundational skills before the level-7 class choice:
+
+- `Investida` — `STARTER`, level 1.
+- `Quebra-Armadura` — `STARTER`, level 3.
+
+Its four permanent level skills are:
+
+- `Golpe Experiente` — `LEVEL`, level 7.
+- `Grito de Guerra` — `LEVEL`, level 10.
+- `Perseverança` — `LEVEL`, level 15.
+- `Lenda Viva` — `LEVEL`, level 20.
+
+Every other playable class has four permanent `LEVEL` skills. Retirement of the Flagelo's two `STARTER` skills remains deferred to the future level-7 class-choice flow.
+
+### Skill-detail presentation
+
+Available skills are first displayed as a compact selectable list. Selecting one opens a shared detail sheet containing:
+
+- Level requirement.
+- Main type.
+- Power.
+- Action target.
+- MP and SP cost.
+- External narrative description.
+
+For `STARTER` and `LEVEL` skills, the displayed level is the automatic learning level. For `SCROLL` skills, it is the minimum level required to use the linked scroll.
+
+The first displayable component in `PRIMARY` defines the summary type, power and action target. If a future valid skill has no displayable `PRIMARY` component, the first displayable component in execution order is used as a fallback. Secondary effects remain part of the narrative description and do not replace the main classification.
+
+Power is the component's base power, not the final damage or recovery amount after attributes, defenses and other battle calculations. Narrative descriptions must therefore avoid promising a fixed final value when the result is scaled at runtime.
+
+`CharacterStatusMenu` and battle confirmation use the same `SkillDetailFormatter` output so that technical and narrative information cannot diverge between those interfaces.
 
 ## Level-up resource restoration
 
-A playable character who survives a victorious battle and gains at least one level restores:
+A playable character who survives a victorious battle and gains at least one level restores these resources after the new natural maximums are installed:
 
 - 100% of maximum HP.
 - 100% of maximum MP.
@@ -445,11 +1027,53 @@ Restoration occurs in this order:
 1. Every defeated party member is revived.
 2. Every party member has HP, MP and SP fully restored.
 
-The INN flow does not change the general behavior of `GameCharacter.restoreAllResources()`, which still refuses to restore defeated characters. The INN explicitly revives them before calling that method.
+Complete party restoration is centralized in `Party.fullyRestoreMembers()` and is shared by INN stays and full-party rescue. The operation revives each defeated member before fully restoring every member's HP, MP and SP.
+
+This does not change the general behavior of `GameCharacter.restoreAllResources()`, which still refuses to restore defeated characters.
 
 After a successful stay, the player remains inside the INN. Feedback from successful, unnecessary and unaffordable attempts is displayed inside the current INN screen, between the party's gold information and the available actions.
 
 City locations and city exits remain separate navigation paths. Adjacent exits reuse unlocked `TravelRouteDefinition` entries, preserve their display names and descriptions, and do not charge the party. Fixed city shops are available through the same location-selection flow as INNs, while paid transport remains a separate city action.
+
+## Initial character creation
+
+A normal new game creates only the protagonist. The protagonist:
+
+- Is always created as a level-1 Flagelo.
+- Begins with full HP, MP and SP.
+- Becomes the first member and leader of the `Party`.
+- Receives the Flagelo skills automatically available at level 1.
+- Is the only initial party member.
+
+The player may either enter the protagonist's name or ask the game to select one uniformly from `character_names.txt`.
+
+Playable-character names follow these rules:
+
+- The normalized name may contain at most 16 Unicode code points.
+- Unicode letters are allowed.
+- Single spaces, hyphens and apostrophes may separate letters.
+- Outer spaces are removed.
+- Repeated ordinary spaces are collapsed.
+- Unicode text is normalized to NFC.
+- Blank names, numbers, controls, unrelated punctuation and malformed separators are rejected.
+- Party-member names cannot repeat without regard to letter case.
+- Accented and unaccented names remain distinct.
+
+When random naming is selected, names already supplied by the caller are excluded. During protagonist creation, requesting another random name excludes the currently proposed name so that the next result is different.
+
+Before confirmation, the interface displays:
+
+- The proposed character name.
+- The complete Flagelo class name.
+- The primary specialization marked with `↑↑`.
+- The secondary specialization marked with `↑`.
+- The external Flagelo description.
+
+The player may confirm the character, change the proposed name or cancel. Changing the name returns to the manual-or-random choice. Cancelling returns to the title screen. No `PlayableCharacter` or `Party` is created until confirmation succeeds.
+
+Story-based ally recruitment, random ally classes and party-title acquisition are not part of the initial creation flow.
+
+The `--dev-party` argument activates a separate development-only shortcut. It bypasses the title and normal creation interface and produces one to four configured characters with distinct classes, positive levels and fully restored resources. This shortcut is not a player-facing game mechanic.
 
 ## Party status
 
@@ -457,40 +1081,44 @@ The party status interface is available outside battle.
 
 The summary screen displays:
 
-- Every current party member.
+- Every current party member's complete name and class symbol.
 - Level.
 - Current and maximum HP.
 - Current and maximum MP.
 - Current and maximum SP.
 - Defeated state.
 - Shared party gold.
+- Active temporary M.EXP and total effective party M.GOLD.
 
-A defeated character is displayed compactly as `DERROTADO`.
+Each member uses a two-line summary: the complete name and class symbol appear first, while level and resources appear on the indented line below. Names are never truncated. A defeated character uses the same layout but replaces level and resource information with `DERROTADO`.
 
 Every party member, including a defeated member, may be selected for individual inspection.
 
 The individual character screen displays:
 
+- Complete character name.
+- Class symbol and complete class name.
 - Level.
 - Current EXP and next-level requirement.
 - HP, MP and SP.
 - ATK, DEF and VEL.
 - MAG, RES and LCK.
-- Learned skills.
+- Learned `STARTER`, `LEVEL` and `SCROLL` skills.
+- Equipped weapon, armor and trinket through the equipment submenu.
+- Total effective individual M.EXP, including temporary and equipped sources.
 
 Future versions will add:
 
-- Playable class.
-- Equipment.
 - Character history.
-- Individual reward multipliers.
+
+The battle reward screen omits the per-character M.EXP list to remain readable with a full four-character party.
 
 ## Currency presentation
 
 The party owns one shared gold balance. `GameCurrency` centralizes only how that currency is presented:
 
 - The current display name is `GOLD`.
-- Numeric values use the `G$ ` prefix.
+- Numeric values use the `G` suffix without a separating space, such as `100G`.
 - Prices, balances and rewards use `GameCurrency.format(int)`.
 - Screens that name the currency directly use `GameCurrency.getName()`.
 
@@ -665,19 +1293,85 @@ The player selects a destination and confirms the journey before payment. Invali
 
 Leaving an incomplete combat scenario through paid transport discards its current `ExplorationSession`. Permanent gains already obtained—including EXP, gold, items, bestiary analysis, discoveries and route unlocks—remain unchanged. Returning later creates a fresh exploration session using the entry position of the route used to return.
 
-## Full-party defeat
+## Full-party defeat and rescue
 
 A battle ends in defeat when every playable character is defeated.
 
-The current V2 behavior opens the temporary `GameOverScreen`.
+`Battle` displays its final defeat message and returns `BattleResult.DEFEAT`. It does not terminate the application, select a destination, restore characters or modify world progression.
 
-Defeated characters are not automatically revived after battle.
+`World` coordinates the rescue after receiving the defeat result.
 
-A future version will replace Game Over with:
+### Rescue destination
 
-- Rescue in Bree.
-- Full restoration through the rescue flow.
-- Preservation of EXP, gold, inventory and progression.
+Each combat scenario defines:
+
+- An optional preferred rescue city.
+- A required fallback rescue city.
+- A narrative rescue description.
+
+The preferred city is selected only when it has already been discovered. When the preferred city is absent or undiscovered, the fallback city is selected.
+
+A fallback city may be selected even when it has not previously been discovered. The selected city becomes discovered through the rescue, but unrelated travel routes are not unlocked.
+
+Every configured rescue destination must be a registered city with exactly one INN.
+
+### Rescue cost
+
+The proportional rescue cost is 10% of the party's current gold, rounded upward:
+
+```text
+proportionalCost = ceil(currentGold * 10 / 100)
+```
+
+The final cost is:
+
+```text
+rescueCost = min(
+    currentGold,
+    max(destinationInnPrice, proportionalCost)
+)
+```
+
+The calculation therefore follows these rules:
+
+- The destination INN price is the minimum cost when the party has enough gold.
+- The proportional cost may exceed the INN price for wealthier parties.
+- The cost never exceeds the party's current gold.
+- The cost never produces negative gold.
+- A party with no gold is rescued without payment.
+- The implementation calculates the upward-rounded percentage without integer overflow.
+
+### Rescue flow
+
+After the destination and cost are resolved:
+
+1. The rescue cost is deducted from the shared party gold.
+2. Every defeated party member is revived.
+3. Every party member's HP, MP and SP are fully restored through `Party.fullyRestoreMembers()`.
+4. `PartyRescueScreen` displays the scenario's rescue description.
+5. The selected city name is displayed separately.
+6. The exact cost is displayed through `GameCurrency`.
+7. The player must press ENTER.
+8. The party is moved to the selected city.
+9. The normal world loop continues.
+
+The failed `ExplorationSession` is abandoned without advancing or completing it. Returning to the defeated scenario later creates a fresh exploration session using the entry position of the route used to return.
+
+### Preserved state
+
+Rescue is not a rollback. It preserves:
+
+- Character EXP and levels.
+- Learned skills.
+- Gold remaining after the rescue cost.
+- Inventory contents, excluding items already consumed.
+- Equipped items.
+- Active temporary reward modifiers and their remaining durations.
+- Discovered scenarios and unlocked routes.
+- Completed permanent world progression.
+- Current shop offers and remaining stock.
+
+Defeat grants no battle rewards. Victory and escape do not activate rescue, and defeated allies are not automatically revived after a normal victory.
 
 ## Linear exploration
 

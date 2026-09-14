@@ -4,10 +4,18 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.Optional;
 
-import rpg.characters.CharacterStats;
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
+import rpg.characters.CharacterNameCatalog;
+import rpg.characters.CharacterNameLoader;
+import rpg.characters.CharacterNameSelector;
+import rpg.classes.CharacterGrowthCalculator;
+import rpg.classes.PlayableClassCatalog;
+import rpg.classes.PlayableClassLoader;
+import rpg.classes.PlayableClassDefinition;
+import rpg.development.DevelopmentPartyFactory;
 import rpg.enemies.EnemyCatalog;
 import rpg.enemies.EnemyDropCatalog;
 import rpg.enemies.EnemyDropLoader;
@@ -20,12 +28,16 @@ import rpg.items.ItemFactory;
 import rpg.items.ItemLoader;
 import rpg.items.RecoveryItemDefinitionCatalog;
 import rpg.items.RecoveryItemLoader;
-import rpg.skills.DamageType;
-import rpg.skills.RecoveryType;
-import rpg.skills.Skill;
-import rpg.skills.SkillTargetType;
+import rpg.items.equipment.EquipmentCatalog;
+import rpg.items.equipment.EquipmentLoader;
+import rpg.items.equipment.EquipmentService;
+import rpg.items.SkillScrollDefinitionCatalog;
+import rpg.items.SkillScrollLoader;
+import rpg.skills.SkillCatalog;
+import rpg.skills.SkillLoader;
 import rpg.ui.ConsoleUI;
 import rpg.ui.TitleScreen;
+import rpg.ui.CharacterCreationMenu;
 import rpg.world.World;
 import rpg.world.WorldProgress;
 import rpg.world.branches.ScenarioBranchCatalog;
@@ -60,42 +72,73 @@ import rpg.world.travel.TravelRouteLoader;
 
 // Starts the game and controls its initial execution.
 public class Main {
+	private static final String DEVELOPMENT_PARTY_ARGUMENT = "--dev-party";
 
 	public static void main(String[] args) {
 
+		CharacterNameCatalog characterNameCatalog;
+		ItemCatalog itemCatalog;
+		ItemDefinitionCatalog itemDefinitionCatalog;
+		RecoveryItemDefinitionCatalog recoveryItemDefinitionCatalog;
+		SkillScrollDefinitionCatalog skillScrollDefinitionCatalog;
+		EquipmentCatalog equipmentCatalog;
+		EquipmentService equipmentService;
+		SkillCatalog skillCatalog;
 		ShopStateCatalog shopStateCatalog;
 		ShopCatalog shopCatalog;
 		ShopStockCatalog shopStockCatalog;
 		CityTransportCatalog cityTransportCatalog;
 		InnCatalog innCatalog;
 		ExplorationRewardCatalog explorationRewardCatalog;
-		ItemCatalog itemCatalog;
-		RecoveryItemDefinitionCatalog recoveryItemDefinitionCatalog;
-		ItemDefinitionCatalog itemDefinitionCatalog;
 		EnemyCatalog enemyCatalog;
 		EncounterCatalog encounterCatalog;
 		EnemyDropCatalog enemyDropCatalog;
 		ScenarioCatalog scenarioCatalog;
 		ScenarioBranchCatalog scenarioBranchCatalog;
+		PlayableClassCatalog playableClassCatalog;
 		Scenario currentScenario;
 		TravelProgress travelProgress;
 		WorldProgress worldProgress;
 		Scanner scanner = new Scanner(System.in);
 
 		try {
+			CharacterNameLoader characterNameLoader = new CharacterNameLoader();
+			characterNameCatalog = characterNameLoader.load(Path.of("data", "character_names.txt"));
+			PlayableClassLoader playableClassLoader = new PlayableClassLoader();
+			playableClassCatalog = playableClassLoader.load(Path.of("data", "playable_classes.txt"));
+			SkillLoader skillLoader = new SkillLoader();
+			skillCatalog = skillLoader
+					.load(Path.of("data", "skills.txt"), Path.of("data", "skill_effects.txt"), playableClassCatalog);
 			EnemyLoader enemyLoader = new EnemyLoader();
 			enemyCatalog = enemyLoader.load(Path.of("data", "enemies.txt"));
 			ItemLoader itemLoader = new ItemLoader();
 			itemDefinitionCatalog = itemLoader.load(Path.of("data", "items.txt"));
+			EquipmentLoader equipmentLoader = new EquipmentLoader();
+
+			equipmentCatalog = equipmentLoader.load(
+					Path.of("data", "weapons.txt"),
+					Path.of("data", "armors.txt"),
+					Path.of("data", "trinkets.txt"),
+					itemDefinitionCatalog
+			);
 			RecoveryItemLoader recoveryItemLoader = new RecoveryItemLoader();
 			recoveryItemDefinitionCatalog = recoveryItemLoader
 					.load(Path.of("data", "recovery_items.txt"), itemDefinitionCatalog);
+			SkillScrollLoader skillScrollLoader = new SkillScrollLoader();
+			skillScrollDefinitionCatalog = skillScrollLoader.load(
+					Path.of("data", "skill_scrolls.txt"),
+					itemDefinitionCatalog,
+					skillCatalog,
+					playableClassCatalog
+			);
 			itemCatalog = new ItemCatalog();
 			ItemFactory itemFactory = new ItemFactory();
 			for (ItemDefinition definition : itemDefinitionCatalog.getAll()) {
-				Item item = itemFactory.create(definition, recoveryItemDefinitionCatalog);
+				Item item = itemFactory
+						.create(definition, recoveryItemDefinitionCatalog, skillScrollDefinitionCatalog, skillCatalog);
 				itemCatalog.register(item);
 			}
+			equipmentService = new EquipmentService(equipmentCatalog, itemCatalog);
 			EnemyDropLoader enemyDropLoader = new EnemyDropLoader();
 			enemyDropCatalog = enemyDropLoader.load(Path.of("data", "enemy_drops.txt"), enemyCatalog, itemCatalog);
 			EncounterLoader encounterLoader = new EncounterLoader();
@@ -109,7 +152,7 @@ public class Main {
 			innCatalog = innLoader.load(Path.of("data", "inns.txt"), scenarioDefinitionCatalog);
 			CombatScenarioLoader combatScenarioLoader = new CombatScenarioLoader();
 			CombatScenarioDefinitionCatalog combatScenarioDefinitionCatalog = combatScenarioLoader
-					.load(Path.of("data", "combat_scenarios.txt"), scenarioDefinitionCatalog);
+	                .load(Path.of("data", "combat_scenarios.txt"), scenarioDefinitionCatalog, innCatalog);
 			ShopLoader shopLoader = new ShopLoader();
 			shopCatalog = shopLoader
 					.load(Path.of("data", "shops.txt"), scenarioDefinitionCatalog, combatScenarioDefinitionCatalog);
@@ -157,147 +200,35 @@ public class Main {
 			return;
 		}
 
-		TitleScreen.show(scanner);
-		ConsoleUI.clearScreen();
+		CharacterGrowthCalculator characterGrowthCalculator = new CharacterGrowthCalculator();
 
-		CharacterStats flageloStats = new CharacterStats(
-				120, // HP
-				50, // MP
-				110, // SP
-				15, // ATK
-				14, // DEF
-				9, // MAG
-				12, // RES
-				12, // VEL
-				10 // LCK
-		);
+		Party party;
 
-		PlayableCharacter flagelo = new PlayableCharacter("Flagelo", flageloStats);
+		if (usesDevelopmentParty(args)) {
+			DevelopmentPartyFactory developmentPartyFactory = new DevelopmentPartyFactory(
+					playableClassCatalog,
+					skillCatalog,
+					characterGrowthCalculator
+			);
 
-		Party party = new Party(flagelo);
-
-		CharacterStats bardoStats = new CharacterStats(
-				80, // HP
-				80, // MP
-				60, // SP
-				8, // ATK
-				8, // DEF
-				12, // MAG
-				10, // RES
-				15, // VEL
-				14 // LCK
-		);
-
-		PlayableCharacter bardo = new PlayableCharacter("Bardo", bardoStats);
-
-		party.addMember(bardo);
-
-		Skill investida = new Skill(
-				"Investida",
-				1,
-				DamageType.PHYSICAL,
-				5,
-				0,
-				RecoveryType.NONE,
-				SkillTargetType.NONE,
-				0,
-				10,
-				"Corre até o alvo e o atropela.\nCausa dano físico moderado e pode causar dano a si mesmo."
-		);
-
-		Skill perseveranca = new Skill(
-				"Perseverança",
-				1,
-				DamageType.NONE,
-				0,
-				10,
-				RecoveryType.HEAL,
-				SkillTargetType.SELF,
-				0,
-				10,
-				"Mesmo ferido, firma seus pés em batalha e avança sobre o inimigo causando dano físico."
-						+ "\nAo final do ataque, recupera uma pequena quantidade do próprio HP"
-		);
-
-		Skill palavraCurativa = new Skill(
-				"Palavra Curativa",
-				1,
-				DamageType.NONE,
-				0,
-				35,
-				RecoveryType.HEAL,
-				SkillTargetType.SINGLE_ALLY,
-				0,
-				10,
-				"Uma frase inspiradora, um grito de ajuda, ou apenas uma ordem, que restaura 35 de HP de um aliado."
-		);
-
-		Skill inspiracaoDoBardo = new Skill(
-				"Inspiração do Bardo",
-				1,
-				DamageType.NONE,
-				0,
-				10,
-				RecoveryType.HEAL,
-				SkillTargetType.ALL_ALLIES,
-				0,
-				10,
-				"Inspira seus aliados, curando HP de todo o grupo."
-		);
-
-		Skill chamadoDosEcos = new Skill(
-				"Chamado dos Ecos (TEMP)",
-				1,
-				DamageType.NONE,
-				0,
-				10,
-				RecoveryType.HEAL,
-				SkillTargetType.ALL_BUT_SELF,
-				0,
-				10,
-				"Entra em um transe altruísta, invocando forças obscuras para normalizar e curar os aliados enquanto abre mão da sua própria cura."
-						+ "\nReforça a DEF e RES dos aliados em 2 pontos por 2 turnos."
-		);
-
-		Skill reviveUm = new Skill(
-				"Revive um (TEMP)",
-				1,
-				DamageType.NONE,
-				0,
-				100,
-				RecoveryType.REVIVE,
-				SkillTargetType.SINGLE_ALLY,
-				0,
-				15,
-				"Skill de teste. Revive um aliado."
-		);
-
-		Skill reviveTodos = new Skill(
-				"Revive todos (TEMP)",
-				1,
-				DamageType.NONE,
-				0,
-				50,
-				RecoveryType.REVIVE,
-				SkillTargetType.ALL_ALLIES,
-				0,
-				15,
-				"Skill de teste. Revive todos os aliados."
-		);
-
-		flagelo.learnSkill(investida);
-		flagelo.learnSkill(perseveranca);
-		flagelo.learnSkill(chamadoDosEcos);
-		flagelo.learnSkill(reviveUm);
-		bardo.learnSkill(inspiracaoDoBardo);
-		bardo.learnSkill(palavraCurativa);
-		bardo.learnSkill(reviveTodos);
+			party = developmentPartyFactory.create();
+		} else {
+			party = createNewGameParty(
+					scanner,
+					characterNameCatalog,
+					playableClassCatalog,
+					skillCatalog,
+					characterGrowthCalculator
+			);
+		}
 
 		World world = new World(
 				party,
 				currentScenario,
 				scanner,
 				itemCatalog,
+				equipmentCatalog,
+				equipmentService,
 				shopCatalog,
 				shopStateCatalog,
 				enemyCatalog,
@@ -316,5 +247,49 @@ public class Main {
 
 		scanner.close();
 
+	}
+
+	private static Party createNewGameParty(
+			Scanner scanner,
+			CharacterNameCatalog characterNameCatalog,
+			PlayableClassCatalog playableClassCatalog,
+			SkillCatalog skillCatalog,
+			CharacterGrowthCalculator characterGrowthCalculator
+	) {
+		CharacterNameSelector characterNameSelector = new CharacterNameSelector(characterNameCatalog, new Random());
+
+		CharacterCreationMenu characterCreationMenu = new CharacterCreationMenu(scanner, characterNameSelector);
+
+		PlayableClassDefinition flageloDefinition = playableClassCatalog.getById("flagelo");
+
+		Optional<String> protagonistName = Optional.empty();
+
+		while (protagonistName.isEmpty()) {
+			TitleScreen.show(scanner);
+			ConsoleUI.clearScreen();
+
+			protagonistName = characterCreationMenu.open(flageloDefinition);
+
+			ConsoleUI.clearScreen();
+		}
+
+		PlayableCharacter protagonist = new PlayableCharacter(
+				protagonistName.get(),
+				flageloDefinition,
+				skillCatalog.getByClassId(flageloDefinition.getId()),
+				characterGrowthCalculator
+		);
+
+		return new Party(protagonist);
+	}
+
+	private static boolean usesDevelopmentParty(String[] arguments) {
+		for (String argument : arguments) {
+			if (DEVELOPMENT_PARTY_ARGUMENT.equals(argument)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

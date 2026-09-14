@@ -2,15 +2,15 @@
 
 ## Current version
 
-V3 feature implementation completed.
+V4 gameplay-systems functional implementation complete.
 
 Current stage:
 
-`Release preparation and documentation`
+`Final documentation review and release audit`
 
 Current Git branch:
 
-`feature/v3-data-driven-scenarios`
+`feature/v4-gameplay-systems`
 
 The V1 MMMVP is preserved by the tag:
 
@@ -146,30 +146,11 @@ enemy_drops.txt
 - Defeated characters remain defeated even after leveling up.
 - Party and individual character status menus are available outside battle.
 - Shared gold is displayed in the party status menu.
+- `Party.fullyRestoreMembers()` centralizes revival and complete HP, MP and SP restoration for INN stays and full-party rescue.
 
 ### Recovery skills
 
-Supported recovery types:
-
-- Healing.
-- Revival.
-
-Supported skill targets:
-
-- Self.
-- One ally.
-- All allies.
-- All allies except the user.
-- One enemy.
-- All enemies.
-
-Current rules:
-
-- Healing cannot target defeated allies.
-- Revival targets only defeated allies.
-- Skills do not consume resources when no valid target exists.
-- Revived allies enter the initiative queue only in the following round.
-- Temporary healing and revival skills remain hardcoded for V2 testing.
+V2 introduced healing and revival as single-purpose hardcoded skill fields. V4 replaced that precursor with external ordered components. HP recovery and revival now scale through `RecoveryCalculator`; MP and SP recovery remain fixed-power components. Targeting and applicability belong to each component, and revived allies still enter the initiative queue only in the following round.
 
 ### Multiple enemies
 
@@ -252,9 +233,9 @@ Responsibilities previously concentrated in `World` were extracted into dedicate
 
 World, combat-scenario, city, city-location, INN, travel, branch, inventory and status menus use iterative navigation and explicit back commands.
 
-## City structure and Bree services
+## City structure and services
 
-Cities now use a dedicated action flow instead of the combat-scenario menu.
+Cities use a dedicated action flow instead of the combat-scenario menu.
 
 The city menu currently supports:
 
@@ -268,18 +249,19 @@ Unavailable actions are omitted. Paid city transport appears only when at least 
 
 City locations are treated as a navigation concept rather than a generic service hierarchy. `CityLocationMenu` displays only functional location names, while each selected service owns its details and interaction flow.
 
-Bree currently provides one externally configured INN and one fixed city shop. `CityLocationMenu` combines the available location names without owning their service-specific behavior.
+Every registered city has exactly one externally configured INN. `InnCatalog` prevents multiple definitions for the same city, while `InnLoader` rejects initialization when any city has no INN.
 
-The Bree INN:
+City INNs:
 
-- Charges a provisional fixed price of 25 gold for the whole party.
-- Remains accessible when the party cannot afford a stay.
-- Prevents unnecessary, unaffordable and cancelled payments.
-- Requests confirmation before charging.
-- Revives defeated members before restoring resources.
-- Fully restores HP, MP and SP for the entire party.
-- Keeps the player inside the INN after resting.
-- Displays action feedback inside the current INN screen.
+- Charge an externally configured fixed price for the whole party.
+- Remain accessible when the party cannot afford a stay.
+- Prevent unnecessary, unaffordable and cancelled payments.
+- Request confirmation before charging.
+- Delegate revival and complete HP, MP and SP restoration to `Party.fullyRestoreMembers()`.
+- Keep the player inside the INN after resting.
+- Display action feedback inside the current INN screen.
+
+Bree additionally provides one fixed city shop. `CityLocationMenu` combines the available location names without owning their service-specific behavior.
 
 The Bree market uses the same shop definitions, runtime state, interface and transaction rules as exploration merchants. City shops remain accessible when they have no remaining purchase offers.
 
@@ -374,6 +356,8 @@ Recovery behavior is loaded separately from `data/recovery_items.txt`, preventin
 
 The current construction flow is:
 
+The current construction flow is:
+
 ```text
 items.txt
     -> ItemLoader
@@ -383,18 +367,29 @@ recovery_items.txt
     -> RecoveryItemLoader
     -> RecoveryItemDefinitionCatalog
 
+skill_scrolls.txt
+SkillCatalog
+PlayableClassCatalog
+    -> SkillScrollLoader
+    -> SkillScrollDefinitionCatalog
+
 ItemDefinitionCatalog
 RecoveryItemDefinitionCatalog
+SkillScrollDefinitionCatalog
+SkillCatalog
     -> ItemFactory
     -> ItemCatalog
 ```
 
-`ItemDefinitionCatalog` and `RecoveryItemDefinitionCatalog` contain immutable data loaded during application initialization.
+`ItemDefinitionCatalog`, `RecoveryItemDefinitionCatalog` and `SkillScrollDefinitionCatalog` contain immutable data loaded during application initialization.
 
 `ItemFactory` combines the base and specialized definitions. It currently creates:
 
 - `BasicItem` for items without specialized runtime behavior.
 - `RecoveryItem` for items with a recovery definition.
+- `SkillScroll` for items with a validated skill-scroll definition.
+
+Equipment items remain `BasicItem` runtime objects. Their specialized immutable data is loaded independently from `weapons.txt`, `armors.txt` and `trinkets.txt` into `EquipmentCatalog` using the same stable item IDs.
 
 `ItemCatalog` contains the complete runtime objects used by enemy drops, exploration rewards, shop offers, menus and inventory.
 
@@ -403,7 +398,7 @@ Base item definitions may independently declare:
 - `baseShopSalePrice`, used to calculate offers sold by shops.
 - `shopPurchasePrice`, used when shops buy owned items from the party.
 
-The presence of `shopPurchasePrice` determines whether an item is sellable to shops. `playerTradable` remains reserved for future player-to-player trading.
+The presence of `shopPurchasePrice` determines whether an item is sellable to shops. `playerTradable` identifies items eligible for the future player-to-player trading system. Trading-post behavior is not implemented by the local item integration.
 
 The current recovery-item model supports:
 
@@ -414,11 +409,11 @@ The current recovery-item model supports:
 - Combined effects.
 - Single-ally targeting.
 - Whole-party targeting.
-- Future status-effect purification.
+- Purification of active negative attribute states.
 
 Revival is applied before ordinary HP recovery. Items are removed only when at least one configured component produces an effect.
 
-Purification data is loaded and preserved, but the corresponding runtime effect depends on the future status-effect system.
+Purification is applied only when the target has an eligible negative attribute state. An ineffective item attempt does not consume the item or the acting character's battle action.
 
 ## External exploration reward pools
 
@@ -475,9 +470,140 @@ The general inventory and battle item selection use separate menus.
 
 `RecoveryItemUseMenu` centralizes target selection, effect application, result display and conditional item removal for both contexts.
 
+`SkillScrollUseMenu` resolves the unique class-compatible learner, reports unavailable learning, handles the two-slot replacement flow and delegates successful mutation and consumption to `SkillScrollService`.
+
+Skill-scroll details reuse `SkillDetailFormatter`, display the compatible learner beside the action and remain available only through the general inventory. Successful learning refreshes the scroll category instead of closing the inventory.
+
 An ineffective item attempt does not consume the item or the acting character's battle action.
 
 The shared inventory has no weight or capacity limit.
+
+## V4 combat effects and external skills
+
+The first V4 gameplay-system block is complete.
+
+### External playable-class and skill definitions
+
+- All seven playable classes have stable external definitions, one validated Unicode presentation symbol and startup validation.
+- `skills.txt` stores immutable skill headers with `STARTER`, `LEVEL` or `SCROLL` acquisition types and positive level requirements.
+- `skill_effects.txt` stores ordered effect components.
+- `SkillLoader` combines and validates both files and registers complete `SkillDefinition` objects in `SkillCatalog`.
+- `PlayableCharacter` references its class and skill definitions, stores learned skills through stable IDs and automatically learns eligible non-scroll skills.
+- The old hardcoded `Skill` and `RecoveryType` types were removed.
+- All 30 approved class-progression skills are registered externally: two temporary Flagelo `STARTER` skills and 28 permanent `LEVEL` skills.
+- Skill powers and resource costs remain provisional until the general balance pass.
+
+### Skill execution
+
+- One `SkillExecutionContext` preserves the user and targets selected for the complete skill use.
+- `SkillExecutor` processes `PRE_ACTION`, `PRIMARY` and deferred `POST_ACTION` components in sequence.
+- Existing temporary-effect durations decrease after the acting character consumes its turn and before `POST_ACTION` components are applied.
+- Each component is evaluated in this order: condition, applicability, trigger, resistance when applicable, then application.
+- `triggerChancePercent` belongs to the component. A blank field means 100%, and one trigger roll is shared by all its applicable targets.
+- Resistance is calculated separately for each target from the user's effective LCK and the target's effective RES.
+- `SkillEffectOutcome` distinguishes `APPLIED`, `RESISTED` and `NOT_TRIGGERED` for presentation.
+- A resisted or non-triggered applicable component is still a valid attempt and consumes the action and resources. A failed condition or inapplicable component is not a valid attempt.
+- Conditional components are evaluated against runtime state when their ordered position is reached, so later conditions can observe damage or attribute changes produced earlier in the same execution.
+
+### Combat calculations and effects
+
+- `DamageCalculator` owns physical and magical damage formulas for skills and basic attacks, with `KF = 20` and `KM = 20`.
+- `RecoveryCalculator` owns ATK- or MAG-scaled HP recovery and revival; MP and SP recovery remain fixed.
+- `EffectResistanceCalculator` owns the LCK-against-RES formula, `KR = 1` and the 85% application cap.
+- Negative attribute stages and dissipation are resistible. Distorção Ancestral is not.
+- Negative stages applied to the user are also resistible; each such component compares the user's effective LCK with its own effective RES when it executes.
+- Attribute stages track positive and negative values and durations independently.
+- Distorção Ancestral swaps the structural values of ATK/MAG and DEF/RES while stages remain attached to their named attributes.
+- Distorção is reversible, persists visibly across turns, stays outside purification and dissipation and is removed by battle cleanup.
+- `DAMAGE_POWER_MODIFIER` affects every later compatible damage component against the same target during one execution. Multiple modifiers use overflow-protected accumulation.
+- `RECOIL_DAMAGE` derives a percentage from the actual damage of the immediately preceding single-enemy damage component and applies direct non-lethal damage to the user.
+- Recovery-item purification is connected to active negative attribute states.
+
+## V4 natural character progression
+
+The natural-growth and level-based skill-availability block is complete.
+
+- `CharacterGrowthCalculator` derives a complete natural `CharacterStats` snapshot from one playable-class definition and target level.
+- Base growth after level 1 is `HP +25`, `MP +10`, `SP +10` and `+1` to every regular attribute per level.
+- The primary attribute gains one additional point every two levels; the secondary attribute gains one additional point every three levels.
+- ATK specialization adds SP growth, MAG adds MP growth, and DEF or RES adds HP growth on the same schedules. Defensive specializations are cumulative.
+- Growth is calculated directly from class base stats and final level, avoiding incremental drift when several levels are gained at once.
+- Natural stats remain separate from temporary effects and implemented equipment bonuses.
+- `PlayableCharacter` keeps its immutable class and skill definitions while storing the stable IDs of skills it has actually learned.
+- Eligible `STARTER` and `LEVEL` skills are learned during construction and after level gains; `SCROLL` skills are never granted automatically.
+- `BattleRewardService` records natural stats before and after leveling, detects every newly learned non-scroll skill and restores surviving characters only after the new maximums are installed.
+- `BattleRewardScreen` displays compact stat deltas and newly learned skill names; `CharacterStatusMenu` displays the character's complete class name and symbol.
+- Experience and level arithmetic reject overflow instead of wrapping silently.
+
+## V4 skill-detail presentation
+
+- `CharacterStatusMenu` presents available skills as a compact selectable list instead of expanding every description at once.
+- `SkillDetailFormatter` derives level, main type, power, action target and resource cost from the immutable skill definition.
+- The main display component is the first effective component in `PRIMARY`; secondary components remain described by the external narrative text.
+- Character status and battle confirmation reuse the same formatted skill sheet.
+- Narrative descriptions avoid promising final damage or recovery amounts that depend on effective attributes and combat formulas.
+- The displayed level represents automatic acquisition for `STARTER` and `LEVEL` skills and the minimum scroll-use requirement for `SCROLL` skills.
+- Skill-scroll details reuse the same formatter instead of maintaining a separate technical presentation.
+
+## V4 skill-scroll integration
+
+The local skill-scroll architecture and behavior are complete.
+
+- `skill_scrolls.txt` links item, skill and playable-class IDs.
+- `SkillScrollLoader` validates item categories, acquisition types, catalog references, class agreement, duplicate links and complete specialization.
+- `SkillScrollDefinition` and `SkillScrollDefinitionCatalog` store immutable specialized data.
+- `ItemFactory` creates the specialized runtime `SkillScroll` using the canonical `SkillDefinition`.
+- `PlayableCharacter` stores learned skill IDs in deterministic order.
+- `SkillLearningResult` reports successful and rejected learning outcomes.
+- `SkillScrollService` consumes one owned scroll only after successful learning or replacement.
+- `SkillScrollUseMenu` supports class and level rejection, duplicate rejection, a maximum of two learned scroll skills, cancellation and confirmed replacement.
+- Only learned `SCROLL` skills may be replaced; `STARTER` and `LEVEL` skills remain protected.
+- Forgotten scroll skills do not return their original item.
+- Scroll-learned skills reuse normal status display, battle selection and skill execution.
+- Skill scrolls remain outside battle inventory and can use the existing enemy-drop system.
+- Temporary synthetic scrolls validated loading, learning, consumption, rejection, replacement and battle execution before being removed.
+
+No permanent scroll item, scroll skill or curated scroll drop is currently registered. The seven initial scroll-skill concepts remain draft content and some require additional combat-effect mechanics.
+
+## V4 equipment
+
+The equipment block is complete and contains 67 weapons, 25 armors and 22 trinkets, totaling 114 specialized definitions linked to base items.
+
+- `EquipmentLoader` reads all three external files and registers definitions in one `EquipmentCatalog`.
+- `EquipmentDefinition` centralizes level requirements and all nine possible stat bonuses.
+- `WeaponDefinition`, `ArmorDefinition` and `TrinketDefinition` add their category-specific fields.
+- `ArmorWeight` replaced the former `PlayableClassWeight` and is shared by class and armor compatibility.
+- `DamageType` moved to `rpg.battle`, where it serves skills and weapon attacks.
+- `CharacterEquipment` owns one weapon, one armor and one trinket per playable character.
+- `EquipmentService` transfers units between the shared inventory and character slots, including replacement and removal.
+- Equipped units leave inventory, so no `(E)` marker or special sale filtering is required.
+- Every class may use every weapon and trinket after meeting the level requirement; armor requires exact weight compatibility.
+- Every equipment category may grant HP, MP, SP, ATK, DEF, MAG, RES, VEL and LCK bonuses.
+- Natural stats remain unchanged by equipment. Public maximums and attributes add structural equipment bonuses before temporary combat effects.
+- Lower maximums clamp current HP, MP and SP after equipment changes; higher maximums do not heal.
+- One shared `EquipmentMenu` supports equipping from inventory and managing slots from character status.
+- `EquipmentDetailFormatter` presents details and change-only confirmation comparisons with `Poder` as the player-facing weapon-power label.
+
+## Equipment-aware combat
+
+- A player's basic attack uses the equipped weapon's damage type, normal-attack name and base power.
+- An unarmed basic attack falls back to physical damage with zero weapon power.
+- Every damaging skill adds 100% of the equipped weapon's base power.
+- A skill's declared damage type remains independent from the equipped weapon's physical or magical classification.
+- `SkillExecutionContext` captures weapon base power for one skill use.
+- Enemy basic attacks remain physical with zero weapon power.
+- Skill powers and resource costs remain provisional until the general balance pass.
+
+## Reward modifiers
+
+- `PartyRewardModifierState` supports one temporary EXP modifier and one temporary GOLD modifier at the same time.
+- Durations decrease only after a rewarded victory; escape and defeat do not consume them.
+- An equipped trinket's EXP modifier applies only to its wearer.
+- GOLD modifiers from every equipped trinket are summed for the party.
+- Temporary and equipment percentages combine additively before one rounding.
+- Character status displays total individual M.EXP.
+- Party status and battle rewards display temporary global M.EXP and total effective M.GOLD.
+- Battle rewards intentionally do not list every ally's individual M.EXP, preserving readability for a four-member party.
 
 ## Character attributes
 
@@ -493,11 +619,58 @@ The complete character attribute set is:
 - VEL — Speed
 - LCK — Luck
 
-Initial values are grouped in immutable `CharacterStats`.
+Initial values are grouped in immutable `CharacterStats`. Maximum HP and all six regular attributes must be positive; maximum MP and SP may be zero. Enemy and playable-class loaders report the source line and content ID when invalid values are found.
 
 Current HP, MP and SP remain inside `GameCharacter` because they change during gameplay.
 
-Recovery power is not a character attribute. Recovery values belong to skills or items, while `GameCharacter.recoverHp()`, `recoverMp()`, `recoverSp()` and `revive()` apply changes to character resources.
+Temporary attribute stages and special battle states belong to each character's `CombatEffectState`. Battle formulas consume effective attributes rather than repeating stage logic.
+
+Recovery power is not a character attribute. Recovery values belong to skill components or items. `RecoveryCalculator` calculates scaled skill recovery, while `GameCharacter.recoverHp()`, `recoverMp()`, `recoverSp()` and `revive()` apply changes to character resources.
+
+## V4 initial character and party creation
+
+The initial character-creation block is complete.
+
+- `CharacterNameRules` centralizes normalization, validation, the 16-code-point limit and case-insensitive comparison.
+- Valid names use Unicode letters separated only by single spaces, hyphens or apostrophes.
+- Names are normalized to NFC, outer spaces are removed and repeated ordinary spaces are collapsed.
+- `PlayableCharacter` accepts only normalized valid names.
+- `Party` rejects a new member whose name duplicates an existing member without regard to letter case.
+- `character_names.txt` provides external names for random selection.
+- `CharacterNameLoader` validates every external name, rejects case-insensitive duplicates and requires at least four valid entries.
+- `CharacterNameCatalog` stores the validated names and `CharacterNameSelector` selects uniformly after exclusions.
+- `CharacterCreationMenu` supports manual naming, random naming, repeated randomization, name changes, confirmation and cancellation.
+- Character creation displays the Flagelo's complete class name, primary and secondary specializations and external description.
+- Cancelling returns to `TitleScreen` without constructing partial character or party state.
+- A confirmed normal new game creates only one level-1 Flagelo with full resources.
+- The confirmed protagonist becomes the first member and leader of the new `Party`.
+- `Main` no longer contains a hardcoded normal party.
+- The `--dev-party` argument bypasses normal creation and delegates to `DevelopmentPartyFactory`.
+- `DevelopmentPartyFactory` supports one to four configured members with distinct classes, positive levels, fully restored resources, configurable initial gold and optional temporary reward modifiers.
+- Every playable class defines one visible Unicode symbol for compact interface identification.
+- `PartyStatusMenu` displays complete names and symbols in a two-line layout.
+- `CharacterStatusMenu` displays the complete character name together with the class symbol and name.
+- Character names are not truncated in character interfaces.
+
+The four current entries in `character_names.txt` are temporary placeholders. Final name curation belongs to the creative team.
+
+## V4 full-party defeat and rescue
+
+The full-party defeat and rescue block is complete.
+
+- `Battle` displays the final defeat message and returns `BattleResult.DEFEAT` without terminating the application.
+- Every combat scenario externally defines an optional preferred rescue city, a required fallback rescue city and a narrative rescue description.
+- The preferred city is selected only when already discovered; otherwise, the fallback city is used.
+- Every registered city has exactly one INN, and every configured rescue destination is validated against the scenario and INN catalogs during initialization.
+- Rescue costs the greater value between the destination INN price and 10% of current party gold rounded upward, limited to the gold currently available.
+- A party with no gold is rescued without payment.
+- `World` coordinates destination selection, payment, complete restoration and movement to the selected city.
+- `Party.fullyRestoreMembers()` revives every defeated member and fully restores HP, MP and SP.
+- `PartyRescueScreen` presents the external narrative, selected destination and exact cost before requiring ENTER.
+- The failed exploration session is discarded without advancing or completing its current position.
+- Rescue preserves EXP, levels, learned skills, remaining gold, inventory, equipment, reward modifiers, world progress, unlocked routes and shop state.
+- Rescue may discover an undiscovered fallback city without unlocking unrelated routes.
+- Victory and escape do not activate rescue, and normal victory does not automatically revive defeated allies.
 
 ## Scenario discovery and paid city transport
 
@@ -531,38 +704,34 @@ Adjacent routes remain free and continue to use `TravelRouteDefinition`, `Travel
 
 ## Centralized currency presentation
 
-`GameCurrency` centralizes the visible currency name and numeric formatting. The current interface uses `GOLD` as the name and `G$ ` as the value prefix.
+`GameCurrency` centralizes the visible currency name and numeric formatting. The current interface uses `GOLD` as the name and the `G` suffix without a separating space, such as `100G`.
 
 Battle rewards, exploration rewards, inventory, party status, INNs, paid city transport and every shop price, total and balance use this shared presentation without moving gold ownership away from `Party`.
 
 ## Current limitations and temporary implementations
 
-- Equipment behavior and specialized equipment data are not implemented.
-- Skill-scroll behavior and specialized skill-scroll data are not implemented.
-- Recovery-item purification cannot remove effects until status effects exist.
-- Playable characters and skills are created in `Main`.
-- Temporary healing and revival skills exist for testing.
-- Playable classes are not represented as data yet.
-- Buffs and debuffs are not implemented.
+- Permanent skill-scroll content and curated scroll drops remain absent while the draft skills await required combat mechanics and final content review.
+- The Flagelo's two temporary `STARTER` skills are not yet retired because the level-7 class-choice flow is not implemented.
+- Learned scroll skills remain runtime-only until save and load persist individual learned-skill IDs.
+- Playable-class definitions, natural growth and the complete approved 30-skill roster are external; skill powers and resource costs remain provisional pending the general balance pass.
+- Enemy turns currently use basic attacks; enemy skill selection is deferred.
 - Tavern functionality remains unavailable.
-- Defeated allies remain unavailable until revived by a skill, item or city INN.
-- Full-party defeat still uses the temporary Game Over flow.
+- After a normal victory, defeated allies remain unavailable until revived by a skill, item or city INN; full-party defeat instead activates rescue and complete restoration.
 - Shop state is regenerated when the program starts and is not persisted.
 - Shops do not restock during the current execution.
 - Items sold by the player cannot be bought back.
+- Normal new games currently begin with only the protagonist; story-based recruitment of three distinct-class allies remains future work.
+- Random ally naming will reuse the implemented external-name selection after recruitment is added.
+- The four current random character names remain temporary pending creative-team curation.
+- Party-title acquisition and character-history presentation remain future narrative work.
 
 ## Current next step
 
-V3 roadmap sections 1 through 10 are complete.
+All definitive V4 gameplay-system blocks are functionally complete, including combat effects, external skills, natural progression, reward modifiers, equipment, local skill-scroll infrastructure, initial character creation and full-party rescue.
 
-The remaining V3 work consists of:
+The remaining V4 work is the final documentation and consistency audit before concluding the version. Save/load, story-based ally recruitment, party-title acquisition and the level-7 class-path decision remain preserved for future planning.
 
-- Release-specific regression testing.
-- Final consistency review of technical documentation.
-- Build generation and validation.
-- Release preparation.
-
-Requirements beyond the data-driven world scope are preserved in `V4_ROADMAP.md`.
+The post-V4 level-7 class-change flow already has one equipment rule fixed: all three equipped items return to inventory, the chosen class NPC grants that class's level-7 starter weapon and armor even when the character remains a Flagelo, and the narration tells the player to open the equipment menu and equip the new set.
 
 ## Important conventions
 

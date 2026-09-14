@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Objects;
 
 import rpg.items.Inventory;
+import rpg.battle.rewards.PartyRewardModifierState;
 
 // Stores the playable characters and shared party resources.
 public final class Party {
@@ -14,6 +15,7 @@ public final class Party {
 
 	private final List<PlayableCharacter> members;
 	private final Inventory inventory;
+	private final PartyRewardModifierState rewardModifierState;
 	private int gold;
 
 	public Party(PlayableCharacter initialMember) {
@@ -21,6 +23,7 @@ public final class Party {
 
 		this.members = new ArrayList<>();
 		this.inventory = new Inventory();
+		this.rewardModifierState = new PartyRewardModifierState();
 		this.gold = 0;
 
 		members.add(initialMember);
@@ -29,7 +32,10 @@ public final class Party {
 	public boolean addMember(PlayableCharacter newMember) {
 		Objects.requireNonNull(newMember, "Party member cannot be null.");
 
-		if (members.size() >= MAXIMUM_SIZE || members.contains(newMember)) {
+		boolean nameAlreadyUsed = members.stream()
+				.anyMatch(member -> CharacterNameRules.areEquivalent(member.getName(), newMember.getName()));
+
+		if (members.size() >= MAXIMUM_SIZE || members.contains(newMember) || nameAlreadyUsed) {
 			return false;
 		}
 
@@ -61,6 +67,16 @@ public final class Party {
 		return members.stream().noneMatch(PlayableCharacter::isAlive);
 	}
 
+	public void fullyRestoreMembers() {
+		for (PlayableCharacter member : members) {
+			if (!member.isAlive()) {
+				member.revive(member.getMaxHp());
+			}
+
+			member.restoreAllResources();
+		}
+	}
+
 	public boolean hasAvailableSlot() {
 		return members.size() < MAXIMUM_SIZE;
 	}
@@ -73,10 +89,16 @@ public final class Party {
 		return inventory;
 	}
 
+	public PartyRewardModifierState getRewardModifierState() {
+		return rewardModifierState;
+	}
+
 	public void addGold(int amount) {
-		if (amount > 0) {
-			gold += amount;
+		if (amount < 0) {
+			throw new IllegalArgumentException("Gold amount cannot be negative.");
 		}
+
+		gold = Math.addExact(gold, amount);
 	}
 
 	public boolean spendGold(int amount) {
@@ -88,12 +110,22 @@ public final class Party {
 		return true;
 	}
 
+	public int getEquipmentGoldModifierPercent() {
+		int totalModifierPercent = 0;
+
+		for (PlayableCharacter member : members) {
+			totalModifierPercent = Math.addExact(totalModifierPercent, member.getEquipment().getGoldModifierPercent());
+		}
+
+		return totalModifierPercent;
+	}
+
 	public int getGold() {
 		return gold;
 	}
-	
+
 	public PlayableCharacter getLeader() {
-	    return members.get(0);
+		return members.get(0);
 	}
-	
+
 }

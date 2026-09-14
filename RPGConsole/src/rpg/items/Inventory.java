@@ -19,7 +19,9 @@ public class Inventory {
 
         int currentQuantity = items.getOrDefault(item, 0);
 
-        items.put(item, currentQuantity + quantity);
+        int resultingQuantity = Math.addExact(currentQuantity, quantity);
+
+        items.put(item, resultingQuantity);
 
         return true;
     }
