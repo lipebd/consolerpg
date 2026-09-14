@@ -11,14 +11,20 @@ public final class CraftingRecipeDefinition {
 
 	private final String id;
 	private final String outputItemId;
+	private final String name;
+	private final String description;
 	private final List<CraftingMaterial> materials;
 
 	public CraftingRecipeDefinition(
 			String id,
 			String outputItemId,
+			String name,
+			String description,
 			List<CraftingMaterial> materials) {
 		this.id = validateId(id, "Crafting recipe");
 		this.outputItemId = validateId(outputItemId, "Crafting output item");
+		this.name = validateText(name, "Crafting recipe name");
+		this.description = validateText(description, "Crafting recipe description");
 
 		if (materials == null || materials.isEmpty()) {
 			throw new IllegalArgumentException(
@@ -64,12 +70,28 @@ public final class CraftingRecipeDefinition {
 		return trimmedValue;
 	}
 
+	private String validateText(String value, String fieldName) {
+		if (value == null || value.isBlank()) {
+			throw new IllegalArgumentException(fieldName + " cannot be empty.");
+		}
+
+		return value.trim();
+	}
+
 	public String getId() {
 		return id;
 	}
 
 	public String getOutputItemId() {
 		return outputItemId;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public String getDescription() {
+		return description;
 	}
 
 	public List<CraftingMaterial> getMaterials() {
