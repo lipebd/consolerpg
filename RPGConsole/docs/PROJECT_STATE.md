@@ -766,6 +766,22 @@ Initial content includes:
 
 The service has been validated independently for missing ingredients, exact requirements, excess owned quantities, multiple ingredients, successful consumption, single-unit output and inventory overflow. The complete interface flow has also been validated through purchase, crafting and inventory verification.
 
+## V5 numeric resource boundaries
+
+Numeric resource boundaries required for save validation are implemented.
+
+- `Party.MAXIMUM_GOLD` centralizes the liquid-GOLD maximum of `999999999`.
+- `Inventory.MAXIMUM_QUANTITY_PER_ITEM` centralizes the maximum of 999 units for each item ID.
+- The inventory continues to support an unlimited number of different item IDs and one quantity entry per ID.
+- Domain additions use `long` intermediate arithmetic and reject values that do not fit completely.
+- Battle and exploration rewards grant only the portion that fits and explicitly report discarded GOLD or items.
+- Shop purchases validate item capacity before deducting GOLD or reducing stock.
+- Shop sales validate GOLD capacity before removing items.
+- Crafting validates output capacity before consuming ingredients, including recipes whose output is also an ingredient.
+- Equipment replacement and removal are rejected when the returning item cannot fit completely in inventory.
+- Defensive rollback paths verify complete resource restoration.
+- GOLD rewards, item rewards, purchases, sales, crafting, equipment replacement and equipment removal were manually validated at their limits.
+
 ## Current limitations and temporary implementations
 
 - Permanent skill-scroll content and curated scroll drops remain absent while the draft skills await required combat mechanics and final content review.

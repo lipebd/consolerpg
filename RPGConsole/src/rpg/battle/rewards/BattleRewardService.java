@@ -80,19 +80,50 @@ public final class BattleRewardService {
 				rewardModifiers
 		);
 
-		party.addGold(modifiedGoldReward);
+		int grantedGold = Math.min(modifiedGoldReward, party.getRemainingGoldCapacity());
 
-		Map<Item, Integer> collectedItems = collectEnemyDrops(defeatedEnemies);
+		if (!party.addGold(grantedGold)) {
+			throw new IllegalStateException("Validated battle GOLD reward could not be added.");
+		}
 
-		addCollectedItemsToInventory(party, collectedItems);
+		int discardedGold = Math.subtractExact(modifiedGoldReward, grantedGold);
+
+		Map<Item, Integer> rolledItems = collectEnemyDrops(defeatedEnemies);
+
+		Map<Item, Integer> collectedItems = new LinkedHashMap<>();
+
+		Map<Item, Integer> discardedItems = new LinkedHashMap<>();
+
+		for (Map.Entry<Item, Integer> entry : rolledItems.entrySet()) {
+			Item item = entry.getKey();
+			int rolledQuantity = entry.getValue();
+
+			int grantedQuantity = Math.min(rolledQuantity, party.getInventory().getRemainingCapacity(item));
+
+			if (grantedQuantity > 0) {
+				if (!party.getInventory().addItem(item, grantedQuantity)) {
+					throw new IllegalStateException("Validated battle item reward could not be added: " + item.getId());
+				}
+
+				collectedItems.put(item, grantedQuantity);
+			}
+
+			int discardedQuantity = Math.subtractExact(rolledQuantity, grantedQuantity);
+
+			if (discardedQuantity > 0) {
+				discardedItems.put(item, discardedQuantity);
+			}
+		}
 
 		party.getRewardModifierState().consumeRewardedVictory();
 
 		return new BattleRewards(
 				progressionResults,
 				globalExperienceReward,
-				modifiedGoldReward,
+				grantedGold,
+				discardedGold,
 				collectedItems,
+				discardedItems,
 				rewardModifiers
 		);
 	}
@@ -141,18 +172,11 @@ public final class BattleRewardService {
 
 				Item item = dropEntry.getItem();
 
-				collectedItems.merge(item, quantity, Integer::sum);
+				collectedItems.merge(item, quantity, Math::addExact);
 			}
 		}
 
 		return collectedItems;
-	}
-
-	private void addCollectedItemsToInventory(Party party, Map<Item, Integer> collectedItems) {
-		for (Map.Entry<Item, Integer> entry : collectedItems.entrySet()) {
-
-			party.getInventory().addItem(entry.getKey(), entry.getValue());
-		}
 	}
 
 	private List<CharacterProgressionResult>

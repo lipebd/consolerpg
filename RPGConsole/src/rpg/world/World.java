@@ -608,15 +608,45 @@ public class World {
 		case ITEM -> {
 			Item item = itemCatalog.getById(reward.getRewardId());
 
-			party.getInventory().addItem(item, reward.getQuantity());
+			int foundQuantity = reward.getQuantity();
 
-			System.out.println("Você encontrou " + item.getName() + " x" + reward.getQuantity() + "!");
+			int grantedQuantity = Math.min(foundQuantity, party.getInventory().getRemainingCapacity(item));
+
+			if (grantedQuantity > 0 && !party.getInventory().addItem(item, grantedQuantity)) {
+				throw new IllegalStateException("Validated exploration item reward could not be added.");
+			}
+
+			int discardedQuantity = Math.subtractExact(foundQuantity, grantedQuantity);
+
+			System.out.println("Você encontrou " + item.getName() + " x" + foundQuantity + "!");
+
+			if (discardedQuantity > 0) {
+				System.out.println(
+						"Recebido: x" + grantedQuantity + " | Descartado: x" + discardedQuantity
+								+ " (limite do inventário)."
+				);
+			}
 		}
 
 		case GOLD -> {
-			party.addGold(reward.getQuantity());
+			int foundGold = reward.getQuantity();
 
-			System.out.println("Você encontrou " + GameCurrency.format(reward.getQuantity()) + "!");
+			int grantedGold = Math.min(foundGold, party.getRemainingGoldCapacity());
+
+			if (!party.addGold(grantedGold)) {
+				throw new IllegalStateException("Validated exploration GOLD reward could not be added.");
+			}
+
+			int discardedGold = Math.subtractExact(foundGold, grantedGold);
+
+			System.out.println("Você encontrou " + GameCurrency.format(foundGold) + "!");
+
+			if (discardedGold > 0) {
+				System.out.println(
+						"Recebido: " + GameCurrency.format(grantedGold) + " | Descartado: "
+								+ GameCurrency.format(discardedGold) + " (limite da carteira)."
+				);
+			}
 		}
 		}
 	}

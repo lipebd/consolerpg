@@ -170,6 +170,8 @@ Shared state belongs to `Party`:
 - Temporary global EXP and gold modifiers together with their remaining rewarded victories.
 - Future party title.
 
+`Party.MAXIMUM_GOLD` defines the liquid-GOLD ceiling of `999999999`. `Inventory.MAXIMUM_QUANTITY_PER_ITEM` defines the limit of `999` units for each stable item ID while leaving the number of different owned item IDs unlimited. Both mutation owners use `long` intermediate arithmetic and reject additions that do not fit completely.
+
 Individual state belongs to `PlayableCharacter`:
 
 - HP.
@@ -184,7 +186,7 @@ Individual state belongs to `PlayableCharacter`:
 - The individual EXP modifier supplied by its equipped trinket.
 - Temporary combat effects.
 
-This separation allows party members to enter and leave the group without duplicating shared resources.
+This separation allows future recruitment to grow the party without duplicating shared resources. The first member remains the permanent protagonist and party leader.
 
 ## Initial character creation
 
@@ -222,7 +224,7 @@ DevelopmentPartyFactory
 Party with one to four configured members
 ```
 
-`DevelopmentPartyFactory` validates party size, positive levels and distinct class IDs. It creates each character through the normal domain constructor, advances configured levels through normal progression and restores resources to the resulting maximums. The first configured member becomes the leader.
+`DevelopmentPartyFactory` validates party size, levels within the supported playable-character range and distinct class IDs. It creates each character through the normal domain constructor, advances configured levels through normal progression and restores resources to the resulting maximums. The first configured member becomes the leader.
 
 ## Scenario model
 
@@ -694,6 +696,8 @@ Status -> character -> equipment slot -> inventory item -> confirmation
 
 `EquipmentDetailFormatter` produces shared details and change-only confirmation comparisons. Player-facing text calls weapon base damage `Poder`; `DBA` remains internal vocabulary. Equipped units are absent from inventory rather than marked with an `(E)` flag.
 
+`EquipmentService` checks inventory capacity before returning an unequipped or replaced item. A transfer that cannot return every participating item is rejected before changing equipment, while defensive rollback checks protect items already removed from inventory.
+
 ## Battle reward architecture
 
 `BattleRewardService` calculates:
@@ -701,7 +705,7 @@ Status -> character -> equipment slot -> inventory item -> confirmation
 - Base EXP and gold after enemy-rank multiplication and aggregation.
 - Temporarily modified global EXP and gold.
 - Final EXP for each character after temporary and equipped individual modifiers are combined additively.
-- Final party gold after temporary and all equipped trinket gold modifiers are combined additively.
+- Calculated party gold after temporary and all equipped trinket gold modifiers are combined additively.
 - Individual character progression.
 - Independent drop rolls.
 - Consolidated item quantities.
@@ -715,6 +719,8 @@ Status -> character -> equipment slot -> inventory item -> confirmation
 EXP is granted individually to every party member.
 
 Gold and items are granted once to `Party`.
+
+Calculated gold and item drops are granted only up to their domain limits. `BattleRewards` stores the granted and discarded portions separately so the normal reward summary remains accurate and an additional limit notice appears only when something could not be received.
 
 `CharacterProgressionResult` stores:
 
@@ -878,8 +884,10 @@ data/shop_stock.txt
 - Sales validate the selected item, commercial availability, owned quantity, total and resulting party gold before changing state.
 - Successful sales remove items from the shared inventory and credit party gold.
 - Items sold by the player never enter shop stock.
-- Cancelled or rejected transactions preserve gold, inventory and shop stock.
-- Price totals, resulting gold and inventory quantities are protected against integer overflow.
+- Cancelled, rejected or capacity-exceeding transactions preserve gold, inventory and shop stock.
+- Purchase totals use overflow-checked arithmetic and receiving capacities are checked against the explicit GOLD and per-item limits.
+- Purchases and sales validate every receiving limit before spending GOLD or removing items.
+- Defensive rollback operations verify that every removed resource is restored completely.
 - Every transaction is atomic from the player's perspective.
 
 An item is sellable to every shop when it defines `shopPurchasePrice`. `KEY_ITEM` definitions cannot provide that price and the category is excluded from the sale interface.
@@ -939,6 +947,8 @@ data/crafters.txt
 * Rejected attempts preserve the complete inventory.
 
 Crafting uses the shared inventory owned by `Party`. It does not own a second inventory, use shop prices, modify shop state or restrict ingredients and outputs by `ItemCategory`.
+
+Before consuming materials, `CraftingService` calculates the resulting output quantity against the per-item limit. When the output is also one of the ingredients, the validation accounts for the quantity consumed before adding the produced unit. A capacity failure preserves every ingredient.
 
 ## UI boundaries
 

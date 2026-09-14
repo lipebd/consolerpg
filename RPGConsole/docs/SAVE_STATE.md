@@ -406,7 +406,11 @@ Intermediate arithmetic uses `long` before validated values are stored as `int`.
 
 A future exchange item may represent `100000000` GOLD and be bought and sold for the same amount.
 
+`Party.MAXIMUM_GOLD` is the shared runtime and load-validation source for this boundary.
+
 With an inventory limit of 999 units, this item can represent wealth above `Integer.MAX_VALUE` while liquid GOLD remains bounded.
+
+`Inventory.MAXIMUM_QUANTITY_PER_ITEM` is the shared runtime and load-validation source for this boundary.
 
 This item and its exchange mechanism are outside the current save/load implementation.
 

@@ -240,13 +240,13 @@ The implementation should continue to favor:
 * [x] Reject save data containing negative or out-of-range GOLD or item quantities.
 * [x] Never cap or correct invalid loaded quantities silently.
 * [x] Use `long` for intermediate arithmetic before validating and storing bounded `int` quantities.
-* [ ] Centralize the maximum GOLD and per-item quantity values.
-* [ ] Apply the GOLD limit to every normal gameplay mutation.
-* [ ] Apply the per-item quantity limit to every normal gameplay mutation.
-* [ ] Update free-reward flows to report partially granted and discarded quantities.
-* [ ] Update shop purchases to reject limit violations before deducting GOLD.
-* [ ] Update crafting to reject output-limit violations before consuming ingredients.
-* [ ] Ensure inventory transfers and rollback operations never destroy items because of a quantity limit.
+* [x] Centralize the maximum GOLD and per-item quantity values.
+* [x] Apply the GOLD limit to every normal gameplay mutation.
+* [x] Apply the per-item quantity limit to every normal gameplay mutation.
+* [x] Update free-reward flows to report partially granted and discarded quantities.
+* [x] Update shop purchases to reject limit violations before deducting GOLD.
+* [x] Update crafting to reject output-limit violations before consuming ingredients.
+* [x] Ensure inventory transfers and rollback operations never destroy items because of a quantity limit.
 * [ ] Preserve mandatory quest rewards until they can be granted instead of discarding them after the quest system exists.
 
 > **Deferred wealth extension:** A future exchange item may represent `100000000` GOLD and be bought and sold for the same amount, allowing total player wealth to exceed `Integer.MAX_VALUE` without increasing the liquid-GOLD limit. This extension is outside the current save/load implementation and would require an exchange mechanism compatible with the finite-stock shop model.

@@ -74,7 +74,7 @@ public final class CraftingService {
 			CraftingRecipeDefinition recipeDefinition,
 			Item outputItem,
 			Inventory inventory) {
-		int resultingOutputQuantity = inventory.getQuantity(outputItem);
+		long resultingOutputQuantity = inventory.getQuantity(outputItem);
 
 		for (CraftingMaterial material : recipeDefinition.getMaterials()) {
 			if (material.getItemId().equals(outputItem.getId())) {
@@ -82,12 +82,9 @@ public final class CraftingService {
 			}
 		}
 
-		try {
-			Math.addExact(resultingOutputQuantity, 1);
-			return true;
-		} catch (ArithmeticException exception) {
-			return false;
-		}
+		resultingOutputQuantity++;
+
+		return resultingOutputQuantity <= Inventory.MAXIMUM_QUANTITY_PER_ITEM;
 	}
 
 	private void applyCraft(

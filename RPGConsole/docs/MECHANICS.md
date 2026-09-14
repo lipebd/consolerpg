@@ -682,9 +682,12 @@ The inventory:
 - Stores one runtime `Item` entry with its owned quantity.
 - Stacks equal items using their stable IDs.
 - Has no weight mechanic.
-- Has no capacity limit.
+- Supports an unlimited number of different item IDs.
+- Stores at most 999 units of each item ID in one quantity entry.
 - Does not require inventory expansions or external storage.
 - Keeps item prices hidden outside shop, merchant and trading contexts.
+
+Party liquid GOLD is limited to `999999999`. `Party` and `Inventory` own these limits and reject integral additions that would exceed them.
 
 ## General inventory
 
@@ -854,11 +857,14 @@ Every party member receives the complete experience reward:
 - Living members receive EXP.
 - Defeated members also receive EXP.
 - EXP is not divided by party size.
-- Excess EXP is preserved after leveling up.
+- Below the maximum level, excess EXP is preserved after leveling up.
+- EXP exceeding the amount required to reach the maximum level is discarded.
 
 Individual EXP multipliers are calculated separately for each character. Temporary party EXP and the wearer's trinket EXP are added before that character's reward is rounded.
 
 Gold is calculated once from the temporary party GOLD modifier plus the GOLD modifiers of every equipped trinket.
+
+Free GOLD and item rewards are granted up to their applicable limits. The normal reward summary shows only quantities actually received. When part or all of a reward is discarded, a separate `Limites atingidos` section reports the discarded GOLD and items. No additional section is displayed during ordinary rewards.
 
 The reward screen:
 
@@ -1213,7 +1219,7 @@ A purchase succeeds only when:
 - The quantity is positive and available.
 - The total price can be calculated without overflow.
 - The party has enough gold.
-- The resulting inventory quantity stays within the supported integer range.
+- The resulting inventory quantity does not exceed 999 units of the purchased item ID.
 - The player confirms the transaction.
 
 Only after every validation succeeds does the transaction deduct party gold, add the items to the shared inventory and reduce the offer's remaining stock.
@@ -1236,7 +1242,7 @@ A sale succeeds only when:
 - The selected item is valid and sellable.
 - The quantity is positive and owned.
 - The total value can be calculated without overflow.
-- The resulting party gold stays within the supported integer range.
+- The resulting party GOLD does not exceed `999999999`.
 - The player confirms the transaction.
 
 Only after every validation succeeds does the transaction remove the items from the shared inventory and add the resulting gold.
@@ -1247,7 +1253,7 @@ Items sold by the player are not added to shop stock. V3 does not implement buyb
 
 Purchases and sales are atomic from the player's perspective.
 
-Invalid, unaffordable, stale, overflowing or cancelled transactions preserve all affected state:
+Invalid, unaffordable, stale, overflowing, capacity-exceeding or cancelled transactions preserve all affected state:
 
 - Party gold.
 - Shared inventory.
@@ -1301,6 +1307,8 @@ The initial crafting content demonstrates both category-independent and multi-in
 * Three units of Madeira and five units of Ferro produce one Espada de Ferro.
 
 The initial Bree locations include an alchemist offering the potion recipe and a blacksmith offering the weapon recipe.
+
+Crafting never consumes ingredients when its output would exceed 999 owned units of the output item ID. Capacity validation considers the inventory state after consuming the recipe materials, allowing a recipe to consume and produce the same item correctly. Rollback restores every material if an unexpected output-addition failure occurs.
 
 ## Scenario discovery
 
@@ -1500,7 +1508,7 @@ When a reward event occurs:
 2. `ANY` entries are combined with entries specific to that area.
 3. Exactly one eligible entry is selected using its relative weight.
 4. Its quantity is randomized inclusively between the configured minimum and maximum.
-5. The selected item or gold is added directly to the party's shared resources.
+5. The selected item or GOLD is granted up to the applicable party-resource limit.
 
 Reward weights:
 
@@ -1509,9 +1517,11 @@ Reward weights:
 - Do not need to total 100.
 - Exist only within the eligible pool for the current scenario and area.
 
-Item rewards reference runtime items by their stable IDs and are added to the shared inventory.
+Item rewards reference runtime items by their stable IDs and are added up to 999 owned units of that item ID.
 
-Gold rewards do not use a reward ID and are added directly to party gold.
+Gold rewards do not use a reward ID and are added up to the liquid-GOLD maximum of `999999999`.
+
+When a reward does not fit completely, the event reports the original found amount together with the granted and discarded portions. Ordinary rewards retain the existing single-line presentation.
 
 Exploration rewards are repeatable. Unique, narrative and quest rewards are not part of these pools.
 

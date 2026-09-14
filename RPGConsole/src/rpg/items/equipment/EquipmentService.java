@@ -41,6 +41,14 @@ public final class EquipmentService {
 
 		Inventory inventory = party.getInventory();
 
+		if (currentDefinition != null) {
+			Item currentItem = itemCatalog.getById(currentDefinition.getItemId());
+
+			if (inventory.getRemainingCapacity(currentItem) < 1) {
+				return false;
+			}
+		}
+
 		if (!inventory.removeItem(item, 1)) {
 			return false;
 		}
@@ -50,7 +58,9 @@ public final class EquipmentService {
 		try {
 			replacedDefinition = equipDefinition(character, newDefinition);
 		} catch (RuntimeException exception) {
-			inventory.addItem(item, 1);
+			if (!inventory.addItem(item, 1)) {
+				throw new IllegalStateException("Equipment transfer rollback failed.", exception);
+			}
 
 			throw exception;
 		}
@@ -80,6 +90,10 @@ public final class EquipmentService {
 		}
 
 		Item item = itemCatalog.getById(equippedDefinition.getItemId());
+
+		if (party.getInventory().getRemainingCapacity(item) < 1) {
+			return false;
+		}
 
 		if (!party.getInventory().addItem(item, 1)) {
 			throw new IllegalStateException(

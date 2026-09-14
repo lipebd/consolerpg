@@ -48,9 +48,7 @@ public final class ShopTransactionService {
 
 		Inventory inventory = party.getInventory();
 
-		try {
-			Math.addExact(inventory.getQuantity(item), quantity);
-		} catch (ArithmeticException exception) {
+		if (quantity > inventory.getRemainingCapacity(item)) {
 			return ShopPurchaseResult.INVENTORY_CAPACITY_EXCEEDED;
 		}
 
@@ -65,7 +63,11 @@ public final class ShopTransactionService {
 		}
 
 		if (!party.getInventory().addItem(item, quantity)) {
-			party.addGold(totalPrice);
+			boolean goldRestored = party.addGold(totalPrice);
+
+			if (!goldRestored) {
+				throw new IllegalStateException("Shop purchase rollback failed.");
+			}
 
 			throw new IllegalStateException("Validated item could not be added during shop purchase.");
 		}
@@ -76,9 +78,9 @@ public final class ShopTransactionService {
 		} catch (RuntimeException exception) {
 			boolean inventoryRestored = party.getInventory().removeItem(item, quantity);
 
-			party.addGold(totalPrice);
+			boolean goldRestored = party.addGold(totalPrice);
 
-			if (!inventoryRestored) {
+			if (!inventoryRestored || !goldRestored) {
 				throw new IllegalStateException("Shop purchase rollback failed.", exception);
 			}
 
@@ -86,21 +88,19 @@ public final class ShopTransactionService {
 		}
 	}
 
-	private void applySale(Item selectedItem, int quantity, int totalValue, int expectedGold) {
+	private void applySale(Item selectedItem, int quantity, int totalValue) {
 		if (!party.getInventory().removeItem(selectedItem, quantity)) {
 			throw new IllegalStateException("Party inventory changed before shop sale.");
 		}
 
-		party.addGold(totalValue);
-
-		if (party.getGold() != expectedGold) {
+		if (!party.addGold(totalValue)) {
 			boolean inventoryRestored = party.getInventory().addItem(selectedItem, quantity);
 
 			if (!inventoryRestored) {
 				throw new IllegalStateException("Shop sale rollback failed.");
 			}
 
-			throw new IllegalStateException("Party gold changed during shop sale.");
+			throw new IllegalStateException("Validated GOLD could not be added during shop sale.");
 		}
 	}
 
@@ -133,15 +133,11 @@ public final class ShopTransactionService {
 			return ShopSaleResult.TOTAL_OVERFLOW;
 		}
 
-		int resultingGold;
-
-		try {
-			resultingGold = Math.addExact(party.getGold(), totalValue);
-		} catch (ArithmeticException exception) {
+		if (totalValue > party.getRemainingGoldCapacity()) {
 			return ShopSaleResult.GOLD_CAPACITY_EXCEEDED;
 		}
 
-		applySale(selectedItem, quantity, totalValue, resultingGold);
+		applySale(selectedItem, quantity, totalValue);
 
 		return ShopSaleResult.SUCCESS;
 	}

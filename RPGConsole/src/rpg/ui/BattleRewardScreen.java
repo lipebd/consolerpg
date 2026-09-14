@@ -1,13 +1,9 @@
 package rpg.ui;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Scanner;
-import java.math.BigDecimal;
-import java.util.ArrayList;
 
 import rpg.GameCurrency;
 import rpg.battle.rewards.BattleRewardModifiers;
@@ -34,6 +30,7 @@ public final class BattleRewardScreen {
 
 		displayRewardModifiers(rewards);
 		displayRewardSummary(rewards);
+		displayDiscardedRewards(rewards);
 		displayLevelProgress(rewards);
 
 		waitForContinue();
@@ -64,6 +61,25 @@ public final class BattleRewardScreen {
 		System.out.printf("  %-7s+%s%n", GameCurrency.getName() + ":", GameCurrency.format(rewards.getGold()));
 
 		displayCollectedItems(rewards.getCollectedItems());
+	}
+
+	private void displayDiscardedRewards(BattleRewards rewards) {
+		int discardedGold = rewards.getDiscardedGold();
+		Map<Item, Integer> discardedItems = rewards.getDiscardedItems();
+
+		if (discardedGold == 0 && discardedItems.isEmpty()) {
+			return;
+		}
+
+		System.out.println("\nLimites atingidos:");
+
+		if (discardedGold > 0) {
+			System.out.println("  GOLD descartado: " + GameCurrency.format(discardedGold));
+		}
+
+		for (Map.Entry<Item, Integer> entry : discardedItems.entrySet()) {
+			System.out.println("  Item descartado: " + entry.getKey().getName() + " x" + entry.getValue());
+		}
 	}
 
 	private void displayCollectedItems(Map<Item, Integer> collectedItems) {

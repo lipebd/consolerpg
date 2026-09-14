@@ -18,7 +18,10 @@ import rpg.characters.PlayableCharacterLevelRules;
 public final class DevelopmentPartyFactory {
 
 	private static final List<MemberConfiguration> PARTY_CONFIGURATION = List.of(
-			new MemberConfiguration("Flagelinho Silva", "flagelo", 1)
+			new MemberConfiguration("Flagelinho Silva", "flagelo", 1),
+			new MemberConfiguration("La Metamorfica", "metamorfo", 1),
+			new MemberConfiguration("Suzana Vieira", "atirador", 1),
+			new MemberConfiguration("Michael Jackson", "druida", 1)
 	);
 
 	private static final int INITIAL_GOLD = 5000;
@@ -62,7 +65,12 @@ public final class DevelopmentPartyFactory {
 			}
 		}
 
-		party.addGold(INITIAL_GOLD);
+		if (!party.addGold(INITIAL_GOLD)) {
+			throw new IllegalStateException(
+					"Development-party initial GOLD exceeds the supported maximum: " + INITIAL_GOLD
+			);
+		}
+
 		if (TEST_MODIFIERS) {
 			applyModifiers(
 					party,
@@ -102,9 +110,8 @@ public final class DevelopmentPartyFactory {
 			if (configuration.level < PlayableCharacterLevelRules.MINIMUM_LEVEL
 					|| configuration.level > PlayableCharacterLevelRules.MAXIMUM_LEVEL) {
 				throw new IllegalStateException(
-						"Development character level must be between "
-								+ PlayableCharacterLevelRules.MINIMUM_LEVEL + " and "
-								+ PlayableCharacterLevelRules.MAXIMUM_LEVEL + ": " + configuration.name
+						"Development character level must be between " + PlayableCharacterLevelRules.MINIMUM_LEVEL
+								+ " and " + PlayableCharacterLevelRules.MAXIMUM_LEVEL + ": " + configuration.name
 				);
 			}
 
