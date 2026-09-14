@@ -18,6 +18,7 @@ import rpg.enemies.EnemyDefinition;
 import rpg.enemies.EnemyDropCatalog;
 import rpg.items.Item;
 import rpg.items.ItemCatalog;
+import rpg.marketplace.MarketplaceListing;
 import rpg.ui.BattleRewardScreen;
 import rpg.ui.CityLocationMenu;
 import rpg.ui.CityMenu;
@@ -32,6 +33,7 @@ import rpg.ui.PartyStatusMenu;
 import rpg.ui.RouteMenu;
 import rpg.ui.ScenarioBranchMenu;
 import rpg.ui.ShopMenu;
+import rpg.ui.MarketplaceMenu;
 import rpg.world.branches.ScenarioBranchCatalog;
 import rpg.world.branches.ScenarioBranchDefinition;
 import rpg.world.encounters.EncounterCatalog;
@@ -79,6 +81,7 @@ public class World {
 	private final CombatScenarioMenu combatScenarioMenu;
 	private final EpicEncounterMenu epicEncounterMenu;
 	private final ShopMenu shopMenu;
+	private final MarketplaceMenu marketplaceMenu;
 
 	private final ItemCatalog itemCatalog;
 	private final CityTransportCatalog cityTransportCatalog;
@@ -121,6 +124,7 @@ public class World {
 			InnCatalog innCatalog,
 			ScenarioBranchCatalog scenarioBranchCatalog,
 			TravelProgress travelProgress
+			
 	) {
 
 		Objects.requireNonNull(scanner, "Scanner cannot be null.");
@@ -143,6 +147,19 @@ public class World {
 		this.cityTransportCatalog = Objects
 				.requireNonNull(cityTransportCatalog, "City transport catalog cannot be null.");
 		this.worldProgress.discover(this.currentScenario.getId());
+		
+		// Trading Post data
+		List<MarketplaceListing> listings = new ArrayList<>();
+		listings.add(
+		        new MarketplaceListing(
+		                "listing-001",
+		                "cesar",
+		                "meruma",
+		                3,
+		                500
+		        )
+		);
+		this.marketplaceMenu = new MarketplaceMenu(scanner, listings);
 
 		// Shared random generator and gameplay services
 		this.random = new Random();
@@ -313,13 +330,17 @@ public class World {
 
 		availableActions.add(CityAction.INVENTORY);
 		availableActions.add(CityAction.VIEW_STATUS);
+		availableActions.add(CityAction.MARKETPLACE);
 
 		return List.copyOf(availableActions);
 	}
+	
 
 	private void executeCityAction(City city, CityAction action) {
 		switch (action) {
 		case VISIT_LOCATION -> executeCityLocationMenu(city);
+		
+		case MARKETPLACE -> marketplaceMenu.open();
 
 		case LEAVE_CITY -> executeRouteMenu();
 

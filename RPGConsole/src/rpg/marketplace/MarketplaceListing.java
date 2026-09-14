@@ -7,6 +7,7 @@ public class MarketplaceListing {
 	private final String itemId;
 	private final int quantity;
 	private final int unitPrice;
+	
 
 	private ListingStatus status;
 
