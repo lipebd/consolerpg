@@ -75,18 +75,18 @@ Current milestone: planning and integration of the approved crafting contributio
 
 ### Service and results
 
-* [ ] Adapt the contributed crafting service into `CraftingService`.
-* [ ] Create `CraftingResult` to represent the outcome of one crafting attempt.
-* [ ] Resolve recipes and items through their catalogs instead of creating duplicate definitions.
-* [ ] Check the party inventory for every required ingredient before mutating it.
-* [ ] Report insufficient ingredients without changing the inventory.
-* [ ] Remove every required ingredient only after the complete recipe has been validated.
-* [ ] Add exactly one output item after successful ingredient removal.
-* [ ] Keep one crafting operation atomic from the player's perspective.
-* [ ] Prevent partial ingredient consumption when crafting cannot be completed.
-* [ ] Reuse the existing inventory mutation behavior instead of duplicating inventory rules.
-* [ ] Keep crafting independent from item trading and shop prices.
-* [ ] Keep crafting independent from the `MATERIAL` item category.
+* [x] Adapt the contributed crafting service into `CraftingService`.
+* [x] Create `CraftingResult` to represent the outcome of one crafting attempt.
+* [x] Resolve recipes and items through their catalogs instead of creating duplicate definitions.
+* [x] Check the party inventory for every required ingredient before mutating it.
+* [x] Report insufficient ingredients without changing the inventory.
+* [x] Remove every required ingredient only after the complete recipe has been validated.
+* [x] Add exactly one output item after successful ingredient removal.
+* [x] Keep one crafting operation atomic from the player's perspective.
+* [x] Prevent partial ingredient consumption when crafting cannot be completed.
+* [x] Reuse the existing inventory mutation behavior instead of duplicating inventory rules.
+* [x] Keep crafting independent from item trading and shop prices.
+* [x] Keep crafting independent from the `MATERIAL` item category.
 
 ### Transaction validation
 
@@ -105,21 +105,21 @@ Current milestone: planning and integration of the approved crafting contributio
 
 ## 3. Crafting interface
 
-* [ ] Adapt the contributed menu into `CraftingMenu`.
-* [ ] Display the selected crafter's name and description.
-* [ ] Display only the recipes configured for the selected crafter.
-* [ ] Display the selected recipe's name and narrative description.
-* [ ] Preserve the recipe order declared by the crafter definition.
-* [ ] Display the output item using data resolved from `ItemCatalog`.
-* [ ] Display every required ingredient and quantity.
-* [ ] Display the quantity currently owned for every ingredient.
-* [ ] Allow the player to inspect a recipe before confirming fabrication.
-* [ ] Allow the player to cancel recipe selection.
-* [ ] Allow the player to cancel the final crafting confirmation.
-* [ ] Display a clear success message after crafting.
-* [ ] Display which ingredients are insufficient after a failed attempt.
-* [ ] Return to the crafter's recipe list after completing or cancelling an attempt.
-* [ ] Keep input parsing and console presentation outside the crafting service.
+* [x] Adapt the contributed menu into `CraftingMenu`.
+* [x] Display the selected crafter's name and description.
+* [x] Display only the recipes configured for the selected crafter.
+* [x] Display the selected recipe's name and narrative description.
+* [x] Preserve the recipe order declared by the crafter definition.
+* [x] Display the output item using data resolved from `ItemCatalog`.
+* [x] Display every required ingredient and quantity.
+* [x] Display the quantity currently owned for every ingredient.
+* [x] Allow the player to inspect a recipe before confirming fabrication.
+* [x] Allow the player to cancel recipe selection.
+* [x] Allow the player to cancel the final crafting confirmation.
+* [x] Display a clear success message after crafting.
+* [x] Display which ingredients are insufficient after a failed attempt.
+* [x] Return to the crafter's recipe list after completing or cancelling an attempt.
+* [x] Keep input parsing and console presentation outside the crafting service.
 
 ---
 
@@ -130,7 +130,7 @@ Current milestone: planning and integration of the approved crafting contributio
 * [x] Integrate the crafting catalogs and service into the current V4 startup flow.
 * [x] Adapt only the required sections of the contributed `Main` implementation.
 * [x] Adapt only the required sections of the contributed `World` implementation.
-* [ ] Preserve all V4 initialization, character creation, combat, equipment, shop, INN, travel and rescue behavior.
+* [x] Preserve all V4 initialization, character creation, combat, equipment, shop, INN, travel and rescue behavior.
 * [x] Make every crafter in the current city available through the city-location flow.
 * [x] Display multiple crafters in the same city as independent destinations.
 * [x] Open `CraftingMenu` with the selected crafter definition.
@@ -156,16 +156,16 @@ Current milestone: planning and integration of the approved crafting contributio
 
 ## 6. Documentation and regression
 
-* [ ] Document the `crafters.txt` format in `DATA_FORMATS.md`.
-* [ ] Document the `crafting_recipes.txt` format in `DATA_FORMATS.md`.
-* [ ] Document crafting ownership and data flow in `ARCHITECTURE.md`.
-* [ ] Document player-facing crafting rules in `MECHANICS.md`.
-* [ ] Update `PROJECT_STATE.md` after the integration is complete.
-* [ ] Preserve English identifiers and comments.
-* [ ] Preserve PT-BR player-facing text.
-* [ ] Compile after every atomic implementation stage.
+* [x] Document the `crafters.txt` format in `DATA_FORMATS.md`.
+* [x] Document the `crafting_recipes.txt` format in `DATA_FORMATS.md`.
+* [x] Document crafting ownership and data flow in `ARCHITECTURE.md`.
+* [x] Document player-facing crafting rules in `MECHANICS.md`.
+* [x] Update `PROJECT_STATE.md` after the integration is complete.
+* [x] Preserve English identifiers and comments.
+* [x] Preserve PT-BR player-facing text.
+* [x] Compile after every atomic implementation stage.
 * [ ] Validate malformed crafting and crafter data during startup.
-* [ ] Complete crafting-flow regression through the city interface.
+* [x] Complete crafting-flow regression through the city interface.
 * [ ] Complete general V4 regression after modifying `Main` and `World`.
 * [ ] Verify the portable Windows build with the new data files.
-* [ ] Credit the original contributor in the integration history.
+* [x] Credit the original contributor in the integration history.

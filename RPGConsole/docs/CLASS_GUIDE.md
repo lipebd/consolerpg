@@ -313,6 +313,7 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 | `CombatScenarioMenu` | Menu de cenário de combate | Recebe as ações de `CombatScenarioAction` permitidas no campo ou dungeon atual, mantém numeração contínua, separa grupos visualmente e devolve a escolha. Não é usado por cidades. |
 | `CityMenu` | Menu de cidade | Recebe o nome da cidade e as ações de `CityAction` atualmente disponíveis. Omite ações sem destino funcional, preserva numeração contínua e separa navegação dos recursos do grupo. |
 | `CityLocationMenu` | Menu de navegação urbana | Exibe apenas os nomes dos locais funcionais da cidade e devolve a posição selecionada. Não conhece nem executa as regras internas dos serviços. |
+| `CraftingMenu` | Menu de fabricação | Exibe o crafter selecionado e suas receitas ordenadas, apresenta narrativa, item produzido e quantidades necessárias e possuídas, solicita confirmação e traduz `CraftingResult` em feedback. Resolve dados por catálogo, mas delega toda mutação a `CraftingService`. |
 | `InnMenu` | Menu de serviço urbano | Exibe os dados de `InnDefinition`, controla confirmação e pagamento da estadia e solicita a restauração centralizada em `Party.fullyRestoreMembers()`. Mantém o jogador no INN até um retorno explícito e apresenta o resultado das ações dentro da tela atual. |
 | `ScenarioBranchMenu` | Menu | Recebe as bifurcações disponíveis na posição atual, exibe seus nomes e descrições e devolve a `ScenarioBranchDefinition` escolhida. Não altera o cenário nem o estado da exploração. |
 | `RouteMenu` | Menu | Recebe as rotas adjacentes atualmente disponíveis, exibe nomes e descrições das saídas e devolve a `TravelRouteDefinition` escolhida. Não resolve o destino nem aplica a posição de chegada; essas consequências pertencem a `World`. |
@@ -343,8 +344,37 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
-| `World` | Coordenador principal do jogo | Mantém o cenário atual, a sessão de exploração e o loop do mundo. Monta ações disponíveis, coordena exploração, eventos, rotas adjacentes, transporte pago, encontros aleatórios, épicos e bosses, chama menus e `BattleCoordinator` e interpreta `BattleResult`. Após derrota completa, interrompe apenas a exploração atual, resolve destino, INN e custo do resgate, solicita pagamento e restauração, exibe `PartyRescueScreen` e retoma o loop na cidade escolhida. |
+| `World` | Coordenador principal do jogo | Mantém o cenário atual, a sessão de exploração e o loop do mundo. Monta ações disponíveis, coordena exploração, eventos, rotas adjacentes, transporte pago, encontros aleatórios, épicos e bosses, chama menus e `BattleCoordinator` e interpreta `BattleResult`. Disponibiliza INNs, lojas e todos os crafters associados à cidade atual por meio do mesmo fluxo de locais urbanos. Após derrota completa, interrompe apenas a exploração atual, resolve destino, INN e custo do resgate, solicita pagamento e restauração, exibe `PartyRescueScreen` e retoma o loop na cidade escolhida. |
 | `WorldProgress` | Estado mutável | Registra os IDs dos cenários descobertos na execução atual, valida referências por meio de `ScenarioCatalog` e expõe uma cópia não modificável do progresso. Permanece separado de `TravelProgress`, pois descoberta e desbloqueio de rotas são conceitos independentes. |
+
+---
+
+## Pacote `rpg.world.crafting`
+
+| Classe                     | Categoria             | Finalidade e relações principais                                                                                                                                                                                                   |
+| -------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CraftingMaterial`         | Requisito imutável    | Representa um item e sua quantidade positiva dentro de uma receita. Apesar do nome histórico preservado da contribuição, aceita qualquer `ItemCategory` e não se limita a itens `MATERIAL`.                                        |
+| `CraftingRecipeDefinition` | Definição imutável    | Armazena ID estável, item produzido, nome, descrição narrativa e lista ordenada de requisitos. Rejeita receita sem ingredientes e IDs de ingrediente repetidos. A quantidade de saída é sempre uma unidade.                        |
+| `CraftingRecipeLoader`     | Carregamento de dados | Lê `crafting_recipes.txt`, interpreta os pares variáveis de item e quantidade, converte quebras literais `\n`, valida todas as referências por meio de `ItemDefinitionCatalog` e registra as receitas no catálogo.                 |
+| `CraftingRecipeCatalog`    | Catálogo              | Registra e localiza receitas por ID estável, rejeita duplicidades e preserva a ordem externa de declaração.                                                                                                                        |
+| `CrafterDefinition`        | Definição imutável    | Armazena ID, cidade, nome, descrição e lista ordenada de receitas de um NPC de fabricação. Permite representar diferentes profissões sem criar definições específicas para ferreiro, alquimista ou cozinheiro.                     |
+| `CrafterLoader`            | Carregamento de dados | Lê `crafters.txt`, exige referência a um cenário `CITY`, valida cada receita por meio de `CraftingRecipeCatalog` e registra o NPC. Não exige exclusividade por cidade.                                                             |
+| `CrafterCatalog`           | Catálogo              | Registra crafters por ID e os agrupa por cenário, preservando a ordem. Permite que `World` encontre todos os NPCs de fabricação associados à cidade atual.                                                                         |
+| `CraftingResult`           | Resultado imutável    | Informa sucesso, materiais insuficientes ou limite de quantidade do inventário. Quando necessário, transporta todos os requisitos não atendidos para que a interface não precise deduzir novamente a regra.                        |
+| `CraftingService`          | Serviço transacional  | Valida ingredientes e capacidade, consome requisitos e adiciona uma unidade do item produzido no inventário compartilhado da `Party`. Rejeições não alteram o inventário e falhas inesperadas durante a aplicação ativam rollback. |
+
+### Fluxo essencial
+
+```text
+itens + receitas + crafters
+    -> catálogos validados
+    -> World seleciona o NPC da cidade
+    -> CraftingMenu seleciona e confirma a receita
+    -> CraftingService altera o inventário
+    -> CraftingResult descreve o resultado
+```
+
+Não existe um objeto mutável `Crafter` porque o NPC atualmente não possui estado próprio durante a execução. `CrafterDefinition` é suficiente até que uma futura mecânica realmente exija estado persistente por NPC.
 
 ---
 

@@ -1249,6 +1249,53 @@ Invalid, unaffordable, stale, overflowing or cancelled transactions preserve all
 
 The shop remains open after successful, cancelled or rejected transactions until the player explicitly leaves.
 
+## Crafting
+
+Crafter NPCs appear as functional locations in their configured cities.
+
+A city may contain multiple crafters. Each NPC has its own identity, description and ordered recipe set. Entering one crafter never exposes recipes assigned exclusively to another.
+
+When inspecting a recipe, the interface displays:
+
+* The recipe name and narrative description.
+* The item produced.
+* Every required item and quantity.
+* The quantity of each requirement currently owned by the party.
+
+The term crafting material describes an item's role inside one recipe. It does not require the item to use the `MATERIAL` category. Consumables, equipment and any other registered item category may participate as ingredients or outputs.
+
+Current crafting rules:
+
+* Every recipe requires at least one ingredient.
+* Every required quantity is positive.
+* Every successful attempt produces exactly one output item.
+* Crafting is performed one unit at a time.
+* Crafting does not charge gold.
+* Crafting has no random failure chance.
+* Crafting has no character-level or profession requirement.
+* Recipes are available through their configured crafter and do not currently require discovery.
+* Batch crafting and variable output quantities are not implemented.
+* Equipment enhancement is separate from item crafting and is not implemented.
+
+Crafting follows this transaction order:
+
+1. Resolve every ingredient and the output item.
+2. Compare every required quantity with the shared party inventory.
+3. Reject the attempt and identify all insufficient requirements when necessary.
+4. Verify that adding the output will not exceed the supported inventory quantity.
+5. Remove every required ingredient.
+6. Add exactly one output item.
+7. Report the completed operation.
+
+Insufficient ingredients and output-quantity overflow preserve the complete inventory. If an unexpected failure occurs after ingredient removal begins, the service restores every item already removed before reporting an internal-state error.
+
+The initial crafting content demonstrates both category-independent and multi-ingredient recipes:
+
+* Four Merumãs produce one Poção de Merumã.
+* Three units of Madeira and five units of Ferro produce one Espada de Ferro.
+
+The initial Bree locations include an alchemist offering the potion recipe and a blacksmith offering the weapon recipe.
+
 ## Scenario discovery
 
 `WorldProgress` records each scenario entered during the active game.
