@@ -16,7 +16,7 @@ Quests, world flags, access requirements, remaining exploration decisions, save 
 
 The implementation must continue to preserve stable IDs, strict startup validation and separation between immutable definitions and mutable runtime state. Validation and regression testing must accompany each system instead of being postponed to a final generic phase.
 
-Current milestone: combat effects, external skills, natural progression, reward modifiers and the complete equipment system are implemented. Remaining unchecked validation items represent broader regression coverage, not missing core architecture.
+Current milestone: all definitive V4 gameplay-system blocks are functionally complete. Remaining unchecked items belong to preserved post-V4 planning, broader regression coverage or optional learning work.
 
 ---
 
@@ -176,7 +176,7 @@ Current milestone: combat effects, external skills, natural progression, reward 
 * [x] Display the class in individual status.
 * [x] Display attribute growth and newly learned skills during level-up.
 * [x] Preserve a temporary development shortcut for assigning any playable class during party creation.
-* [ ] Keep the normal new-game flow restricted to the Flagelo class.
+* [x] Keep the normal new-game flow restricted to the Flagelo class.
 * [x] Test the base attributes of all seven playable classes.
 * [x] Test attribute and resource growth at levels before, during and after primary and secondary growth thresholds.
 * [x] Test natural progression independently from equipment bonuses.
@@ -325,19 +325,90 @@ Current milestone: combat effects, external skills, natural progression, reward 
 
 ## 5. Full-party defeat and rescue
 
-* [ ] Replace the temporary `GameOverScreen`.
-* [ ] Send the defeated party to Bree.
-* [ ] Fully restore HP, MP and SP through the rescue flow.
-* [ ] Revive all defeated party members through rescue.
-* [ ] Preserve EXP.
-* [ ] Preserve gold.
-* [ ] Preserve inventory.
-* [ ] Preserve equipment.
-* [ ] Preserve scenario discovery and progression.
-* [ ] Keep normal post-battle behavior from automatically reviving defeated members.
-* [ ] Test defeat in fields.
-* [ ] Test defeat in dungeons.
-* [ ] Test defeat during mandatory and optional encounters.
+### Rescue destination data
+
+* [x] Add an optional `preferredRescueScenarioId` to every external combat-scenario definition.
+* [x] Add a required `fallbackRescueScenarioId` to every external combat-scenario definition.
+* [x] Add a required external `rescueDescription` to every combat-scenario definition.
+* [x] Define exactly one external INN for every registered city.
+* [x] Reject game initialization when any registered city has no INN.
+* [x] Interpret literal `\n` sequences in rescue descriptions as line breaks.
+* [x] Require every configured rescue destination to reference a valid city.
+* [x] Require every configured rescue destination to provide a valid INN.
+* [x] Reject equal preferred and fallback rescue destinations when a preferred destination is present.
+* [x] Use the preferred rescue destination only when it has already been discovered.
+* [x] Use the fallback rescue destination when the preferred destination is absent or undiscovered.
+* [x] Allow the fallback destination to be used regardless of its previous discovery state.
+* [x] Mark the selected rescue destination as discovered without unlocking unrelated routes.
+
+### Rescue cost
+
+* [x] Calculate 10% of the party's current gold as the proportional rescue cost.
+* [x] Round the proportional rescue cost upward.
+* [x] Use the greater value between the proportional cost and the selected destination INN price.
+* [x] Limit the final rescue cost to the party's current gold.
+* [x] Allow rescue with no payment when the party has no gold.
+* [x] Prevent rescue costs from producing negative gold or arithmetic overflow.
+* [x] Display the exact gold amount deducted for rescue and medical care.
+
+### Defeat and restoration flow
+
+* [x] Replace and remove the temporary `GameOverScreen`.
+* [x] Keep `Battle` responsible only for determining and returning `BattleResult.DEFEAT`.
+* [x] Keep the final battle-defeat message before beginning the rescue flow.
+* [x] Keep the application running after full-party defeat.
+* [x] Make `World` resolve the rescue destination and coordinate the complete rescue flow.
+* [x] Abandon the failed `ExplorationSession` without advancing or completing it.
+* [x] Start a new exploration session from the normal entry position when the defeated scenario is visited again.
+* [x] Move the party to the selected rescue city.
+* [x] Revive every defeated party member.
+* [x] Fully restore every party member's HP, MP and SP.
+* [x] Centralize complete party restoration and reuse it from both rescue and INN flows.
+* [x] Keep normal victory and escape behavior from automatically reviving defeated members.
+
+### Rescue presentation
+
+* [x] Create a dedicated `PartyRescueScreen`.
+* [x] Display the defeated combat scenario's external rescue description.
+* [x] Display the selected rescue city's name separately from the external narrative.
+* [x] Support appropriate singular and full-party restoration messages.
+* [x] Display the rescue and medical-care cost through `GameCurrency`.
+* [x] Require ENTER before returning control to the normal world loop.
+* [x] Resume the normal world loop in the selected rescue city after confirmation.
+
+### State preservation
+
+* [x] Preserve character EXP and levels.
+* [x] Preserve learned skills.
+* [x] Preserve all gold remaining after the explicit rescue penalty.
+* [x] Preserve inventory contents without restoring items consumed during battle.
+* [x] Preserve equipped items.
+* [x] Preserve active temporary reward modifiers and their remaining durations.
+* [x] Preserve discovered scenarios and unlocked routes.
+* [x] Preserve completed permanent world progression.
+* [x] Preserve current shop offers and remaining stock.
+* [x] Keep defeat from granting battle rewards or rolling back previous state changes.
+
+### Rescue validation
+
+* [x] Test rescue from a field encounter.
+* [x] Test rescue from a dungeon encounter.
+* [x] Test rescue from an accepted optional epic encounter.
+* [x] Test rescue from a mandatory boss encounter.
+* [x] Test selection of a discovered preferred rescue destination.
+* [x] Test fallback selection when the preferred destination is absent.
+* [x] Test fallback selection when the preferred destination is undiscovered.
+* [x] Test fallback discovery without unrelated route unlocking.
+* [x] Test zero-gold rescue.
+* [x] Test gold below the destination INN price.
+* [x] Test the destination INN price exceeding the proportional cost.
+* [x] Test the proportional cost exceeding the destination INN price.
+* [x] Test upward percentage rounding and maximum integer gold.
+* [x] Test complete revival and HP, MP and SP restoration for parties of one to four members.
+* [x] Test preservation of EXP, skills, remaining gold, inventory, equipment, reward modifiers, world progress and shop state.
+* [x] Test that the failed exploration position is discarded.
+* [x] Test that victory and escape do not activate the rescue flow.
+* [x] Test that defeated members are not automatically revived after a normal victory.
 
 ---
 
@@ -405,10 +476,12 @@ Current milestone: combat effects, external skills, natural progression, reward 
 * [x] Test party rewards and level-ups after class progression is implemented.
 * [ ] Test equipment changes during normal progression.
 * [x] Test character creation.
-* [ ] Test full-party rescue.
+* [x] Test full-party rescue.
 * [ ] Test save and load after restarting the application.
 * [ ] Test world flags and access requirements when their supporting systems exist.
 * [ ] Test gold and per-item quantity boundaries, overflow attempts and invalid save values.
+* [ ] Standardize remaining external-data loaders so validation errors report the source file, line number and content ID whenever available.
+* [ ] Review compact functional-style code and replace it with clearer imperative code when this improves maintainability without changing behavior.
 
 ## 9. Optional post-release learning
 

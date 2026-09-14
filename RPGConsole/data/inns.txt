@@ -1,2 +1,8 @@
 # id;scenarioId;name;description;price
-bree_inn;bree;INN de Bree;Uma estalagem simples e acolhedora, frequentada por viajantes que atravessam Bree.\nSeus quartos oferecem o descanso necessário antes da próxima jornada.;25
+bree_inn;bree;Pensão da Dona Fábula;Uma estalagem simples e acolhedora, frequentada por viajantes que atravessam Bree.\nSeus quartos oferecem o descanso necessário antes da próxima jornada.;25
+setegalhos_inn;setegalhos;Pousada dos Sete Galhos;Construída junto às raízes da árvore colossal, esta pousada recebe aprendizes e viajantes vindos de todas as direções.\nSeus quartos simples permanecem protegidos sob a vasta copa de Setegalhos.;50
+entrelugar_inn;entrelugar;Hospedaria do Intervalo;Uma hospedaria de corredores estranhamente extensos e quartos maiores por dentro do que aparentam.\nApesar das irregularidades espaciais, suas camas oferecem um descanso surpreendentemente tranquilo.;75
+o_vao_inn;o_vao;Refúgio Entreportões;Uma pequena estalagem protegida pelas mesmas runas que ocultam o povoado.\nSeu ambiente silencioso oferece abrigo seguro a magos, viajantes e visitantes autorizados.;100
+deep_valley_inn;deep_valley;Pousada Pedra Firme;Construída sobre fundações reforçadas para resistir aos constantes tremores de Deep Valley.\nSeus quartos aquecidos oferecem repouso aos viajantes que atravessam as profundezas da região.;125
+mist_suburb_inn;mist_suburb;Abrigo da Bruma;Uma hospedaria cuidadosamente vedada contra a névoa tóxica que cobre Mist Suburb.\nFiltros e ervas aromáticas mantêm o ar dos quartos respirável durante o descanso.;150
+altaneve_inn;reino_altaneve;Pousada do Último Sol;Uma hospedaria sempre aquecida, conhecida como um dos poucos lugares de Altaneve onde o frio constante e a cor deslumbrante dão lugar ao aconchego e à meia-luz.;200

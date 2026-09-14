@@ -2,11 +2,11 @@
 
 ## Current version
 
-V4 gameplay-systems implementation in progress.
+V4 gameplay-systems functional implementation complete.
 
 Current stage:
 
-`Equipment, equipment-aware combat and equipment reward modifiers completed`
+`Final documentation review and release audit`
 
 Current Git branch:
 
@@ -146,6 +146,7 @@ enemy_drops.txt
 - Defeated characters remain defeated even after leveling up.
 - Party and individual character status menus are available outside battle.
 - Shared gold is displayed in the party status menu.
+- `Party.fullyRestoreMembers()` centralizes revival and complete HP, MP and SP restoration for INN stays and full-party rescue.
 
 ### Recovery skills
 
@@ -232,9 +233,9 @@ Responsibilities previously concentrated in `World` were extracted into dedicate
 
 World, combat-scenario, city, city-location, INN, travel, branch, inventory and status menus use iterative navigation and explicit back commands.
 
-## City structure and Bree services
+## City structure and services
 
-Cities now use a dedicated action flow instead of the combat-scenario menu.
+Cities use a dedicated action flow instead of the combat-scenario menu.
 
 The city menu currently supports:
 
@@ -248,18 +249,19 @@ Unavailable actions are omitted. Paid city transport appears only when at least 
 
 City locations are treated as a navigation concept rather than a generic service hierarchy. `CityLocationMenu` displays only functional location names, while each selected service owns its details and interaction flow.
 
-Bree currently provides one externally configured INN and one fixed city shop. `CityLocationMenu` combines the available location names without owning their service-specific behavior.
+Every registered city has exactly one externally configured INN. `InnCatalog` prevents multiple definitions for the same city, while `InnLoader` rejects initialization when any city has no INN.
 
-The Bree INN:
+City INNs:
 
-- Charges a provisional fixed price of 25 gold for the whole party.
-- Remains accessible when the party cannot afford a stay.
-- Prevents unnecessary, unaffordable and cancelled payments.
-- Requests confirmation before charging.
-- Revives defeated members before restoring resources.
-- Fully restores HP, MP and SP for the entire party.
-- Keeps the player inside the INN after resting.
-- Displays action feedback inside the current INN screen.
+- Charge an externally configured fixed price for the whole party.
+- Remain accessible when the party cannot afford a stay.
+- Prevent unnecessary, unaffordable and cancelled payments.
+- Request confirmation before charging.
+- Delegate revival and complete HP, MP and SP restoration to `Party.fullyRestoreMembers()`.
+- Keep the player inside the INN after resting.
+- Display action feedback inside the current INN screen.
+
+Bree additionally provides one fixed city shop. `CityLocationMenu` combines the available location names without owning their service-specific behavior.
 
 The Bree market uses the same shop definitions, runtime state, interface and transaction rules as exploration merchants. City shops remain accessible when they have no remaining purchase offers.
 
@@ -644,13 +646,31 @@ The initial character-creation block is complete.
 - The confirmed protagonist becomes the first member and leader of the new `Party`.
 - `Main` no longer contains a hardcoded normal party.
 - The `--dev-party` argument bypasses normal creation and delegates to `DevelopmentPartyFactory`.
-- `DevelopmentPartyFactory` supports one to four configured members with distinct classes, positive levels and fully restored resources.
+- `DevelopmentPartyFactory` supports one to four configured members with distinct classes, positive levels, fully restored resources, configurable initial gold and optional temporary reward modifiers.
 - Every playable class defines one visible Unicode symbol for compact interface identification.
 - `PartyStatusMenu` displays complete names and symbols in a two-line layout.
 - `CharacterStatusMenu` displays the complete character name together with the class symbol and name.
 - Character names are not truncated in character interfaces.
 
 The four current entries in `character_names.txt` are temporary placeholders. Final name curation belongs to the creative team.
+
+## V4 full-party defeat and rescue
+
+The full-party defeat and rescue block is complete.
+
+- `Battle` displays the final defeat message and returns `BattleResult.DEFEAT` without terminating the application.
+- Every combat scenario externally defines an optional preferred rescue city, a required fallback rescue city and a narrative rescue description.
+- The preferred city is selected only when already discovered; otherwise, the fallback city is used.
+- Every registered city has exactly one INN, and every configured rescue destination is validated against the scenario and INN catalogs during initialization.
+- Rescue costs the greater value between the destination INN price and 10% of current party gold rounded upward, limited to the gold currently available.
+- A party with no gold is rescued without payment.
+- `World` coordinates destination selection, payment, complete restoration and movement to the selected city.
+- `Party.fullyRestoreMembers()` revives every defeated member and fully restores HP, MP and SP.
+- `PartyRescueScreen` presents the external narrative, selected destination and exact cost before requiring ENTER.
+- The failed exploration session is discarded without advancing or completing its current position.
+- Rescue preserves EXP, levels, learned skills, remaining gold, inventory, equipment, reward modifiers, world progress, unlocked routes and shop state.
+- Rescue may discover an undiscovered fallback city without unlocking unrelated routes.
+- Victory and escape do not activate rescue, and normal victory does not automatically revive defeated allies.
 
 ## Scenario discovery and paid city transport
 
@@ -696,8 +716,7 @@ Battle rewards, exploration rewards, inventory, party status, INNs, paid city tr
 - Playable-class definitions, natural growth and the complete approved 30-skill roster are external; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy turns currently use basic attacks; enemy skill selection is deferred.
 - Tavern functionality remains unavailable.
-- Defeated allies remain unavailable until revived by a skill, item or city INN.
-- Full-party defeat still uses the temporary Game Over flow.
+- After a normal victory, defeated allies remain unavailable until revived by a skill, item or city INN; full-party defeat instead activates rescue and complete restoration.
 - Shop state is regenerated when the program starts and is not persisted.
 - Shops do not restock during the current execution.
 - Items sold by the player cannot be bought back.
@@ -708,9 +727,9 @@ Battle rewards, exploration rewards, inventory, party status, INNs, paid city tr
 
 ## Current next step
 
-The combat-effect, external-skill, natural-progression, reward-modifier, equipment, local skill-scroll and initial character-creation foundations are complete. The remaining skill-scroll roadmap item depends on retiring the Flagelo's temporary `STARTER` skills during the future level-7 class-choice flow.
+All definitive V4 gameplay-system blocks are functionally complete, including combat effects, external skills, natural progression, reward modifiers, equipment, local skill-scroll infrastructure, initial character creation and full-party rescue.
 
-The next V4 implementation block is full-party defeat and rescue. Save/load, story-based ally recruitment, party-title acquisition and the level-7 class-path decision stay outside the current implementation block.
+The remaining V4 work is the final documentation and consistency audit before concluding the version. Save/load, story-based ally recruitment, party-title acquisition and the level-7 class-path decision remain preserved for future planning.
 
 The post-V4 level-7 class-change flow already has one equipment rule fixed: all three equipped items return to inventory, the chosen class NPC grants that class's level-7 starter weapon and armor even when the character remains a Flagelo, and the narration tells the player to open the equipment menu and equip the new set.
 

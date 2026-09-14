@@ -1,5 +1,7 @@
 package rpg.world.scenarios;
 
+import java.util.Optional;
+
 import rpg.world.exploration.ExplorationSettings;
 
 
@@ -12,16 +14,22 @@ public class Field extends CombatScenario {
 	        String description,
 	        int baseExperienceReward,
 	        int baseGoldReward,
-	        ExplorationSettings explorationSettings
+	        ExplorationSettings explorationSettings,
+	        Optional<String> preferredRescueScenarioId,
+	        String fallbackRescueScenarioId,
+	        String rescueDescription
 	) {
-	    super(
-	            id,
-	            name,
-	            description,
-	            baseExperienceReward,
-	            baseGoldReward,
-	            explorationSettings
-	    );
+		super(
+		        id,
+		        name,
+		        description,
+		        baseExperienceReward,
+		        baseGoldReward,
+		        explorationSettings,
+		        preferredRescueScenarioId,
+		        fallbackRescueScenarioId,
+		        rescueDescription
+		);
 	}
 
 }

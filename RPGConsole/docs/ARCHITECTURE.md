@@ -33,16 +33,16 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.items` | External item definitions, runtime item behavior, shared inventory and individual drop rules | `ItemDefinition`, `ItemDefinitionCatalog`, `ItemLoader`, `RecoveryItemDefinition`, `RecoveryItemLoader`, `ItemFactory`, `Item`, `BasicItem`, `RecoveryItem`, `ItemCatalog`, `Inventory`, `DropEntry` |
 | `rpg.items.equipment` | Immutable equipment specialization, loading, lookup, compatibility vocabulary and inventory-to-character transfers | `EquipmentDefinition`, `WeaponDefinition`, `ArmorDefinition`, `TrinketDefinition`, `EquipmentLoader`, `EquipmentCatalog`, `EquipmentService`, `WeaponType`, `ArmorWeight`, `TrinketType` |
 | `rpg.enemies` | Enemy definitions and external enemy/drop loading | `EnemyDefinition`, `EnemyCatalog`, `EnemyLoader`, `EnemyDropCatalog`, `EnemyDropLoader` |
-| `rpg.world` | Active world state, scenario discovery and high-level coordination | `World`, `WorldProgress` |
+| `rpg.world` | Active world state, scenario discovery, rescue coordination and high-level gameplay coordination | `World`, `WorldProgress` |
 | `rpg.world.scenarios` | External scenario definitions, runtime scenario hierarchy and scenario creation | `ScenarioDefinition`, `ScenarioDefinitionCatalog`, `ScenarioLoader`, `CombatScenarioDefinition`, `CombatScenarioLoader`, `DungeonDefinition`, `DungeonLoader`, `ScenarioFactory`, `Scenario`, `CombatScenario`, `Field`, `Dungeon`, `City`, `ScenarioCatalog`, `CombatScenarioAction`, `CityAction` |
 | `rpg.world.encounters` | Encounter availability and weighted group generation | `EncounterEntry`, `EncounterCatalog`, `EncounterLoader`, `EncounterGenerator` |
 | `rpg.world.exploration` | Exploration configuration, progress and event selection | `ExplorationSettings`, `ExplorationSession`, `ExplorationEventGenerator`, `ExplorationEventType`, `ExplorationAreaRestriction` |
-| `rpg.world.inns` | Immutable city-INN definitions, loading and lookup by stable or city scenario ID | `InnDefinition`, `InnCatalog`, `InnLoader` |
+| `rpg.world.inns` | Immutable city-INN definitions, complete city coverage validation and lookup by stable or city scenario ID | `InnDefinition`, `InnCatalog`, `InnLoader` |
 | `rpg.world.shops` | External shop and offer definitions, runtime stock state, weighted offer generation and atomic commercial transactions | `ShopAccessType`, `ShopDefinition`, `ShopCatalog`, `ShopLoader`, `ShopStockEntry`, `ShopStockCatalog`, `ShopStockLoader`, `ShopOfferState`, `ShopState`, `ShopStateCatalog`, `ShopStateGenerator`, `ShopTransactionService`, `ShopPurchaseResult`, `ShopSaleResult` |
 | `rpg.world.rewards` | External exploration reward pools, validation and weighted selection | `ExplorationRewardEntry`, `ExplorationRewardCatalog`, `ExplorationRewardLoader`, `ExplorationRewardGenerator`, `ExplorationReward`, `ExplorationRewardType` |
 | `rpg.world.travel` | External directed-route definitions, loading and runtime unlock progress | `TravelRouteDefinition`, `TravelCatalog`, `TravelRouteLoader`, `TravelProgress` |
 | `rpg.world.transport` | External paid city-transport definitions, loading and destination lookup | `CityTransportDefinition`, `CityTransportCatalog`, `CityTransportLoader` |
-| `rpg.ui` | Console menus, character creation, navigation, target selection, shared formatters and information screens | `TitleScreen`, `CharacterCreationMenu`, `GameOverScreen`, `CombatScenarioMenu`, `CityMenu`, `CityLocationMenu`, `InnMenu`, `RouteMenu`, `CityTransportMenu`, `InventoryMenu`, `EquipmentMenu`, `BattleItemMenu`, `RecoveryItemUseMenu`, `EpicEncounterMenu`, `BattleRewardScreen`, `BattleTurnOrderScreen`, `PartyStatusMenu`, `CharacterStatusMenu`, `PlayableClassDetailFormatter`, `EquipmentDetailFormatter`, `SkillDetailFormatter`, `RewardModifierFormatter`, `ShopMenu` |
+| `rpg.ui` | Console menus, character creation, navigation, target selection, shared formatters and information screens | `TitleScreen`, `CharacterCreationMenu`, `PartyRescueScreen`, `CombatScenarioMenu`, `CityMenu`, `CityLocationMenu`, `InnMenu`, `RouteMenu`, `CityTransportMenu`, `InventoryMenu`, `EquipmentMenu`, `BattleItemMenu`, `RecoveryItemUseMenu`, `EpicEncounterMenu`, `BattleRewardScreen`, `BattleTurnOrderScreen`, `PartyStatusMenu`, `CharacterStatusMenu`, `PlayableClassDetailFormatter`, `EquipmentDetailFormatter`, `SkillDetailFormatter`, `RewardModifierFormatter`, `ShopMenu` |
 
 ## Application initialization
 
@@ -60,7 +60,7 @@ Initialization includes:
 8. Creating `EquipmentService` from the item and equipment catalogs.
 9. Loading enemy drops and encounter definitions.
 10. Loading common scenario definitions.
-11. Loading city-transport, INN and combat-scenario definitions.
+11. Loading city-transport definitions, INN definitions with complete city coverage and combat-scenario definitions whose rescue destinations are validated against scenario and INN catalogs.
 12. Loading shop definitions and their possible stock entries.
 13. Generating one runtime state for every shop through `ShopStateGenerator`.
 14. Loading exploration-reward, dungeon and scenario-branch definitions.
@@ -74,9 +74,11 @@ Initialization includes:
 
 External data is loaded before gameplay. Invalid definitions or unresolved references prevent the game from starting with partially inconsistent catalogs.
 
+INN definitions are loaded before combat-scenario definitions. This makes `InnCatalog` available to `CombatScenarioLoader`, which can reject rescue destinations that are not registered cities with a valid INN.
+
 During a normal run, `Main` repeatedly opens `TitleScreen` and `CharacterCreationMenu` until the player confirms a protagonist. The confirmed character is created as a level-1 Flagelo and becomes the only initial member and leader of the new `Party`. Cancelling character creation returns to the title screen without creating partial character state.
 
-When the `--dev-party` argument is present, `Main` bypasses the normal title and creation flow and delegates party construction to `DevelopmentPartyFactory`. This development-only path supports one to four configured members with distinct classes and arbitrary positive levels while remaining isolated from normal new-game behavior.
+When the `--dev-party` argument is present, `Main` bypasses the normal title and creation flow and delegates party construction to `DevelopmentPartyFactory`. This development-only path supports one to four configured members with distinct classes, arbitrary positive levels, configurable initial gold and optional temporary reward modifiers while remaining isolated from normal new-game behavior.
 
 `WorldProgress`, `TravelProgress` and `ShopStateCatalog` represent separate runtime concerns. `WorldProgress` records discovered scenarios, `TravelProgress` records unlocked adjacent routes, and `ShopStateCatalog` preserves every shop's selected offers and remaining stock for the current program execution.
 
@@ -240,6 +242,11 @@ Scenario
 - Base EXP reward.
 - Base gold reward.
 - `ExplorationSettings`.
+- Optional preferred rescue scenario ID.
+- Required fallback rescue scenario ID.
+- Rescue description.
+
+`ScenarioFactory` propagates these rescue values from `CombatScenarioDefinition` when creating each runtime `Field` or `Dungeon`.
 
 `Field` represents open exploration areas.
 
@@ -248,7 +255,7 @@ Scenario
 - A required group of one to three boss enemy IDs.
 - An optional group of one to three epic enemy IDs.
 
-`City` represents non-combat settlements. Cities use their own action flow, separate functional locations from adjacent exits and do not create exploration sessions. Bree currently provides a configurable INN and fixed shop. Paid city transport is available through the shared world flow, while taverns remain a future system.
+`City` represents non-combat settlements. Cities use their own action flow, separate functional locations from adjacent exits and do not create exploration sessions. Every registered city has exactly one externally configured INN. Bree currently also provides a fixed shop, while taverns remain a future system. Paid city transport is available through the shared world flow.
 
 `ScenarioCatalog` resolves stable scenario IDs to runtime scenario objects.
 
@@ -744,7 +751,9 @@ City exits reuse this route infrastructure. Their display names can represent ga
 
 `WorldProgress` stores the scenario IDs discovered during the active game. It validates scenario references through `ScenarioCatalog` and exposes discovered IDs without exposing mutable internal state.
 
-The initial scenario is marked as discovered when `World` is created. Every successful scenario change records its destination, regardless of whether entry occurs through an adjacent route, an exploration branch or paid city transport.
+The initial scenario is marked as discovered when `World` is created. Every successful scenario change records its destination, regardless of whether entry occurs through an adjacent route, an exploration branch, paid city transport or full-party rescue.
+
+Rescue may discover a configured fallback city that was not previously known. This discovery does not unlock unrelated adjacent routes.
 
 Scenario discovery remains independent from `TravelProgress`. Discovering a scenario does not unlock an adjacent route, and unlocking a route does not automatically discover its destination.
 
@@ -771,6 +780,32 @@ The loader validates that every destination references an existing `CITY`, that 
 `World` resolves the selected destination through `ScenarioCatalog`, changes directly to that city and displays the definition's travel description.
 
 Paid city transport is available from cities, fields and dungeons, including incomplete combat-scenario exploration, but never during battle. Leaving an incomplete exploration discards its current `ExplorationSession`. Permanent party and world state already obtained remains unchanged. Entering that combat scenario again creates a fresh exploration session from the position defined by the route used to return.
+
+## Full-party rescue flow
+
+`Battle` remains responsible only for battle resolution. After displaying its final defeat message, it returns `BattleResult.DEFEAT` to `World`.
+
+```text
+Battle
+    -> BattleResult.DEFEAT
+    -> World resolves rescue city and INN
+    -> World calculates and deducts rescue cost
+    -> Party.fullyRestoreMembers()
+    -> PartyRescueScreen
+    -> World changes to the rescue city
+```
+
+`World` selects the optional preferred rescue city only when it is already present in `WorldProgress`. Otherwise, it selects the required fallback city. Runtime type validation ensures that the selected scenario is a `City`, while startup validation guarantees that it has an INN.
+
+The rescue cost uses the greater value between the destination INN price and 10% of current party gold rounded upward, then limits that value to the gold currently available. A zero-gold party is rescued without calling `Party.spendGold(0)`.
+
+Complete restoration belongs to `Party.fullyRestoreMembers()`. The method revives defeated members and then fully restores every member's HP, MP and SP. Both `World` and `InnMenu` reuse this operation.
+
+`PartyRescueScreen` is presentation-only. It displays the external narrative, selected city, restoration message and formatted cost, then waits for ENTER.
+
+Random and optional epic encounter methods propagate whether the current exploration should continue through boolean return values. A defeat returns `false` to `explore()`, preventing the failed position from advancing or completing without terminating the world loop. Boss encounters already inspect `BattleResult` directly.
+
+After confirmation, `World.changeScenario()` moves to the city, records its discovery and discards the failed `ExplorationSession`. It does not modify `TravelProgress`, shop state or other persistent runtime progress.
 
 ## City, shop and INN flow
 
@@ -804,9 +839,9 @@ data/inns.txt
     -> InnMenu
 ```
 
-`InnCatalog` resolves INNs by stable ID and by city scenario ID. It permits at most one INN definition per city.
+`InnCatalog` resolves INNs by stable ID and by city scenario ID and rejects multiple definitions for the same city. After loading, `InnLoader` verifies that every registered city has an INN; together, these rules guarantee exactly one INN per city.
 
-`InnMenu` owns the iterative resting interaction and uses the shared `Party` instance. It validates whether rest is necessary and affordable, requests confirmation, charges shared gold and restores every party member. Defeated members are revived before `restoreAllResources()` is called.
+`InnMenu` owns the iterative resting interaction and uses the shared `Party` instance. It validates whether rest is necessary and affordable, requests confirmation, charges shared gold and delegates complete restoration to `Party.fullyRestoreMembers()`.
 
 `City`, location and INN navigation remain iterative. Returning from the INN leads back to location selection, and returning again leads back to the city menu without recursive menu calls.
 
@@ -880,12 +915,14 @@ Important UI components include:
 - `SkillDetailFormatter`
 - `EquipmentDetailFormatter`
 - `RewardModifierFormatter`
-- `GameOverScreen`
+- `PartyRescueScreen`
 - `ShopMenu`
 
 `CharacterCreationMenu` controls manual or random protagonist naming, name changes, cancellation and confirmation. It does not create partial character state: the confirmed name returns to `Main`, which constructs the protagonist and `Party`.
 
 `PlayableClassDetailFormatter` presents a class's primary and secondary attribute specializations using shared arrow notation. It derives the displayed attributes from `PlayableClassDefinition` and does not own growth rules.
+
+`PartyRescueScreen` receives already resolved rescue information from `World`. It does not calculate costs, spend gold, restore characters, discover scenarios or change the current scenario.
 
 `World` selects the appropriate menu according to the runtime scenario type. Combat actions are built incrementally from exploration progress, available branches, unlocked routes and paid-transport availability, then displayed by `CombatScenarioMenu`. City actions are built from functional locations, unlocked exits and paid-transport availability, then displayed by `CityMenu`. Both menus preserve continuous numbering, omit unavailable actions and separate action groups through whitespace.
 
@@ -934,9 +971,8 @@ The following implementations remain intentionally temporary:
 - `character_names.txt` currently contains only temporary entries pending creative-team curation.
 - Playable-class definitions, natural class growth and the complete approved 30-skill class-progression roster are integrated; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy actions currently use basic attacks; enemy skill selection can reuse the skill executor later but is outside the current scope.
-- Bree currently provides its INN and fixed shop, while tavern functionality remains unavailable.
+- Every registered city currently provides an INN, while Bree also provides a fixed shop; tavern functionality remains unavailable.
 - Shop state is regenerated when the application starts; persistence and restocking remain postponed until save and load are implemented.
-- Defeat opens `GameOverScreen` instead of rescuing the party in Bree.
 - Save and load are not implemented.
 - `Battle` remains large and may later be divided into more focused action services.
 - Permanent skill-scroll items, skills and curated enemy drops remain deferred until their draft effects receive the required combat mechanics and final content review.

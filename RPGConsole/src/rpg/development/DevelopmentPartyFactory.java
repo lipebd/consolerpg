@@ -11,16 +11,24 @@ import rpg.classes.CharacterGrowthCalculator;
 import rpg.classes.PlayableClassCatalog;
 import rpg.classes.PlayableClassDefinition;
 import rpg.skills.SkillCatalog;
+import rpg.battle.rewards.PartyRewardModifierState;
 
 // Creates configurable temporary parties for development runs.
 public final class DevelopmentPartyFactory {
 
 	private static final List<MemberConfiguration> PARTY_CONFIGURATION = List.of(
-			new MemberConfiguration("Maximiliano Dias", "flagelo", 7),
-			new MemberConfiguration("Jurema Souza", "espectro", 7),
-			new MemberConfiguration("Ivete Sangalo", "bardo", 7),
-			new MemberConfiguration("Lady Voldemort", "metamorfo", 7)
+			new MemberConfiguration("Flagelinho Silva", "flagelo", 1),
+			new MemberConfiguration("La Metamorfica", "metamorfo", 1),
+			new MemberConfiguration("Suzana Vieira", "atirador", 1),
+			new MemberConfiguration("Michael Jackson", "druida", 1)
 	);
+
+	private static final int INITIAL_GOLD = 5000;
+	private static final boolean TEST_MODIFIERS = false;
+	private static final int EXP_MODIFIER_PERCENTAGE = 50;
+	private static final int EXP_MODIFIER_USES = 3;
+	private static final int GOLD_MODIFIER_PERCENTAGE = 25;
+	private static final int GOLD_MODIFIER_USES = 4;
 
 	private final CharacterGrowthCalculator growthCalculator;
 	private final PlayableClassCatalog playableClassCatalog;
@@ -56,7 +64,30 @@ public final class DevelopmentPartyFactory {
 			}
 		}
 
+		party.addGold(INITIAL_GOLD);
+		if (TEST_MODIFIERS) {
+			applyModifiers(
+					party,
+					EXP_MODIFIER_PERCENTAGE,
+					EXP_MODIFIER_USES,
+					GOLD_MODIFIER_PERCENTAGE,
+					GOLD_MODIFIER_USES
+			);
+		}
+
 		return party;
+	}
+
+	private void applyModifiers(
+			Party party,
+			int expModifierPercentage,
+			int expModifierUses,
+			int goldModifierPercentage,
+			int goldModifierUses
+	) {
+		PartyRewardModifierState rewardModifierState = party.getRewardModifierState();
+		rewardModifierState.activateExperienceModifier(expModifierPercentage, expModifierUses);
+		rewardModifierState.activateGoldModifier(goldModifierPercentage, goldModifierUses);
 	}
 
 	private void validateConfiguration() {

@@ -152,7 +152,7 @@ public class Main {
 			innCatalog = innLoader.load(Path.of("data", "inns.txt"), scenarioDefinitionCatalog);
 			CombatScenarioLoader combatScenarioLoader = new CombatScenarioLoader();
 			CombatScenarioDefinitionCatalog combatScenarioDefinitionCatalog = combatScenarioLoader
-					.load(Path.of("data", "combat_scenarios.txt"), scenarioDefinitionCatalog);
+	                .load(Path.of("data", "combat_scenarios.txt"), scenarioDefinitionCatalog, innCatalog);
 			ShopLoader shopLoader = new ShopLoader();
 			shopCatalog = shopLoader
 					.load(Path.of("data", "shops.txt"), scenarioDefinitionCatalog, combatScenarioDefinitionCatalog);

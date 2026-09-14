@@ -1027,7 +1027,9 @@ Restoration occurs in this order:
 1. Every defeated party member is revived.
 2. Every party member has HP, MP and SP fully restored.
 
-The INN flow does not change the general behavior of `GameCharacter.restoreAllResources()`, which still refuses to restore defeated characters. The INN explicitly revives them before calling that method.
+Complete party restoration is centralized in `Party.fullyRestoreMembers()` and is shared by INN stays and full-party rescue. The operation revives each defeated member before fully restoring every member's HP, MP and SP.
+
+This does not change the general behavior of `GameCharacter.restoreAllResources()`, which still refuses to restore defeated characters.
 
 After a successful stay, the player remains inside the INN. Feedback from successful, unnecessary and unaffordable attempts is displayed inside the current INN screen, between the party's gold information and the available actions.
 
@@ -1291,19 +1293,85 @@ The player selects a destination and confirms the journey before payment. Invali
 
 Leaving an incomplete combat scenario through paid transport discards its current `ExplorationSession`. Permanent gains already obtained—including EXP, gold, items, bestiary analysis, discoveries and route unlocks—remain unchanged. Returning later creates a fresh exploration session using the entry position of the route used to return.
 
-## Full-party defeat
+## Full-party defeat and rescue
 
 A battle ends in defeat when every playable character is defeated.
 
-The current V2 behavior opens the temporary `GameOverScreen`.
+`Battle` displays its final defeat message and returns `BattleResult.DEFEAT`. It does not terminate the application, select a destination, restore characters or modify world progression.
 
-Defeated characters are not automatically revived after battle.
+`World` coordinates the rescue after receiving the defeat result.
 
-A future version will replace Game Over with:
+### Rescue destination
 
-- Rescue in Bree.
-- Full restoration through the rescue flow.
-- Preservation of EXP, gold, inventory and progression.
+Each combat scenario defines:
+
+- An optional preferred rescue city.
+- A required fallback rescue city.
+- A narrative rescue description.
+
+The preferred city is selected only when it has already been discovered. When the preferred city is absent or undiscovered, the fallback city is selected.
+
+A fallback city may be selected even when it has not previously been discovered. The selected city becomes discovered through the rescue, but unrelated travel routes are not unlocked.
+
+Every configured rescue destination must be a registered city with exactly one INN.
+
+### Rescue cost
+
+The proportional rescue cost is 10% of the party's current gold, rounded upward:
+
+```text
+proportionalCost = ceil(currentGold * 10 / 100)
+```
+
+The final cost is:
+
+```text
+rescueCost = min(
+    currentGold,
+    max(destinationInnPrice, proportionalCost)
+)
+```
+
+The calculation therefore follows these rules:
+
+- The destination INN price is the minimum cost when the party has enough gold.
+- The proportional cost may exceed the INN price for wealthier parties.
+- The cost never exceeds the party's current gold.
+- The cost never produces negative gold.
+- A party with no gold is rescued without payment.
+- The implementation calculates the upward-rounded percentage without integer overflow.
+
+### Rescue flow
+
+After the destination and cost are resolved:
+
+1. The rescue cost is deducted from the shared party gold.
+2. Every defeated party member is revived.
+3. Every party member's HP, MP and SP are fully restored through `Party.fullyRestoreMembers()`.
+4. `PartyRescueScreen` displays the scenario's rescue description.
+5. The selected city name is displayed separately.
+6. The exact cost is displayed through `GameCurrency`.
+7. The player must press ENTER.
+8. The party is moved to the selected city.
+9. The normal world loop continues.
+
+The failed `ExplorationSession` is abandoned without advancing or completing it. Returning to the defeated scenario later creates a fresh exploration session using the entry position of the route used to return.
+
+### Preserved state
+
+Rescue is not a rollback. It preserves:
+
+- Character EXP and levels.
+- Learned skills.
+- Gold remaining after the rescue cost.
+- Inventory contents, excluding items already consumed.
+- Equipped items.
+- Active temporary reward modifiers and their remaining durations.
+- Discovered scenarios and unlocked routes.
+- Completed permanent world progression.
+- Current shop offers and remaining stock.
+
+Defeat grants no battle rewards. Victory and escape do not activate rescue, and defeated allies are not automatically revived after a normal victory.
 
 ## Linear exploration
 

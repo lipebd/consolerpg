@@ -64,6 +64,7 @@ public final class PartyStatusMenu {
 
 	private void displayPartyStatus(List<PlayableCharacter> members) {
 		System.out.println("\n[STATUS]\n");
+		int nameWidth = party.getMembers().stream().mapToInt(currentMember -> currentMember.getName().length()).max().orElse(1);
 		int levelWidth = party.getMembers().stream()
 				.mapToInt(currentMember -> String.valueOf(currentMember.getLevel()).length()).max().orElse(1);
 		int hpWidth = party.getMembers().stream()
@@ -78,7 +79,7 @@ public final class PartyStatusMenu {
 
 			PlayableCharacter member = members.get(index);
 
-			displayMemberSummary(member, index + 1, levelWidth, hpWidth, mpWidth);
+			displayMemberSummary(member, index + 1, nameWidth, levelWidth, hpWidth, mpWidth);
 		}
 
 		System.out.println("\n" + GameCurrency.getName() + ": " + GameCurrency.format(party.getGold()));
@@ -89,11 +90,12 @@ public final class PartyStatusMenu {
 private void displayMemberSummary(
                 PlayableCharacter member,
                 int optionNumber,
+                int nameWidth,
                 int levelWidth,
                 int hpWidth,
                 int mpWidth
 ) {
-        String memberLabel = member.getName() + " [" + member.getPlayableClassDefinition().getSymbol() + "]";
+        String memberLabel = String.format("%-" + nameWidth + "s", member.getName()) + " [" + member.getPlayableClassDefinition().getSymbol() + "]";
         String rowFormat = "[%d] %s%n    %s%n";
 
         if (!member.isAlive()) {

@@ -126,7 +126,7 @@ BattleCoordinator
 | `Enemy` | Inimigo de execução | Estende `GameCharacter` e representa uma ocorrência mutável de um inimigo dentro de uma batalha. Recebe seus dados de `EnemyDefinition`, possui rank, descrição e tabela de drops, e é colocado em `EnemyBattleSlot`. Vários objetos `Enemy` podem nascer da mesma definição sem compartilhar HP. |
 | `EnemyRank` | Enum de domínio | Define os ranks válidos dos inimigos, como comum, veterano, líder, boss, épico e lendário. É usado por loaders, definições, recompensas e validações de dungeon. |
 | `PlayableCharacter` | Personagem jogável | Estende `GameCharacter` com nome normalizado validado, nível, EXP, definição de classe, equipamentos, definições de habilidade e IDs das habilidades efetivamente aprendidas. Aprende automaticamente habilidades `STARTER` e `LEVEL`, permite aprender ou substituir habilidades `SCROLL`, preserva sua ordem e limita pergaminhos a duas vagas. Ao ganhar níveis, substitui somente os atributos naturais pelo resultado final de `CharacterGrowthCalculator`. |
-| `Party` | Estado compartilhado do grupo | Armazena de um a quatro `PlayableCharacter`, inventário, ouro e modificadores temporários compartilhados. Rejeita integrantes repetidos e nomes equivalentes sem diferenciar maiúsculas e minúsculas; o primeiro integrante é o líder. Também soma os bônus de GOLD dos berloques equipados pelo grupo. |
+| `Party` | Estado compartilhado do grupo | Armazena de um a quatro `PlayableCharacter`, inventário, ouro e modificadores temporários compartilhados. Rejeita integrantes repetidos e nomes equivalentes sem diferenciar maiúsculas e minúsculas; o primeiro integrante é o líder. Também soma os bônus de GOLD dos berloques equipados e centraliza, por meio de `fullyRestoreMembers()`, a ressurreição e a restauração completa de HP, MP e SP de todos os integrantes. |
 | `CharacterNameRules` | Regras de domínio | Centraliza normalização NFC, limite de 16 pontos de código Unicode, caracteres permitidos, validação e comparação sem diferenciação de maiúsculas e minúsculas para nomes de personagens jogáveis. |
 | `CharacterNameCatalog` | Catálogo | Armazena os nomes externos já normalizados e validados, preservando sua ordem e rejeitando duplicatas sem diferenciar maiúsculas e minúsculas. |
 | `CharacterNameLoader` | Carregamento de dados | Lê `character_names.txt`, ignora comentários e linhas vazias, aplica `CharacterNameRules`, acrescenta arquivo e linha aos erros e exige nomes suficientes para uma `Party` completa. |
@@ -309,11 +309,11 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 | `ConsoleUI` | Utilitário de interface | Centraliza operações gerais do console, como limpeza da tela ou pausa para continuação. É reutilizada por telas e fluxos que precisam do mesmo comportamento visual. |
 | `TitleScreen` | Tela | Exibe a apresentação inicial do jogo e controla a entrada necessária para começar. É chamada durante a inicialização antes de `World`. |
 | `CharacterCreationMenu` | Menu de criação | Permite digitar ou sortear o nome do protagonista, repetir o sorteio, alterar a proposta, confirmar ou cancelar. Exibe nome, classe Flagelo, especializações e descrição, mas devolve apenas o nome confirmado; `Main` cria o personagem e a `Party` posteriormente. |
-| `GameOverScreen` | Tela | Exibe a derrota definitiva temporária e informações finais da `Party`. É acionada por `World` quando `BattleResult` indica derrota. |
+| `PartyRescueScreen` | Tela | Apresenta o resgate após a derrota completa da `Party`. Recebe o grupo, o `CombatScenario` derrotado, a cidade escolhida e o custo calculado; exibe narrativa, destino, restauração e custo por meio de `GameCurrency`, adapta a mensagem ao tamanho da party e exige ENTER. Não altera ouro, personagens, cenário ou progresso. |
 | `CombatScenarioMenu` | Menu de cenário de combate | Recebe as ações de `CombatScenarioAction` permitidas no campo ou dungeon atual, mantém numeração contínua, separa grupos visualmente e devolve a escolha. Não é usado por cidades. |
 | `CityMenu` | Menu de cidade | Recebe o nome da cidade e as ações de `CityAction` atualmente disponíveis. Omite ações sem destino funcional, preserva numeração contínua e separa navegação dos recursos do grupo. |
 | `CityLocationMenu` | Menu de navegação urbana | Exibe apenas os nomes dos locais funcionais da cidade e devolve a posição selecionada. Não conhece nem executa as regras internas dos serviços. |
-| `InnMenu` | Menu de serviço urbano | Exibe os dados de `InnDefinition`, controla confirmação e pagamento da estadia e restaura a `Party`. Mantém o jogador no INN até um retorno explícito e apresenta o resultado das ações dentro da tela atual. |
+| `InnMenu` | Menu de serviço urbano | Exibe os dados de `InnDefinition`, controla confirmação e pagamento da estadia e solicita a restauração centralizada em `Party.fullyRestoreMembers()`. Mantém o jogador no INN até um retorno explícito e apresenta o resultado das ações dentro da tela atual. |
 | `ScenarioBranchMenu` | Menu | Recebe as bifurcações disponíveis na posição atual, exibe seus nomes e descrições e devolve a `ScenarioBranchDefinition` escolhida. Não altera o cenário nem o estado da exploração. |
 | `RouteMenu` | Menu | Recebe as rotas adjacentes atualmente disponíveis, exibe nomes e descrições das saídas e devolve a `TravelRouteDefinition` escolhida. Não resolve o destino nem aplica a posição de chegada; essas consequências pertencem a `World`. |
 | `CityTransportMenu` | Menu de transporte pago | Recebe os destinos urbanos descobertos e configurados, exibe preços e saldo por meio de `GameCurrency`, valida seleção e saldo, solicita confirmação, realiza o pagamento e devolve a `CityTransportDefinition` escolhida. Não altera o cenário. |
@@ -343,7 +343,7 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
-| `World` | Coordenador principal do jogo | Mantém o cenário atual, a sessão de exploração e o loop do mundo. Monta ações disponíveis, coordena exploração, eventos, rotas adjacentes, transporte pago, encontros aleatórios, épicos e bosses, chama menus e `BattleCoordinator` e interpreta `BattleResult`. Conhece vários subsistemas porque é o ponto em que suas consequências se encontram, mas delega entrada, apresentação e cálculos específicos. |
+| `World` | Coordenador principal do jogo | Mantém o cenário atual, a sessão de exploração e o loop do mundo. Monta ações disponíveis, coordena exploração, eventos, rotas adjacentes, transporte pago, encontros aleatórios, épicos e bosses, chama menus e `BattleCoordinator` e interpreta `BattleResult`. Após derrota completa, interrompe apenas a exploração atual, resolve destino, INN e custo do resgate, solicita pagamento e restauração, exibe `PartyRescueScreen` e retoma o loop na cidade escolhida. |
 | `WorldProgress` | Estado mutável | Registra os IDs dos cenários descobertos na execução atual, valida referências por meio de `ScenarioCatalog` e expõe uma cópia não modificável do progresso. Permanece separado de `TravelProgress`, pois descoberta e desbloqueio de rotas são conceitos independentes. |
 
 ---
@@ -415,7 +415,7 @@ ExplorationReward          = o resultado concreto do sorteio
 | `Scenario` | Classe-base de execução | Define os dados comuns dos cenários usados durante o jogo: ID, nome e descrição. É herdada por `City` e `CombatScenario` e registrada em `ScenarioCatalog`. |
 | `CombatScenarioAction` | Enum de interface e fluxo | Define ações exclusivas de campos e dungeons, como explorar, seguir uma bifurcação, enfrentar o boss, viajar, abrir o inventário e ver status. |
 | `CityAction` | Enum de interface e fluxo | Define as ações urbanas atualmente suportadas: visitar um local, sair por uma rota adjacente, abrir o inventário e ver status. |
-| `CombatScenario` | Classe-base de execução | Estende `Scenario` com recompensas-base e `ExplorationSettings`. É herdada por `Field` e `Dungeon` e fornece os dados necessários para encontros e recompensas. |
+| `CombatScenario` | Classe-base de execução | Estende `Scenario` com recompensas-base, `ExplorationSettings`, destino preferencial opcional, destino fallback obrigatório e descrição do resgate. É herdada por `Field` e `Dungeon` e fornece a `World` os dados necessários para encontros, recompensas e resgate. |
 | `Field` | Cenário de execução | Representa um campo explorável com eventos aleatórios e conclusão após resolver sua posição final. É criado por `ScenarioFactory` a partir das definições comuns e de combate. |
 | `Dungeon` | Cenário de execução | Representa uma masmorra explorável. Além dos dados de `CombatScenario`, possui `DungeonSettings` com grupos obrigatórios de bosses e épicos opcionais. Sua posição final é resolvida por uma batalha de boss. |
 | `DungeonSettings` | Configuração de execução | Guarda as listas de um a três IDs de bosses e de um a três IDs épicos usadas pelo objeto `Dungeon`. Recebe os dados de `DungeonDefinition` durante a criação do cenário. |
@@ -433,8 +433,8 @@ ExplorationReward          = o resultado concreto do sorteio
 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
-| `CombatScenarioLoader` | Carregamento de dados | Lê `combat_scenarios.txt`, valida se o ID existe e não pertence a uma cidade, monta `ExplorationSettings`, cria `CombatScenarioDefinition` e registra no catálogo correspondente. |
-| `CombatScenarioDefinition` | Definição imutável | Armazena os dados externos exclusivos de campos e dungeons: recompensas-base e `ExplorationSettings`. Complementa `ScenarioDefinition` em vez de duplicar os dados comuns. |
+| `CombatScenarioLoader` | Carregamento de dados | Lê os 16 campos de `combat_scenarios.txt`, valida se o cenário existe e não é uma cidade, monta `ExplorationSettings` e interpreta os dados de resgate. Exige destinos urbanos com INN, rejeita destinos preferencial e fallback iguais e relata arquivo, linha e ID quando possível. Produz definições registradas no catálogo correspondente. |
+| `CombatScenarioDefinition` | Definição imutável | Armazena os dados externos exclusivos de campos e dungeons: recompensas-base, `ExplorationSettings`, destino preferencial opcional, fallback obrigatório e descrição do resgate. Valida a presença e a diferença dos destinos antes de complementar `ScenarioDefinition`, sem duplicar os dados comuns. |
 | `CombatScenarioDefinitionCatalog` | Catálogo de definições | Registra e localiza `CombatScenarioDefinition` por ID de cenário. É usado por `DungeonLoader` para validar dados e por `ScenarioFactory` para criar `Field` e `Dungeon`. |
 
 ### Definições específicas de dungeon
@@ -449,7 +449,7 @@ ExplorationReward          = o resultado concreto do sorteio
 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
-| `ScenarioFactory` | Fábrica | Recebe `ScenarioDefinition` e consulta os catálogos especializados. Conforme `ScenarioType`, cria `City`, `Field` ou `Dungeon`, combinando dados comuns, dados de combate e dados específicos da dungeon. |
+| `ScenarioFactory` | Fábrica | Recebe `ScenarioDefinition` e consulta os catálogos especializados. Conforme `ScenarioType`, cria `City`, `Field` ou `Dungeon`, combinando dados comuns, dados de combate e dados específicos da dungeon. Ao criar `Field` e `Dungeon`, também propaga os destinos e a descrição de resgate definidos em `CombatScenarioDefinition`. |
 | `ScenarioCatalog` | Catálogo de execução | Registra os objetos `Scenario` já criados e permite resolvê-los por ID durante o jogo. É usado por `World`, `RouteMenu`, `CityTransportMenu`, `WorldProgress` e validações de destinos. Não guarda definições cruas dos arquivos. |
 
 ### Fluxo completo dos cenários
@@ -501,13 +501,13 @@ scenario_branches.txt
 
 ## Pacote `rpg.world.inns`
 
-Este pacote representa os dados fixos dos INNs urbanos. Ele não controla entrada do jogador nem altera diretamente a `Party`; essas responsabilidades pertencem a `World` e `InnMenu`.
+Este pacote representa os dados fixos dos INNs urbanos. Ele não controla entrada do jogador nem altera diretamente a `Party`: `World` coordena o acesso e o resgate, `InnMenu` controla a interface e o pagamento da estadia, e `Party` executa a restauração coletiva.
 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
-| `InnLoader` | Carregamento de dados | Lê `inns.txt`, interpreta quebras literais `\n`, valida os cinco campos, resolve o cenário associado e exige o tipo `CITY`. Produz definições registradas em `InnCatalog`. |
+| `InnLoader` | Carregamento de dados | Lê `inns.txt`, interpreta quebras literais `\n`, valida os cinco campos, resolve o cenário associado e exige o tipo `CITY`. Depois do carregamento, rejeita a inicialização quando qualquer cidade registrada não possui INN. |
+| `InnCatalog` | Catálogo de definições | Registra INNs por ID estável e por ID da cidade, rejeita IDs duplicados e impede mais de um INN no mesmo cenário urbano. Em conjunto com a validação de cobertura de `InnLoader`, garante exatamente um INN para cada cidade. |
 | `InnDefinition` | Definição imutável | Armazena ID estável, ID do cenário urbano, nome, descrição e preço fixo da estadia para todo o grupo. Rejeita textos vazios e preços menores ou iguais a zero. |
-| `InnCatalog` | Catálogo de definições | Registra INNs por ID estável e por ID da cidade. Rejeita IDs duplicados e permite no máximo um INN por cenário urbano. |
 
 ### Fluxo do INN
 
@@ -522,7 +522,7 @@ inns.txt
     -> Party
 ```
 
-`InnCatalog` informa a `World` se a cidade atual possui um INN funcional. `CityLocationMenu` cuida apenas da navegação pelo nome do local. Depois da seleção, `InnMenu` apresenta seus detalhes e executa confirmação, pagamento, ressurreição e restauração.
+`InnCatalog` informa a `World` qual INN está associado à cidade atual. `CityLocationMenu` cuida apenas da navegação pelo nome do local. Depois da seleção, `InnMenu` apresenta os detalhes, executa confirmação e pagamento e solicita a restauração coletiva a `Party.fullyRestoreMembers()`.
 
 ---
 

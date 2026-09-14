@@ -82,7 +82,7 @@ public final class InnMenu {
 			throw new IllegalStateException("Party gold changed before Inn payment.");
 		}
 
-		restoreParty();
+		party.fullyRestoreMembers();
 
 		return "Após uma noite de descanso, todos despertam com as forças completamente renovadas.";
 	}
@@ -121,15 +121,5 @@ public final class InnMenu {
 		}
 
 		return true;
-	}
-
-	private void restoreParty() {
-		for (PlayableCharacter member : party.getMembers()) {
-			if (!member.isAlive()) {
-				member.revive(member.getMaxHp());
-			}
-
-			member.restoreAllResources();
-		}
 	}
 }

@@ -754,10 +754,16 @@ File:
 
 `data/combat_scenarios.txt`
 
-Each active combat-scenario line contains exactly 13 fields:
+Each active combat-scenario line contains exactly 16 fields:
 
 ```text
-# scenarioId;baseExperienceReward;baseGoldReward;explorationLength;battleChance;rewardChance;merchantChance;epicEncounterChance;specialAreaChance;minEnemies;maxEnemies;normalAreaMessage;specialAreaMessage
+# scenarioId;baseExperienceReward;baseGoldReward;explorationLength;battleChance;rewardChance;merchantChance;epicEncounterChance;specialAreaChance;minEnemies;maxEnemies;normalAreaMessage;specialAreaMessage;preferredRescueScenarioId;fallbackRescueScenarioId;rescueDescription
+```
+
+Example:
+
+```text
+verdes_ermos;25;5;5;70;15;15;0;30;1;2;Você avança pelos vastos campos verdes.;Você encontrou uma área especial de mini-floresta!;setegalhos;bree;Uma caravana encontrou os feridos e providenciou seu resgate.
 ```
 
 Rules:
@@ -771,6 +777,14 @@ Rules:
 - Normal and special area messages cannot be empty.
 - Area messages support literal `\n`.
 - Base EXP and gold rewards belong to the combat scenario rather than the common scenario definition.
+- `preferredRescueScenarioId` is optional and must be represented by an empty field when absent.
+- `fallbackRescueScenarioId` is required and cannot be empty.
+- Every configured rescue scenario ID must reference an existing `CITY` with a registered INN.
+- Preferred and fallback rescue scenario IDs must be different when a preferred destination is present.
+- `rescueDescription` is required and cannot be empty.
+- Rescue descriptions support literal `\n`.
+- Rescue descriptions must remain appropriate for any party size.
+- `CombatScenarioLoader` reports invalid definitions with their source file, line number and scenario ID whenever available.
 
 ## Dungeon definitions
 
@@ -921,7 +935,7 @@ Each active INN line contains exactly 5 fields:
 Example:
 
 ```text
-bree_inn;bree;INN de Bree;Uma estalagem simples e acolhedora.\nSeus quartos oferecem o descanso necessário antes da próxima jornada.;25
+bree_inn;bree;Pensão da Dona Fábula;Uma estalagem simples e acolhedora.\nSeus quartos oferecem o descanso necessário antes da próxima jornada.;25
 ```
 
 Rules:
@@ -932,7 +946,9 @@ Rules:
 - INN IDs must be unique.
 - Descriptions support literal `\n`.
 - `price` must be a valid integer greater than zero.
-- At most one INN may be registered for each city.
+- Every registered city must have exactly one INN.
+- `InnCatalog` rejects multiple INNs for the same city.
+- `InnLoader` rejects game initialization when any registered city has no INN.
 - The price applies to the whole party and is independent of party size.
 - Prices remain externally configurable for future balancing.
 - `InnLoader` produces immutable `InnDefinition` entries registered in `InnCatalog`.

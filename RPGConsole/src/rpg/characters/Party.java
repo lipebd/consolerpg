@@ -67,6 +67,16 @@ public final class Party {
 		return members.stream().noneMatch(PlayableCharacter::isAlive);
 	}
 
+	public void fullyRestoreMembers() {
+		for (PlayableCharacter member : members) {
+			if (!member.isAlive()) {
+				member.revive(member.getMaxHp());
+			}
+
+			member.restoreAllResources();
+		}
+	}
+
 	public boolean hasAvailableSlot() {
 		return members.size() < MAXIMUM_SIZE;
 	}
