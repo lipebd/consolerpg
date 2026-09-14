@@ -166,6 +166,6 @@ Current milestone: planning and integration of the approved crafting contributio
 * [x] Compile after every atomic implementation stage.
 * [x] Validate malformed crafting and crafter data during startup.
 * [x] Complete crafting-flow regression through the city interface.
-* [ ] Complete general V4 regression after modifying `Main` and `World`.
-* [ ] Verify the portable Windows build with the new data files.
+* [x] Complete general V4 regression after modifying `Main` and `World`.
+* [x] Verify the portable Windows build with the new data files.
 * [x] Credit the original contributor in the integration history.
