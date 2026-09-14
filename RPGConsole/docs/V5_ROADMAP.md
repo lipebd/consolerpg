@@ -164,7 +164,7 @@ Current milestone: planning and integration of the approved crafting contributio
 * [x] Preserve English identifiers and comments.
 * [x] Preserve PT-BR player-facing text.
 * [x] Compile after every atomic implementation stage.
-* [ ] Validate malformed crafting and crafter data during startup.
+* [x] Validate malformed crafting and crafter data during startup.
 * [x] Complete crafting-flow regression through the city interface.
 * [ ] Complete general V4 regression after modifying `Main` and `World`.
 * [ ] Verify the portable Windows build with the new data files.
