@@ -42,6 +42,10 @@ import rpg.world.World;
 import rpg.world.WorldProgress;
 import rpg.world.branches.ScenarioBranchCatalog;
 import rpg.world.branches.ScenarioBranchLoader;
+import rpg.world.crafting.CraftingRecipeCatalog;
+import rpg.world.crafting.CraftingRecipeLoader;
+import rpg.world.crafting.CrafterCatalog;
+import rpg.world.crafting.CrafterLoader;
 import rpg.world.encounters.EncounterCatalog;
 import rpg.world.encounters.EncounterLoader;
 import rpg.world.inns.InnCatalog;
@@ -77,6 +81,8 @@ public class Main {
 	public static void main(String[] args) {
 
 		CharacterNameCatalog characterNameCatalog;
+		CrafterCatalog crafterCatalog;
+		CraftingRecipeCatalog craftingRecipeCatalog;
 		ItemCatalog itemCatalog;
 		ItemDefinitionCatalog itemDefinitionCatalog;
 		RecoveryItemDefinitionCatalog recoveryItemDefinitionCatalog;
@@ -113,6 +119,11 @@ public class Main {
 			enemyCatalog = enemyLoader.load(Path.of("data", "enemies.txt"));
 			ItemLoader itemLoader = new ItemLoader();
 			itemDefinitionCatalog = itemLoader.load(Path.of("data", "items.txt"));
+			CraftingRecipeLoader craftingRecipeLoader = new CraftingRecipeLoader();
+			craftingRecipeCatalog = craftingRecipeLoader.load(
+				Path.of("data", "crafting_recipes.txt"),
+			itemDefinitionCatalog
+			);
 			EquipmentLoader equipmentLoader = new EquipmentLoader();
 
 			equipmentCatalog = equipmentLoader.load(
@@ -145,6 +156,12 @@ public class Main {
 			encounterCatalog = encounterLoader.load(Path.of("data", "encounters.txt"), enemyCatalog);
 			ScenarioLoader scenarioLoader = new ScenarioLoader();
 			ScenarioDefinitionCatalog scenarioDefinitionCatalog = scenarioLoader.load(Path.of("data", "scenarios.txt"));
+			CrafterLoader crafterLoader = new CrafterLoader();
+			crafterCatalog = crafterLoader.load(
+					Path.of("data", "crafters.txt"),
+					scenarioDefinitionCatalog,
+					craftingRecipeCatalog
+			);
 			CityTransportLoader cityTransportLoader = new CityTransportLoader();
 			cityTransportCatalog = cityTransportLoader
 					.load(Path.of("data", "city_transport.txt"), scenarioDefinitionCatalog);
@@ -227,6 +244,8 @@ public class Main {
 				currentScenario,
 				scanner,
 				itemCatalog,
+				craftingRecipeCatalog,
+				crafterCatalog,
 				equipmentCatalog,
 				equipmentService,
 				shopCatalog,

@@ -17,6 +17,8 @@ pocao_concentrada_de_frutas_da_montanha;CONSUMABLE;true;300;90;Poção Concentra
 
 # Materiais
 pelo_lupino;MATERIAL;true;;15;Pelo Lupino;Um tufo espesso de pelo obtido de um Lobermo.
+madeira;MATERIAL;true;10;5;Madeira;Um material resistente obtido de árvores e construções.
+ferro;MATERIAL;true;50;20;Ferro;Um metal resistente obtido principalmente em minas e cavernas.
 
 # Armas
 adaga_improvisada;WEAPON;false;;;Adaga Improvisada;Uma lâmina simples e desgastada, adequada para golpes rápidos.

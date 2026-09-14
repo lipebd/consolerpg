@@ -2,19 +2,24 @@
 
 ## Current version
 
-V4 gameplay-systems functional implementation complete.
+V4 is complete and preserved as the current released version.
+
+V5 development is in progress.
 
 Current stage:
 
-`Final documentation review and release audit`
+`Data-driven crafting integration and validation`
 
 Current Git branch:
 
-`feature/v4-gameplay-systems`
+`feature/v5-crafting-integration`
 
-The V1 MMMVP is preserved by the tag:
+Preserved release tags:
 
-`v1.0-mmmvp`
+* `v1.0-mmmvp`
+* `v2.0-mmvp`
+* `v3.0.0`
+* `v4.0.0`
 
 ## Project objective
 
@@ -708,6 +713,44 @@ Adjacent routes remain free and continue to use `TravelRouteDefinition`, `Travel
 
 Battle rewards, exploration rewards, inventory, party status, INNs, paid city transport and every shop price, total and balance use this shared presentation without moving gold ownership away from `Party`.
 
+## V5 data-driven crafting
+
+The initial V5 crafting integration is functionally complete.
+
+The system adapts the crafting contribution created by Matheus to the architecture established through V4 while preserving its core definition, catalog, loader, service and menu responsibilities.
+
+Implemented behavior includes:
+
+* External recipes loaded from `data/crafting_recipes.txt`.
+* External crafter NPCs loaded from `data/crafters.txt`.
+* Immutable recipe, material and crafter definitions.
+* Stable recipe and crafter IDs.
+* Strict item, scenario and recipe reference validation during startup.
+* Generic crafter terminology supporting different crafting professions.
+* Multiple crafter NPCs in the same city.
+* Independent ordered recipe sets for every crafter.
+* Recipe names and narrative descriptions separate from output-item content.
+* Ingredients and outputs from any item category.
+* Positive ingredient quantities and exactly one output unit per successful operation.
+* Complete ingredient validation before inventory mutation.
+* Reporting of every insufficient ingredient.
+* Output-quantity overflow protection.
+* Atomic ingredient removal and output insertion with rollback protection.
+* Integration with the shared party inventory.
+* Integration with the existing city-location selection flow.
+* Player-facing recipe inspection, confirmation, cancellation and feedback.
+* Display of required and currently owned ingredient quantities.
+
+Initial content includes:
+
+* `Senhor das Armas` in Bree, offering the Espada de Ferro recipe.
+* `Alquimista de Bree` in Bree, offering the Poção de Merumã recipe.
+* External Madeira and Ferro material items.
+* A multi-ingredient equipment recipe.
+* A recovery-item recipe that consumes a `CONSUMABLE`.
+
+The service has been validated independently for missing ingredients, exact requirements, excess owned quantities, multiple ingredients, successful consumption, single-unit output and inventory overflow. The complete interface flow has also been validated through purchase, crafting and inventory verification.
+
 ## Current limitations and temporary implementations
 
 - Permanent skill-scroll content and curated scroll drops remain absent while the draft skills await required combat mechanics and final content review.
@@ -724,14 +767,17 @@ Battle rewards, exploration rewards, inventory, party status, INNs, paid city tr
 - Random ally naming will reuse the implemented external-name selection after recruitment is added.
 - The four current random character names remain temporary pending creative-team curation.
 - Party-title acquisition and character-history presentation remain future narrative work.
+- Initial crafting content is limited to two Bree crafters and two recipes pending broader creative and balance curation.
+- Crafters are currently restricted to city scenarios.
+- Batch crafting, variable output quantities, crafting fees, recipe discovery, crafting levels, random failure and equipment enhancement are not implemented.
 
 ## Current next step
 
-All definitive V4 gameplay-system blocks are functionally complete, including combat effects, external skills, natural progression, reward modifiers, equipment, local skill-scroll infrastructure, initial character creation and full-party rescue.
+The initial V5 crafting flow is functionally integrated from external data through city interaction and atomic inventory mutation.
 
-The remaining V4 work is the final documentation and consistency audit before concluding the version. Save/load, story-based ally recruitment, party-title acquisition and the level-7 class-path decision remain preserved for future planning.
+The next step is to complete malformed-data validation, update the remaining class-responsibility documentation and perform broader V4 regression after the `Main` and `World` integration.
 
-The post-V4 level-7 class-change flow already has one equipment rule fixed: all three equipped items return to inventory, the chosen class NPC grants that class's level-7 starter weapon and armor even when the character remains a Flagelo, and the narration tells the player to open the equipment menu and equip the new set.
+The broader V5 release boundary remains preliminary until the remaining planned systems are presented and evaluated. Crafting decisions already recorded in `V5_ROADMAP.md` are definitive.
 
 ## Important conventions
 
@@ -745,4 +791,5 @@ The post-V4 level-7 class-change flow already has one equipment rule fixed: all 
 - Inventory and gold belong to `Party`.
 - Character resources and progression belong to `PlayableCharacter`.
 - Git operations are performed through Git Bash.
+- Git operations and manual compilation are performed through Git Bash.
 - Eclipse is used to edit, compile and run the Java project.

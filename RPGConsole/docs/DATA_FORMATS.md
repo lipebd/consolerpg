@@ -1104,6 +1104,117 @@ shop_stock.txt
     -> ShopStockCatalog
 ```
 
+## Crafting recipe definitions
+
+Crafting recipes are loaded from:
+
+`data/crafting_recipes.txt`
+
+Header:
+
+```text
+# id;outputItemId;name;description;materialItemId;requiredQuantity;...
+```
+
+Each valid line contains four fixed fields followed by one or more item-ID and quantity pairs:
+
+| Position | Field                                        | Java type       | Empty value |
+| -------: | -------------------------------------------- | --------------- | ----------- |
+|        1 | Recipe ID                                    | `String`        | Not allowed |
+|        2 | Output item ID                               | `String`        | Not allowed |
+|        3 | Name                                         | `String`        | Not allowed |
+|        4 | Description                                  | `String`        | Not allowed |
+| 5 onward | Material item ID and required quantity pairs | `String`, `int` | Not allowed |
+
+Rules:
+
+* Recipe IDs follow the project stable-ID convention.
+* Recipe IDs must be unique.
+* Every output item ID must reference an existing item definition.
+* Every material item ID must reference an existing item definition.
+* Every recipe requires at least one material.
+* Material fields must occur in complete item-ID and quantity pairs.
+* Required quantities must be positive integers.
+* The same material item ID cannot occur more than once in one recipe.
+* Item categories do not restrict crafting participation.
+* Items from any category may be consumed or produced.
+* Every successful operation produces exactly one unit of the configured output item.
+* Recipe names and descriptions belong to the crafting process and remain separate from the output item's name and description.
+* Literal `\n` inside descriptions becomes a line break when loaded.
+* Recipe and material order follows declaration order.
+
+Examples:
+
+```text
+pocao_de_meruma;pocao_de_meruma;Preparar Poção de Merumã;Quatro Merumãs são maceradas e combinadas em uma poção restauradora.;meruma;4
+espada_de_ferro;espada_de_ferro;Forjar Espada de Ferro;Um cabo de madeira é combinado a uma lâmina moldada em ferro.;madeira;3;ferro;5
+```
+
+Loading flow:
+
+```text
+crafting_recipes.txt
+    -> CraftingRecipeLoader
+    -> CraftingRecipeDefinition
+        -> ordered CraftingMaterial requirements
+    -> CraftingRecipeCatalog
+```
+
+## Crafter definitions
+
+Crafter NPCs are loaded from:
+
+`data/crafters.txt`
+
+Header:
+
+```text
+# id;scenarioId;name;description;recipeId;...
+```
+
+Each valid line contains four fixed fields followed by one or more recipe IDs:
+
+| Position | Field       | Java type | Empty value |
+| -------: | ----------- | --------- | ----------- |
+|        1 | Crafter ID  | `String`  | Not allowed |
+|        2 | Scenario ID | `String`  | Not allowed |
+|        3 | Name        | `String`  | Not allowed |
+|        4 | Description | `String`  | Not allowed |
+| 5 onward | Recipe IDs  | `String`  | Not allowed |
+
+Rules:
+
+* Crafter IDs follow the project stable-ID convention.
+* Crafter IDs must be unique.
+* The scenario ID must reference an existing `CITY` scenario.
+* More than one crafter may reference the same city.
+* Every crafter requires a non-empty name and description.
+* Every crafter provides at least one recipe.
+* Every recipe ID must reference an existing crafting recipe.
+* A crafter cannot repeat the same recipe ID.
+* Recipe IDs preserve their declaration order.
+* Different crafters in the same city may expose independent recipe sets.
+* Literal `\n` inside descriptions becomes a line break when loaded.
+* Crafter is the generic system concept; individual NPCs may represent blacksmiths, alchemists, cooks or other crafting professions.
+
+Examples:
+
+```text
+ferreiro_bree;bree;Senhor das Armas;Um sábio ferreiro com conhecimento dos metais de toda a região.;espada_de_ferro
+alquimista_bree;bree;Alquimista de Bree;Uma estudiosa das propriedades restauradoras de frutas e ervas.;pocao_de_meruma
+```
+
+Loading flow:
+
+```text
+crafters.txt
+    -> CrafterLoader
+    -> CrafterDefinition
+    -> CrafterCatalog
+        -> lookup by ID
+        -> ordered lookup by city scenario ID
+```
+
 ## Skill definitions
 
 General skill data is loaded from:

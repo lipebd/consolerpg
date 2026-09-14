@@ -35,6 +35,10 @@ import rpg.ui.PartyStatusMenu;
 import rpg.ui.RouteMenu;
 import rpg.ui.ScenarioBranchMenu;
 import rpg.ui.ShopMenu;
+import rpg.ui.CraftingMenu;
+import rpg.world.crafting.CrafterCatalog;
+import rpg.world.crafting.CrafterDefinition;
+import rpg.world.crafting.CraftingRecipeCatalog;
 import rpg.world.branches.ScenarioBranchCatalog;
 import rpg.world.branches.ScenarioBranchDefinition;
 import rpg.world.encounters.EncounterCatalog;
@@ -80,11 +84,13 @@ public class World {
 	private final RouteMenu routeMenu;
 	private final ScenarioBranchMenu scenarioBranchMenu;
 	private final CombatScenarioMenu combatScenarioMenu;
+	private final CraftingMenu craftingMenu;
 	private final EpicEncounterMenu epicEncounterMenu;
 	private final ShopMenu shopMenu;
 	private final PartyRescueScreen partyRescueScreen;
 
 	private final ItemCatalog itemCatalog;
+	private final CrafterCatalog crafterCatalog;
 	private final CityTransportCatalog cityTransportCatalog;
 	private final ScenarioCatalog scenarioCatalog;
 	private final ScenarioBranchCatalog scenarioBranchCatalog;
@@ -113,6 +119,8 @@ public class World {
 			Scenario initialScenario,
 			Scanner scanner,
 			ItemCatalog itemCatalog,
+			CraftingRecipeCatalog craftingRecipeCatalog,
+			CrafterCatalog crafterCatalog,
 			EquipmentCatalog equipmentCatalog,
 			EquipmentService equipmentService,
 			ShopCatalog shopCatalog,
@@ -142,6 +150,7 @@ public class World {
 		this.scenarioBranchCatalog = Objects
 				.requireNonNull(scenarioBranchCatalog, "Scenario branch catalog cannot be null.");
 		this.travelProgress = Objects.requireNonNull(travelProgress, "Travel progress cannot be null.");
+		this.crafterCatalog = Objects.requireNonNull(crafterCatalog, "Crafter catalog cannot be null.");
 		this.itemCatalog = Objects.requireNonNull(itemCatalog, "Item catalog cannot be null.");
 		this.shopCatalog = Objects.requireNonNull(shopCatalog, "Shop catalog cannot be null.");
 		this.shopStateCatalog = Objects.requireNonNull(shopStateCatalog, "Shop state catalog cannot be null.");
@@ -183,6 +192,12 @@ public class World {
 		this.cityMenu = new CityMenu(scanner);
 		this.cityTransportMenu = new CityTransportMenu(this.party, scanner, this.scenarioCatalog);
 		this.cityLocationMenu = new CityLocationMenu(scanner);
+		this.craftingMenu = new CraftingMenu(
+				this.party,
+				scanner,
+				this.itemCatalog,
+				Objects.requireNonNull(craftingRecipeCatalog, "Crafting recipe catalog cannot be null.")
+		);
 		this.innMenu = new InnMenu(this.party, scanner);
 		this.shopMenu = new ShopMenu(this.party, scanner);
 		this.partyRescueScreen = new PartyRescueScreen(scanner);
@@ -314,13 +329,16 @@ public class World {
 
 		boolean hasCityShop = !getCityShops(city).isEmpty();
 
-		if (hasInn || hasCityShop) {
+		boolean hasCrafter = !getCityCrafters(city).isEmpty();
+
+		if (hasInn || hasCityShop || hasCrafter) {
 			availableActions.add(CityAction.VISIT_LOCATION);
 		}
 
 		if (travelProgress.hasUnlockedRoutesFrom(city.getId())) {
 			availableActions.add(CityAction.LEAVE_CITY);
 		}
+
 		if (!getAvailableCityTransportDestinations().isEmpty()) {
 			availableActions.add(CityAction.CITY_TRANSPORT);
 		}
@@ -349,6 +367,7 @@ public class World {
 		Optional<InnDefinition> innDefinition = innCatalog.findByScenarioId(city.getId());
 
 		List<ShopDefinition> cityShops = getCityShops(city);
+		List<CrafterDefinition> cityCrafters = getCityCrafters(city);
 
 		List<String> locationNames = new ArrayList<>();
 
@@ -356,6 +375,10 @@ public class World {
 
 		for (ShopDefinition shopDefinition : cityShops) {
 			locationNames.add(shopDefinition.getName());
+		}
+
+		for (CrafterDefinition crafterDefinition : cityCrafters) {
+			locationNames.add(crafterDefinition.getName());
 		}
 
 		OptionalInt selectedLocation = cityLocationMenu.selectLocation(locationNames);
@@ -375,11 +398,20 @@ public class World {
 			selectedIndex--;
 		}
 
-		ShopDefinition selectedShop = cityShops.get(selectedIndex);
+		if (selectedIndex < cityShops.size()) {
+			ShopDefinition selectedShop = cityShops.get(selectedIndex);
 
-		ShopState selectedShopState = shopStateCatalog.getByShopId(selectedShop.getId());
+			ShopState selectedShopState = shopStateCatalog.getByShopId(selectedShop.getId());
 
-		shopMenu.open(selectedShopState);
+			shopMenu.open(selectedShopState);
+			return;
+		}
+
+		selectedIndex -= cityShops.size();
+
+		CrafterDefinition selectedCrafter = cityCrafters.get(selectedIndex);
+
+		craftingMenu.open(selectedCrafter);
 	}
 
 	private void executeCombatScenarioMenu() {
@@ -859,6 +891,10 @@ public class World {
 	private void exitGame() {
 		System.out.println("\nObrigado por testar a V4!");
 		running = false;
+	}
+
+	private List<CrafterDefinition> getCityCrafters(City city) {
+		return crafterCatalog.getByScenarioId(city.getId());
 	}
 
 	private List<ShopDefinition> getCityShops(City city) {

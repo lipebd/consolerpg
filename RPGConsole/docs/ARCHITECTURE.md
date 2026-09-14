@@ -825,7 +825,7 @@ The city flow separates three navigation concepts:
 - Leaving through an unlocked adjacent route.
 - Traveling directly to another discovered city through paid transport.
 
-`CityLocationMenu` displays the names of currently functional locations. Location descriptions and actions are shown only after the player enters the selected location. The list may combine the city's optional INN with every associated `CITY` shop, while unfinished services such as taverns remain absent instead of appearing as placeholders.
+`CityLocationMenu` displays the names of currently functional locations. Location descriptions and actions are shown only after the player enters the selected location. The list may combine the city's optional INN, every associated `CITY` shop and every associated crafter NPC, while unfinished services such as taverns remain absent instead of appearing as placeholders.
 
 Current INN data flow:
 
@@ -880,6 +880,62 @@ data/shop_stock.txt
 
 An item is sellable to every shop when it defines `shopPurchasePrice`. `KEY_ITEM` definitions cannot provide that price and the category is excluded from the sale interface.
 
+## Crafting architecture
+
+Crafting extends the existing data-driven city-location flow without introducing a separate scenario type or mutable crafter runtime object.
+
+Recipe data flow:
+
+```text
+data/crafting_recipes.txt
+    -> CraftingRecipeLoader
+    -> CraftingRecipeDefinition
+        -> ordered CraftingMaterial requirements
+    -> CraftingRecipeCatalog
+```
+
+Crafter data and interaction flow:
+
+```text
+data/crafters.txt
+    -> CrafterLoader
+    -> CrafterDefinition
+    -> CrafterCatalog
+    -> World
+    -> CityLocationMenu
+    -> CraftingMenu
+    -> CraftingService
+    -> Party inventory
+```
+
+`CraftingRecipeDefinition` stores a stable recipe ID, one output item ID, a player-facing name and narrative description, and an ordered immutable list of required items. Output quantity is fixed at one and therefore is not duplicated as mutable or external state.
+
+`CraftingMaterial` represents one item requirement and positive quantity. Its name is retained from the original contribution, but its item reference is category-neutral: `MATERIAL` is not required for crafting participation.
+
+`CraftingRecipeLoader` validates output and ingredient references against `ItemDefinitionCatalog`. Recipe definitions do not copy item properties, and runtime presentation later resolves complete items through `ItemCatalog`.
+
+`CrafterDefinition` stores immutable NPC content and an ordered list of recipe IDs. It does not require a parallel mutable crafter class because the NPC currently owns no runtime state.
+
+`CrafterLoader` accepts only city scenario references in the initial integration block and validates every recipe reference. `CrafterCatalog` supports lookup by stable ID and ordered grouping by scenario ID. Unlike `InnCatalog`, it deliberately permits multiple definitions in one city.
+
+`Main` loads common item definitions before crafting recipes and loads scenarios before crafters. This makes every external reference available before its dependent definition is constructed.
+
+`World` adds every crafter associated with the current city to the existing location-selection flow. INNs, city shops and crafters preserve separate definitions and menus while sharing continuous location numbering.
+
+`CraftingMenu` owns recipe selection, item-name resolution, requirement presentation, owned-quantity presentation, confirmation and player-facing feedback. It does not mutate inventory directly.
+
+`CraftingService` owns the transaction:
+
+* It resolves all required and output items through `ItemCatalog`.
+* It identifies every insufficient requirement before mutation.
+* It protects the resulting output quantity against integer overflow.
+* It removes ingredients only after all requirements pass.
+* It produces exactly one output item.
+* It restores already removed ingredients if an unexpected output failure occurs.
+* Rejected attempts preserve the complete inventory.
+
+Crafting uses the shared inventory owned by `Party`. It does not own a second inventory, use shop prices, modify shop state or restrict ingredients and outputs by `ItemCategory`.
+
 ## UI boundaries
 
 The UI package contains console-specific behavior:
@@ -895,6 +951,7 @@ Important UI components include:
 - `CombatScenarioMenu`
 - `CityMenu`
 - `CityLocationMenu`
+- `CraftingMenu`
 - `InnMenu`
 - `RouteMenu`
 - `CityTransportMenu`
@@ -931,6 +988,8 @@ Important UI components include:
 `InventoryMenu` controls the general inventory flow outside battle. It displays every item category in deterministic enum order, keeps empty categories selectable, reports an empty category only after it is selected, paginates non-empty contents and opens contextual item details. Recovery items may be used, equipment items may open the shared equipment flow and skill scrolls may teach their linked skill to the unique compatible party member. Empty inventory screens remain open until the player explicitly returns or closes the inventory.
 
 `ShopMenu` is shared by fixed city shops and exploration merchants. It displays the configured shop identity and party gold, lists active purchase offers with deterministic pagination, organizes owned sellable items by category and keeps the shop open until the player explicitly leaves.
+
+`CraftingMenu` displays the selected crafter's ordered recipes, recipe narrative, output item and required-versus-owned ingredient quantities. It requests confirmation and translates `CraftingResult` into player-facing feedback while delegating every inventory mutation to `CraftingService`.
 
 `BattleItemMenu` is a separate battle-specific flow. It lists only items that can currently be used in battle and reports success only when an item produces an effect.
 
