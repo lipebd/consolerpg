@@ -43,14 +43,6 @@ public final class Party {
 		return true;
 	}
 
-	public boolean removeMember(PlayableCharacter member) {
-		if (member == null || members.size() <= MINIMUM_SIZE) {
-			return false;
-		}
-
-		return members.remove(member);
-	}
-
 	public List<PlayableCharacter> getMembers() {
 		return List.copyOf(members);
 	}
