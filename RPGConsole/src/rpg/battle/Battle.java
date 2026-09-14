@@ -111,7 +111,7 @@ public class Battle {
 		BattleResult result = determineBattleResult();
 
 		displayBattleResult(result);
-		
+
 		ConsoleUI.pause(PACING_PAUSE_MILLISECONDS);
 
 		return result;
@@ -321,15 +321,17 @@ public class Battle {
 
 	private void displayBattleIntroduction() {
 		System.out.println("\nO grupo foi atacado!");
-		
+
 		ConsoleUI.pause(PACING_PAUSE_MILLISECONDS);
-		
-		/*System.out.println("\nBatalha contra:");
 
-		for (EnemyBattleSlot slot : enemyGroup.getSlots()) {
-
-			System.out.println("- " + slot.getDisplayName());
-		}*/
+		// Temporarily commented to test battle flow. Might remove this method entirely.
+		/*
+		 * System.out.println("\nBatalha contra:");
+		 * 
+		 * for (EnemyBattleSlot slot : enemyGroup.getSlots()) {
+		 * 
+		 * System.out.println("- " + slot.getDisplayName()); }
+		 */
 	}
 
 	private void executeEnemyTurn(BattleTurnEntry actingEntry) {
