@@ -49,7 +49,7 @@ public final class PartyRescueScreen {
 		}
 
 		System.out.println(
-				"\nTodos os integrantes do grupo foram resgatados " + "e tiveram suas forças completamente restauradas."
+				"\nTodos os integrantes do grupo foram resgatados e tiveram suas forças completamente restauradas."
 		);
 	}
 
