@@ -244,6 +244,8 @@ public class Main {
 				currentScenario,
 				scanner,
 				itemCatalog,
+				craftingRecipeCatalog,
+				crafterCatalog,
 				equipmentCatalog,
 				equipmentService,
 				shopCatalog,

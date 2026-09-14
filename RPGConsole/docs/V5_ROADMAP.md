@@ -91,7 +91,7 @@ Current milestone: planning and integration of the approved crafting contributio
 ### Transaction validation
 
 * [x] Test crafting with exactly the required ingredient quantities.
-* [ ] Test crafting while holding more than the required quantities.
+* [x] Test crafting while holding more than the required quantities.
 * [x] Test failure when one ingredient is missing.
 * [x] Test failure when one ingredient has insufficient quantity.
 * [x] Test that failed crafting does not consume any ingredient.
@@ -125,18 +125,18 @@ Current milestone: planning and integration of the approved crafting contributio
 
 ## 4. World integration
 
-* [ ] Load crafting recipes after the item catalog is available.
+* [x] Load crafting recipes after the item catalog is available.
 * [x] Load crafter definitions after the recipe and scenario catalogs are available.
-* [ ] Integrate the crafting catalogs and service into the current V4 startup flow.
-* [ ] Adapt only the required sections of the contributed `Main` implementation.
-* [ ] Adapt only the required sections of the contributed `World` implementation.
+* [x] Integrate the crafting catalogs and service into the current V4 startup flow.
+* [x] Adapt only the required sections of the contributed `Main` implementation.
+* [x] Adapt only the required sections of the contributed `World` implementation.
 * [ ] Preserve all V4 initialization, character creation, combat, equipment, shop, INN, travel and rescue behavior.
-* [ ] Make every crafter in the current city available through the city-location flow.
-* [ ] Display multiple crafters in the same city as independent destinations.
-* [ ] Open `CraftingMenu` with the selected crafter definition.
-* [ ] Prevent crafter access outside its configured scenario.
-* [ ] Preserve the current scenario flow after leaving the crafting menu.
-* [ ] Avoid introducing crafting-specific conditionals throughout unrelated world behavior.
+* [x] Make every crafter in the current city available through the city-location flow.
+* [x] Display multiple crafters in the same city as independent destinations.
+* [x] Open `CraftingMenu` with the selected crafter definition.
+* [x] Prevent crafter access outside its configured scenario.
+* [x] Preserve the current scenario flow after leaving the crafting menu.
+* [x] Avoid introducing crafting-specific conditionals throughout unrelated world behavior.
 
 ---
 
