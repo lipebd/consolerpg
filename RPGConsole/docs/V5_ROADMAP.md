@@ -90,16 +90,16 @@ Current milestone: planning and integration of the approved crafting contributio
 
 ### Transaction validation
 
-* [ ] Test crafting with exactly the required ingredient quantities.
+* [x] Test crafting with exactly the required ingredient quantities.
 * [ ] Test crafting while holding more than the required quantities.
-* [ ] Test failure when one ingredient is missing.
-* [ ] Test failure when one ingredient has insufficient quantity.
-* [ ] Test that failed crafting does not consume any ingredient.
-* [ ] Test that successful crafting consumes every configured ingredient quantity.
-* [ ] Test that successful crafting adds exactly one output item.
-* [ ] Test a recipe that consumes a non-`MATERIAL` item.
-* [ ] Test a recipe whose output is not equipment.
-* [ ] Test recipes containing multiple ingredients.
+* [x] Test failure when one ingredient is missing.
+* [x] Test failure when one ingredient has insufficient quantity.
+* [x] Test that failed crafting does not consume any ingredient.
+* [x] Test that successful crafting consumes every configured ingredient quantity.
+* [x] Test that successful crafting adds exactly one output item.
+* [x] Test a recipe that consumes a non-`MATERIAL` item.
+* [x] Test a recipe whose output is not equipment.
+* [x] Test recipes containing multiple ingredients.
 
 ---
 
