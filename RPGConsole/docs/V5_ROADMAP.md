@@ -204,6 +204,27 @@ The implementation should continue to favor:
 * [ ] Confirm that transient battle and menu state is not serialized.
 * [ ] Confirm that an active exploration session cannot exist while saving inside an INN.
 
+### Character-level boundary
+
+> **Frozen behavior:** The current playable-character progression ceiling is level 20. This value must have one shared source of truth so future content may raise the ceiling without requiring scattered code changes.
+
+* [x] Set the minimum playable-character level to `1`.
+* [x] Set the current maximum playable-character level to `20`.
+* [x] Require current EXP to be non-negative and lower than the next-level requirement at levels 1 through 19.
+* [x] Keep current EXP at `0` while a character is at level 20.
+* [x] Discard EXP exceeding the amount required to reach level 20.
+* [x] Ignore further EXP gains while a character remains at the maximum level.
+* [x] Allow saves created at the previous maximum to remain valid when the maximum level is increased.
+* [ ] Centralize the minimum and maximum playable-character levels in one domain rule.
+* [ ] Make `PlayableCharacter` stop progression at the shared maximum level.
+* [ ] Prevent EXP arithmetic overflow before it mutates character progression.
+* [ ] Display `Nível máximo` instead of next-level progress at the maximum level.
+* [ ] Reject skill and equipment definitions whose level requirements exceed the supported maximum.
+* [ ] Validate saved level and current EXP against the shared progression rules.
+* [ ] Test reaching level 20 with exact and excess EXP.
+* [ ] Test additional EXP rewards at level 20.
+* [ ] Test save and load at levels 1, 19 and 20.
+
 ### Numeric resource boundaries
 
 > **Frozen behavior:** Resource limits must prevent overflow without silently destroying the value exchanged by the player. Free rewards may be partially granted, while operations involving a cost must remain atomic.
@@ -229,6 +250,40 @@ The implementation should continue to favor:
 * [ ] Preserve mandatory quest rewards until they can be granted instead of discarding them after the quest system exists.
 
 > **Deferred wealth extension:** A future exchange item may represent `100000000` GOLD and be bought and sold for the same amount, allowing total player wealth to exceed `Integer.MAX_VALUE` without increasing the liquid-GOLD limit. This extension is outside the current save/load implementation and would require an exchange mechanism compatible with the finite-stock shop model.
+
+### World time and shop restocking
+
+> **Frozen direction:** Shop restocking is controlled by a persistent fictional world clock. Exact time-advancement triggers and restocking intervals will be defined when the gameplay integration points are implemented.
+
+* [x] Add a fictional world clock to the mutable campaign state.
+* [x] Persist the world-clock state in `save.txt`.
+* [x] Keep world time unchanged when opening menus, visiting shops, saving, loading or restarting the application.
+* [x] Make shop restocking depend on world-time progression instead of shop visits.
+* [x] Restock all registered shops globally when the configured world-time boundary is reached.
+* [x] Replace every shop's active offers through a complete new weighted selection.
+* [x] Restore the initial stock of every offer selected for the new cycle.
+* [x] Do not preserve old offers or merge depleted offers with newly selected entries during restocking.
+* [x] Keep shop offers unchanged while the player is interacting with an open shop menu.
+* [x] Display enough world-time information for the player to anticipate the next restocking boundary.
+* [x] Restore the saved world time and shop states without generating new offers during loading.
+* [ ] Define the initial world day and time.
+* [ ] Define which completed gameplay actions advance world time.
+* [ ] Define how many hours each supported action advances.
+* [ ] Define the number of world hours between global shop restocks.
+* [ ] Define the exact player-facing world-time and restocking presentation.
+* [ ] Add the world-clock state only after its progression rules are frozen.
+* [ ] Make `ShopStateGenerator` available for both new-game initialization and runtime restocking.
+* [ ] Generate a complete replacement `ShopStateCatalog` before modifying the active world state.
+* [ ] Replace the active shop-state catalog only after complete generation succeeds.
+* [ ] Preserve the previous shop states when replacement generation fails.
+* [ ] Ensure one world-time advancement cannot trigger the same restocking boundary more than once.
+* [ ] Save world time and active shop states in the same campaign snapshot.
+* [ ] Test world-time progression for every supported triggering action.
+* [ ] Test that non-triggering menus and operations do not advance world time.
+* [ ] Test the exact moment of a global shop restock.
+* [ ] Test that every shop receives one complete new offer selection.
+* [ ] Test saving and loading immediately before and after a restocking boundary.
+* [ ] Test that loading never causes an additional restock.
 
 ### Encrypted file container
 
@@ -342,6 +397,22 @@ The implementation should continue to favor:
 * [ ] Leave the existing `save.txt` unchanged when exiting without saving.
 * [ ] Display the warning consistently even when no unsaved-change tracker exists.
 * [ ] Do not add implicit saving to ordinary exit operations.
+
+### Save-state documentation
+
+* [x] Create `docs/SAVE_STATE.md` as the detailed persistence reference.
+* [x] Mark the document as a planned contract until save and load are implemented.
+* [x] Separate persisted, derived and transient runtime state.
+* [x] Document the encrypted outer container independently from the decrypted property schema.
+* [ ] Map every persisted property to its domain source and validation rules.
+* [x] Document the required reconstruction and validation order.
+* [x] Document the campaign-selection, New Game, Continue, INN-save and exit-without-saving flows.
+* [x] Document numeric resource and playable-level boundaries.
+* [x] Document world-time and shop-restocking persistence.
+* [x] Document save-format and encryption-container versioning.
+* [x] Add guidance for integrating future quests, flags and permanent unlocks.
+* [x] Keep real encryption keys and real decrypted campaign data out of documentation.
+* [ ] Add concise references from `ARCHITECTURE.md`, `DATA_FORMATS.md`, `MECHANICS.md` and `PROJECT_STATE.md` as implementation milestones are completed.
 
 ### Verification
 
