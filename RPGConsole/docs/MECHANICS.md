@@ -1142,7 +1142,7 @@ The implemented persistence foundation can capture one immutable campaign snapsh
 
 The snapshot is serialized through the versioned property schema defined in `SAVE_STATE.md`, encoded as UTF-8, authenticated and encrypted through AES-256-GCM and written through atomic save-file replacement.
 
-Loading currently produces a structurally validated candidate snapshot without modifying active gameplay state. Catalog-backed validation, runtime reconstruction, title-screen campaign selection and INN save access remain pending.
+Loading decrypts and structurally validates the snapshot, validates every catalog-backed reference and reconstructs an isolated runtime candidate without modifying active gameplay state. A valid campaign may be continued after the title screen, while saving is available exclusively through INNs.
 
 ## World time and daily shop restocking
 

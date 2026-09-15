@@ -20,7 +20,7 @@ public final class InnMenu {
 		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
 	}
 
-	public void open(InnDefinition innDefinition) {
+	public Selection open(InnDefinition innDefinition) {
 		Objects.requireNonNull(innDefinition, "Inn definition cannot be null.");
 
 		String feedbackMessage = null;
@@ -32,14 +32,26 @@ public final class InnMenu {
 
 			switch (choice) {
 			case "0" -> {
-				return;
+				return Selection.BACK;
 			}
 
 			case "1" -> feedbackMessage = tryRest(innDefinition);
 
+			case "2" -> {
+				return Selection.SAVE_AND_CONTINUE;
+			}
+
+			case "3" -> {
+				return Selection.SAVE_AND_EXIT;
+			}
+
 			default -> feedbackMessage = "Opção inválida.";
 			}
 		}
+	}
+
+	public enum Selection {
+		BACK, SAVE_AND_CONTINUE, SAVE_AND_EXIT
 	}
 
 	private void displayInn(InnDefinition innDefinition, String feedbackMessage) {
@@ -61,6 +73,8 @@ public final class InnMenu {
 
 		System.out.println();
 		System.out.println("[1] Descansar");
+		System.out.println("[2] Salvar e continuar");
+		System.out.println("[3] Salvar e encerrar");
 		System.out.println("[0] Voltar");
 		System.out.print("> ");
 	}

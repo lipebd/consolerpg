@@ -36,20 +36,36 @@ public class PlayableCharacter extends GameCharacter {
 			List<SkillDefinition> classSkillDefinitions,
 			CharacterGrowthCalculator growthCalculator
 	) {
+		this(name, classDefinition, classSkillDefinitions, growthCalculator, PlayableCharacterLevelRules.MINIMUM_LEVEL);
+	}
+
+	public PlayableCharacter(
+			String name,
+			PlayableClassDefinition classDefinition,
+			List<SkillDefinition> classSkillDefinitions,
+			CharacterGrowthCalculator growthCalculator,
+			int level
+	) {
 		super(
 				CharacterNameRules.requireValid(name),
 				Objects.requireNonNull(classDefinition, "Playable class definition cannot be null.").getBaseStats()
 		);
 
-		this.classDefinition = classDefinition;
+		PlayableCharacterLevelRules.validateLevel(level);
 
+		this.classDefinition = classDefinition;
 		this.classSkillDefinitions = List
 				.copyOf(Objects.requireNonNull(classSkillDefinitions, "Class skill definitions cannot be null."));
 		this.learnedSkillIds = new LinkedHashSet<>();
 		this.growthCalculator = Objects.requireNonNull(growthCalculator, "Character growth calculator cannot be null.");
 		this.equipment = new CharacterEquipment();
-		this.level = 1;
+		this.level = level;
 		this.experience = 0;
+
+		CharacterStats naturalStats = this.growthCalculator.calculateNaturalStats(this.classDefinition, this.level);
+
+		replaceNaturalStats(naturalStats);
+		restoreAllResources();
 		learnAutomaticallyAvailableSkills();
 	}
 

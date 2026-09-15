@@ -33,6 +33,7 @@ import rpg.items.equipment.EquipmentLoader;
 import rpg.items.equipment.EquipmentService;
 import rpg.items.SkillScrollDefinitionCatalog;
 import rpg.items.SkillScrollLoader;
+import rpg.persistence.CampaignSaveService;
 import rpg.skills.SkillCatalog;
 import rpg.skills.SkillLoader;
 import rpg.ui.ConsoleUI;
@@ -74,6 +75,11 @@ import rpg.world.travel.TravelCatalog;
 import rpg.world.travel.TravelProgress;
 import rpg.world.travel.TravelRouteLoader;
 import rpg.world.WorldClock;
+import rpg.persistence.CampaignLoadResult;
+import rpg.persistence.CampaignLoadService;
+import rpg.persistence.CampaignSnapshotRestorer;
+import rpg.persistence.RestoredCampaign;
+import rpg.ui.CampaignSelectionMenu;
 
 // Starts the game and controls its initial execution.
 public class Main {
@@ -96,6 +102,8 @@ public class Main {
 		ShopCatalog shopCatalog;
 		ShopStockCatalog shopStockCatalog;
 		CityTransportCatalog cityTransportCatalog;
+		TravelCatalog travelCatalog;
+		TravelProgress travelProgress;
 		InnCatalog innCatalog;
 		ExplorationRewardCatalog explorationRewardCatalog;
 		EnemyCatalog enemyCatalog;
@@ -105,7 +113,6 @@ public class Main {
 		ScenarioBranchCatalog scenarioBranchCatalog;
 		PlayableClassCatalog playableClassCatalog;
 		Scenario currentScenario;
-		TravelProgress travelProgress;
 		WorldProgress worldProgress;
 		Scanner scanner = new Scanner(System.in);
 
@@ -122,10 +129,8 @@ public class Main {
 			ItemLoader itemLoader = new ItemLoader();
 			itemDefinitionCatalog = itemLoader.load(Path.of("data", "items.txt"));
 			CraftingRecipeLoader craftingRecipeLoader = new CraftingRecipeLoader();
-			craftingRecipeCatalog = craftingRecipeLoader.load(
-				Path.of("data", "crafting_recipes.txt"),
-			itemDefinitionCatalog
-			);
+			craftingRecipeCatalog = craftingRecipeLoader
+					.load(Path.of("data", "crafting_recipes.txt"), itemDefinitionCatalog);
 			EquipmentLoader equipmentLoader = new EquipmentLoader();
 
 			equipmentCatalog = equipmentLoader.load(
@@ -159,11 +164,8 @@ public class Main {
 			ScenarioLoader scenarioLoader = new ScenarioLoader();
 			ScenarioDefinitionCatalog scenarioDefinitionCatalog = scenarioLoader.load(Path.of("data", "scenarios.txt"));
 			CrafterLoader crafterLoader = new CrafterLoader();
-			crafterCatalog = crafterLoader.load(
-					Path.of("data", "crafters.txt"),
-					scenarioDefinitionCatalog,
-					craftingRecipeCatalog
-			);
+			crafterCatalog = crafterLoader
+					.load(Path.of("data", "crafters.txt"), scenarioDefinitionCatalog, craftingRecipeCatalog);
 			CityTransportLoader cityTransportLoader = new CityTransportLoader();
 			cityTransportCatalog = cityTransportLoader
 					.load(Path.of("data", "city_transport.txt"), scenarioDefinitionCatalog);
@@ -171,14 +173,13 @@ public class Main {
 			innCatalog = innLoader.load(Path.of("data", "inns.txt"), scenarioDefinitionCatalog);
 			CombatScenarioLoader combatScenarioLoader = new CombatScenarioLoader();
 			CombatScenarioDefinitionCatalog combatScenarioDefinitionCatalog = combatScenarioLoader
-	                .load(Path.of("data", "combat_scenarios.txt"), scenarioDefinitionCatalog, innCatalog);
+					.load(Path.of("data", "combat_scenarios.txt"), scenarioDefinitionCatalog, innCatalog);
 			ShopLoader shopLoader = new ShopLoader();
 			shopCatalog = shopLoader
 					.load(Path.of("data", "shops.txt"), scenarioDefinitionCatalog, combatScenarioDefinitionCatalog);
 			ShopStockLoader shopStockLoader = new ShopStockLoader();
 			shopStockCatalog = shopStockLoader.load(Path.of("data", "shop_stock.txt"), shopCatalog, itemCatalog);
 			shopStateGenerator = new ShopStateGenerator(shopCatalog, shopStockCatalog, new Random());
-			shopStateCatalog = shopStateGenerator.generate();
 			ExplorationRewardLoader explorationRewardLoader = new ExplorationRewardLoader();
 			explorationRewardCatalog = explorationRewardLoader
 					.load(Path.of("data", "exploration_rewards.txt"), combatScenarioDefinitionCatalog, itemCatalog);
@@ -203,15 +204,13 @@ public class Main {
 				scenarioCatalog.register(scenario);
 			}
 
-			currentScenario = scenarioCatalog.getById("bree");
 			worldProgress = new WorldProgress(scenarioCatalog);
 			TravelRouteLoader travelRouteLoader = new TravelRouteLoader();
-			TravelCatalog travelCatalog = travelRouteLoader.load(
+			travelCatalog = travelRouteLoader.load(
 					Path.of("data", "travel_routes.txt"),
 					scenarioDefinitionCatalog,
 					combatScenarioDefinitionCatalog
 			);
-			travelProgress = new TravelProgress(travelCatalog);
 
 		} catch (IOException | IllegalArgumentException exception) {
 			System.out.println("Não foi possível carregar os dados do jogo.");
@@ -222,6 +221,7 @@ public class Main {
 		CharacterGrowthCalculator characterGrowthCalculator = new CharacterGrowthCalculator();
 
 		Party party;
+		WorldClock worldClock;
 
 		if (usesDevelopmentParty(args)) {
 			DevelopmentPartyFactory developmentPartyFactory = new DevelopmentPartyFactory(
@@ -231,17 +231,77 @@ public class Main {
 			);
 
 			party = developmentPartyFactory.create();
+			currentScenario = scenarioCatalog.getById("bree");
+			worldProgress = new WorldProgress(scenarioCatalog);
+			travelProgress = new TravelProgress(travelCatalog);
+			worldClock = new WorldClock();
+			shopStateCatalog = shopStateGenerator.generate();
 		} else {
-			party = createNewGameParty(
-					scanner,
-					characterNameCatalog,
+			TitleScreen.show(scanner);
+			ConsoleUI.clearScreen();
+
+			CampaignSnapshotRestorer snapshotRestorer = new CampaignSnapshotRestorer(
 					playableClassCatalog,
 					skillCatalog,
+					equipmentCatalog,
+					itemCatalog,
+					scenarioCatalog,
+					innCatalog,
+					travelCatalog,
+					shopCatalog,
+					shopStockCatalog,
 					characterGrowthCalculator
 			);
+
+			CampaignLoadService loadService = new CampaignLoadService(snapshotRestorer);
+			CampaignLoadResult loadResult = loadService.load();
+
+			CampaignSelectionMenu campaignSelectionMenu = new CampaignSelectionMenu(scanner);
+
+			while (true) {
+				CampaignSelectionMenu.Selection selection = campaignSelectionMenu.select(loadResult);
+
+				ConsoleUI.clearScreen();
+
+				if (selection == CampaignSelectionMenu.Selection.CONTINUE) {
+					RestoredCampaign restoredCampaign = loadResult.getRestoredCampaign().orElseThrow();
+
+					party = restoredCampaign.getParty();
+					currentScenario = restoredCampaign.getCurrentScenario();
+					worldProgress = restoredCampaign.getWorldProgress();
+					travelProgress = restoredCampaign.getTravelProgress();
+					worldClock = restoredCampaign.getWorldClock();
+					shopStateCatalog = restoredCampaign.getShopStateCatalog();
+
+					break;
+				}
+
+				Optional<Party> createdParty = createNewGameParty(
+						scanner,
+						characterNameCatalog,
+						playableClassCatalog,
+						skillCatalog,
+						characterGrowthCalculator
+				);
+
+				if (createdParty.isEmpty()) {
+					ConsoleUI.clearScreen();
+					continue;
+				}
+
+				party = createdParty.get();
+				currentScenario = scenarioCatalog.getById("bree");
+				worldProgress = new WorldProgress(scenarioCatalog);
+				travelProgress = new TravelProgress(travelCatalog);
+				worldClock = new WorldClock();
+				shopStateCatalog = shopStateGenerator.generate();
+
+				ConsoleUI.clearScreen();
+				break;
+			}
 		}
 
-		WorldClock worldClock = new WorldClock();
+		CampaignSaveService campaignSaveService = new CampaignSaveService();
 
 		World world = new World(
 				party,
@@ -255,6 +315,7 @@ public class Main {
 				shopCatalog,
 				shopStateCatalog,
 				shopStateGenerator,
+				campaignSaveService,
 				enemyCatalog,
 				enemyDropCatalog,
 				encounterCatalog,
@@ -274,7 +335,7 @@ public class Main {
 
 	}
 
-	private static Party createNewGameParty(
+	private static Optional<Party> createNewGameParty(
 			Scanner scanner,
 			CharacterNameCatalog characterNameCatalog,
 			PlayableClassCatalog playableClassCatalog,
@@ -287,15 +348,10 @@ public class Main {
 
 		PlayableClassDefinition flageloDefinition = playableClassCatalog.getById("flagelo");
 
-		Optional<String> protagonistName = Optional.empty();
+		Optional<String> protagonistName = characterCreationMenu.open(flageloDefinition);
 
-		while (protagonistName.isEmpty()) {
-			TitleScreen.show(scanner);
-			ConsoleUI.clearScreen();
-
-			protagonistName = characterCreationMenu.open(flageloDefinition);
-
-			ConsoleUI.clearScreen();
+		if (protagonistName.isEmpty()) {
+			return Optional.empty();
 		}
 
 		PlayableCharacter protagonist = new PlayableCharacter(
@@ -305,7 +361,7 @@ public class Main {
 				characterGrowthCalculator
 		);
 
-		return new Party(protagonist);
+		return Optional.of(new Party(protagonist));
 	}
 
 	private static boolean usesDevelopmentParty(String[] arguments) {

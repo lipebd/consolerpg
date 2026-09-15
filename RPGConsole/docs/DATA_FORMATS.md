@@ -33,7 +33,7 @@ The IV and authenticated ciphertext use canonical basic Base64 encoding. No camp
 
 After authenticated AES-GCM decryption, the version-1 campaign payload uses strict `name=value` properties encoded as UTF-8. Property names, indexed collection structures and validation rules are defined centrally in `SAVE_STATE.md`.
 
-The encrypted codec and atomic file services are implemented. Catalog-backed runtime reconstruction and gameplay integration remain pending.
+The encrypted codec, atomic file services, catalog-backed runtime reconstruction and gameplay integration are implemented.
 
 ## Character-name definitions
 
@@ -1118,7 +1118,7 @@ Runtime rules:
 - A complete replacement `ShopStateCatalog` is generated before world time or active shop state changes.
 - Failed replacement generation preserves the previous world time and shop states.
 - Starting a new program execution currently creates fresh clock and shop states because campaign loading is not yet connected to application initialization.
-- The snapshot schema and encrypted file services preserve world time and active shop offers together; catalog-backed runtime restoration and gameplay integration remain pending.
+- The snapshot schema preserves world time and active shop offers together. Catalog-backed loading restores both without generating additional shop offers or advancing fictional time.
 
 Loading flow:
 

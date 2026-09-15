@@ -1,6 +1,6 @@
 # RPGConsole — Save State
 
-> **Implementation status:** The version-1 snapshot model, strict UTF-8 property codec, authenticated AES-GCM container, atomic file writer and snapshot-level save/load services are implemented. Catalog-backed validation, runtime reconstruction and gameplay-interface integration remain pending. Confirmed rules remain authoritative for the continuing implementation.
+> **Implementation status:** Version-1 campaign persistence is fully integrated. The game creates complete immutable snapshots, serializes and encrypts them into `save.txt`, atomically replaces the previous save, validates and reconstructs runtime state during loading, offers campaign selection after the title screen and provides save access exclusively through INNs. Remaining work is limited to additional automated verification and future schema evolution.
 
 ## Purpose
 
@@ -17,7 +17,7 @@ It separates:
 * Player-facing save and load behavior.
 * Versioning and future-feature integration.
 
-`ARCHITECTURE.md`, `DATA_FORMATS.md`, `MECHANICS.md` and `PROJECT_STATE.md` will contain shorter summaries after the corresponding behavior is implemented.
+`ARCHITECTURE.md`, `DATA_FORMATS.md`, `MECHANICS.md` and `PROJECT_STATE.md` contain shorter summaries, while this document remains the authoritative persistence reference.
 
 ## Academic requirement
 

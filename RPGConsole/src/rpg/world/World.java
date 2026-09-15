@@ -20,6 +20,10 @@ import rpg.items.Item;
 import rpg.items.ItemCatalog;
 import rpg.items.equipment.EquipmentCatalog;
 import rpg.items.equipment.EquipmentService;
+import rpg.persistence.CampaignSaveResult;
+import rpg.persistence.CampaignSaveService;
+import rpg.persistence.CampaignSnapshot;
+import rpg.persistence.CampaignSnapshotFactory;
 import rpg.ui.EquipmentMenu;
 import rpg.ui.BattleRewardScreen;
 import rpg.ui.CityLocationMenu;
@@ -28,6 +32,7 @@ import rpg.ui.CityTransportMenu;
 import rpg.ui.CombatScenarioMenu;
 import rpg.ui.ConsoleUI;
 import rpg.ui.EpicEncounterMenu;
+import rpg.ui.ExitConfirmationMenu;
 import rpg.ui.InnMenu;
 import rpg.ui.InventoryMenu;
 import rpg.ui.PartyRescueScreen;
@@ -75,7 +80,7 @@ public class World {
 
 	private static final int HOURS_PER_FINISHED_BATTLE = 1;
 
-	private final BattleCoordinator battleCoordinator;
+	private final CampaignSaveService campaignSaveService;
 
 	private final CityLocationMenu cityLocationMenu;
 	private final CityMenu cityMenu;
@@ -90,6 +95,7 @@ public class World {
 	private final CraftingMenu craftingMenu;
 	private final EpicEncounterMenu epicEncounterMenu;
 	private final ShopMenu shopMenu;
+	private final ExitConfirmationMenu exitConfirmationMenu;
 	private final PartyRescueScreen partyRescueScreen;
 
 	private final ItemCatalog itemCatalog;
@@ -109,6 +115,7 @@ public class World {
 	private final WorldProgress worldProgress;
 	private final WorldClock worldClock;
 	private final TravelProgress travelProgress;
+	private final BattleCoordinator battleCoordinator;
 
 	private Party party;
 	private ExplorationSession explorationSession;
@@ -131,6 +138,7 @@ public class World {
 			ShopCatalog shopCatalog,
 			ShopStateCatalog shopStateCatalog,
 			ShopStateGenerator shopStateGenerator,
+			CampaignSaveService campaignSaveService,
 			EnemyCatalog enemyCatalog,
 			EnemyDropCatalog enemyDropCatalog,
 			EncounterCatalog encounterCatalog,
@@ -183,6 +191,7 @@ public class World {
 		this.encounterGenerator = new EncounterGenerator(this.enemyCatalog, encounterCatalog, random);
 		this.explorationRewardGenerator = new ExplorationRewardGenerator(explorationRewardCatalog, random);
 		this.explorationEventGenerator = new ExplorationEventGenerator(random);
+		this.campaignSaveService = Objects.requireNonNull(campaignSaveService, "Campaign save service cannot be null.");
 
 		// User interface
 		this.epicEncounterMenu = new EpicEncounterMenu(scanner);
@@ -210,6 +219,7 @@ public class World {
 		this.innMenu = new InnMenu(this.party, scanner);
 		this.shopMenu = new ShopMenu(this.party, scanner, this.worldClock);
 		this.partyRescueScreen = new PartyRescueScreen(scanner);
+		this.exitConfirmationMenu = new ExitConfirmationMenu(scanner);
 
 		// Initial exploration state
 		if (this.currentScenario instanceof CombatScenario combatScenario) {
@@ -324,7 +334,7 @@ public class World {
 		Optional<CityAction> selectedAction = cityMenu.selectAction(city.getName(), availableActions);
 
 		if (selectedAction.isEmpty()) {
-			exitGame();
+			requestExitWithoutSaving();
 			return;
 		}
 
@@ -400,7 +410,7 @@ public class World {
 
 		if (innDefinition.isPresent()) {
 			if (selectedIndex == 0) {
-				innMenu.open(innDefinition.get());
+				executeInnMenu(innDefinition.get());
 				return;
 			}
 
@@ -423,13 +433,67 @@ public class World {
 		craftingMenu.open(selectedCrafter);
 	}
 
+	private void executeInnMenu(InnDefinition innDefinition) {
+		while (running) {
+			InnMenu.Selection selection = innMenu.open(innDefinition);
+
+			if (selection == InnMenu.Selection.BACK) {
+				return;
+			}
+
+			CampaignSaveResult saveResult = saveCampaign(innDefinition);
+
+			if (!saveResult.isSuccess()) {
+				displaySaveFailure(saveResult);
+				continue;
+			}
+
+			System.out.println();
+			System.out.println("Campanha salva com sucesso.");
+
+			if (selection == InnMenu.Selection.SAVE_AND_EXIT) {
+				terminateGame();
+				return;
+			}
+		}
+	}
+
+	private CampaignSaveResult saveCampaign(InnDefinition innDefinition) {
+		if (!currentScenario.getId().equals(innDefinition.getScenarioId())) {
+			throw new IllegalStateException("The active INN does not belong to the current scenario.");
+		}
+
+		CampaignSnapshot snapshot;
+
+		try {
+			snapshot = CampaignSnapshotFactory
+					.create(party, currentScenario, worldProgress, travelProgress, worldClock, shopStateCatalog);
+		} catch (IllegalArgumentException | IllegalStateException | ArithmeticException exception) {
+			return CampaignSaveResult.ENCODING_FAILED;
+		}
+
+		return campaignSaveService.save(snapshot);
+	}
+
+	private void displaySaveFailure(CampaignSaveResult saveResult) {
+		System.out.println();
+
+		switch (saveResult) {
+		case ENCODING_FAILED -> System.out.println("Não foi possível preparar os dados da campanha para salvar.");
+
+		case FILE_WRITE_FAILED -> System.out.println("Não foi possível gravar a campanha salva.");
+
+		case SUCCESS -> throw new IllegalArgumentException("A successful save cannot be displayed as a failure.");
+		}
+	}
+
 	private void executeCombatScenarioMenu() {
 		List<CombatScenarioAction> availableActions = getAvailableCombatScenarioActions();
 
 		Optional<CombatScenarioAction> selectedAction = combatScenarioMenu.selectAction(availableActions);
 
 		if (selectedAction.isEmpty()) {
-			exitGame();
+			requestExitWithoutSaving();
 			return;
 		}
 
@@ -945,7 +1009,13 @@ public class World {
 		return executeExplorationEvent(eventType, position, specialArea);
 	}
 
-	private void exitGame() {
+	private void requestExitWithoutSaving() {
+		if (exitConfirmationMenu.confirm()) {
+			terminateGame();
+		}
+	}
+
+	private void terminateGame() {
 		System.out.println("\nObrigado por testar a V4!");
 		running = false;
 	}

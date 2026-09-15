@@ -6,18 +6,21 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Objects;
 
-// Reads and decodes one encrypted campaign save file.
+// Reads, decodes, validates and reconstructs one encrypted campaign save file.
 public final class CampaignLoadService {
 
 	private final Path savePath;
 	private final CampaignSaveCodec saveCodec;
+	private final CampaignSnapshotRestorer snapshotRestorer;
 
-	public CampaignLoadService() {
-		this(Path.of("save.txt"));
+	public CampaignLoadService(CampaignSnapshotRestorer snapshotRestorer) {
+		this(Path.of("save.txt"), snapshotRestorer);
 	}
 
-	public CampaignLoadService(Path savePath) {
+	public CampaignLoadService(Path savePath, CampaignSnapshotRestorer snapshotRestorer) {
 		this.savePath = Objects.requireNonNull(savePath, "Save path cannot be null.");
+
+		this.snapshotRestorer = Objects.requireNonNull(snapshotRestorer, "Campaign snapshot restorer cannot be null.");
 
 		this.saveCodec = new CampaignSaveCodec();
 	}
@@ -38,8 +41,10 @@ public final class CampaignLoadService {
 		try {
 			CampaignSnapshot campaignSnapshot = saveCodec.decode(encodedSave);
 
-			return CampaignLoadResult.success(campaignSnapshot);
-		} catch (IllegalArgumentException | IllegalStateException exception) {
+			RestoredCampaign restoredCampaign = snapshotRestorer.restore(campaignSnapshot);
+
+			return CampaignLoadResult.success(restoredCampaign);
+		} catch (IllegalArgumentException | IllegalStateException | ArithmeticException exception) {
 			return CampaignLoadResult.invalidSave();
 		} finally {
 			Arrays.fill(encodedSave, (byte) 0);

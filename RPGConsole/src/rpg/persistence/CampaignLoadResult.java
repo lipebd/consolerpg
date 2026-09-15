@@ -3,31 +3,31 @@ package rpg.persistence;
 import java.util.Objects;
 import java.util.Optional;
 
-// Stores the outcome and optional snapshot of one campaign load attempt.
+// Stores the outcome and optional reconstructed campaign of one load attempt.
 public final class CampaignLoadResult {
 
 	private final CampaignLoadStatus status;
-	private final CampaignSnapshot campaignSnapshot;
+	private final RestoredCampaign restoredCampaign;
 
-	private CampaignLoadResult(CampaignLoadStatus status, CampaignSnapshot campaignSnapshot) {
+	private CampaignLoadResult(CampaignLoadStatus status, RestoredCampaign restoredCampaign) {
 		this.status = Objects.requireNonNull(status, "Campaign load status cannot be null.");
 
 		boolean success = status == CampaignLoadStatus.SUCCESS;
-		boolean hasSnapshot = campaignSnapshot != null;
+		boolean hasCampaign = restoredCampaign != null;
 
-		if (success != hasSnapshot) {
+		if (success != hasCampaign) {
 			throw new IllegalArgumentException(
-					"A successful load must contain a campaign snapshot, " + "and a failed load cannot contain one."
+					"A successful load must contain a restored campaign, and a failed load cannot contain one."
 			);
 		}
 
-		this.campaignSnapshot = campaignSnapshot;
+		this.restoredCampaign = restoredCampaign;
 	}
 
-	public static CampaignLoadResult success(CampaignSnapshot campaignSnapshot) {
+	public static CampaignLoadResult success(RestoredCampaign restoredCampaign) {
 		return new CampaignLoadResult(
 				CampaignLoadStatus.SUCCESS,
-				Objects.requireNonNull(campaignSnapshot, "Campaign snapshot cannot be null.")
+				Objects.requireNonNull(restoredCampaign, "Restored campaign cannot be null.")
 		);
 	}
 
@@ -47,8 +47,8 @@ public final class CampaignLoadResult {
 		return status;
 	}
 
-	public Optional<CampaignSnapshot> getCampaignSnapshot() {
-		return Optional.ofNullable(campaignSnapshot);
+	public Optional<RestoredCampaign> getRestoredCampaign() {
+		return Optional.ofNullable(restoredCampaign);
 	}
 
 	public boolean isSuccess() {

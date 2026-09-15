@@ -826,21 +826,20 @@ Current completed behavior:
 - Invalid save files are preserved instead of being deleted or corrected.
 - Snapshot, property, UTF-8, encryption, container, atomic-file and save/load service round trips were manually validated.
 
-The current load result contains an immutable candidate snapshot only. Catalog-backed validation and reconstruction must succeed before that candidate can become an active campaign.
+`CampaignSnapshotRestorer` validates every catalog-backed reference and reconstructs a complete isolated `RestoredCampaign`, including party order, progression, learned scroll skills, equipment, resources, inventory, reward modifiers, world progress, travel progress, fictional time and finite shop stock. The reconstructed candidate becomes active only after every loading stage succeeds.
 
-Gameplay access through INNs and campaign selection after the title screen remain pending.
+After the unchanged title screen, `CampaignSelectionMenu` distinguishes absent, unreadable, invalid and valid saves. Valid campaigns may be continued or replaced through the confirmed New Game flow. Every INN provides atomic Save and Continue and Save and Exit operations, while ordinary exits require confirmation and never save implicitly.
+
+Complete encrypted round trips, campaign reconstruction, valid and invalid startup flows, preservation of previous saves, INN saving, failed writes and exit-without-saving behavior were manually validated.
 
 ## Current limitations and temporary implementations
 
 - Permanent skill-scroll content and curated scroll drops remain absent while the draft skills await required combat mechanics and final content review.
 - The Flagelo's two temporary `STARTER` skills are not yet retired because the level-7 class-choice flow is not implemented.
-- Learned scroll skills remain runtime-only until save and load persist individual learned-skill IDs.
 - Playable-class definitions, natural growth and the complete approved 30-skill roster are external; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy turns currently use basic attacks; enemy skill selection is deferred.
 - Tavern functionality remains unavailable.
 - After a normal victory, defeated allies remain unavailable until revived by a skill, item or city INN; full-party defeat instead activates rescue and complete restoration.
-- World time and active shop states remain runtime-only until save and load persist them in one campaign snapshot.
-- Restarting the application currently resets the clock and generates new shop states because campaign loading is not yet implemented.
 - Items sold by the player cannot be bought back.
 - Normal new games currently begin with only the protagonist; story-based recruitment of three distinct-class allies remains future work.
 - Random ally naming will reuse the implemented external-name selection after recruitment is added.
@@ -850,11 +849,12 @@ Gameplay access through INNs and campaign selection after the title screen remai
 - Crafters are currently restricted to city scenarios.
 - Batch crafting, variable output quantities, crafting fees, recipe discovery, crafting levels, random failure and equipment enhancement are not implemented.
 
+
 ## Current next step
 
-The V5 fictional world clock and runtime shop-restocking prerequisite are functionally complete.
+The complete V5 save-and-load flow is implemented and manually validated.
 
-The next step is to continue the save-and-load implementation using the frozen persistence contract. World time and active shop states must be stored in the same validated campaign snapshot, and loading must restore both without producing an additional offer generation or partial runtime replacement.
+The next persistence step is verification hardening: add focused automated tests for character levels 1, 19 and 20, loading around midnight-restocking boundaries and rejection of each invalid catalog-backed reference. Future quest, flag and permanent-unlock systems must extend the versioned schema before introducing mutable runtime state.
 
 ## Important conventions
 

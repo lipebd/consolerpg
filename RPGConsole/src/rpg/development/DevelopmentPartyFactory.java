@@ -18,7 +18,7 @@ import rpg.characters.PlayableCharacterLevelRules;
 public final class DevelopmentPartyFactory {
 
 	private static final List<MemberConfiguration> PARTY_CONFIGURATION = List.of(
-			new MemberConfiguration("Flagelinho Silva", "flagelo", 1),
+			new MemberConfiguration("Flagelinho Silva", "flagelo",1),
 			new MemberConfiguration("La Metamorfica", "metamorfo", 1),
 			new MemberConfiguration("Suzana Vieira", "atirador", 1),
 			new MemberConfiguration("Michael Jackson", "druida", 1)
@@ -128,20 +128,13 @@ public final class DevelopmentPartyFactory {
 	private PlayableCharacter createCharacter(MemberConfiguration configuration) {
 		PlayableClassDefinition classDefinition = playableClassCatalog.getById(configuration.classId);
 
-		PlayableCharacter character = new PlayableCharacter(
+		return new PlayableCharacter(
 				configuration.name,
 				classDefinition,
 				skillCatalog.getByClassId(classDefinition.getId()),
-				growthCalculator
+				growthCalculator,
+				configuration.level
 		);
-
-		while (character.getLevel() < configuration.level) {
-			character.gainExperience(character.getExperienceRequiredForNextLevel());
-		}
-
-		character.restoreAllResources();
-
-		return character;
 	}
 
 	private static final class MemberConfiguration {

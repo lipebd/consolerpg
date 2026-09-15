@@ -1103,7 +1103,7 @@ CampaignSnapshot
     -> textual encrypted container
 ```
 
-The decoding flow performs the reverse transformation and produces a complete candidate `CampaignSnapshot` without modifying active runtime state.
+The decoding flow performs the reverse transformation and produces a complete `CampaignSnapshot`. `CampaignSnapshotRestorer` then validates its catalog-backed references and reconstructs an isolated `RestoredCampaign` without modifying active runtime state. The candidate is activated only after the complete operation succeeds.
 
 `StrictPropertyReader` requires every version-1 property, parses decimal numeric values, tracks consumed fields and rejects unknown properties. `PropertyPayloadDecoder` performs strict UTF-8 decoding and rejects duplicated property names before one value can overwrite another.
 
@@ -1113,7 +1113,7 @@ The decoding flow performs the reverse transformation and produces a complete ca
 
 `CampaignSaveService` and `CampaignLoadService` expose explicit operation results without logging the encryption key or decrypted payload. Missing, unreadable and invalid save files remain distinct load outcomes.
 
-Catalog-backed validation, reconstruction of runtime domain objects, campaign selection and INN integration remain pending.
+`CampaignLoadService` reports success only after decryption, strict decoding, catalog-backed validation and complete runtime reconstruction succeed. The startup flow uses `CampaignSelectionMenu` to continue a valid campaign or begin a new one. Saving is exposed exclusively through INNs, and ordinary game exits require confirmation without performing an implicit save.
 
 ## Current temporary boundaries
 
@@ -1125,8 +1125,6 @@ The following implementations remain intentionally temporary:
 - Playable-class definitions, natural class growth and the complete approved 30-skill class-progression roster are integrated; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy actions currently use basic attacks; enemy skill selection can reuse the skill executor later but is outside the current scope.
 - Every registered city currently provides an INN, while Bree also provides a fixed shop; tavern functionality remains unavailable.
-- World time and active shop states remain runtime-only until save and load are implemented. Restarting currently resets the clock and generates new shop states, while runtime midnight restocking is already integrated.
-- The encrypted snapshot codec and atomic save-file services are implemented, but catalog-backed runtime reconstruction, campaign selection and INN save integration remain pending.
 - `Battle` remains large and may later be divided into more focused action services.
 - Permanent skill-scroll items, skills and curated enemy drops remain deferred until their draft effects receive the required combat mechanics and final content review.
 - The Flagelo's temporary `STARTER` skills remain learned until their retirement is implemented as part of the future level-7 class-choice flow.
