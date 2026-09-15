@@ -68,9 +68,12 @@ import rpg.world.transport.CityTransportCatalog;
 import rpg.world.transport.CityTransportDefinition;
 import rpg.world.travel.TravelProgress;
 import rpg.world.travel.TravelRouteDefinition;
+import rpg.world.shops.ShopStateGenerator;
 
 // Controls navigation and interaction with the game world.
 public class World {
+
+	private static final int HOURS_PER_FINISHED_BATTLE = 1;
 
 	private final BattleCoordinator battleCoordinator;
 
@@ -96,13 +99,15 @@ public class World {
 	private final ScenarioBranchCatalog scenarioBranchCatalog;
 	private final EnemyCatalog enemyCatalog;
 	private final ShopCatalog shopCatalog;
-	private final ShopStateCatalog shopStateCatalog;
+	private final ShopStateGenerator shopStateGenerator;
+	private ShopStateCatalog shopStateCatalog;
 
 	private final ExplorationRewardGenerator explorationRewardGenerator;
 	private final ExplorationEventGenerator explorationEventGenerator;
 	private final EncounterGenerator encounterGenerator;
 
 	private final WorldProgress worldProgress;
+	private final WorldClock worldClock;
 	private final TravelProgress travelProgress;
 
 	private Party party;
@@ -125,12 +130,14 @@ public class World {
 			EquipmentService equipmentService,
 			ShopCatalog shopCatalog,
 			ShopStateCatalog shopStateCatalog,
+			ShopStateGenerator shopStateGenerator,
 			EnemyCatalog enemyCatalog,
 			EnemyDropCatalog enemyDropCatalog,
 			EncounterCatalog encounterCatalog,
 			ExplorationRewardCatalog explorationRewardCatalog,
 			ScenarioCatalog scenarioCatalog,
 			WorldProgress worldProgress,
+			WorldClock worldClock,
 			CityTransportCatalog cityTransportCatalog,
 			InnCatalog innCatalog,
 			ScenarioBranchCatalog scenarioBranchCatalog,
@@ -153,11 +160,13 @@ public class World {
 		this.crafterCatalog = Objects.requireNonNull(crafterCatalog, "Crafter catalog cannot be null.");
 		this.itemCatalog = Objects.requireNonNull(itemCatalog, "Item catalog cannot be null.");
 		this.shopCatalog = Objects.requireNonNull(shopCatalog, "Shop catalog cannot be null.");
+		this.shopStateGenerator = Objects.requireNonNull(shopStateGenerator, "Shop state generator cannot be null.");
 		this.shopStateCatalog = Objects.requireNonNull(shopStateCatalog, "Shop state catalog cannot be null.");
 		this.innCatalog = Objects.requireNonNull(innCatalog, "Inn catalog cannot be null.");
 		this.cityTransportCatalog = Objects
 				.requireNonNull(cityTransportCatalog, "City transport catalog cannot be null.");
 		this.worldProgress.discover(this.currentScenario.getId());
+		this.worldClock = Objects.requireNonNull(worldClock, "World clock cannot be null.");
 
 		// Shared random generator and gameplay services
 		this.random = new Random();
@@ -177,7 +186,7 @@ public class World {
 
 		// User interface
 		this.epicEncounterMenu = new EpicEncounterMenu(scanner);
-		this.combatScenarioMenu = new CombatScenarioMenu(scanner);
+		this.combatScenarioMenu = new CombatScenarioMenu(scanner, this.worldClock);
 		this.routeMenu = new RouteMenu(scanner, this.travelProgress);
 		this.scenarioBranchMenu = new ScenarioBranchMenu(scanner);
 		EquipmentMenu equipmentMenu = new EquipmentMenu(
@@ -189,7 +198,7 @@ public class World {
 		);
 		this.inventoryMenu = new InventoryMenu(this.party, scanner, equipmentMenu);
 		this.partyStatusMenu = new PartyStatusMenu(this.party, scanner, equipmentMenu);
-		this.cityMenu = new CityMenu(scanner);
+		this.cityMenu = new CityMenu(scanner, this.worldClock);
 		this.cityTransportMenu = new CityTransportMenu(this.party, scanner, this.scenarioCatalog);
 		this.cityLocationMenu = new CityLocationMenu(scanner);
 		this.craftingMenu = new CraftingMenu(
@@ -199,7 +208,7 @@ public class World {
 				Objects.requireNonNull(craftingRecipeCatalog, "Crafting recipe catalog cannot be null.")
 		);
 		this.innMenu = new InnMenu(this.party, scanner);
-		this.shopMenu = new ShopMenu(this.party, scanner);
+		this.shopMenu = new ShopMenu(this.party, scanner, this.worldClock);
 		this.partyRescueScreen = new PartyRescueScreen(scanner);
 
 		// Initial exploration state
@@ -723,6 +732,10 @@ public class World {
 
 		BattleResult result = battleCoordinator.start(enemyDefinitions, combatScenario);
 
+		if (result == BattleResult.VICTORY || result == BattleResult.DEFEAT) {
+			advanceWorldTime(HOURS_PER_FINISHED_BATTLE);
+		}
+
 		switch (result) {
 		case VICTORY, FLED -> shouldDisplayScenarioDescription = true;
 
@@ -730,6 +743,20 @@ public class World {
 		}
 
 		return result;
+	}
+
+	private void advanceWorldTime(int hours) {
+		boolean crossesMidnight = worldClock.crossesMidnightAfter(hours);
+
+		if (!crossesMidnight) {
+			worldClock.advanceHours(hours);
+			return;
+		}
+
+		ShopStateCatalog replacementShopStateCatalog = shopStateGenerator.generate();
+
+		worldClock.advanceHours(hours);
+		shopStateCatalog = replacementShopStateCatalog;
 	}
 
 	private void executeCityTransportMenu() {

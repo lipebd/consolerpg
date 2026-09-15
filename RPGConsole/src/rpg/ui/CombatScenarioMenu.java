@@ -5,32 +5,32 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Scanner;
 
+import rpg.world.WorldClock;
 import rpg.world.scenarios.CombatScenarioAction;
 
 // Displays the available actions for the current combat scenario.
 public final class CombatScenarioMenu {
 
 	private final Scanner scanner;
+	private final WorldClock worldClock;
 
-	public CombatScenarioMenu(Scanner scanner) {
+	public CombatScenarioMenu(Scanner scanner, WorldClock worldClock) {
 		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+		this.worldClock = Objects.requireNonNull(worldClock, "World clock cannot be null.");
 	}
 
 	public Optional<CombatScenarioAction> selectAction(List<CombatScenarioAction> actions) {
 		Objects.requireNonNull(actions, "Combat scenario actions cannot be null.");
 
 		while (true) {
+			System.out.println("\n" + WorldTimeFormatter.formatCurrentTime(worldClock));
+
 			System.out.println("\nO que deseja fazer?");
+			System.out.println();
 
-			for (int index = 0; index < actions.size(); index++) {
-				CombatScenarioAction action = actions.get(index);
+			int secondRowStartIndex = actions.indexOf(CombatScenarioAction.INVENTORY);
 
-				if (index > 0 && startsNewActionGroup(action)) {
-					System.out.println();
-				}
-
-				System.out.println("[" + (index + 1) + "] " + action);
-			}
+			ConsoleUI.displayActionRows(actions, secondRowStartIndex);
 
 			System.out.println();
 			System.out.println("[0] Encerrar jogo");
@@ -57,10 +57,4 @@ public final class CombatScenarioMenu {
 			}
 		}
 	}
-
-	private boolean startsNewActionGroup(CombatScenarioAction action) {
-		return action == CombatScenarioAction.FOLLOW_ROUTE || action == CombatScenarioAction.CITY_TRANSPORT
-				|| action == CombatScenarioAction.INVENTORY;
-	}
-
 }

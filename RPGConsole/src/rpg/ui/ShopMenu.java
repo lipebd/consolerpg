@@ -16,6 +16,7 @@ import rpg.world.shops.ShopState;
 import rpg.world.shops.ShopTransactionService;
 import rpg.items.ItemCategory;
 import rpg.world.shops.ShopSaleResult;
+import rpg.world.WorldClock;
 
 // Displays a shop and its currently available offers.
 public final class ShopMenu {
@@ -23,13 +24,15 @@ public final class ShopMenu {
 	private static final int ITEMS_PER_PAGE = 8;
 	private static final int PRICE_WIDTH = 14;
 
+	private final WorldClock worldClock;
 	private final Party party;
 	private final Scanner scanner;
 	private final ShopTransactionService transactionService;
 
-	public ShopMenu(Party party, Scanner scanner) {
+	public ShopMenu(Party party, Scanner scanner, WorldClock worldClock) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
 		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+		this.worldClock = Objects.requireNonNull(worldClock, "World clock cannot be null.");
 		this.transactionService = new ShopTransactionService(this.party);
 	}
 
@@ -65,7 +68,9 @@ public final class ShopMenu {
 
 	private void displayMainMenu(ShopState shopState, String feedbackMessage) {
 		System.out.println("\n[" + shopState.getDefinition().getName().toUpperCase(Locale.ROOT) + "]");
-
+		System.out.println();
+		System.out.println(WorldTimeFormatter.formatCurrentTime(worldClock));
+		System.out.println("Próxima reposição: " + WorldTimeFormatter.formatNextRestockingTime(worldClock));
 		System.out.println();
 		System.out.println(shopState.getDefinition().getDescription());
 

@@ -1073,7 +1073,7 @@ Accumulated selection weights use overflow-safe arithmetic.
 
 ### Runtime stock behavior
 
-Every shop receives one `ShopState` during application initialization:
+Every shop receives an initial `ShopState` when the campaign runtime is created:
 
 ```text
 ShopCatalog + ShopStockCatalog
@@ -1083,17 +1083,23 @@ ShopCatalog + ShopStockCatalog
     -> ShopMenu
 ```
 
+`World` retains the same `ShopStateGenerator` for later global restocking.
+
 Runtime rules:
 
-- Active offers are generated once per program execution.
+- Initial active offers are generated when the campaign runtime is created.
 - Each selected offer receives its configured initial stock.
-- Selected offers and remaining quantities are preserved throughout the execution.
+- Selected offers and remaining quantities are preserved throughout the current restocking cycle.
 - An exhausted offer disappears from the visible purchase list.
-- Exhausting an offer does not activate an unused entry from `shop_stock.txt`.
+- Exhausting an offer does not activate an unused entry from `shop_stock.txt` during the same cycle.
 - A shop remains accessible when every active offer is exhausted.
-- Shops do not restock during the current execution.
-- Starting a new program execution generates fresh shop states.
-- Shop-state persistence and restocking rules remain postponed until save and load are implemented.
+- Whenever world time crosses midnight, every registered shop receives a complete new weighted offer selection.
+- Newly selected offers begin with their configured initial stock.
+- Old offers and remaining quantities are not merged into the new cycle.
+- A complete replacement `ShopStateCatalog` is generated before world time or active shop state changes.
+- Failed replacement generation preserves the previous world time and shop states.
+- Starting a new program execution currently creates fresh clock and shop states because save and load are not yet implemented.
+- Shop-state persistence remains postponed until save and load are implemented.
 
 Loading flow:
 

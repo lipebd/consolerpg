@@ -253,35 +253,46 @@ The implementation should continue to favor:
 
 ### World time and shop restocking
 
-> **Frozen direction:** Shop restocking is controlled by a persistent fictional world clock. Exact time-advancement triggers and restocking intervals will be defined when the gameplay integration points are implemented.
+> **Frozen behavior:** Shop restocking is controlled exclusively by a persistent fictional world clock. A new campaign starts on day 1 at 08:00. Only a battle completed with victory or defeat advances world time, currently by one hour. Escaping or avoiding an encounter does not advance time. Every midnight replaces all registered shop states through complete new weighted offer selections.
 
 * [x] Add a fictional world clock to the mutable campaign state.
 * [x] Persist the world-clock state in `save.txt`.
 * [x] Keep world time unchanged when opening menus, visiting shops, saving, loading or restarting the application.
 * [x] Make shop restocking depend on world-time progression instead of shop visits.
-* [x] Restock all registered shops globally when the configured world-time boundary is reached.
+* [x] Restock all registered shops globally at each midnight.
 * [x] Replace every shop's active offers through a complete new weighted selection.
 * [x] Restore the initial stock of every offer selected for the new cycle.
 * [x] Do not preserve old offers or merge depleted offers with newly selected entries during restocking.
 * [x] Keep shop offers unchanged while the player is interacting with an open shop menu.
-* [x] Display enough world-time information for the player to anticipate the next restocking boundary.
 * [x] Restore the saved world time and shop states without generating new offers during loading.
-* [ ] Define the initial world day and time.
-* [ ] Define which completed gameplay actions advance world time.
-* [ ] Define how many hours each supported action advances.
-* [ ] Define the number of world hours between global shop restocks.
-* [ ] Define the exact player-facing world-time and restocking presentation.
-* [ ] Add the world-clock state only after its progression rules are frozen.
-* [ ] Make `ShopStateGenerator` available for both new-game initialization and runtime restocking.
-* [ ] Generate a complete replacement `ShopStateCatalog` before modifying the active world state.
-* [ ] Replace the active shop-state catalog only after complete generation succeeds.
-* [ ] Preserve the previous shop states when replacement generation fails.
-* [ ] Ensure one world-time advancement cannot trigger the same restocking boundary more than once.
+* [x] Start every new campaign on day 1 at 08:00.
+* [x] Advance world time only after a battle ends in victory or defeat.
+* [x] Advance zero hours after escaping or avoiding an encounter.
+* [x] Advance one hour per currently supported finished-battle event.
+* [x] Centralize the finished-battle duration through `HOURS_PER_FINISHED_BATTLE`.
+* [x] Pass the applicable hour quantity to the general world-clock advancement operation.
+* [x] Use a 24-hour day and perform global shop restocking whenever an advancement crosses midnight.
+* [x] Display the current day and time above city and combat-scenario action menus.
+* [x] Display city and combat-scenario actions horizontally across two rows.
+* [x] Display the next restocking day and time only inside the shop's main menu.
+* [x] Display `☼` from 06:00 through 17:59 and `☾` from 18:00 through 05:59.
+* [x] Do not display time advancement as a battle reward or separate post-battle message.
+* [x] Add the mutable world-clock state after its progression rules are frozen.
+* [x] Store elapsed world hours as the authoritative clock value.
+* [x] Derive the displayed day and hour from elapsed world hours.
+* [x] Reject non-positive advancement amounts and arithmetic overflow.
+* [x] Make `ShopStateGenerator` available for both new-game initialization and runtime restocking.
+* [x] Generate a complete replacement `ShopStateCatalog` before modifying the active world state.
+* [x] Replace the active shop-state catalog only after complete generation succeeds.
+* [x] Preserve the previous world time and shop states when replacement generation fails.
+* [x] Ensure one world-time advancement cannot process the same midnight boundary more than once.
 * [ ] Save world time and active shop states in the same campaign snapshot.
-* [ ] Test world-time progression for every supported triggering action.
-* [ ] Test that non-triggering menus and operations do not advance world time.
-* [ ] Test the exact moment of a global shop restock.
+* [ ] Test world-time progression after victory and defeat.
+* [ ] Test that escape and avoided encounters do not advance world time.
+* [ ] Test that menus, shops, saving, loading and application restart do not advance world time.
+* [x] Test the exact moment of a global shop restock.
 * [ ] Test that every shop receives one complete new offer selection.
+* [x] Test the sun and moon boundaries at 06:00 and 18:00.
 * [ ] Test saving and loading immediately before and after a restocking boundary.
 * [ ] Test that loading never causes an additional restock.
 

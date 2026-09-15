@@ -305,7 +305,7 @@ Startup validation covers:
 - Price-calculation overflow.
 - Per-item anti-arbitrage rules.
 
-`ShopStateGenerator` creates every shop's active offers once during application initialization. It performs weighted selection without replacement and safely accumulates selection weights.
+`ShopStateGenerator` creates every shop's initial active offers during application initialization and remains available to `World` for runtime restocking. Every generation performs weighted selection without replacement and safely accumulates selection weights.
 
 The generated runtime structure is:
 
@@ -315,9 +315,13 @@ ShopStateCatalog
         -> ShopOfferState
 ```
 
-Each `ShopOfferState` preserves its remaining quantity. Active offers and quantities remain unchanged between repeated accesses during the current execution.
+Each `ShopOfferState` preserves its remaining quantity. Active offers and quantities remain unchanged between repeated accesses during the current restocking cycle.
 
-Exhausted offers disappear from the purchase list but are not replaced by unused entries. Shops remain accessible when all active offers are exhausted. Restocking and shop-state persistence remain postponed until save and load are implemented.
+Exhausted offers disappear from the purchase list but are not replaced by unused entries during the same cycle. Shops remain accessible when all active offers are exhausted.
+
+Whenever world time crosses midnight, `World` requests a complete replacement `ShopStateCatalog`. Every registered shop receives a new weighted offer selection with canonical initial stock. Old offers and remaining quantities are discarded instead of being merged into the new cycle.
+
+The replacement catalog is generated before the current clock or shop-state reference changes. A generation failure therefore preserves the complete previous runtime state.
 
 City shops:
 
@@ -782,6 +786,27 @@ Numeric resource boundaries required for save validation are implemented.
 - Defensive rollback paths verify complete resource restoration.
 - GOLD rewards, item rewards, purchases, sales, crafting, equipment replacement and equipment removal were manually validated at their limits.
 
+## V5 world time and shop restocking
+
+The fictional world clock and runtime shop-restocking cycle are functionally integrated.
+
+- `WorldClock` stores one authoritative elapsed-hour value using `long`.
+- New campaigns begin on day 1 at 08:00.
+- Displayed day and hour values are derived using 24-hour days.
+- Non-positive advancement and elapsed-hour overflow are rejected before mutation.
+- `World.HOURS_PER_FINISHED_BATTLE` centralizes the current one-hour battle duration.
+- Victories and defeats advance world time.
+- Successful escape and avoidance before battle do not advance world time.
+- Every midnight triggers one global replacement of all registered shop states.
+- Every shop performs a complete new weighted offer selection with canonical initial stock.
+- Old offers, depleted quantities and non-selected entries are not merged into the new cycle.
+- Candidate generation completes before clock and shop-state replacement.
+- Failed candidate generation preserves the previous time and shop states.
+- City and combat-scenario menus display current world time above horizontally arranged action rows.
+- Shop main menus additionally display the exact next midnight restocking boundary.
+- `WorldTimeFormatter` displays `☼` from 06:00 through 17:59 and `☾` from 18:00 through 05:59.
+- Clock progression, midnight restocking, restored stock, escape behavior and period-symbol boundaries were manually validated.
+
 ## Current limitations and temporary implementations
 
 - Permanent skill-scroll content and curated scroll drops remain absent while the draft skills await required combat mechanics and final content review.
@@ -791,8 +816,8 @@ Numeric resource boundaries required for save validation are implemented.
 - Enemy turns currently use basic attacks; enemy skill selection is deferred.
 - Tavern functionality remains unavailable.
 - After a normal victory, defeated allies remain unavailable until revived by a skill, item or city INN; full-party defeat instead activates rescue and complete restoration.
-- Shop state is regenerated when the program starts and is not persisted.
-- Shops do not restock during the current execution.
+- World time and active shop states remain runtime-only until save and load persist them in one campaign snapshot.
+- Restarting the application currently resets the clock and generates new shop states because campaign loading is not yet implemented.
 - Items sold by the player cannot be bought back.
 - Normal new games currently begin with only the protagonist; story-based recruitment of three distinct-class allies remains future work.
 - Random ally naming will reuse the implemented external-name selection after recruitment is added.
@@ -804,11 +829,9 @@ Numeric resource boundaries required for save validation are implemented.
 
 ## Current next step
 
-The initial V5 crafting flow is functionally integrated from external data through city interaction and atomic inventory mutation.
+The V5 fictional world clock and runtime shop-restocking prerequisite are functionally complete.
 
-The next step is to complete malformed-data validation, update the remaining class-responsibility documentation and perform broader V4 regression after the `Main` and `World` integration.
-
-The broader V5 release boundary remains preliminary until the remaining planned systems are presented and evaluated. Crafting decisions already recorded in `V5_ROADMAP.md` are definitive.
+The next step is to continue the save-and-load implementation using the frozen persistence contract. World time and active shop states must be stored in the same validated campaign snapshot, and loading must restore both without producing an additional offer generation or partial runtime replacement.
 
 ## Important conventions
 

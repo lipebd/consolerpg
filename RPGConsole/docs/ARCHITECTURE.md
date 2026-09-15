@@ -33,7 +33,7 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.items` | External item definitions, runtime item behavior, shared inventory and individual drop rules | `ItemDefinition`, `ItemDefinitionCatalog`, `ItemLoader`, `RecoveryItemDefinition`, `RecoveryItemLoader`, `ItemFactory`, `Item`, `BasicItem`, `RecoveryItem`, `ItemCatalog`, `Inventory`, `DropEntry` |
 | `rpg.items.equipment` | Immutable equipment specialization, loading, lookup, compatibility vocabulary and inventory-to-character transfers | `EquipmentDefinition`, `WeaponDefinition`, `ArmorDefinition`, `TrinketDefinition`, `EquipmentLoader`, `EquipmentCatalog`, `EquipmentService`, `WeaponType`, `ArmorWeight`, `TrinketType` |
 | `rpg.enemies` | Enemy definitions and external enemy/drop loading | `EnemyDefinition`, `EnemyCatalog`, `EnemyLoader`, `EnemyDropCatalog`, `EnemyDropLoader` |
-| `rpg.world` | Active world state, scenario discovery, rescue coordination and high-level gameplay coordination | `World`, `WorldProgress` |
+| `rpg.world` | Active world state, fictional world time, scenario discovery, rescue coordination, shop-restocking coordination and high-level gameplay flow | `World`, `WorldClock`, `WorldProgress` |
 | `rpg.world.scenarios` | External scenario definitions, runtime scenario hierarchy and scenario creation | `ScenarioDefinition`, `ScenarioDefinitionCatalog`, `ScenarioLoader`, `CombatScenarioDefinition`, `CombatScenarioLoader`, `DungeonDefinition`, `DungeonLoader`, `ScenarioFactory`, `Scenario`, `CombatScenario`, `Field`, `Dungeon`, `City`, `ScenarioCatalog`, `CombatScenarioAction`, `CityAction` |
 | `rpg.world.encounters` | Encounter availability and weighted group generation | `EncounterEntry`, `EncounterCatalog`, `EncounterLoader`, `EncounterGenerator` |
 | `rpg.world.exploration` | Exploration configuration, progress and event selection | `ExplorationSettings`, `ExplorationSession`, `ExplorationEventGenerator`, `ExplorationEventType`, `ExplorationAreaRestriction` |
@@ -69,7 +69,7 @@ Initialization includes:
 17. Loading adjacent travel routes and creating `TravelProgress`.
 18. Creating one shared `CharacterGrowthCalculator`.
 19. Creating either the confirmed new-game protagonist or an isolated development party according to the application arguments.
-20. Creating `World` with the required catalogs, services, shop states, progress state and shared dependencies.
+20. Creating the initial `WorldClock` and creating `World` with the required catalogs, generators, services, mutable state and shared dependencies.
 21. Starting the world loop.
 
 External data is loaded before gameplay. Invalid definitions or unresolved references prevent the game from starting with partially inconsistent catalogs.
@@ -80,7 +80,7 @@ During a normal run, `Main` repeatedly opens `TitleScreen` and `CharacterCreatio
 
 When the `--dev-party` argument is present, `Main` bypasses the normal title and creation flow and delegates party construction to `DevelopmentPartyFactory`. This development-only path supports one to four configured members with distinct classes, arbitrary positive levels, configurable initial gold and optional temporary reward modifiers while remaining isolated from normal new-game behavior.
 
-`WorldProgress`, `TravelProgress` and `ShopStateCatalog` represent separate runtime concerns. `WorldProgress` records discovered scenarios, `TravelProgress` records unlocked adjacent routes, and `ShopStateCatalog` preserves every shop's selected offers and remaining stock for the current program execution.
+`WorldProgress`, `TravelProgress`, `WorldClock` and `ShopStateCatalog` represent separate runtime concerns. `WorldProgress` records discovered scenarios, `TravelProgress` records unlocked adjacent routes, `WorldClock` stores authoritative elapsed campaign hours, and `ShopStateCatalog` preserves every shop's selected offers and remaining stock for the current restocking cycle.
 
 ## Character model
 
@@ -817,6 +817,35 @@ Random and optional epic encounter methods propagate whether the current explora
 
 After confirmation, `World.changeScenario()` moves to the city, records its discovery and discards the failed `ExplorationSession`. It does not modify `TravelProgress`, shop state or other persistent runtime progress.
 
+## World time architecture
+
+`WorldClock` owns the fictional campaign time as one mutable elapsed-hour value. A new campaign starts with eight elapsed hours, representing day 1 at 08:00. Displayed days and hours are derived from this value using 24-hour days.
+
+The clock exposes a general positive-hour advancement operation and can determine whether a proposed advancement crosses midnight without mutating its state. Non-positive advancement and `long` overflow are rejected before the stored value changes.
+
+`World` owns the gameplay actions that consume time. The current finished-battle duration is centralized as:
+
+```java
+private static final int HOURS_PER_FINISHED_BATTLE = 1;
+```
+
+Every random, epic and boss battle returns through `World.startEncounter()`. A `VICTORY` or `DEFEAT` result passes this configured duration to the general world-time operation. `FLED` does not advance time, and avoiding an optional encounter never reaches the battle integration point.
+
+When an advancement does not cross midnight, `World` advances only the clock.
+
+When an advancement crosses midnight, `World`:
+
+1. Requests a complete candidate `ShopStateCatalog` from the existing `ShopStateGenerator`.
+2. Leaves the current clock and shop states unchanged while generation is in progress.
+3. Advances the clock only after complete generation succeeds.
+4. Replaces the active catalog reference with the complete candidate.
+
+`ShopStateGenerator.generate()` always creates new `ShopState` and `ShopOfferState` instances for every registered shop. New weighted selections begin with canonical initial stock and never merge with the previous cycle.
+
+The generated catalog is committed as a whole. A generation failure therefore preserves both the previous elapsed time and every previous shop state.
+
+`WorldTimeFormatter` derives the Brazilian Portuguese console presentation from `WorldClock`. It displays `☼` from 06:00 through 17:59 and `☾` from 18:00 through 05:59. These symbols and all formatted clock values are presentation-only and are not stored as campaign state.
+
 ## City, shop and INN flow
 
 `World` dispatches the current scenario to a type-specific menu:
@@ -825,7 +854,7 @@ After confirmation, `World.changeScenario()` moves to the city, records its disc
 
 - Unsupported runtime scenario types cause an internal-state error.
 
-`CityMenu` receives an incrementally built list of available `CityAction` values. It omits actions that currently have no functional destination, keeps continuous numeric selection and separates navigation actions from inventory and party status through whitespace.
+`CityMenu` receives an incrementally built list of available `CityAction` values. It omits actions that currently have no functional destination and keeps continuous numeric selection. Scenario actions appear horizontally on the first row, while inventory and party status appear on the second row. The current formatted world time is displayed immediately above the action prompt.
 
 The paid `Viajar` action is included only when at least one configured and discovered destination city is available. It opens `CityTransportMenu` without mixing paid transport with city exits or adjacent-route unlocking.
 
@@ -855,6 +884,8 @@ data/inns.txt
 
 `City`, location and INN navigation remain iterative. Returning from the INN leads back to location selection, and returning again leads back to the city menu without recursive menu calls.
 
+`CombatScenarioMenu` uses the same two-row action presentation and displays the same shared `WorldClock` state. `ConsoleUI.displayActionRows()` centralizes the numbered two-row layout without moving action availability or selection rules out of their owning menus.
+
 Current shop data and runtime flow:
 
 ```text
@@ -873,9 +904,11 @@ data/shop_stock.txt
     -> ShopTransactionService
 ```
 
+`Main` creates one reusable `ShopStateGenerator` and passes it to `World` together with the initial generated catalog. `World` is the only owner of the active catalog reference. City and exploration shop access always resolve a `ShopState` from the currently active catalog, so a successful midnight replacement affects every later shop access without leaving menus attached to an obsolete catalog.
+
 `CITY` shops are exposed through `CityLocationMenu`. `EXPLORATION` shops are exposed through the existing merchant event. Both access types resolve the same `ShopState` objects and open the same `ShopMenu`.
 
-`ShopMenu` controls player-facing navigation, deterministic sorting, pagination, quantity selection, transaction confirmation and feedback. It displays every monetary value through `GameCurrency`.
+`ShopMenu` controls player-facing navigation, deterministic sorting, pagination, quantity selection, transaction confirmation and feedback. It displays every monetary value through `GameCurrency`, the current time through `WorldTimeFormatter` and the exact next midnight restocking boundary on its main screen.
 
 `ShopTransactionService` owns the shared transaction rules:
 
@@ -1045,10 +1078,10 @@ The following implementations remain intentionally temporary:
 - Playable-class definitions, natural class growth and the complete approved 30-skill class-progression roster are integrated; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy actions currently use basic attacks; enemy skill selection can reuse the skill executor later but is outside the current scope.
 - Every registered city currently provides an INN, while Bree also provides a fixed shop; tavern functionality remains unavailable.
-- Shop state is regenerated when the application starts; persistence and restocking remain postponed until save and load are implemented.
+- World time and active shop states remain runtime-only until save and load are implemented. Restarting currently resets the clock and generates new shop states, while runtime midnight restocking is already integrated.
 - Save and load are not implemented.
 - `Battle` remains large and may later be divided into more focused action services.
 - Permanent skill-scroll items, skills and curated enemy drops remain deferred until their draft effects receive the required combat mechanics and final content review.
 - The Flagelo's temporary `STARTER` skills remain learned until their retirement is implemented as part of the future level-7 class-choice flow.
 
-These limitations are tracked in `V4_ROADMAP.md` and should be replaced incrementally instead of through one large rewrite.
+These limitations are tracked in `V5_ROADMAP.md` and should be replaced incrementally instead of through one large rewrite.

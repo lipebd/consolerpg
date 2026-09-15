@@ -73,13 +73,15 @@ import rpg.world.transport.CityTransportLoader;
 import rpg.world.travel.TravelCatalog;
 import rpg.world.travel.TravelProgress;
 import rpg.world.travel.TravelRouteLoader;
+import rpg.world.WorldClock;
 
 // Starts the game and controls its initial execution.
 public class Main {
-	private static final String DEVELOPMENT_PARTY_ARGUMENT = "--dev-party";
+	private static final String DEVELOPMENT_PARTY_ARGUMENT = "---dev-party";
 
 	public static void main(String[] args) {
 
+		ShopStateGenerator shopStateGenerator;
 		CharacterNameCatalog characterNameCatalog;
 		CrafterCatalog crafterCatalog;
 		CraftingRecipeCatalog craftingRecipeCatalog;
@@ -175,7 +177,7 @@ public class Main {
 					.load(Path.of("data", "shops.txt"), scenarioDefinitionCatalog, combatScenarioDefinitionCatalog);
 			ShopStockLoader shopStockLoader = new ShopStockLoader();
 			shopStockCatalog = shopStockLoader.load(Path.of("data", "shop_stock.txt"), shopCatalog, itemCatalog);
-			ShopStateGenerator shopStateGenerator = new ShopStateGenerator(shopCatalog, shopStockCatalog, new Random());
+			shopStateGenerator = new ShopStateGenerator(shopCatalog, shopStockCatalog, new Random());
 			shopStateCatalog = shopStateGenerator.generate();
 			ExplorationRewardLoader explorationRewardLoader = new ExplorationRewardLoader();
 			explorationRewardCatalog = explorationRewardLoader
@@ -239,6 +241,8 @@ public class Main {
 			);
 		}
 
+		WorldClock worldClock = new WorldClock();
+
 		World world = new World(
 				party,
 				currentScenario,
@@ -250,12 +254,14 @@ public class Main {
 				equipmentService,
 				shopCatalog,
 				shopStateCatalog,
+				shopStateGenerator,
 				enemyCatalog,
 				enemyDropCatalog,
 				encounterCatalog,
 				explorationRewardCatalog,
 				scenarioCatalog,
 				worldProgress,
+				worldClock,
 				cityTransportCatalog,
 				innCatalog,
 				scenarioBranchCatalog,

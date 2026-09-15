@@ -1136,6 +1136,45 @@ The party owns one shared gold balance. `GameCurrency` centralizes only how that
 
 Changing the visible name or symbol does not alter stored gold, prices or transaction rules.
 
+## World time and daily shop restocking
+
+A new campaign starts on day 1 at 08:00.
+
+World time advances by one hour only when a battle reaches one of these completed results:
+
+* Victory.
+* Defeat.
+
+A successful escape does not advance time. Avoiding an optional encounter before battle also does not advance time.
+
+Opening or navigating menus, visiting shops, using inventory, viewing party status and performing events that do not complete a battle leave world time unchanged.
+
+The current hour cost of a finished battle is a configurable gameplay value. The general clock operation receives the applicable number of hours so future actions may advance a different amount without changing the clock's progression rules.
+
+World time uses 24-hour days. Every transition across 00:00 begins a new global shop-restocking cycle.
+
+Current time is displayed above city and combat-scenario action menus:
+
+```text
+Dia 1 — 08:00 ☼
+Dia 1 — 19:00 ☾
+```
+
+The period symbol follows these ranges:
+
+* `☼` from 06:00 through 17:59.
+* `☾` from 18:00 through 05:59.
+
+City and combat-scenario actions are organized horizontally into two rows. Scenario and navigation actions occupy the first row, while inventory and party status occupy the second row.
+
+A shop's main menu additionally displays the exact next global restocking boundary:
+
+```text
+Próxima reposição: Dia 2 — 00:00 ☾
+```
+
+Time advancement is not presented as a battle reward or as a separate post-battle message.
+
 ## Shops and merchants
 
 Fixed city shops and exploration merchants share the same definitions, runtime state, interface and transaction rules.
@@ -1151,7 +1190,7 @@ An `EXPLORATION` shop:
 - Is associated with a field or dungeon.
 - Is accessed through the existing merchant exploration event.
 - Is selected uniformly when multiple eligible merchants exist in the current scenario.
-- Uses the same persistent in-memory state whenever encountered again during the current program execution.
+- Uses the same active state whenever encountered again during the current restocking cycle.
 
 ### Commercial item prices
 
@@ -1176,7 +1215,7 @@ For every item, `shopPurchasePrice` cannot exceed its lowest configured shop sal
 
 ### Active shop offers
 
-Every shop defines a number of active offer slots. Its active offers are generated once when the application starts.
+Every shop defines a number of active offer slots. Its first active offers are generated when the campaign runtime is created. Complete new active states are generated for every registered shop whenever world time crosses midnight.
 
 Selection uses relative weights without replacement. For one selection step, the probability of entry `i` is:
 
@@ -1193,14 +1232,18 @@ Weights:
 
 If the number of slots is equal to or greater than the number of possible entries, every entry is selected.
 
-The generated offers and their remaining quantities are preserved for the whole program execution. When an offer is exhausted:
+The generated offers and their remaining quantities are preserved throughout the current restocking cycle. When an offer is exhausted:
 
 - It disappears from the visible purchase list.
 - Its slot remains empty.
-- No unused entry from `shop_stock.txt` replaces it.
+- No unused entry from `shop_stock.txt` replaces it before the next global restocking cycle.
 - The shop itself remains accessible.
 
-Shops and merchants do not restock during the current execution. Starting a new program execution generates a new active offer list and restores initial quantities. Persistent shop state and explicit restocking events remain postponed until save and load are implemented.
+At every midnight, all registered shops restock globally. Each shop performs a complete new weighted selection, and every newly selected offer begins with its canonical initial stock. Old offers and remaining quantities are discarded rather than merged with the new cycle.
+
+A replacement catalog is generated completely before world time and active shop state are committed. If generation fails, both the previous time and every previous shop state are preserved.
+
+Restarting the application still creates new clock and shop state because save and load are not yet implemented. Future loading will restore the persisted clock and active offers without treating application startup as a restocking event.
 
 ### Buying
 

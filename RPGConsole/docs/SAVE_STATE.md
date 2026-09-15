@@ -259,7 +259,7 @@ Persist:
 * Current city scenario ID.
 * Discovered scenario IDs.
 * Unlocked travel-route IDs.
-* Persistent world-clock state after its exact representation is frozen.
+* Authoritative elapsed world hours through `world.elapsedHours`.
 
 The current city must already be included among the discovered scenarios.
 
@@ -272,7 +272,7 @@ Persist for every registered shop:
 * Stable `ShopStockEntry` ID for each offer.
 * Remaining stock for each offer, including zero.
 
-Persist the world-time/restocking state required to associate the shop states with their current restocking cycle after that representation is frozen.
+`world.elapsedHours` and every active shop state must belong to the same campaign snapshot. The current restocking cycle is derived from elapsed hours, so no separate cycle identifier is persisted.
 
 ## Derived state
 
@@ -491,35 +491,119 @@ Prices, weights and initial quantities are never trusted from the save.
 
 ## World time and shop restocking
 
-A fictional world clock will control shop restocking.
+A fictional world clock controls global shop restocking. It belongs to mutable campaign state and never reads the operating-system date or time.
 
-The following behavior is frozen:
+### Authoritative clock representation
 
-* World time belongs to mutable campaign state.
-* World time is persisted.
-* Opening menus does not advance time.
-* Visiting a shop does not advance time.
-* Saving and loading do not advance time.
-* Restarting the application does not advance time.
-* Shop restocking depends on world-time progression.
-* All registered shops restock globally at the configured boundary.
-* Restocking performs a complete new weighted offer selection.
-* New offers begin with their canonical initial stock.
-* Old and new offer sets are not merged.
-* Shop state never changes while its menu is open.
-* The player receives enough clock information to anticipate restocking.
-* Loading restores saved shop states without a new roll.
+The authoritative persisted clock value is `world.elapsedHours`, representing the number of complete world hours elapsed since 00:00 on day 1.
 
-Still pending:
+A new campaign starts with:
 
-* Initial world day and time.
-* Actions that advance time.
-* Hours advanced by each action.
-* Hours between restocking boundaries.
-* Exact persisted clock representation.
-* Exact player-facing clock presentation.
+```properties
+world.elapsedHours=8
+```
 
-A restock must generate a complete replacement `ShopStateCatalog` before replacing the active catalog. Failed generation preserves the previous shop states.
+World time uses 24-hour days. The player-facing values are derived as follows:
+
+```text
+day = floor(elapsedHours / 24) + 1
+hourOfDay = elapsedHours % 24
+```
+
+For example:
+
+```text
+elapsedHours = 8  -> day 1 at 08:00
+elapsedHours = 23 -> day 1 at 23:00
+elapsedHours = 24 -> day 2 at 00:00
+```
+
+The displayed day, hour, period symbol and next-restocking time are derived values and are not persisted independently.
+
+Loaded elapsed hours must be integral, must represent at least the initial campaign time and must fit the supported runtime representation. Invalid values reject the complete save instead of being capped or corrected.
+
+Opening menus, visiting shops, saving, loading and restarting the application do not advance world time. Loading restores the exact saved elapsed-hour value and active shop states without consulting real time or generating new offers.
+
+### Time advancement
+
+The world clock exposes a general operation that receives the positive number of hours to advance. It does not know which gameplay action caused the advancement.
+
+The current gameplay integration advances time only after a battle ends in:
+
+* `VICTORY`.
+* `DEFEAT`.
+
+`World` owns the current battle-duration configuration:
+
+```java
+private static final int HOURS_PER_FINISHED_BATTLE = 1;
+```
+
+The value is passed to the general clock-advancement operation. This keeps the clock reusable if another gameplay action later advances a different configured number of hours.
+
+The following outcomes do not advance world time:
+
+* `FLED`.
+* Avoiding an optional encounter before battle.
+* Any event that does not start a battle.
+* A battle attempt that does not produce a finished victory or defeat result.
+
+Time advancement is not displayed as a battle reward and does not add a separate post-battle message.
+
+### Restocking boundary
+
+Every midnight begins a new global shop-restocking cycle.
+
+The current cycle is derived from:
+
+```text
+restockingCycle = floor(elapsedHours / 24)
+```
+
+A time advancement crosses a restocking boundary when its resulting cycle differs from its previous cycle.
+
+When an advancement crosses midnight:
+
+1. Generate a complete candidate `ShopStateCatalog`.
+2. Perform a new weighted offer selection independently for every registered shop.
+3. Give every selected offer its canonical initial stock.
+4. Do not merge old and new offers.
+5. Commit the new elapsed world time and replacement shop states together.
+
+The previous world time and complete previous shop states remain unchanged if replacement generation fails.
+
+Shop state never changes while a shop menu is open. With the currently supported progression rules, only a finished battle can cross midnight, and battles cannot occur during shop interaction.
+
+Saving stores world time and all active shop states in the same campaign snapshot. Loading restores both from that snapshot and never interprets loading itself as a crossed boundary.
+
+### Player-facing presentation
+
+Current world time uses this format:
+
+```text
+Dia 1 — 08:00 ☼
+Dia 1 — 19:00 ☾
+```
+
+The period symbol is derived from the displayed hour:
+
+* `☼` from 06:00 through 17:59.
+* `☾` from 18:00 through 05:59.
+
+The current day and time appear above the horizontally arranged action menus in cities and combat scenarios.
+
+City and combat-scenario actions are displayed horizontally across two rows, following the compact organization already used by battle actions.
+
+The shop's main menu displays both the current world time and the exact next global restocking boundary:
+
+```text
+Dia 1 — 13:00 ☼
+Próxima reposição: Dia 2 — 00:00 ☾
+```
+
+The next-restocking line is not repeated in ordinary city or combat-scenario menus.
+
+The presentation symbols are runtime formatting details. They are not stored in `save.txt` and do not affect clock progression or shop behavior.
 
 ## Encrypted container
 
@@ -707,7 +791,7 @@ A valid candidate campaign must satisfy all of the following:
 * Every discovered scenario and unlocked route exists.
 * Every shop has one valid restored state.
 * Every active offer belongs to its shop.
-* World time and shop restocking cycle are mutually consistent after their representation is frozen.
+* Validated world time and the complete validated shop catalog come from the same candidate snapshot and are installed together without load-triggered restocking.
 
 A failed invariant rejects the complete candidate.
 
