@@ -159,7 +159,7 @@ public class World {
 		                500
 		        )
 		);
-		this.marketplaceMenu = new MarketplaceMenu(scanner, listings);
+		this.marketplaceMenu = new MarketplaceMenu(scanner, listings, itemCatalog);
 
 		// Shared random generator and gameplay services
 		this.random = new Random();
