@@ -175,34 +175,34 @@ The implementation should continue to favor:
 
 ### Save-data schema
 
-* [ ] Define the complete version-1 property schema before implementing serialization.
-* [ ] Represent the decrypted logical payload through Java `Properties`.
-* [ ] Encode and decode the decrypted payload explicitly as UTF-8.
-* [ ] Add an explicit save-format version inside the encrypted payload.
-* [ ] Define stable property names and indexed collection conventions.
-* [ ] Document required, optional and repeated properties.
-* [ ] Reject missing required properties.
-* [ ] Reject duplicated or structurally inconsistent indexed entries.
-* [ ] Save every playable character in party order.
-* [ ] Save each character's identity and creation data required to reconstruct it.
-* [ ] Save each character's level, EXP and playable class.
-* [ ] Save learned skills.
-* [ ] Save current HP, MP and SP.
-* [ ] Save equipped weapon and armor items.
-* [ ] Save shared GOLD.
-* [ ] Save every owned inventory item and quantity.
-* [ ] Save the current scenario ID.
+* [x] Define the complete version-1 property schema before implementing serialization.
+* [x] Represent the decrypted logical payload through Java `Properties`.
+* [x] Encode and decode the decrypted payload explicitly as UTF-8.
+* [x] Add an explicit save-format version inside the encrypted payload.
+* [x] Define stable property names and indexed collection conventions.
+* [x] Document required, optional and repeated properties.
+* [x] Reject missing required properties.
+* [x] Reject duplicated or structurally inconsistent indexed entries.
+* [x] Save every playable character in party order.
+* [x] Save each character's identity and creation data required to reconstruct it.
+* [x] Save each character's level, EXP and playable class.
+* [x] Save learned skills.
+* [x] Save current HP, MP and SP.
+* [x] Save equipped weapon, armor and trinket item IDs, including empty slots.
+* [x] Save shared GOLD.
+* [x] Save every owned inventory item and quantity.
+* [x] Save the current scenario ID.
 * [ ] Require the saved current scenario to be the city containing the INN used to save.
-* [ ] Save discovered scenarios and world progress.
-* [ ] Save explicit route and travel progress.
-* [ ] Save relevant persistent exploration progress.
-* [ ] Save persistent reward modifiers that must survive application restart.
-* [ ] Save every generated shop offer and its remaining finite stock.
-* [ ] Preserve shops whose generated offer collection is empty.
-* [ ] Preserve offers whose finite stock has reached zero when required to prevent regeneration.
-* [ ] Prepare the schema for completed quests, world flags and permanent unlocks after those systems exist.
-* [ ] Confirm that transient battle and menu state is not serialized.
-* [ ] Confirm that an active exploration session cannot exist while saving inside an INN.
+* [x] Save discovered scenarios and world progress.
+* [x] Save explicit route and travel progress.
+* [x] Exclude transient exploration-session position and event flags from the save payload.
+* [x] Save persistent reward modifiers that must survive application restart.
+* [x] Save every generated shop offer and its remaining finite stock.
+* [x] Preserve shops whose active offers all have zero remaining stock.
+* [x] Preserve offers whose finite stock has reached zero when required to prevent regeneration.
+* [x] Prepare the schema for completed quests, world flags and permanent unlocks after those systems exist.
+* [x] Confirm that transient battle and menu state is not serialized.
+* [x] Confirm that an active exploration session cannot exist while saving inside an INN.
 
 ### Character-level boundary
 
@@ -256,7 +256,7 @@ The implementation should continue to favor:
 > **Frozen behavior:** Shop restocking is controlled exclusively by a persistent fictional world clock. A new campaign starts on day 1 at 08:00. Only a battle completed with victory or defeat advances world time, currently by one hour. Escaping or avoiding an encounter does not advance time. Every midnight replaces all registered shop states through complete new weighted offer selections.
 
 * [x] Add a fictional world clock to the mutable campaign state.
-* [x] Persist the world-clock state in `save.txt`.
+* [ ] Persist the world-clock state in `save.txt`.
 * [x] Keep world time unchanged when opening menus, visiting shops, saving, loading or restarting the application.
 * [x] Make shop restocking depend on world-time progression instead of shop visits.
 * [x] Restock all registered shops globally at each midnight.
@@ -264,7 +264,7 @@ The implementation should continue to favor:
 * [x] Restore the initial stock of every offer selected for the new cycle.
 * [x] Do not preserve old offers or merge depleted offers with newly selected entries during restocking.
 * [x] Keep shop offers unchanged while the player is interacting with an open shop menu.
-* [x] Restore the saved world time and shop states without generating new offers during loading.
+* [ ] Restore the saved world time and shop states without generating new offers during loading.
 * [x] Start every new campaign on day 1 at 08:00.
 * [x] Advance world time only after a battle ends in victory or defeat.
 * [x] Advance zero hours after escaping or avoiding an encounter.
@@ -307,27 +307,27 @@ The implementation should continue to favor:
 * [x] Use a new cryptographically secure random 12-byte IV for every save operation.
 * [x] Use a 128-bit GCM authentication tag.
 * [x] Encode the encrypted binary content as Base64 so `save.txt` remains a textual file.
-* [ ] Define a minimal unencrypted container header containing no campaign information.
-* [ ] Add an explicit encryption-container version.
-* [ ] Store the IV and authenticated ciphertext in the encrypted container.
-* [ ] Keep the internal save-format version inside the encrypted payload.
-* [ ] Reject unsupported encryption-container versions.
-* [ ] Reject missing, malformed or invalid Base64 fields.
-* [ ] Reject authentication failure as invalid or altered save data.
-* [ ] Never log the encryption key or decrypted campaign payload.
+* [x] Define a minimal unencrypted container header containing no campaign information.
+* [x] Add an explicit encryption-container version.
+* [x] Store the IV and authenticated ciphertext in the encrypted container.
+* [x] Keep the internal save-format version inside the encrypted payload.
+* [x] Reject unsupported encryption-container versions.
+* [x] Reject missing, malformed or invalid Base64 fields.
+* [x] Reject authentication failure as invalid or altered save data.
+* [x] Never log the encryption key or decrypted campaign payload.
 
 ### Atomic save operation
 
 * [ ] Build and validate a complete save snapshot before writing.
-* [ ] Serialize the snapshot into the versioned property payload.
-* [ ] Encrypt the complete payload before touching the previous `save.txt`.
-* [ ] Write the encrypted result to a temporary file in the application root.
-* [ ] Replace `save.txt` only after the temporary file has been written successfully.
-* [ ] Prefer an atomic filesystem move when supported.
-* [ ] Provide a safe replacement fallback when atomic moves are unavailable.
-* [ ] Preserve the previous valid save when serialization, encryption or temporary writing fails.
-* [ ] Remove obsolete temporary save files safely when appropriate.
-* [ ] Return an explicit result describing save success or failure.
+* [x] Serialize the snapshot into the versioned property payload.
+* [x] Encrypt the complete payload before touching the previous `save.txt`.
+* [x] Write the encrypted result to a temporary file in the application root.
+* [x] Replace `save.txt` only after the temporary file has been written successfully.
+* [x] Prefer an atomic filesystem move when supported.
+* [x] Provide a safe replacement fallback when atomic moves are unavailable.
+* [x] Preserve the previous valid save when serialization, encryption or temporary writing fails.
+* [x] Remove obsolete temporary save files safely when appropriate.
+* [x] Return an explicit result describing save success or failure.
 * [ ] Display player-facing save failures without terminating the application.
 
 ### Campaign selection after the title screen

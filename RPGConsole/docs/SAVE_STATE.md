@@ -1,6 +1,6 @@
 # RPGConsole — Save State
 
-> **Planning status:** This document defines the planned V5 persistence contract. Save and load are not implemented yet. Confirmed rules are authoritative for implementation; explicitly pending decisions remain open until their gameplay integration is designed.
+> **Implementation status:** The version-1 snapshot model, strict UTF-8 property codec, authenticated AES-GCM container, atomic file writer and snapshot-level save/load services are implemented. Catalog-backed validation, runtime reconstruction and gameplay-interface integration remain pending. Confirmed rules remain authoritative for the continuing implementation.
 
 ## Purpose
 
@@ -282,7 +282,6 @@ The following values are reconstructed and must not be duplicated as authoritati
 * Character natural statistics, derived from class and level.
 * Maximum HP, MP and SP, derived from natural stats and equipment.
 * Equipment bonuses.
-* Equipment EXP and GOLD modifiers.
 * Normal level-acquired skills made automatically available by class and level.
 * Item category, prices, name and description.
 * Equipment requirements and bonuses.
@@ -680,20 +679,85 @@ independently from the outer `containerVersion`.
 * Unknown properties are rejected unless a later format version explicitly permits them.
 * Duplicate property keys must be detected before ordinary `Properties` loading can overwrite them silently.
 
-### Planned property groups
+### Version-1 property schema
 
-| Prefix | Content |
-|---|---|
-| `save.*` | Internal save-format metadata |
-| `party.*` | Shared party resources and ordered members |
-| `party.member.<index>.*` | One playable character |
-| `party.inventory.*` | Ordered inventory entries |
-| `party.rewardModifier.*` | Temporary global reward modifiers |
-| `world.*` | Current city, discovery and persistent clock |
-| `travel.*` | Unlocked route IDs |
-| `shop.*` | Ordered shop states and offer stock |
+The decrypted version-1 payload contains exactly the following property structures.
 
-The complete version-1 property list will be frozen before serialization code is implemented.
+```properties
+save.formatVersion=1
+
+party.gold=1250
+
+party.rewardModifier.experience.percent=20
+party.rewardModifier.experience.remainingVictories=3
+party.rewardModifier.gold.percent=0
+party.rewardModifier.gold.remainingVictories=0
+
+party.member.count=1
+
+party.member.0.name=Aragorn
+party.member.0.classId=flagelo
+party.member.0.level=7
+party.member.0.experience=120
+party.member.0.currentHp=85
+party.member.0.currentMp=20
+party.member.0.currentSp=30
+
+party.member.0.equipment.weaponItemId=espada_de_ferro
+party.member.0.equipment.armorItemId=
+party.member.0.equipment.trinketItemId=
+
+party.member.0.learnedSkill.count=1
+party.member.0.learnedSkill.0.id=golpe_aprendido
+
+party.inventory.count=2
+party.inventory.0.itemId=pocao
+party.inventory.0.quantity=4
+party.inventory.1.itemId=espada_de_ferro
+party.inventory.1.quantity=1
+
+world.currentScenarioId=bree
+world.elapsedHours=31
+
+world.discoveredScenario.count=2
+world.discoveredScenario.0.id=bree
+world.discoveredScenario.1.id=campos_de_bree
+
+travel.unlockedRoute.count=1
+travel.unlockedRoute.0.id=bree_campos
+
+shop.count=1
+shop.0.id=mercado_de_bree
+shop.0.offer.count=2
+shop.0.offer.0.stockEntryId=mercado_pocao
+shop.0.offer.0.remainingStock=3
+shop.0.offer.1.stockEntryId=mercado_espada
+shop.0.offer.1.remainingStock=0
+```
+
+The values above are illustrative and are not canonical campaign data.
+
+All properties shown by the applicable count structures are required. Counts may be zero where the persistence contract permits an empty collection.
+
+Equipment-slot properties are always present. An empty value represents an unequipped slot. A non-empty value must be a canonical item ID resolving to the correct equipment category.
+
+`party.member.<index>.learnedSkill.*` contains only explicitly learned scroll-skill IDs. Skills acquired automatically from class and level are reconstructed from current definitions and are not serialized.
+
+Party members, learned skills, inventory entries, shops and active offers preserve their runtime order. Discovered-scenario and unlocked-route order is not meaningful and must be serialized in stable ID order.
+
+Every repeated index starts at zero, is contiguous and is lower than its declared count. Missing indexes, additional indexes, duplicate IDs and duplicate property names invalidate the complete payload.
+
+Properties outside the version-1 schema invalidate the payload. This prevents misspelled or unsupported fields from being silently ignored.
+
+All numeric values use base-10 ASCII digits and must satisfy their documented domain boundaries.
+
+The four reward-modifier properties are always present. An inactive modifier is represented by zero percent and zero remaining victories.
+
+`world.elapsedHours` and all `shop.*` structures belong to the same snapshot. No separate restocking-cycle property is stored.
+
+`shop.<index>.offer.count` must be positive because every valid runtime `ShopState` contains at least one active offer. Offers with zero remaining stock remain serialized.
+
+The version-1 payload contains no timestamps, display names, formatted values, derived period symbols, cryptographic fields or transient runtime state.
 
 ## Save-format versioning
 

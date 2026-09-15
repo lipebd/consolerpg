@@ -807,6 +807,29 @@ The fictional world clock and runtime shop-restocking cycle are functionally int
 - `WorldTimeFormatter` displays `☼` from 06:00 through 17:59 and `☾` from 18:00 through 05:59.
 - Clock progression, midnight restocking, restored stock, escape behavior and period-symbol boundaries were manually validated.
 
+## Save and load foundation
+
+The version-1 persistence foundation is implemented through `rpg.persistence`.
+
+Current completed behavior:
+
+- Immutable snapshots represent party, character, equipment, inventory, reward-modifier, world-time, discovery, travel and shop state.
+- `CampaignSnapshotFactory` captures one complete runtime snapshot without mutating gameplay state.
+- The versioned campaign schema uses strict indexed Java properties encoded as UTF-8.
+- Missing, duplicated, unexpected and structurally inconsistent properties are rejected.
+- AES-256-GCM encrypts and authenticates the complete campaign payload.
+- Every encryption uses a new secure random 12-byte IV and a 128-bit authentication tag.
+- The textual container exposes no campaign information outside authenticated ciphertext.
+- Save replacement is performed through a completed temporary file, with atomic movement preferred and a safe fallback available.
+- Save operations return distinct encoding and file-writing failures.
+- Load operations distinguish absent, unreadable, invalid and successfully decoded saves.
+- Invalid save files are preserved instead of being deleted or corrected.
+- Snapshot, property, UTF-8, encryption, container, atomic-file and save/load service round trips were manually validated.
+
+The current load result contains an immutable candidate snapshot only. Catalog-backed validation and reconstruction must succeed before that candidate can become an active campaign.
+
+Gameplay access through INNs and campaign selection after the title screen remain pending.
+
 ## Current limitations and temporary implementations
 
 - Permanent skill-scroll content and curated scroll drops remain absent while the draft skills await required combat mechanics and final content review.

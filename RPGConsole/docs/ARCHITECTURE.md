@@ -33,6 +33,7 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.items` | External item definitions, runtime item behavior, shared inventory and individual drop rules | `ItemDefinition`, `ItemDefinitionCatalog`, `ItemLoader`, `RecoveryItemDefinition`, `RecoveryItemLoader`, `ItemFactory`, `Item`, `BasicItem`, `RecoveryItem`, `ItemCatalog`, `Inventory`, `DropEntry` |
 | `rpg.items.equipment` | Immutable equipment specialization, loading, lookup, compatibility vocabulary and inventory-to-character transfers | `EquipmentDefinition`, `WeaponDefinition`, `ArmorDefinition`, `TrinketDefinition`, `EquipmentLoader`, `EquipmentCatalog`, `EquipmentService`, `WeaponType`, `ArmorWeight`, `TrinketType` |
 | `rpg.enemies` | Enemy definitions and external enemy/drop loading | `EnemyDefinition`, `EnemyCatalog`, `EnemyLoader`, `EnemyDropCatalog`, `EnemyDropLoader` |
+| `rpg.persistence` | Immutable campaign snapshots, strict versioned property encoding, authenticated encrypted containers and atomic save-file access | `CampaignSnapshot`, `CampaignSnapshotFactory`, `CampaignPropertiesSerializer`, `CampaignPropertiesDeserializer`, `CampaignSaveCodec`, `CampaignSaveService`, `CampaignLoadService` |
 | `rpg.world` | Active world state, fictional world time, scenario discovery, rescue coordination, shop-restocking coordination and high-level gameplay flow | `World`, `WorldClock`, `WorldProgress` |
 | `rpg.world.scenarios` | External scenario definitions, runtime scenario hierarchy and scenario creation | `ScenarioDefinition`, `ScenarioDefinitionCatalog`, `ScenarioLoader`, `CombatScenarioDefinition`, `CombatScenarioLoader`, `DungeonDefinition`, `DungeonLoader`, `ScenarioFactory`, `Scenario`, `CombatScenario`, `Field`, `Dungeon`, `City`, `ScenarioCatalog`, `CombatScenarioAction`, `CityAction` |
 | `rpg.world.encounters` | Encounter availability and weighted group generation | `EncounterEntry`, `EncounterCatalog`, `EncounterLoader`, `EncounterGenerator` |
@@ -1068,6 +1069,52 @@ It does not own party gold, perform transactions or define prices. Gold remains 
 
 Menus and screens call `GameCurrency.getName()` when the currency is referenced directly and `GameCurrency.format(int)` whenever a numeric amount is displayed. Changing the visible currency convention therefore requires changing only `GameCurrency`.
 
+## Persistence foundation
+
+The persistence foundation separates mutable runtime state from immutable serialized data.
+
+`CampaignSnapshotFactory` reads the current runtime objects and creates this immutable hierarchy:
+
+```text
+CampaignSnapshot
+├── PartySnapshot
+│   ├── PlayableCharacterSnapshot
+│   │   └── EquipmentSnapshot
+│   ├── InventoryEntrySnapshot
+│   └── RewardModifierSnapshot
+├── WorldSnapshot
+└── ShopSnapshot
+    └── ShopOfferSnapshot
+```
+
+Snapshots contain only the canonical IDs and mutable values required to reconstruct the campaign. They do not contain catalog definitions, presentation values, cryptographic metadata or transient gameplay state.
+
+The current encoding flow is:
+
+```text
+CampaignSnapshot
+    -> CampaignPropertiesSerializer
+    -> Java Properties
+    -> PropertyPayloadEncoder
+    -> UTF-8 plaintext
+    -> SaveEncryptionService
+    -> EncryptedSavePayload
+    -> SaveContainerCodec
+    -> textual encrypted container
+```
+
+The decoding flow performs the reverse transformation and produces a complete candidate `CampaignSnapshot` without modifying active runtime state.
+
+`StrictPropertyReader` requires every version-1 property, parses decimal numeric values, tracks consumed fields and rejects unknown properties. `PropertyPayloadDecoder` performs strict UTF-8 decoding and rejects duplicated property names before one value can overwrite another.
+
+`SaveEncryptionService` uses `AES/GCM/NoPadding` with the stable 256-bit application key, a new secure random 12-byte IV for every encryption and a 128-bit authentication tag. The textual outer container exposes only its identifier, container version, Base64 IV and Base64 authenticated ciphertext.
+
+`AtomicSaveFileWriter` completes and flushes a temporary file in the target directory before replacing `save.txt`. It prefers an atomic move and uses a backup-assisted replacement fallback when atomic moves are unavailable.
+
+`CampaignSaveService` and `CampaignLoadService` expose explicit operation results without logging the encryption key or decrypted payload. Missing, unreadable and invalid save files remain distinct load outcomes.
+
+Catalog-backed validation, reconstruction of runtime domain objects, campaign selection and INN integration remain pending.
+
 ## Current temporary boundaries
 
 The following implementations remain intentionally temporary:
@@ -1079,7 +1126,7 @@ The following implementations remain intentionally temporary:
 - Enemy actions currently use basic attacks; enemy skill selection can reuse the skill executor later but is outside the current scope.
 - Every registered city currently provides an INN, while Bree also provides a fixed shop; tavern functionality remains unavailable.
 - World time and active shop states remain runtime-only until save and load are implemented. Restarting currently resets the clock and generates new shop states, while runtime midnight restocking is already integrated.
-- Save and load are not implemented.
+- The encrypted snapshot codec and atomic save-file services are implemented, but catalog-backed runtime reconstruction, campaign selection and INN save integration remain pending.
 - `Battle` remains large and may later be divided into more focused action services.
 - Permanent skill-scroll items, skills and curated enemy drops remain deferred until their draft effects receive the required combat mechanics and final content review.
 - The Flagelo's temporary `STARTER` skills remain learned until their retirement is implemented as part of the future level-7 class-choice flow.

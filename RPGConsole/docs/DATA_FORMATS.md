@@ -16,6 +16,25 @@ This document describes the external text files used to load game data.
 - Content IDs are written in Brazilian Portuguese without accents.
 - Invalid references or malformed lines stop game initialization instead of creating partially invalid data.
 
+## Campaign save container
+
+`save.txt` is generated campaign data rather than an external game-definition file. The complete persistence contract is documented in `SAVE_STATE.md`.
+
+The implemented outer container is UTF-8 text containing exactly:
+
+```properties
+container=RPGCONSOLE_SAVE
+containerVersion=1
+iv=<Base64>
+ciphertext=<Base64>
+```
+
+The IV and authenticated ciphertext use canonical basic Base64 encoding. No campaign property is exposed outside the ciphertext.
+
+After authenticated AES-GCM decryption, the version-1 campaign payload uses strict `name=value` properties encoded as UTF-8. Property names, indexed collection structures and validation rules are defined centrally in `SAVE_STATE.md`.
+
+The encrypted codec and atomic file services are implemented. Catalog-backed runtime reconstruction and gameplay integration remain pending.
+
 ## Character-name definitions
 
 Names available for random playable-character naming are loaded from:
@@ -1098,8 +1117,8 @@ Runtime rules:
 - Old offers and remaining quantities are not merged into the new cycle.
 - A complete replacement `ShopStateCatalog` is generated before world time or active shop state changes.
 - Failed replacement generation preserves the previous world time and shop states.
-- Starting a new program execution currently creates fresh clock and shop states because save and load are not yet implemented.
-- Shop-state persistence remains postponed until save and load are implemented.
+- Starting a new program execution currently creates fresh clock and shop states because campaign loading is not yet connected to application initialization.
+- The snapshot schema and encrypted file services preserve world time and active shop offers together; catalog-backed runtime restoration and gameplay integration remain pending.
 
 Loading flow:
 

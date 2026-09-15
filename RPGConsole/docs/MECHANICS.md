@@ -1136,6 +1136,14 @@ The party owns one shared gold balance. `GameCurrency` centralizes only how that
 
 Changing the visible name or symbol does not alter stored gold, prices or transaction rules.
 
+## Campaign persistence foundation
+
+The implemented persistence foundation can capture one immutable campaign snapshot containing party, inventory, equipment, learned scroll skills, reward modifiers, world progress, travel progress, fictional time and active shop states.
+
+The snapshot is serialized through the versioned property schema defined in `SAVE_STATE.md`, encoded as UTF-8, authenticated and encrypted through AES-256-GCM and written through atomic save-file replacement.
+
+Loading currently produces a structurally validated candidate snapshot without modifying active gameplay state. Catalog-backed validation, runtime reconstruction, title-screen campaign selection and INN save access remain pending.
+
 ## World time and daily shop restocking
 
 A new campaign starts on day 1 at 08:00.
@@ -1243,7 +1251,7 @@ At every midnight, all registered shops restock globally. Each shop performs a c
 
 A replacement catalog is generated completely before world time and active shop state are committed. If generation fails, both the previous time and every previous shop state are preserved.
 
-Restarting the application still creates new clock and shop state because save and load are not yet implemented. Future loading will restore the persisted clock and active offers without treating application startup as a restocking event.
+Restarting the application still creates new clock and shop state because campaign loading is not yet connected to application initialization. The persistence foundation already stores clock and shop state in the same candidate snapshot; runtime reconstruction will restore both without treating loading as a restocking event.
 
 ### Buying
 
