@@ -19,6 +19,9 @@ import rpg.enemies.EnemyDropCatalog;
 import rpg.items.Item;
 import rpg.items.ItemCatalog;
 import rpg.marketplace.MarketplaceListing;
+import rpg.marketplace.MarketplaceTransaction;
+import rpg.marketplace.PendingReward;
+import rpg.marketplace.MarketplaceTransactionService;
 import rpg.ui.BattleRewardScreen;
 import rpg.ui.CityLocationMenu;
 import rpg.ui.CityMenu;
@@ -149,17 +152,33 @@ public class World {
 		this.worldProgress.discover(this.currentScenario.getId());
 		
 		// Trading Post data
+		
 		List<MarketplaceListing> listings = new ArrayList<>();
+		
+		List<MarketplaceTransaction> transactions = new ArrayList<>();
+
+		List<PendingReward> pendingRewards = new ArrayList<>();
+		
 		listings.add(
 		        new MarketplaceListing(
 		                "listing-001",
 		                "cesar",
 		                "meruma",
-		                3,
-		                500
+		                1,
+		                5
 		        )
 		);
-		this.marketplaceMenu = new MarketplaceMenu(scanner, listings, itemCatalog);
+		
+		MarketplaceTransactionService marketplaceTransactionService =
+		        new MarketplaceTransactionService(
+		                this.party,
+		                this.itemCatalog,
+		                "local-player", // Place-Holder, it will not be a local player in the future
+		                transactions,
+		                pendingRewards
+		        );
+		
+		this.marketplaceMenu = new MarketplaceMenu(scanner, listings, this.itemCatalog, marketplaceTransactionService, pendingRewards);
 
 		// Shared random generator and gameplay services
 		this.random = new Random();

@@ -1,0 +1,11 @@
+package rpg.marketplace;
+
+public enum MarketplaceRewardClaimResult {
+	
+	SUCCESS,
+    INVALID_REWARD,
+    REWARD_NOT_PENDING,
+    NOT_REWARD_OWNER,
+    GOLD_CAPACITY_EXCEEDED
+
+}
