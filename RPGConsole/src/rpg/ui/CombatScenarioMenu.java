@@ -3,7 +3,6 @@ package rpg.ui;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Scanner;
 
 import rpg.world.WorldClock;
 import rpg.world.scenarios.CombatScenarioAction;
@@ -11,11 +10,11 @@ import rpg.world.scenarios.CombatScenarioAction;
 // Displays the available actions for the current combat scenario.
 public final class CombatScenarioMenu {
 
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 	private final WorldClock worldClock;
 
-	public CombatScenarioMenu(Scanner scanner, WorldClock worldClock) {
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+	public CombatScenarioMenu(ConsoleInput consoleInput, WorldClock worldClock) {
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 		this.worldClock = Objects.requireNonNull(worldClock, "World clock cannot be null.");
 	}
 
@@ -36,7 +35,7 @@ public final class CombatScenarioMenu {
 			System.out.println("[0] Encerrar jogo");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine();
+			String choice = consoleInput.readLine();
 
 			if (choice.equals("0")) {
 				return Optional.empty();

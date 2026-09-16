@@ -3,15 +3,14 @@ package rpg.ui;
 import java.util.List;
 import java.util.Objects;
 import java.util.OptionalInt;
-import java.util.Scanner;
 
 // Displays functional city locations and returns the selected position.
 public final class CityLocationMenu {
 
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 
-	public CityLocationMenu(Scanner scanner) {
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+	public CityLocationMenu(ConsoleInput consoleInput) {
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 	}
 
 	public OptionalInt selectLocation(List<String> locationNames) {
@@ -34,7 +33,7 @@ public final class CityLocationMenu {
 			System.out.println("[0] Voltar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return OptionalInt.empty();

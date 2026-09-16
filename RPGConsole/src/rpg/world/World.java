@@ -6,7 +6,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Random;
-import java.util.Scanner;
 
 import rpg.GameCurrency;
 import rpg.battle.BattleCoordinator;
@@ -30,6 +29,7 @@ import rpg.ui.CityLocationMenu;
 import rpg.ui.CityMenu;
 import rpg.ui.CityTransportMenu;
 import rpg.ui.CombatScenarioMenu;
+import rpg.ui.ConsoleInput;
 import rpg.ui.ConsoleUI;
 import rpg.ui.EpicEncounterMenu;
 import rpg.ui.ExitConfirmationMenu;
@@ -129,7 +129,7 @@ public class World {
 	public World(
 			Party party,
 			Scenario initialScenario,
-			Scanner scanner,
+			ConsoleInput consoleInput,
 			ItemCatalog itemCatalog,
 			CraftingRecipeCatalog craftingRecipeCatalog,
 			CrafterCatalog crafterCatalog,
@@ -152,7 +152,7 @@ public class World {
 			TravelProgress travelProgress
 	) {
 
-		Objects.requireNonNull(scanner, "Scanner cannot be null.");
+		Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 		Objects.requireNonNull(enemyDropCatalog, "Enemy drop catalog cannot be null.");
 		Objects.requireNonNull(encounterCatalog, "Encounter catalog cannot be null.");
 
@@ -179,10 +179,10 @@ public class World {
 		// Shared random generator and gameplay services
 		this.random = new Random();
 		BattleRewardService rewardService = new BattleRewardService(random);
-		BattleRewardScreen rewardScreen = new BattleRewardScreen(scanner);
+		BattleRewardScreen rewardScreen = new BattleRewardScreen(consoleInput);
 		this.battleCoordinator = new BattleCoordinator(
 				this.party,
-				scanner,
+				consoleInput,
 				enemyDropCatalog,
 				rewardService,
 				rewardScreen,
@@ -194,32 +194,32 @@ public class World {
 		this.campaignSaveService = Objects.requireNonNull(campaignSaveService, "Campaign save service cannot be null.");
 
 		// User interface
-		this.epicEncounterMenu = new EpicEncounterMenu(scanner);
-		this.combatScenarioMenu = new CombatScenarioMenu(scanner, this.worldClock);
-		this.routeMenu = new RouteMenu(scanner, this.travelProgress);
-		this.scenarioBranchMenu = new ScenarioBranchMenu(scanner);
+		this.epicEncounterMenu = new EpicEncounterMenu(consoleInput);
+		this.combatScenarioMenu = new CombatScenarioMenu(consoleInput, this.worldClock);
+		this.routeMenu = new RouteMenu(consoleInput, this.travelProgress);
+		this.scenarioBranchMenu = new ScenarioBranchMenu(consoleInput);
 		EquipmentMenu equipmentMenu = new EquipmentMenu(
 				this.party,
-				scanner,
+				consoleInput,
 				Objects.requireNonNull(equipmentCatalog, "Equipment catalog cannot be null."),
 				this.itemCatalog,
 				Objects.requireNonNull(equipmentService, "Equipment service cannot be null.")
 		);
-		this.inventoryMenu = new InventoryMenu(this.party, scanner, equipmentMenu);
-		this.partyStatusMenu = new PartyStatusMenu(this.party, scanner, equipmentMenu);
-		this.cityMenu = new CityMenu(scanner, this.worldClock);
-		this.cityTransportMenu = new CityTransportMenu(this.party, scanner, this.scenarioCatalog);
-		this.cityLocationMenu = new CityLocationMenu(scanner);
+		this.inventoryMenu = new InventoryMenu(this.party, consoleInput, equipmentMenu);
+		this.partyStatusMenu = new PartyStatusMenu(this.party, consoleInput, equipmentMenu);
+		this.cityMenu = new CityMenu(consoleInput, this.worldClock);
+		this.cityTransportMenu = new CityTransportMenu(this.party, consoleInput, this.scenarioCatalog);
+		this.cityLocationMenu = new CityLocationMenu(consoleInput);
 		this.craftingMenu = new CraftingMenu(
 				this.party,
-				scanner,
+				consoleInput,
 				this.itemCatalog,
 				Objects.requireNonNull(craftingRecipeCatalog, "Crafting recipe catalog cannot be null.")
 		);
-		this.innMenu = new InnMenu(this.party, scanner);
-		this.shopMenu = new ShopMenu(this.party, scanner, this.worldClock);
-		this.partyRescueScreen = new PartyRescueScreen(scanner);
-		this.exitConfirmationMenu = new ExitConfirmationMenu(scanner);
+		this.innMenu = new InnMenu(this.party, consoleInput);
+		this.shopMenu = new ShopMenu(this.party, consoleInput, this.worldClock);
+		this.partyRescueScreen = new PartyRescueScreen(consoleInput);
+		this.exitConfirmationMenu = new ExitConfirmationMenu(consoleInput);
 
 		// Initial exploration state
 		if (this.currentScenario instanceof CombatScenario combatScenario) {

@@ -3,7 +3,6 @@ package rpg.ui;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Scanner;
 
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
@@ -16,13 +15,13 @@ import rpg.skills.SkillLearningResult;
 public final class SkillScrollUseMenu {
 
 	private final Party party;
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 	private final SkillScrollService skillScrollService;
 
-	public SkillScrollUseMenu(Party party, Scanner scanner) {
+	public SkillScrollUseMenu(Party party, ConsoleInput consoleInput) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
 
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 
 		this.skillScrollService = new SkillScrollService();
 	}
@@ -34,7 +33,7 @@ public final class SkillScrollUseMenu {
 
 		if (compatibleCharacter.isEmpty()) {
 			System.out.println("Nenhum membro do grupo pode aprender esta habilidade.");
-			ConsoleUI.pause(1000);
+			ConsoleUI.pause(1000, consoleInput);
 			return false;
 		}
 
@@ -52,19 +51,19 @@ public final class SkillScrollUseMenu {
 		return switch (result) {
 		case LEARNED -> {
 			System.out.println(character.getName() + " aprendeu " + skillDefinition.getName() + "!");
-			ConsoleUI.pause(1000);
+			ConsoleUI.pause(1000, consoleInput);
 			yield true;
 		}
 
 		case ALREADY_LEARNED -> {
 			System.out.println(character.getName() + " já sabe usar " + skillDefinition.getName() + ".");
-			ConsoleUI.pause(1000);
+			ConsoleUI.pause(1000, consoleInput);
 			yield false;
 		}
 
 		case INCOMPATIBLE_CLASS -> {
 			System.out.println(character.getName() + " não pertence à classe exigida pelo pergaminho.");
-			ConsoleUI.pause(1000);
+			ConsoleUI.pause(1000, consoleInput);
 			yield false;
 		}
 
@@ -73,7 +72,7 @@ public final class SkillScrollUseMenu {
 					character.getName() + " precisa alcançar o nível " + skillDefinition.getLevelRequirement()
 							+ " para aprender esta habilidade."
 			);
-			ConsoleUI.pause(1000);
+			ConsoleUI.pause(1000, consoleInput);
 			yield false;
 		}
 
@@ -102,7 +101,7 @@ public final class SkillScrollUseMenu {
 				character.getName() + " esqueceu " + replacedSkill.getName() + " e aprendeu "
 						+ skillScroll.getSkillDefinition().getName() + "!"
 		);
-		ConsoleUI.pause(1000);
+		ConsoleUI.pause(1000, consoleInput);
 		return true;
 	}
 
@@ -112,7 +111,7 @@ public final class SkillScrollUseMenu {
 		while (true) {
 			displayReplacementMenu(character, skillScroll, learnedScrollSkills);
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return Optional.empty();
@@ -148,7 +147,7 @@ public final class SkillScrollUseMenu {
 
 		System.out.println();
 		System.out.println(character.getName() + " já aprendeu o máximo de duas habilidades de pergaminho.");
-		ConsoleUI.pause(1000);
+		ConsoleUI.pause(1000, consoleInput);
 		System.out.println(
 				"Escolha uma habilidade para substituir por " + skillScroll.getSkillDefinition().getName() + ":"
 		);
@@ -180,7 +179,7 @@ public final class SkillScrollUseMenu {
 			System.out.println("[0] Voltar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("1")) {
 				return true;

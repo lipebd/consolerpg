@@ -3,7 +3,6 @@ package rpg.ui;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Scanner;
 
 import rpg.GameCurrency;
 import rpg.battle.rewards.BattleRewardModifiers;
@@ -17,10 +16,10 @@ import rpg.skills.SkillDefinition;
 public final class BattleRewardScreen {
 
 	private static final int MAXIMUM_REWARD_LINE_LENGTH = 100;
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 
-	public BattleRewardScreen(Scanner scanner) {
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+	public BattleRewardScreen(ConsoleInput consoleInput) {
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 	}
 
 	public void show(BattleRewards rewards) {
@@ -212,6 +211,6 @@ public final class BattleRewardScreen {
 		System.out.println("\nPressione ENTER para continuar...");
 
 		System.out.print("> ");
-		scanner.nextLine();
+		consoleInput.readLine();
 	}
 }

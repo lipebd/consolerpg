@@ -3,7 +3,6 @@ package rpg.ui;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Scanner;
 
 import rpg.world.WorldClock;
 import rpg.world.scenarios.CityAction;
@@ -11,11 +10,11 @@ import rpg.world.scenarios.CityAction;
 // Displays the actions currently available in a city.
 public final class CityMenu {
 
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 	private final WorldClock worldClock;
 
-	public CityMenu(Scanner scanner, WorldClock worldClock) {
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+	public CityMenu(ConsoleInput consoleInput, WorldClock worldClock) {
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 		this.worldClock = Objects.requireNonNull(worldClock, "World clock cannot be null.");
 	}
 
@@ -37,7 +36,7 @@ public final class CityMenu {
 			System.out.println("[0] Encerrar jogo");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return Optional.empty();

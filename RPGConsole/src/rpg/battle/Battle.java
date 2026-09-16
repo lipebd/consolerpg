@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
-import java.util.Scanner;
 
 import rpg.characters.CharacterAttribute;
 import rpg.characters.Enemy;
@@ -25,6 +24,7 @@ import rpg.ui.AllyTargetMenu;
 import rpg.ui.BattleItemMenu;
 import rpg.ui.BattleTurnOrderScreen;
 import rpg.ui.CombatEffectFormatter;
+import rpg.ui.ConsoleInput;
 import rpg.ui.ConsoleUI;
 import rpg.ui.EnemyTargetMenu;
 import rpg.ui.SkillDetailFormatter;
@@ -51,7 +51,7 @@ public class Battle {
 	private Party party;
 	private EnemyTargetMenu enemyTargetMenu;
 	private EnemyBattleGroup enemyGroup;
-	private Scanner scanner;
+	private ConsoleInput consoleInput;
 	private final Random random;
 	private final DamageCalculator damageCalculator;
 	private final SkillExecutor skillExecutor;
@@ -59,10 +59,10 @@ public class Battle {
 	private boolean partyFled;
 	private final BattleItemMenu battleItemMenu;
 
-	public Battle(Party party, EnemyBattleGroup enemyGroup, Scanner scanner, Random random) {
+	public Battle(Party party, EnemyBattleGroup enemyGroup, ConsoleInput consoleInput, Random random) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
 		this.enemyGroup = Objects.requireNonNull(enemyGroup, "Enemy battle group cannot be null.");
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 		this.random = Objects.requireNonNull(random, "Random generator cannot be null.");
 		this.damageCalculator = new DamageCalculator();
 		this.skillExecutor = new SkillExecutor(
@@ -72,10 +72,10 @@ public class Battle {
 				random
 		);
 		this.pendingPostActionExecution = null;
-		this.enemyTargetMenu = new EnemyTargetMenu(scanner);
+		this.enemyTargetMenu = new EnemyTargetMenu(consoleInput);
 		this.partyFled = false;
-		this.battleItemMenu = new BattleItemMenu(party, scanner);
-		this.allyTargetMenu = new AllyTargetMenu(scanner);
+		this.battleItemMenu = new BattleItemMenu(party, consoleInput);
+		this.allyTargetMenu = new AllyTargetMenu(consoleInput);
 		this.turnOrderGenerator = new BattleTurnOrderGenerator(random);
 		this.turnOrderScreen = new BattleTurnOrderScreen();
 		this.escapeService = new BattleEscapeService(random);
@@ -86,14 +86,14 @@ public class Battle {
 
 		displayBattleIntroduction();
 
-		ConsoleUI.pause(PACING_PAUSE_MILLISECONDS);
+		ConsoleUI.pause(PACING_PAUSE_MILLISECONDS, consoleInput);
 
 		while (!party.isDefeated() && !enemyGroup.isDefeated() && !partyFled) {
 			System.out.println("\n[BATALHA — RODADA " + currentRoundNumber + "]");
 
 			displayCurrentBattleStatus();
 
-			ConsoleUI.pause(PACING_PAUSE_MILLISECONDS);
+			ConsoleUI.pause(PACING_PAUSE_MILLISECONDS, consoleInput);
 
 			List<BattleTurnEntry> turnEntries = turnOrderGenerator.generate(party, enemyGroup);
 
@@ -112,7 +112,7 @@ public class Battle {
 
 		displayBattleResult(result);
 
-		ConsoleUI.pause(PACING_PAUSE_MILLISECONDS);
+		ConsoleUI.pause(PACING_PAUSE_MILLISECONDS, consoleInput);
 
 		return result;
 	}
@@ -322,7 +322,7 @@ public class Battle {
 	private void displayBattleIntroduction() {
 		System.out.println("\nO grupo foi atacado!");
 
-		ConsoleUI.pause(PACING_PAUSE_MILLISECONDS);
+		ConsoleUI.pause(PACING_PAUSE_MILLISECONDS, consoleInput);
 
 		// Temporarily commented to test battle flow. Might remove this method entirely.
 		/*
@@ -357,7 +357,7 @@ public class Battle {
 		while (!validAction) {
 			displayCharacterActionMenu();
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			switch (choice) {
 			case "1" -> {
@@ -423,7 +423,7 @@ public class Battle {
 		while (true) {
 			displayTacticalMenu();
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			switch (choice) {
 			case "0" -> {
@@ -469,7 +469,7 @@ public class Battle {
 			System.out.println("\n[0] Voltar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return;
@@ -506,7 +506,7 @@ public class Battle {
 			System.out.println("\n[0] Voltar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine();
+			String choice = consoleInput.readLine();
 
 			if (choice.equals("0")) {
 				return false;
@@ -640,7 +640,7 @@ public class Battle {
 			BattleTurnEntry actingEntry = currentEntry.get();
 
 			displayCurrentTurn(actingEntry);
-			ConsoleUI.pause(PACING_PAUSE_MILLISECONDS);
+			ConsoleUI.pause(PACING_PAUSE_MILLISECONDS, consoleInput);
 			pendingPostActionExecution = null;
 			executeTurn(actingEntry);
 
@@ -653,7 +653,7 @@ public class Battle {
 				updateFinishingCharacter(pendingPostActionExecution);
 			}
 
-			ConsoleUI.pause(PACING_PAUSE_MILLISECONDS);
+			ConsoleUI.pause(PACING_PAUSE_MILLISECONDS, consoleInput);
 
 			currentTurnOrder.advance();
 		}
@@ -892,7 +892,7 @@ public class Battle {
 
 			System.out.print("> ");
 
-			String confirmation = scanner.nextLine();
+			String confirmation = consoleInput.readLine();
 
 			switch (confirmation) {
 			case "1" -> {

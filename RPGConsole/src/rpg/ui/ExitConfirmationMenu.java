@@ -1,15 +1,14 @@
 package rpg.ui;
 
 import java.util.Objects;
-import java.util.Scanner;
 
 // Requests confirmation before the player exits without saving.
 public final class ExitConfirmationMenu {
 
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 
-	public ExitConfirmationMenu(Scanner scanner) {
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+	public ExitConfirmationMenu(ConsoleInput consoleInput) {
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 	}
 
 	public boolean confirm() {
@@ -25,7 +24,7 @@ public final class ExitConfirmationMenu {
 			System.out.println("[0] Voltar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			switch (choice) {
 			case "1" -> {

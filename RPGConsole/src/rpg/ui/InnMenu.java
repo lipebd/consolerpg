@@ -2,7 +2,6 @@ package rpg.ui;
 
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Scanner;
 
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
@@ -13,11 +12,11 @@ import rpg.GameCurrency;
 public final class InnMenu {
 
 	private final Party party;
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 
-	public InnMenu(Party party, Scanner scanner) {
+	public InnMenu(Party party, ConsoleInput consoleInput) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 	}
 
 	public Selection open(InnDefinition innDefinition) {
@@ -28,7 +27,7 @@ public final class InnMenu {
 		while (true) {
 			displayInn(innDefinition, feedbackMessage);
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			switch (choice) {
 			case "0" -> {
@@ -110,7 +109,7 @@ public final class InnMenu {
 			System.out.println("[0] Cancelar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			switch (choice) {
 			case "1" -> {

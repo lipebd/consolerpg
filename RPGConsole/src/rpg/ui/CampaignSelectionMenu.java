@@ -1,7 +1,6 @@
 package rpg.ui;
 
 import java.util.Objects;
-import java.util.Scanner;
 import java.util.stream.Collectors;
 
 import rpg.characters.PlayableCharacter;
@@ -16,10 +15,10 @@ public final class CampaignSelectionMenu {
 		CONTINUE, NEW_GAME
 	}
 
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 
-	public CampaignSelectionMenu(Scanner scanner) {
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+	public CampaignSelectionMenu(ConsoleInput consoleInput) {
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 	}
 
 	public Selection select(CampaignLoadResult loadResult) {
@@ -41,7 +40,7 @@ public final class CampaignSelectionMenu {
 
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (canContinue && choice.equals("1")) {
 				return Selection.CONTINUE;
@@ -114,7 +113,7 @@ public final class CampaignSelectionMenu {
 			System.out.println("[0] Voltar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			switch (choice) {
 			case "1" -> {

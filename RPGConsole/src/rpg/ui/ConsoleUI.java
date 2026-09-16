@@ -51,4 +51,22 @@ public final class ConsoleUI {
 			Thread.currentThread().interrupt();
 		}
 	}
+
+	public static void pause(long milliseconds, ConsoleInput consoleInput) {
+		Objects.requireNonNull(consoleInput, "Console input cannot be null.");
+
+		consoleInput.beginDiscardingInput();
+
+		try {
+			pause(milliseconds);
+		} finally {
+			consoleInput.endDiscardingInput();
+		}
+	}
+
+	public static void displayIgnoredEndOfInput() {
+		System.out.println();
+		System.out.println("Ctrl+Z ignorado.");
+		System.out.print("> ");
+	}
 }

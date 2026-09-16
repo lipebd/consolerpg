@@ -4,7 +4,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Scanner;
 
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
@@ -18,10 +17,10 @@ public final class RecoveryItemUseMenu {
 	private final Party party;
 	private final AllyTargetMenu allyTargetMenu;
 
-	public RecoveryItemUseMenu(Party party, Scanner scanner) {
+	public RecoveryItemUseMenu(Party party, ConsoleInput consoleInput) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
 
-		this.allyTargetMenu = new AllyTargetMenu(scanner);
+		this.allyTargetMenu = new AllyTargetMenu(consoleInput);
 	}
 
 	public boolean use(RecoveryItem recoveryItem, PlayableCharacter actingCharacter) {

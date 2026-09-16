@@ -3,19 +3,18 @@ package rpg.ui;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Scanner;
 
 import rpg.world.branches.ScenarioBranchDefinition;
 
 // Displays exploration branches and returns the selected branch.
 public final class ScenarioBranchMenu {
 
-        private final Scanner scanner;
+        private final ConsoleInput consoleInput;
 
-        public ScenarioBranchMenu(Scanner scanner) {
-                this.scanner = Objects.requireNonNull(
-                                scanner,
-                                "Scanner cannot be null."
+        public ScenarioBranchMenu(ConsoleInput consoleInput) {
+                this.consoleInput = Objects.requireNonNull(
+                                consoleInput,
+                                "Console input cannot be null."
                 );
         }
 
@@ -58,7 +57,7 @@ public final class ScenarioBranchMenu {
                         System.out.println("[0] Voltar");
                         System.out.print("> ");
 
-                        String choice = scanner.nextLine();
+                        String choice = consoleInput.readLine();
 
                         if (choice.equals("0")) {
                                 return Optional.empty();

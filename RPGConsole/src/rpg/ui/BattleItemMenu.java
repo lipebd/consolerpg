@@ -6,7 +6,6 @@ import java.util.Locale;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Scanner;
 
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
@@ -19,15 +18,15 @@ public final class BattleItemMenu {
 	private static final int ITEMS_PER_PAGE = 8;
 
 	private final Party party;
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 	private final RecoveryItemUseMenu recoveryItemUseMenu;
 
-	public BattleItemMenu(Party party, Scanner scanner) {
+	public BattleItemMenu(Party party, ConsoleInput consoleInput) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
 
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 
-		this.recoveryItemUseMenu = new RecoveryItemUseMenu(party, scanner);
+		this.recoveryItemUseMenu = new RecoveryItemUseMenu(party, consoleInput);
 	}
 
 	public boolean open(PlayableCharacter actingCharacter) {
@@ -61,7 +60,7 @@ public final class BattleItemMenu {
 
 			displayPage(entries, firstIndex, lastIndex, currentPage, totalPages);
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return false;
@@ -160,7 +159,7 @@ public final class BattleItemMenu {
 
 			System.out.print("> ");
 
-			String choice = scanner.nextLine();
+			String choice = consoleInput.readLine();
 
 			switch (choice) {
 			case "1" -> {

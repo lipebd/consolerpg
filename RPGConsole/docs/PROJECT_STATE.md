@@ -234,6 +234,8 @@ Responsibilities previously concentrated in `World` were extracted into dedicate
 
 `World` coordinates scenario state, exploration events and the consequences of battle results. It no longer directly controls console input.
 
+`ConsoleInput` now replaces direct `Scanner` usage throughout the application. It centralizes UTF-8 decoding, recoverable Windows-console EOF handling and queued-command control. Timed battle and skill-scroll pauses discard complete commands entered before their following prompts, preventing delayed actions from leaking into later menus.
+
 `World` dispatches fields and dungeons to `CombatScenarioMenu` and cities to `CityMenu`. Each action list is built incrementally from the current scenario state. Both menus preserve continuous numbering, omit unavailable actions and use whitespace to separate action groups without adding unnecessary submenu layers.
 
 World, combat-scenario, city, city-location, INN, travel, branch, inventory and status menus use iterative navigation and explicit back commands.

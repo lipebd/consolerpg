@@ -51,7 +51,7 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 
 Initialization includes:
 
-1. Creating the shared `Scanner`.
+1. Creating the shared `ConsoleInput`.
 2. Loading and validating external random character names.
 3. Loading playable-class definitions.
 4. Loading skill headers and ordered skill-effect components and creating `SkillCatalog`.
@@ -1059,7 +1059,11 @@ Important UI components include:
 
 `RewardModifierFormatter` produces shared multiplier text. Party status and the battle-reward screen show temporary global EXP and total party GOLD; the individual character screen separately shows that character's total EXP multiplier. The battle-reward screen intentionally does not list every ally's individual EXP modifier.
 
-`World` does not store a `Scanner`. Console input is handled by the components that require it.
+`Main` creates one shared `ConsoleInput`, which is passed to every component that reads player commands. `World` does not retain the input object after constructing its menus and battle services.
+
+`ConsoleInput` decodes input explicitly as UTF-8 and uses one daemon reader thread with an internal blocking queue. This allows timed UI pauses to discard complete commands entered while the game is not accepting actions. On Windows, it reads through `CONIN$` so an accidental `Ctrl+Z` can be ignored without terminating the campaign; other environments fall back to `System.in`.
+
+`ConsoleUI.pause(long, ConsoleInput)` marks the complete pause interval as input-discarding time. Characters may still be echoed by the native terminal, but discarded commands never become actions in a later menu.
 
 ## Currency presentation
 
