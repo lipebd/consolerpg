@@ -18,25 +18,17 @@ public final class CrafterCatalog {
 
 	public void register(CrafterDefinition crafterDefinition) {
 		if (crafterDefinition == null) {
-			throw new IllegalArgumentException(
-					"Crafter definition cannot be null."
-			);
+			throw new IllegalArgumentException("Crafter definition cannot be null.");
 		}
 
 		String crafterId = crafterDefinition.getId();
 
 		if (craftersById.containsKey(crafterId)) {
-			throw new IllegalArgumentException(
-					"Crafter ID is already registered: " + crafterId
-			);
+			throw new IllegalArgumentException("Crafter ID is already registered: " + crafterId);
 		}
 
 		craftersById.put(crafterId, crafterDefinition);
-		craftersByScenarioId
-				.computeIfAbsent(
-						crafterDefinition.getScenarioId(),
-						ignored -> new ArrayList<>()
-				)
+		craftersByScenarioId.computeIfAbsent(crafterDefinition.getScenarioId(), ignored -> new ArrayList<>())
 				.add(crafterDefinition);
 	}
 
@@ -48,17 +40,14 @@ public final class CrafterCatalog {
 		CrafterDefinition crafterDefinition = craftersById.get(crafterId);
 
 		if (crafterDefinition == null) {
-			throw new IllegalArgumentException(
-					"Crafter not found: " + crafterId
-			);
+			throw new IllegalArgumentException("Crafter not found: " + crafterId);
 		}
 
 		return crafterDefinition;
 	}
 
 	public List<CrafterDefinition> getByScenarioId(String scenarioId) {
-		List<CrafterDefinition> crafterDefinitions =
-				craftersByScenarioId.get(scenarioId);
+		List<CrafterDefinition> crafterDefinitions = craftersByScenarioId.get(scenarioId);
 
 		if (crafterDefinitions == null) {
 			return List.of();
