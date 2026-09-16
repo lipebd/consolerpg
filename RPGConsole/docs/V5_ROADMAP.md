@@ -291,9 +291,9 @@ The implementation should continue to favor:
 * [x] Test that escape and avoided encounters do not advance world time.
 * [x] Test that menus, shops, saving, loading and application restart do not advance world time.
 * [x] Test the exact moment of a global shop restock.
-* [ ] Test that every shop receives one complete new offer selection.
+* [x] Test that every shop receives one complete new offer selection.
 * [x] Test the sun and moon boundaries at 06:00 and 18:00.
-* [ ] Test saving and loading immediately before and after a restocking boundary.
+* [x] Test saving and loading immediately before and after a restocking boundary.
 * [x] Test that loading never causes an additional restock.
 
 ### Encrypted file container
@@ -332,82 +332,82 @@ The implementation should continue to favor:
 
 ### Campaign selection after the title screen
 
-* [*] Keep the existing `TitleScreen` presentation unchanged.
-* [*] Add a campaign-selection screen immediately after `TitleScreen`.
-* [*] Inspect, decrypt and validate `save.txt` before offering Continue.
-* [*] Display `[1] Continuar` and `[2] Novo Jogo` when a valid save exists.
-* [*] Display only `[1] Novo Jogo` when no valid campaign can be continued.
-* [*] Display a message stating that no active campaign exists when `save.txt` is absent.
-* [*] Distinguish an absent save from an existing save that cannot be loaded.
-* [*] Preserve an invalid or corrupted `save.txt` instead of deleting it automatically.
-* [*] Display a basic campaign summary when a valid save exists.
-* [*] Display the leader's name through `Party.getLeader()`.
-* [*] Display the leader's current level.
-* [*] Display the player-facing name of the saved city.
-* [*] Resolve the saved city through `ScenarioCatalog` instead of displaying its ID.
-* [*] Display the class icons of all saved party members in party order.
-* [*] Support a summary containing between one and four class icons.
-* [*] Avoid activating the saved campaign merely to produce its summary.
+* [x] Keep the existing `TitleScreen` presentation unchanged.
+* [x] Add a campaign-selection screen immediately after `TitleScreen`.
+* [x] Inspect, decrypt and validate `save.txt` before offering Continue.
+* [x] Display `[1] Continuar` and `[2] Novo Jogo` when a valid save exists.
+* [x] Display only `[1] Novo Jogo` when no valid campaign can be continued.
+* [x] Display a message stating that no active campaign exists when `save.txt` is absent.
+* [x] Distinguish an absent save from an existing save that cannot be loaded.
+* [x] Preserve an invalid or corrupted `save.txt` instead of deleting it automatically.
+* [x] Display a basic campaign summary when a valid save exists.
+* [x] Display the leader's name through `Party.getLeader()`.
+* [x] Display the leader's current level.
+* [x] Display the player-facing name of the saved city.
+* [x] Resolve the saved city through `ScenarioCatalog` instead of displaying its ID.
+* [x] Display the class icons of all saved party members in party order.
+* [x] Support a summary containing between one and four class icons.
+* [x] Avoid activating the saved campaign merely to produce its summary.
 
 ### New Game behavior
 
-* [*] Start a new campaign directly when no previous `save.txt` exists.
-* [*] Ask for confirmation before starting a new campaign when a previous save file exists.
-* [*] Explain that the previous campaign will be lost only if the new campaign is later saved.
-* [*] Allow cancellation and return to campaign selection.
-* [*] Keep the previous `save.txt` untouched after New Game is confirmed.
-* [*] Keep the previous campaign loadable if the new game is closed before its first save.
-* [*] Replace the previous save only after the new campaign completes a successful save operation.
-* [*] Never delete the previous save as a preliminary step before saving its replacement.
+* [x] Start a new campaign directly when no previous `save.txt` exists.
+* [x] Ask for confirmation before starting a new campaign when a previous save file exists.
+* [x] Explain that the previous campaign will be lost only if the new campaign is later saved.
+* [x] Allow cancellation and return to campaign selection.
+* [x] Keep the previous `save.txt` untouched after New Game is confirmed.
+* [x] Keep the previous campaign loadable if the new game is closed before its first save.
+* [x] Replace the previous save only after the new campaign completes a successful save operation.
+* [x] Never delete the previous save as a preliminary step before saving its replacement.
 
 ### Loading and validation
 
-* [*] Read and validate the encrypted container before decrypting its payload.
-* [*] Authenticate and decrypt the payload before parsing campaign properties.
-* [*] Reject unsupported save-format versions.
-* [*] Validate every loaded class, skill, item, equipment, scenario and world ID against the current catalogs.
-* [*] Validate party size as a minimum of one and maximum of four characters.
-* [*] Validate that the first restored member is the player-created protagonist and party leader.
-* [*] Preserve the saved party order.
-* [*] Validate character levels, EXP and current HP, MP and SP.
-* [*] Validate learned skills against character class and progression rules.
-* [*] Validate equipped-item ownership and compatibility.
-* [*] Validate saved GOLD and inventory quantities.
-* [*] Validate generated shop offers and remaining stock.
-* [*] Reject negative, overflowing or out-of-range numeric values.
-* [*] Reject unknown, missing or duplicated IDs.
-* [*] Reject structurally inconsistent collection counts and indexes.
-* [*] Reject a saved current scenario that is not a valid city associated with an INN.
-* [*] Construct a complete candidate runtime state before replacing the active state.
-* [*] Prevent partial state changes when any loading stage fails.
-* [*] Preserve the current runtime state when a load attempt is rejected.
-* [*] Display a clear player-facing reason when the campaign cannot be loaded.
+* [x] Read and validate the encrypted container before decrypting its payload.
+* [x] Authenticate and decrypt the payload before parsing campaign properties.
+* [x] Reject unsupported save-format versions.
+* [x] Validate every loaded class, skill, item, equipment, scenario and world ID against the current catalogs.
+* [x] Validate party size as a minimum of one and maximum of four characters.
+* [x] Validate that the first restored member is the player-created protagonist and party leader.
+* [x] Preserve the saved party order.
+* [x] Validate character levels, EXP and current HP, MP and SP.
+* [x] Validate learned skills against character class and progression rules.
+* [x] Validate equipped-item ownership and compatibility.
+* [x] Validate saved GOLD and inventory quantities.
+* [x] Validate generated shop offers and remaining stock.
+* [x] Reject negative, overflowing or out-of-range numeric values.
+* [x] Reject unknown, missing or duplicated IDs.
+* [x] Reject structurally inconsistent collection counts and indexes.
+* [x] Reject a saved current scenario that is not a valid city associated with an INN.
+* [x] Construct a complete candidate runtime state before replacing the active state.
+* [x] Prevent partial state changes when any loading stage fails.
+* [x] Preserve the current runtime state when a load attempt is rejected.
+* [x] Display a clear player-facing reason when the campaign cannot be loaded.
 
 ### INN save flow
 
-* [*] Add save access to every INN.
-* [*] Display `Salvar e continuar`.
-* [*] Display `Salvar e encerrar`.
-* [*] Allow the player to return without saving.
-* [*] Charge no GOLD for either save option.
-* [*] Make both options use the same atomic save operation.
-* [*] Display a success message after `Salvar e continuar`.
-* [*] Return to the appropriate INN flow after `Salvar e continuar`.
-* [*] Display a success message after `Salvar e encerrar`.
-* [*] Terminate the application only after `Salvar e encerrar` succeeds.
-* [*] Keep the application running when `Salvar e encerrar` fails.
-* [*] Never overwrite the previous save when the new operation fails.
+* [x] Add save access to every INN.
+* [x] Display `Salvar e continuar`.
+* [x] Display `Salvar e encerrar`.
+* [x] Allow the player to return without saving.
+* [x] Charge no GOLD for either save option.
+* [x] Make both options use the same atomic save operation.
+* [x] Display a success message after `Salvar e continuar`.
+* [x] Return to the appropriate INN flow after `Salvar e continuar`.
+* [x] Display a success message after `Salvar e encerrar`.
+* [x] Terminate the application only after `Salvar e encerrar` succeeds.
+* [x] Keep the application running when `Salvar e encerrar` fails.
+* [x] Never overwrite the previous save when the new operation fails.
 
 ### Exit-without-saving flow
 
-* [*] Find every gameplay menu that currently displays `[0] Encerrar Jogo`.
-* [*] Replace direct termination with a confirmation step.
-* [*] Explain that campaign progress after the last save will be lost.
-* [*] Allow the player to cancel and return to the previous menu.
-* [*] Terminate without saving after explicit confirmation.
-* [*] Leave the existing `save.txt` unchanged when exiting without saving.
-* [*] Display the warning consistently even when no unsaved-change tracker exists.
-* [*] Do not add implicit saving to ordinary exit operations.
+* [x] Find every gameplay menu that currently displays `[0] Encerrar Jogo`.
+* [x] Replace direct termination with a confirmation step.
+* [x] Explain that campaign progress after the last save will be lost.
+* [x] Allow the player to cancel and return to the previous menu.
+* [x] Terminate without saving after explicit confirmation.
+* [x] Leave the existing `save.txt` unchanged when exiting without saving.
+* [x] Display the warning consistently even when no unsaved-change tracker exists.
+* [x] Do not add implicit saving to ordinary exit operations.
 
 ### Save-state documentation
 
@@ -415,7 +415,7 @@ The implementation should continue to favor:
 * [x] Mark the document as a planned contract until save and load are implemented.
 * [x] Separate persisted, derived and transient runtime state.
 * [x] Document the encrypted outer container independently from the decrypted property schema.
-* [*] Map every persisted property to its domain source and validation rules.
+* [x] Map every persisted property to its domain source and validation rules.
 * [x] Document the required reconstruction and validation order.
 * [x] Document the campaign-selection, New Game, Continue, INN-save and exit-without-saving flows.
 * [x] Document numeric resource and playable-level boundaries.
