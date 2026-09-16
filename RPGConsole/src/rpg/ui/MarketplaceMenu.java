@@ -8,7 +8,6 @@ import rpg.marketplace.MarketplaceListing;
 import rpg.marketplace.MarketplaceTransactionService;
 import rpg.marketplace.MarketplacePurchaseResult;
 import rpg.marketplace.PendingReward;
-import rpg.marketplace.RewardStatus;
 import rpg.marketplace.ListingStatus;
 import rpg.marketplace.MarketplaceRewardClaimResult;
 import rpg.items.ItemCatalog;
@@ -21,13 +20,11 @@ public final class MarketplaceMenu {
 	private final List<MarketplaceListing> listings;
 	private final ItemCatalog itemCatalog;
 	private final MarketplaceTransactionService transactionService;
-	private final List<PendingReward> pendingRewards;
 
 	public MarketplaceMenu(Scanner scanner,
 			List<MarketplaceListing> listings,
 			ItemCatalog itemCatalog,
-			MarketplaceTransactionService transactionService,
-			List<PendingReward> pendingRewards) {
+			MarketplaceTransactionService transactionService) {
 		
 		this.scanner = Objects.requireNonNull(
 				scanner,
@@ -44,10 +41,6 @@ public final class MarketplaceMenu {
 		this.transactionService = Objects.requireNonNull(
 		        transactionService,
 		        "Transaction service cannot be null."
-		);
-		this.pendingRewards = Objects.requireNonNull(
-		        pendingRewards,
-		        "Pending rewards cannot be null."
 		);
 	}
 
@@ -251,13 +244,8 @@ public final class MarketplaceMenu {
 	private void showRewards() {
 	    System.out.println("\n[RECOMPENSAS]");
 
-	    List<PendingReward> availableRewards = new ArrayList<>();
-
-	    for (PendingReward reward : pendingRewards) {
-	        if (reward.getStatus() == RewardStatus.PENDING) {
-	            availableRewards.add(reward);
-	        }
-	    }
+	    List<PendingReward> availableRewards =
+	            transactionService.getPendingRewardsForCurrentPlayer();
 
 	    if (availableRewards.isEmpty()) {
 	        System.out.println();

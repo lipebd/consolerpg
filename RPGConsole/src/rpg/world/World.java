@@ -174,11 +174,12 @@ public class World {
 		                this.party,
 		                this.itemCatalog,
 		                "local-player", // Place-Holder, it will not be a local player in the future
+		                listings,
 		                transactions,
 		                pendingRewards
 		        );
 		
-		this.marketplaceMenu = new MarketplaceMenu(scanner, listings, this.itemCatalog, marketplaceTransactionService, pendingRewards);
+		this.marketplaceMenu = new MarketplaceMenu(scanner, listings, this.itemCatalog, marketplaceTransactionService);
 
 		// Shared random generator and gameplay services
 		this.random = new Random();

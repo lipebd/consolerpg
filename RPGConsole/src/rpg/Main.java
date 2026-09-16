@@ -58,6 +58,8 @@ import rpg.world.travel.TravelCatalog;
 import rpg.world.travel.TravelProgress;
 import rpg.world.travel.TravelRouteLoader;
 
+import rpg.dev.DevMode;
+
 // Starts the game and controls its initial execution.
 public class Main {
 
@@ -126,13 +128,13 @@ public class Main {
 					scenarioDefinitionCatalog,
 					combatScenarioDefinitionCatalog,
 					enemyCatalog
-			);
+					);
 			ScenarioBranchLoader scenarioBranchLoader = new ScenarioBranchLoader();
 			scenarioBranchCatalog = scenarioBranchLoader.load(
 					Path.of("data", "scenario_branches.txt"),
 					scenarioDefinitionCatalog,
 					combatScenarioDefinitionCatalog
-			);
+					);
 			scenarioCatalog = new ScenarioCatalog();
 			ScenarioFactory scenarioFactory = new ScenarioFactory();
 			for (ScenarioDefinition definition : scenarioDefinitionCatalog.getAll()) {
@@ -148,7 +150,7 @@ public class Main {
 					Path.of("data", "travel_routes.txt"),
 					scenarioDefinitionCatalog,
 					combatScenarioDefinitionCatalog
-			);
+					);
 			travelProgress = new TravelProgress(travelCatalog);
 
 		} catch (IOException | IllegalArgumentException exception) {
@@ -170,11 +172,23 @@ public class Main {
 				12, // RES
 				12, // VEL
 				10 // LCK
-		);
+				);
 
 		PlayableCharacter flagelo = new PlayableCharacter("Flagelo", flageloStats);
 
 		Party party = new Party(flagelo);
+
+		//Dev Mode calls
+
+		DevMode.applyStartingResources(
+				party,
+				itemCatalog
+				);
+
+		DevMode.applyProgress(
+				worldProgress,
+				travelProgress
+				);
 
 		CharacterStats bardoStats = new CharacterStats(
 				80, // HP
@@ -186,7 +200,7 @@ public class Main {
 				10, // RES
 				15, // VEL
 				14 // LCK
-		);
+				);
 
 		PlayableCharacter bardo = new PlayableCharacter("Bardo", bardoStats);
 
@@ -203,7 +217,7 @@ public class Main {
 				0,
 				10,
 				"Corre até o alvo e o atropela.\nCausa dano físico moderado e pode causar dano a si mesmo."
-		);
+				);
 
 		Skill perseveranca = new Skill(
 				"Perseverança",
@@ -217,7 +231,7 @@ public class Main {
 				10,
 				"Mesmo ferido, firma seus pés em batalha e avança sobre o inimigo causando dano físico."
 						+ "\nAo final do ataque, recupera uma pequena quantidade do próprio HP"
-		);
+				);
 
 		Skill palavraCurativa = new Skill(
 				"Palavra Curativa",
@@ -230,7 +244,7 @@ public class Main {
 				0,
 				10,
 				"Uma frase inspiradora, um grito de ajuda, ou apenas uma ordem, que restaura 35 de HP de um aliado."
-		);
+				);
 
 		Skill inspiracaoDoBardo = new Skill(
 				"Inspiração do Bardo",
@@ -243,7 +257,7 @@ public class Main {
 				0,
 				10,
 				"Inspira seus aliados, curando HP de todo o grupo."
-		);
+				);
 
 		Skill chamadoDosEcos = new Skill(
 				"Chamado dos Ecos (TEMP)",
@@ -257,7 +271,7 @@ public class Main {
 				10,
 				"Entra em um transe altruísta, invocando forças obscuras para normalizar e curar os aliados enquanto abre mão da sua própria cura."
 						+ "\nReforça a DEF e RES dos aliados em 2 pontos por 2 turnos."
-		);
+				);
 
 		Skill reviveUm = new Skill(
 				"Revive um (TEMP)",
@@ -270,7 +284,7 @@ public class Main {
 				0,
 				15,
 				"Skill de teste. Revive um aliado."
-		);
+				);
 
 		Skill reviveTodos = new Skill(
 				"Revive todos (TEMP)",
@@ -283,7 +297,7 @@ public class Main {
 				0,
 				15,
 				"Skill de teste. Revive todos os aliados."
-		);
+				);
 
 		flagelo.learnSkill(investida);
 		flagelo.learnSkill(perseveranca);
@@ -310,7 +324,7 @@ public class Main {
 				innCatalog,
 				scenarioBranchCatalog,
 				travelProgress
-		);
+				);
 
 		world.start();
 
