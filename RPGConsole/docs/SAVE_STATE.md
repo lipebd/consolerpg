@@ -1,6 +1,6 @@
 # RPGConsole — Save State
 
-> **Implementation status:** Version-1 campaign persistence is fully integrated. The game creates complete immutable snapshots, serializes and encrypts them into `save.txt`, atomically replaces the previous save, validates and reconstructs runtime state during loading, offers campaign selection after the title screen and provides save access exclusively through INNs. Remaining work is limited to additional automated verification and future schema evolution.
+> **Implementation status:** Version-1 campaign persistence is fully integrated. The game creates complete immutable snapshots, serializes and encrypts them into `save.txt`, atomically replaces the previous save, validates and reconstructs runtime state during loading, offers campaign selection after the title screen and provides save access exclusively through INNs. The implemented persistence scope has completed manual verification. Future work is limited to schema evolution for new campaign systems and the project's optional automated-testing study.
 
 ## Purpose
 

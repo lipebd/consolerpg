@@ -111,7 +111,7 @@ BattleCoordinator
 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
-| `Main` | Ponto de entrada / composição | Inicia a aplicação, cria o `Scanner`, carrega os arquivos externos, monta catálogos e serviços e escolhe entre criação normal e `--dev-party`. No fluxo normal, cria o protagonista e a `Party` somente depois da confirmação devolvida por `CharacterCreationMenu`; por fim, conecta as dependências e inicia `World`. Deve concentrar montagem, não regras de jogo. |
+| `Main` | Ponto de entrada / composição | Inicia a aplicação, cria o `ConsoleInput` compartilhado, carrega os arquivos externos, monta catálogos e serviços e escolhe entre `--dev-party` e o fluxo normal de seleção de campanha. No fluxo normal, ativa uma campanha restaurada ou cria o protagonista e a nova `Party`; por fim, conecta as dependências e inicia `World`. Deve concentrar montagem, não regras de jogo. |
 | `GameCurrency` | Utilitário de apresentação | Centraliza o nome visível da moeda e a formatação de valores numéricos. Não armazena ouro, define preços ou executa transações; essas responsabilidades pertencem aos respectivos estados e sistemas. |
 
 ---

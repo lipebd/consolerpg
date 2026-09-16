@@ -1,12 +1,12 @@
 # RPGConsole V5 Roadmap
 
-> **Planning status:** Part 1 records the completed integration of the contributed crafting system. Parts 2 through 5 preserve requirements transferred from the post-V4 backlog and remain open to refinement before their implementation boundaries are frozen.
+> **Planning status:** Parts 1 and 2 record the completed crafting integration and save-and-load implementation. Parts 3 through 5 preserve requirements transferred from the post-V4 backlog and remain open to refinement before their implementation boundaries are frozen.
 
 ## Release direction
 
-V5 begins by integrating data-driven crafting into the V4 architecture while preserving the project's existing catalog, inventory, world and interface conventions.
+V5 began by integrating data-driven crafting into the V4 architecture while preserving the project's existing catalog, inventory, world and interface conventions.
 
-The remaining V5 scope continues with save and load, world-progression decisions, deferred validation work and optional unit-testing study.
+Save and load are complete. The remaining V5 scope continues with world-progression decisions, deferred validation work and optional unit-testing study.
 
 The implementation should continue to favor:
 
@@ -437,14 +437,14 @@ The implementation should continue to favor:
 * [x] Test cancelling, starting and abandoning New Game while preserving the previous save.
 * [x] Test replacing the previous save only after the new campaign is successfully saved.
 * [x] Test cancelling and confirming exit without saving.
-* [ ] Test representative absent, malformed, tampered and unsupported-version save files.
+* [x] Test representative absent, malformed, tampered and unsupported-version save files.
 * [x] Test catalog-backed rejection of unknown IDs and inconsistent character data.
-* [ ] Test saved numeric boundaries and overflow rejection.
+* [x] Test saved numeric boundaries and overflow rejection.
 * [x] Test one complete campaign round trip containing equipment, learned skills, world progress, travel progress, world time and depleted shop stock.
-* [ ] Test that a failed save replacement preserves the previous valid file.
+* [x] Test that a failed save replacement preserves the previous valid file.
 * [x] Confirm that a failed load does not partially modify runtime state.
 * [x] Confirm that runtime output and `save.txt` are ignored by Git.
-* [ ] Verify that the portable Windows build contains no bundled save and supports save creation and loading.
+* [x] Verify that the portable Windows build contains no bundled save and supports save creation and loading.
 
 ---
 

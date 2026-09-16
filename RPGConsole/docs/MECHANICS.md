@@ -1251,7 +1251,7 @@ At every midnight, all registered shops restock globally. Each shop performs a c
 
 A replacement catalog is generated completely before world time and active shop state are committed. If generation fails, both the previous time and every previous shop state are preserved.
 
-Restarting the application still creates new clock and shop state because campaign loading is not yet connected to application initialization. The persistence foundation already stores clock and shop state in the same candidate snapshot; runtime reconstruction will restore both without treating loading as a restocking event.
+Continuing a saved campaign restores its fictional world time and complete active shop catalog without generating new offers or triggering an additional restock. A new campaign instead starts with the initial clock value and one newly generated shop catalog.
 
 ### Buying
 

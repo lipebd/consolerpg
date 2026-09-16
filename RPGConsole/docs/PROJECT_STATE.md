@@ -809,7 +809,7 @@ The fictional world clock and runtime shop-restocking cycle are functionally int
 - `WorldTimeFormatter` displays `☼` from 06:00 through 17:59 and `☾` from 18:00 through 05:59.
 - Clock progression, midnight restocking, restored stock, escape behavior and period-symbol boundaries were manually validated.
 
-## Save and load foundation
+## Save and load
 
 The version-1 persistence foundation is implemented through `rpg.persistence`.
 
@@ -854,9 +854,9 @@ Complete encrypted round trips, campaign reconstruction, valid and invalid start
 
 ## Current next step
 
-The complete V5 save-and-load flow is implemented and manually validated.
+The complete V5 save-and-load flow and its portable Windows integration are implemented and manually validated.
 
-The next persistence step is verification hardening: add focused automated tests for character levels 1, 19 and 20, loading around midnight-restocking boundaries and rejection of each invalid catalog-backed reference. Future quest, flag and permanent-unlock systems must extend the versioned schema before introducing mutable runtime state.
+The next V5 step is Part 3, `Exploration and world progression`. Its remaining behavior and progression decisions must be frozen before implementation begins. Future quest, flag and permanent-unlock systems must extend the versioned save schema before introducing new mutable runtime state.
 
 ## Important conventions
 
