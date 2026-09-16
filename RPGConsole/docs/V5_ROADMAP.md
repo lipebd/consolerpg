@@ -223,7 +223,7 @@ The implementation should continue to favor:
 * [x] Validate saved level and current EXP against the shared progression rules.
 * [x] Test reaching level 20 with exact and excess EXP.
 * [x] Test additional EXP rewards at level 20.
-* [ ] Test save and load at levels 1, 19 and 20.
+* [x] Test save and load at levels 1, 19 and 20.
 
 ### Numeric resource boundaries
 
