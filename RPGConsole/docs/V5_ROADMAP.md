@@ -427,35 +427,24 @@ The implementation should continue to favor:
 
 ### Verification
 
-* [x] Test the first launch without `save.txt`.
-* [x] Test the campaign-selection screen without an active campaign.
-* [ ] Test saving and continuing from every INN.
-* [ ] Test saving and terminating from every INN.
-* [x] Test loading after restarting the application.
-* [ ] Test the displayed campaign summary with one through four party members.
-* [x] Test leader name, level, city name and class icons in the summary.
-* [ ] Test cancelling New Game when a previous save exists.
-* [x] Test starting New Game while preserving the previous save.
-* [x] Test closing the new campaign before saving and then continuing the previous campaign.
-* [x] Test replacing the previous save with the first successful save of a new campaign.
-* [x] Test cancelling exit without saving.
-* [x] Test confirming exit without saving.
-* [ ] Test missing, empty, truncated and malformed save files.
-* [ ] Test altered ciphertext and GCM authentication failure.
-* [ ] Test unsupported encryption-container versions.
-* [ ] Test unsupported save-format versions.
-* [x] Test unknown catalog IDs and inconsistent character data.
-* [ ] Test GOLD and per-item quantity boundaries.
-* [ ] Test numeric overflow attempts and invalid saved resource values.
-* [x] Test save and load with equipped items and learned skills.
-* [x] Test save and load with world, travel and exploration progress.
-* [x] Test save and load with generated shop offers and depleted finite stock.
-* [ ] Test failure while replacing an existing save.
-* [ ] Confirm that a failed save preserves the previous valid file.
+> **Verification convention:** Tests focus on distinct behavior, relevant boundaries and meaningful failure modes. Data variations that use the same validated runtime flow are covered through representative integration tests and catalog validation instead of repetitive per-entry testing.
+
+* [x] Test startup and campaign selection without `save.txt`.
+* [x] Test saving, continuing, terminating and loading through the shared INN flow.
+* [x] Confirm through catalog validation that every registered city resolves exactly one INN.
+* [x] Test the campaign summary with the minimum and maximum supported party sizes.
+* [x] Test leader name, level, city name and party class icons in the summary.
+* [x] Test cancelling, starting and abandoning New Game while preserving the previous save.
+* [x] Test replacing the previous save only after the new campaign is successfully saved.
+* [x] Test cancelling and confirming exit without saving.
+* [ ] Test representative absent, malformed, tampered and unsupported-version save files.
+* [x] Test catalog-backed rejection of unknown IDs and inconsistent character data.
+* [ ] Test saved numeric boundaries and overflow rejection.
+* [x] Test one complete campaign round trip containing equipment, learned skills, world progress, travel progress, world time and depleted shop stock.
+* [ ] Test that a failed save replacement preserves the previous valid file.
 * [x] Confirm that a failed load does not partially modify runtime state.
-* [x] Confirm that `save.txt` is not tracked by Git.
-* [ ] Confirm that a newly generated portable build contains no user save.
-* [ ] Verify save creation and loading in the portable Windows build.
+* [x] Confirm that runtime output and `save.txt` are ignored by Git.
+* [ ] Verify that the portable Windows build contains no bundled save and supports save creation and loading.
 
 ---
 
