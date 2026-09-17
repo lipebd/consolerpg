@@ -1,0 +1,1 @@
+# id;questId;step;order;objectiveType;targetId;requiredQuantity;text

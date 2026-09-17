@@ -115,7 +115,7 @@ Use `data/quest_steps.txt`:
 
 ---
 
-## 2. Quest objectives and synchronous progress
+## 2. Quest objectives and core progress
 
 ### Objective data
 
@@ -183,19 +183,25 @@ Quantity and target rules:
 * Progress results are returned to the interface instead of being printed by the domain service.
 * Quest notifications are transient and remain outside the save schema.
 
-### Implementation checklist
+### Part 2A — Objective-definition checklist
 
-* [ ] Implement and validate all eight objective types.
+* [x] Create and validate all eight immutable objective-definition types.
+* [x] Load objective definitions through the complete quest aggregate.
+* [x] Require every quest step to contain at least one objective.
+* [x] Validate global objective IDs, step-local order and type-target uniqueness.
+* [x] Validate target presence and required quantities by objective type.
+* [x] Validate transactional delivery-step composition.
+* [x] Keep objectives nested in their owning steps without a separate catalog.
+
+### Parts 2B and 2C — Core-progress checklist
+
 * [ ] Create mutable active-objective counters separate from immutable definitions.
-* [ ] Implement `QuestProgressService` with explicit result objects.
-* [ ] Integrate confirmed NPC conversations, battle outcomes, Analyze, inventory acquisition, scenario arrival and narrative dungeon completion.
-* [ ] Implement transactional item delivery.
+* [ ] Represent `NOT_STARTED`, `ACTIVE` and `COMPLETED` quest status.
+* [ ] Load complete quest definitions before mutable quest progress is created.
+* [ ] Implement `QuestProgressService` with explicit input and result objects.
 * [ ] Prevent one event from progressing both the completed step and the step it just activated.
 * [ ] Allow later ordered events to affect a newly activated step.
 * [ ] Return ordered, groupable progress results to the caller.
-* [ ] Load and validate immutable objective definitions.
-* [ ] Reject steps without objectives after objective loading is complete.
-* [ ] Load complete quest definitions before mutable quest progress is created.
 
 ---
 
@@ -470,10 +476,11 @@ Frozen rules:
 * [ ] Implement linear Enter-driven dialogue presentation.
 * [ ] Implement the stable NPC interaction submenu without a generic dialogue-choice engine.
 * [ ] Validate every quest starting NPC reference after both catalogs are available.
+* [ ] Integrate confirmed NPC conversations and transactional item delivery with quest progress.
 
 ---
 
-## 6. Quest interface and interaction markers
+## 6. Gameplay integration, quest interface and interaction markers
 
 ### Quest menu
 
@@ -516,6 +523,7 @@ Frozen rules:
 * [ ] Derive actionable NPC markers.
 * [ ] Propagate markers to visible locations, cities and immediate travel presentation.
 * [ ] Confirm that markers do not expose unmet requirements or inaccessible content.
+* [ ] Integrate confirmed battle outcomes, Analyze, inventory acquisition, scenario arrival and narrative dungeon completion with quest progress.
 
 ---
 
