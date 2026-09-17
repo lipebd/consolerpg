@@ -18,10 +18,9 @@ import rpg.enemies.EnemyDefinition;
 import rpg.enemies.EnemyDropCatalog;
 import rpg.items.Item;
 import rpg.items.ItemCatalog;
-import rpg.marketplace.MarketplaceListing;
-import rpg.marketplace.MarketplaceTransaction;
-import rpg.marketplace.PendingReward;
 import rpg.marketplace.MarketplaceTransactionService;
+import rpg.marketplace.repository.MarketplaceRepository;
+import rpg.marketplace.api.MarketplaceApiClient;
 import rpg.ui.BattleRewardScreen;
 import rpg.ui.CityLocationMenu;
 import rpg.ui.CityMenu;
@@ -84,6 +83,7 @@ public class World {
 	private final CombatScenarioMenu combatScenarioMenu;
 	private final EpicEncounterMenu epicEncounterMenu;
 	private final ShopMenu shopMenu;
+	private final MarketplaceRepository marketplaceRepository;
 	private final MarketplaceMenu marketplaceMenu;
 
 	private final ItemCatalog itemCatalog;
@@ -126,7 +126,9 @@ public class World {
 			CityTransportCatalog cityTransportCatalog,
 			InnCatalog innCatalog,
 			ScenarioBranchCatalog scenarioBranchCatalog,
-			TravelProgress travelProgress
+			TravelProgress travelProgress,
+			MarketplaceRepository marketplaceRepository,
+			MarketplaceApiClient marketplaceApiClient
 			
 	) {
 
@@ -150,36 +152,18 @@ public class World {
 		this.cityTransportCatalog = Objects
 				.requireNonNull(cityTransportCatalog, "City transport catalog cannot be null.");
 		this.worldProgress.discover(this.currentScenario.getId());
-		
-		// Trading Post data
-		
-		List<MarketplaceListing> listings = new ArrayList<>();
-		
-		List<MarketplaceTransaction> transactions = new ArrayList<>();
-
-		List<PendingReward> pendingRewards = new ArrayList<>();
-		
-		listings.add(
-		        new MarketplaceListing(
-		                "listing-001",
-		                "cesar",
-		                "meruma",
-		                1,
-		                5
-		        )
-		);
+		this.marketplaceRepository = Objects.requireNonNull(marketplaceRepository, "Marketplace repository cannot be null.");
 		
 		MarketplaceTransactionService marketplaceTransactionService =
 		        new MarketplaceTransactionService(
 		                this.party,
 		                this.itemCatalog,
 		                "local-player", // Place-Holder, it will not be a local player in the future
-		                listings,
-		                transactions,
-		                pendingRewards
+		                this.marketplaceRepository,
+		                marketplaceApiClient
 		        );
 		
-		this.marketplaceMenu = new MarketplaceMenu(scanner, listings, this.itemCatalog, marketplaceTransactionService);
+		this.marketplaceMenu = new MarketplaceMenu(scanner, this.itemCatalog, marketplaceTransactionService);
 
 		// Shared random generator and gameplay services
 		this.random = new Random();

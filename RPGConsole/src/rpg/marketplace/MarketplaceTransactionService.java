@@ -4,27 +4,30 @@ import java.util.List;
 import java.util.Objects;
 import java.util.ArrayList;
 import java.util.Map;
+import java.io.IOException;
 
 import rpg.characters.Party;
 import rpg.items.Item;
 import rpg.items.ItemCatalog;
+import rpg.marketplace.repository.MarketplaceRepository;
+import rpg.marketplace.api.CreateListingRequest;
+import rpg.marketplace.api.MarketplaceApiClient;
+import rpg.marketplace.api.MarketplaceListingResponse;
 
 public class MarketplaceTransactionService {
 
 	private final Party party;
 	private final ItemCatalog itemCatalog;
 	private final String playerId;
-	private final List<MarketplaceTransaction> transactions;
-	private final List<PendingReward> pendingRewards;
-	private final List<MarketplaceListing> listings;
+	private final MarketplaceRepository repository;
+	private final MarketplaceApiClient marketplaceApiClient;
 
 	public MarketplaceTransactionService(
 			Party party,
 			ItemCatalog itemCatalog,
 			String playerId,
-			List<MarketplaceListing> listings,
-			List<MarketplaceTransaction> transactions,
-			List<PendingReward> pendingRewards) {
+			MarketplaceRepository repository,
+			MarketplaceApiClient marketplaceApiClient) {
 
 		this.party = Objects.requireNonNull(
 				party,
@@ -41,20 +44,15 @@ public class MarketplaceTransactionService {
 				"Player ID cannot be null."
 				);
 
-		this.listings = Objects.requireNonNull(
-				listings,
-				"Listings cannot be null."
+		this.repository = Objects.requireNonNull(
+				repository,
+				"Marketplace repository cannot be null."
 				);
-
-		this.transactions = Objects.requireNonNull(
-				transactions,
-				"Transactions cannot be null."
-				);
-
-		this.pendingRewards = Objects.requireNonNull(
-				pendingRewards,
-				"Pending rewards cannot be null."
-				);
+		
+		this.marketplaceApiClient = Objects.requireNonNull(
+	            marketplaceApiClient,
+	            "Marketplace API client cannot be null."
+	    );
 	}
 
 	public MarketplacePurchaseResult purchase(
@@ -119,7 +117,7 @@ public class MarketplaceTransactionService {
 			int totalPrice) {
 
 		String transactionId =
-				"transaction-" + (transactions.size() + 1);
+				"transaction-" + (repository.getAllTransactions().size() + 1);
 
 		MarketplaceTransaction transaction =
 				new MarketplaceTransaction(
@@ -132,10 +130,10 @@ public class MarketplaceTransactionService {
 						listing.getUnitPrice()
 						);
 
-		transactions.add(transaction);
+		repository.addTransaction(transaction);
 
 		String rewardId =
-				"reward-" + (pendingRewards.size() + 1);
+				"reward-" + (repository.getAllPendingRewards().size() + 1);
 
 		PendingReward reward =
 				new PendingReward(
@@ -145,74 +143,105 @@ public class MarketplaceTransactionService {
 						totalPrice
 						);
 
-		pendingRewards.add(reward);
+		repository.addPendingReward(reward);
 	}
 
 	public MarketplaceListingCreationResult createListing(
-			String itemId,
-			int quantity,
-			int unitPrice) {
+	        String itemId,
+	        int quantity,
+	        int unitPrice) {
 
-		if (itemId == null || itemId.isBlank()) {
-			return MarketplaceListingCreationResult.INVALID_ITEM;
-		}
+	    if (itemId == null || itemId.isBlank()) {
+	        return MarketplaceListingCreationResult.INVALID_ITEM;
+	    }
 
-		if (quantity <= 0) {
-			return MarketplaceListingCreationResult.INVALID_QUANTITY;
-		}
+	    if (quantity <= 0) {
+	        return MarketplaceListingCreationResult.INVALID_QUANTITY;
+	    }
 
-		if (unitPrice <= 0) {
-			return MarketplaceListingCreationResult.INVALID_UNIT_PRICE;
-		}
+	    if (unitPrice <= 0) {
+	        return MarketplaceListingCreationResult.INVALID_UNIT_PRICE;
+	    }
 
-		Item item;
+	    Item item;
 
-		try {
-			item = itemCatalog.getById(itemId);
-		} catch (IllegalArgumentException exception) {
-			return MarketplaceListingCreationResult.INVALID_ITEM;
-		}
+	    try {
+	        item = itemCatalog.getById(itemId);
+	    } catch (IllegalArgumentException exception) {
+	        return MarketplaceListingCreationResult.INVALID_ITEM;
+	    }
 
-		if (party.getInventory().getQuantity(item) < quantity) {
-			return MarketplaceListingCreationResult.INSUFFICIENT_ITEMS;
-		}
+	    if (party.getInventory().getQuantity(item) < quantity) {
+	        return MarketplaceListingCreationResult.INSUFFICIENT_ITEMS;
+	    }
 
-		String listingId = String.format(
-				"listing-%03d",
-				listings.size() + 1
-				);
+	    if (!party.getInventory().removeItem(item, quantity)) {
+	        return MarketplaceListingCreationResult.INVENTORY_ERROR;
+	    }
 
-		MarketplaceListing listing =
-				new MarketplaceListing(
-						listingId,
-						playerId,
-						itemId,
-						quantity,
-						unitPrice
-						);
+	    CreateListingRequest request =
+	            new CreateListingRequest(
+	                    playerId,
+	                    itemId,
+	                    quantity,
+	                    unitPrice
+	            );
 
-		if (!party.getInventory().removeItem(item, quantity)) {
-			return MarketplaceListingCreationResult.INVENTORY_ERROR;
-		}
+	    MarketplaceListingResponse response;
 
-		listings.add(listing);
+	    try {
+	        response = marketplaceApiClient.createListing(request);
 
-		return MarketplaceListingCreationResult.SUCCESS;
+	    } catch (InterruptedException exception) {
+	        Thread.currentThread().interrupt();
+
+	        party.getInventory().addItem(item, quantity);
+
+	        return MarketplaceListingCreationResult.API_UNAVAILABLE;
+
+	    } catch (IOException exception) {
+	        party.getInventory().addItem(item, quantity);
+
+	        return MarketplaceListingCreationResult.API_UNAVAILABLE;
+	    }
+
+	    MarketplaceListing listing =
+	            response.toMarketplaceListing();
+
+	    repository.addListing(listing);
+
+	    return MarketplaceListingCreationResult.SUCCESS;
 	}
 
 	public List<MarketplaceListing> getListingsForCurrentPlayer() {
 		List<MarketplaceListing> playerListings =
 				new ArrayList<>();
 
-		for (MarketplaceListing listing : listings) {
+		for (MarketplaceListing listing : repository.getAllListings()) {
+
 			if (listing.getSellerId().equals(playerId)
 					&& listing.getStatus() != ListingStatus.CANCELLED) {
-				
+
 				playerListings.add(listing);
 			}
 		}
 
 		return playerListings;
+	}
+
+	public List<MarketplaceListing> getActiveListings() {
+		List<MarketplaceListing> activeListings =
+				new ArrayList<>();
+
+		for (MarketplaceListing listing
+				: repository.getAllListings()) {
+
+			if (listing.getStatus() == ListingStatus.ACTIVE) {
+				activeListings.add(listing);
+			}
+		}
+
+		return activeListings;
 	}
 
 	public MarketplaceListingCancellationResult cancelListing(
@@ -305,7 +334,7 @@ public class MarketplaceTransactionService {
 	public List<PendingReward> getPendingRewardsForCurrentPlayer() {
 		List<PendingReward> playerRewards = new ArrayList<>();
 
-		for (PendingReward reward : pendingRewards) {
+		for (PendingReward reward : repository.getAllPendingRewards()) {
 			if (reward.getStatus() == RewardStatus.PENDING
 					&& reward.getSellerId().equals(playerId)) {
 

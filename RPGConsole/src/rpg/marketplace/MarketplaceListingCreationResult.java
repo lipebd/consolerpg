@@ -7,6 +7,7 @@ public enum MarketplaceListingCreationResult {
     INVALID_QUANTITY,
     INVALID_UNIT_PRICE,
     INSUFFICIENT_ITEMS,
-    INVENTORY_ERROR
+    INVENTORY_ERROR,
+    API_UNAVAILABLE
 
 }

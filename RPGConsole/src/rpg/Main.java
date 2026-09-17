@@ -5,6 +5,9 @@ import java.nio.file.Path;
 import java.util.Random;
 import java.util.Scanner;
 
+import rpg.marketplace.api.MarketplaceApiClient;
+import rpg.marketplace.api.MarketplaceListingResponse;
+
 import rpg.characters.CharacterStats;
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
@@ -57,6 +60,9 @@ import rpg.world.transport.CityTransportLoader;
 import rpg.world.travel.TravelCatalog;
 import rpg.world.travel.TravelProgress;
 import rpg.world.travel.TravelRouteLoader;
+
+import rpg.marketplace.repository.MarketplaceRepository;
+import rpg.marketplace.repository.InMemoryMarketplaceRepository;
 
 import rpg.dev.DevMode;
 
@@ -189,6 +195,43 @@ public class Main {
 				worldProgress,
 				travelProgress
 				);
+		
+		MarketplaceRepository marketplaceRepository =
+		        new InMemoryMarketplaceRepository();
+		
+		MarketplaceApiClient marketplaceApiClient =
+		        new MarketplaceApiClient("http://localhost:8080");
+
+		try {
+		    for (MarketplaceListingResponse response
+		            : marketplaceApiClient.getActiveListings()) {
+
+		        marketplaceRepository.addListing(
+		                response.toMarketplaceListing()
+		        );
+		    }
+
+		    System.out.println(
+		            "[MARKETPLACE] Anúncios online carregados."
+		    );
+
+		} catch (InterruptedException exception) {
+		    Thread.currentThread().interrupt();
+
+		    System.out.println(
+		            "[MARKETPLACE] Carregamento interrompido."
+		    );
+
+		} catch (IOException exception) {
+		    System.out.println(
+		            "[MARKETPLACE] API indisponível. "
+		            + "O jogo continuará com o mercado local."
+		    );
+		}
+
+		DevMode.applyMarketplaceData(
+		        marketplaceRepository
+		);
 
 		CharacterStats bardoStats = new CharacterStats(
 				80, // HP
@@ -323,7 +366,9 @@ public class Main {
 				cityTransportCatalog,
 				innCatalog,
 				scenarioBranchCatalog,
-				travelProgress
+				travelProgress,
+				marketplaceRepository,
+				marketplaceApiClient
 				);
 
 		world.start();
