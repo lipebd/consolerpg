@@ -394,7 +394,7 @@ public class Main {
         CharacterCreationMenu characterCreationMenu =
                 new CharacterCreationMenu(consoleInput, characterNameSelector);
 
-		PlayableClassDefinition flageloDefinition = playableClassCatalog.getById("flagelo");
+		PlayableClassDefinition flageloDefinition = playableClassCatalog.getById("flagelo_iniciante");
 
 		Optional<String> protagonistName = characterCreationMenu.open(flageloDefinition);
 

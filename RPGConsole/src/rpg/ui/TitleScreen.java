@@ -5,18 +5,19 @@ package rpg.ui;
 public final class TitleScreen {
 
     private static final String GAME_TITLE =
-            "RPG CONSOLE — V4";
+            "RPG CONSOLE — V6";
 
     private TitleScreen() {
     }
 
     public static void show(ConsoleInput consoleInput) {
-        System.out.println(
+        String gameTitle = "             \u001B[36m" + GAME_TITLE + "\u001B[0m";
+	System.out.println(
                 "========================================"
         );
-
+        
         System.out.println(
-                "             " + GAME_TITLE
+                gameTitle
         );
 
         System.out.println(

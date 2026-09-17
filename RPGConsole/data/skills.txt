@@ -1,7 +1,7 @@
 # id;classId;acquisitionType;levelRequirement;mpCost;spCost;name;description
 # Flagelo
-investida;flagelo;STARTER;1;0;10;Investida;Corre até o alvo e o atropela, causando dano físico moderado.\nO impacto pode fazer com que sofra parte do dano causado, sem ser nocauteado pelo recuo.
-quebra_armadura;flagelo;STARTER;3;0;20;Quebra-Armadura;Golpeia e estilhaça a proteção do inimigo, causando dano físico.\nReduz a DEF do alvo em 1 estágio por 2 turnos.
+investida;flagelo_iniciante;LEVEL;1;0;10;Investida;Corre até o alvo e o atropela, causando dano físico moderado.\nO impacto pode fazer com que sofra parte do dano causado, sem ser nocauteado pelo recuo.
+quebra_armadura;flagelo_iniciante;LEVEL;3;0;20;Quebra-Armadura;Golpeia e estilhaça a proteção do inimigo, causando dano físico.\nReduz a DEF do alvo em 1 estágio por 2 turnos.
 golpe_experiente;flagelo;LEVEL;7;0;40;Golpe Experiente;Ataca um ponto vulnerável do inimigo, causando dano físico.\nReduz DEF e RES do alvo em 2 estágios por 2 turnos.
 grito_de_guerra;flagelo;LEVEL;10;0;35;Grito de "Guerra";Ignora a dor e solta um grito que eleva a própria moral.\nAumenta ATK, DEF e RES em 1 estágio por 2 turnos.
 perseveranca;flagelo;LEVEL;15;0;40;Perseverança;Mesmo ferido, firma os pés em batalha e avança contra o inimigo, causando dano físico.\nAo final do ataque, recupera parte do próprio HP de acordo com seu ATK.
