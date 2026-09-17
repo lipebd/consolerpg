@@ -284,11 +284,11 @@ Frozen rules:
 
 ### Part 3B — Requirement-definition checklist
 
-* [ ] Create immutable requirement and requirement-set definitions.
-* [ ] Load requirement sets in stable declared order.
-* [ ] Validate requirement types, values, order and catalog references.
-* [ ] Reject duplicated and contradictory requirements within one set.
-* [ ] Reject malformed requirement data before partially populating the catalog.
+* [x] Create immutable requirement and requirement-set definitions.
+* [x] Load requirement sets in stable declared order.
+* [x] Validate requirement types, values, order and catalog references.
+* [x] Reject duplicated and contradictory requirements within one set.
+* [x] Reject malformed requirement data before partially populating the catalog.
 
 ### Part 3C — Evaluation and quest-availability checklist
 
