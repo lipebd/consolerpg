@@ -274,16 +274,28 @@ Frozen rules:
 
 ### Implementation checklist
 
-* [ ] Create immutable flag and requirement definitions.
-* [ ] Create mutable set-only campaign flag state.
-* [ ] Implement pure requirement evaluation against party, inventory, quests and flags.
-* [ ] Validate requirement types, values, order and catalog references during startup.
-* [ ] Reject quest-availability self-dependencies and cycles.
-* [ ] Integrate requirement evaluation with quest offers, narrative locations and NPC placements.
-* [ ] Audit existing route, branch, portal and service data before choosing their exact requirement columns.
-* [ ] Add physical-access integration only where the first five quests require it.
-* [ ] Avoid a generic `access_rules.txt` layer unless the code audit demonstrates a concrete need.
+### Part 3A — Permanent-flag checklist
+
+* [x] Create immutable flag definitions and a stable ordered catalog.
+* [x] Load and validate external flag IDs and descriptions.
+* [x] Create mutable set-only campaign flag state.
+* [x] Keep repeated flag assignment idempotent.
+* [x] Reject unknown flag IDs before mutating campaign state.
+
+### Part 3B — Requirement-definition checklist
+
+* [ ] Create immutable requirement and requirement-set definitions.
+* [ ] Load requirement sets in stable declared order.
+* [ ] Validate requirement types, values, order and catalog references.
+* [ ] Reject duplicated and contradictory requirements within one set.
+* [ ] Reject malformed requirement data before partially populating the catalog.
+
+### Part 3C — Evaluation and quest-availability checklist
+
+* [ ] Implement pure uncached requirement evaluation against party, inventory, quests and flags.
 * [ ] Validate every quest availability requirement-set reference after both catalogs are available.
+* [ ] Reject quest-availability self-dependencies and dependency cycles.
+* [ ] Reevaluate requirements immediately before every protected action.
 
 ---
 
@@ -495,6 +507,7 @@ Frozen rules:
 * [ ] Implement the stable NPC interaction submenu without a generic dialogue-choice engine.
 * [ ] Validate every quest starting NPC reference after both catalogs are available.
 * [ ] Integrate confirmed NPC conversations and transactional item delivery with quest progress.
+* [ ] Integrate requirement evaluation with quest offers, narrative locations and NPC placements.
 
 ---
 
@@ -863,6 +876,8 @@ The companion participates in the story before joining the party and shares the 
 * [ ] Implement and validate Quest 5.
 * [ ] Confirm that permanent route and scenario progression matches the approved campaign order.
 * [ ] Confirm that all five quests are completable from a new campaign without development shortcuts.
+* [ ] Audit existing route, branch, portal and service data against the access needs of the first five quests.
+* [ ] Add physical-access requirement integration only where approved quest content requires it.
 
 ---
 
