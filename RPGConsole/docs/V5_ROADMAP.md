@@ -1,12 +1,12 @@
 # RPGConsole V5 Roadmap
 
-> **Planning status:** Parts 1 and 2 record the completed crafting integration and save-and-load implementation. Parts 3 through 5 preserve requirements transferred from the post-V4 backlog and remain open to refinement before their implementation boundaries are frozen.
+> **Planning status:** Parts 1 and 2 record the completed crafting and save-and-load systems. Part 3 defines the frozen remaining V5 implementation scope. Quest-dependent progression, deferred maintenance and optional unit-testing study have been transferred to future V6 planning.
 
 ## Release direction
 
 V5 began by integrating data-driven crafting into the V4 architecture while preserving the project's existing catalog, inventory, world and interface conventions.
 
-Save and load are complete. The remaining V5 scope continues with world-progression decisions, deferred validation work and optional unit-testing study.
+Crafting and save and load are complete. The remaining V5 scope implements special-area guarantees, persistent dungeon progression, recurring dungeon bosses and cooldown-aware optional epic encounters. After Part 3 is implemented, validated and documented, V5 proceeds to release preparation.
 
 The implementation should continue to favor:
 
@@ -448,83 +448,121 @@ The implementation should continue to favor:
 
 ---
 
-## 3. Exploration and world progression
+## 3. Exploration and dungeon progression
 
-### Exploration behavior decisions
+> **Frozen V5 scope:** Part 3 completes the remaining V5 gameplay work. Active exploration sessions remain transient. Only permanent dungeon progression and encounter availability extend the campaign save. Quest-dependent class paths, world flags and generalized access requirements are transferred to future V6 planning.
 
-* [ ] Decide whether some special areas guarantee a specific event.
-* [ ] Evaluate exploration checkpoints.
-* [ ] Evaluate camps and temporary recovery.
-* [ ] Decide how completed dungeons behave when revisited.
-* [ ] Define which exploration state persists between application executions.
-* [ ] Align persistent exploration state with the save-file contract.
+### Special-area event guarantee
 
-### Level-7 class change
+* [x] Convert a direct `NOTHING` result in a special area into `REWARD`.
+* [x] Convert a later merchant result into `REWARD` when that exploration session has already encountered its merchant in a special area.
+* [x] Keep normal-area `NOTHING` and repeated-merchant behavior unchanged.
+* [x] Require an eligible special-area reward pool whenever a special area can resolve to `REWARD` through its configured reward chance or fallback behavior.
+* [x] Keep special-area encounter and reward filtering based on `NORMAL_ONLY`, `SPECIAL_ONLY` and `ANY`.
+* [x] Redirect an unavailable epic-encounter result to `BATTLE` instead of `NOTHING` in both normal and special areas.
 
-> **Deferred design:** The complete class-path flow must be defined before implementation. Its equipment consequence is already frozen.
+### Exploration boundaries
 
-* [ ] Define the complete level-7 class-path decision.
-* [ ] Define where and when the decision becomes available.
-* [ ] Define the consequences of changing class or remaining a Flagelo.
-* [ ] Return all three equipped items to inventory before applying the class decision.
-* [ ] Grant the chosen class's level-7 starter weapon and armor, including when the character remains a Flagelo.
-* [ ] Display narrative guidance telling the player to open the equipment menu and equip the new set.
-* [ ] Prevent the class decision from being applied more than once to the same character.
-* [ ] Prepare the chosen class path for save data.
+* [x] Keep exploration checkpoints outside V5.
+* [x] Keep camps and temporary full-party recovery outside V5.
+* [x] Preserve INNs as the exclusive save locations.
+* [x] Keep exploration position, current area, merchant occurrence and epic-offer state transient.
+* [x] Continue discarding the active `ExplorationSession` after leaving the scenario or activating rescue.
 
-### World flags and access requirements
+### Dungeon definitions
 
-> **Deferred:** Implement these requirements only after quests and relevant progression systems provide real state to evaluate. Do not introduce placeholder access abstractions before then.
+Update `data/dungeons.txt` to use:
 
-* [ ] Create stable world-progress flags for quests, story events and permanent unlocks.
-* [ ] Define reusable access requirements for routes, branches, portals and services.
-* [ ] Evaluate access requirements against party level, inventory, completed quests and world flags.
-* [ ] Support multiple simultaneous requirements for the same access point.
-* [ ] Decide whether unmet requirements hide an action or display it as blocked with a player-facing reason.
-* [ ] Replace blanket route unlocking with explicit progress triggers where required.
-* [ ] Prepare world flags, completed quests and route unlocks for save data.
-* [ ] Test access requirements with every supported requirement type.
-* [ ] Test combinations of multiple simultaneous requirements.
-* [ ] Test persistence of permanent unlocks after restarting the application.
+```text
+# scenarioId;bossEnemyIds;recurringBossEnemyIds;recurringBossCooldownHours;epicEnemyIds;epicMinPosition;epicAreaRestriction;epicEnemyCooldownHours
+```
+
+* [x] Keep the narrative boss group mandatory and restricted to one through three `BOSS` enemies.
+* [x] Add a mandatory recurring-boss group restricted to one through three `BOSS` enemies.
+* [x] Allow the narrative and recurring groups to reference the same enemy IDs.
+* [x] Add a positive recurring-boss cooldown expressed in fictional world hours.
+* [x] Require every dungeon to define a group of one through three `EPIC` enemies while keeping the offered encounter optional for the player.
+* [x] Prevent epic enemies from also belonging to either boss group.
+* [x] Add an epic minimum exploration position before the dungeon's final position.
+* [x] Add an epic area restriction using `NORMAL_ONLY`, `SPECIAL_ONLY` or `ANY`.
+* [x] Add a positive epic cooldown expressed in fictional world hours.
+* [x] Require every dungeon to define a positive `epicEncounterChance`.
+* [x] Validate that `SPECIAL_ONLY` epic encounters belong to dungeons capable of producing special areas.
+* [x] Preserve the existing global event-chance limit and strict startup validation.
+
+### Persistent dungeon progress
+
+* [x] Add mutable campaign-level `DungeonProgress`, separate from immutable dungeon definitions and transient exploration sessions.
+* [x] Record whether each dungeon's narrative boss has been defeated.
+* [x] Record the next elapsed world hour when its recurring boss becomes available.
+* [x] Record the next elapsed world hour when its epic encounter becomes available.
+* [x] Keep epic encounters initially available.
+* [x] Start the first recurring-boss cooldown after the narrative boss is defeated.
+* [x] Restart the recurring-boss cooldown only after a recurring-boss victory.
+* [x] Restart the epic cooldown only after an epic-encounter victory.
+* [x] Calculate cooldown availability after applying the hour consumed by the completed victory.
+* [x] Keep refusal, escape, defeat and abandoned exploration from starting a cooldown.
+* [x] Reject unknown dungeon IDs, duplicated progress entries and invalid availability values.
+
+### Dungeon runtime behavior
+
+* [x] Keep the narrative boss mandatory at the final position until the dungeon receives its first completion.
+* [x] Mark the narrative completion only after victory.
+* [x] Keep otherwise-unlocked adjacent routes available permanently after the narrative completion.
+* [x] Allow completed dungeons to be explored during recurring-boss cooldowns.
+* [x] Start the mandatory recurring-boss battle at the final position when its cooldown has ended.
+* [x] Complete the current exploration without a final boss when the recurring boss remains in cooldown.
+* [x] Preserve the existing boss-escape behavior by keeping the session at the final position.
+* [x] Keep optional epic encounters random and limited to one offer per exploration session.
+* [x] Offer an epic only when its minimum position, area restriction, session availability and persistent cooldown all permit it.
+* [x] Redirect an ineligible epic result to a regular battle using the current area's encounter pool.
+* [x] Keep an accepted epic battle independent from the mandatory final boss.
+* [x] Keep recurring-boss and epic respawn hours hidden from the player in V5.
+* [x] Evaluate recurring-boss and epic availability when their encounters are reached instead of snapshotting availability when an exploration session begins.
+
+### Save-format integration
+
+* [x] Extend the immutable campaign snapshot with dungeon-progress state.
+* [x] Serialize and deserialize narrative completion and both availability hours through canonical dungeon IDs.
+* [x] Validate and reconstruct complete candidate dungeon progress before activating a loaded campaign.
+* [x] Add dungeon progress to the restored runtime supplied to `World`.
+* [x] Increase the authenticated internal save-format version from 1 to 2.
+* [x] Keep the encrypted outer-container version unchanged.
+* [x] Reject internal version-1 development saves without migration.
+* [x] Preserve atomic save replacement and all-or-nothing campaign restoration.
+* [x] Keep `ExplorationSession` and its temporary fields outside the save schema.
+
+### Verification and closure
+
+* [x] Test representative normal- and special-area fallback behavior.
+* [x] Test first dungeon completion, permanent route access and save/load restoration.
+* [x] Test a completed dungeon with the recurring boss available and in cooldown.
+* [x] Test recurring-boss cooldown boundaries using elapsed world hours.
+* [x] Test epic eligibility by minimum position, area type, session state and cooldown.
+* [x] Test representative epic non-victory and victory outcomes without redundant permutations.
+* [x] Test one version-2 campaign round trip containing dungeon completion and both cooldown states.
+* [x] Test representative malformed dungeon data and invalid saved dungeon progress.
+* [x] Run focused regressions for exploration, bosses, epics, rescue, routes, world time and existing save/load behavior.
+* [x] Update architecture, mechanics, data-format, save-state and project-state documentation after the implementation is approved.
+* [x] Review the complete Part 3 diff and create one consolidated milestone commit.
 
 ---
 
-## 4. Deferred validation and maintainability
+## Transferred to V6 planning
 
-> Crafting-specific validation is tracked in Part 1. Save/load and world-progression validation remain with their respective feature sections.
+The following work no longer belongs to the V5 release boundary:
 
-### Gameplay regression
+* Quest definitions, quest runtime state, objectives, completion and persistence.
+* Stable world flags and access requirements backed by real quest and progression state.
+* The level-7 class-path decision as the final stage of the future `Os Sete Caminhos` quest.
+* The class-choice ceremony, recommendation, free choice, allied-class selection and first ally recruitment.
+* Equipment replacement during the class decision, including returning all equipped items and granting the chosen level-7 starter set.
+* Quest- and flag-driven route, branch, portal, service and subsequent-quest unlocks.
+* Remaining malformed playable-class and skill-data regression.
+* Remaining equipment-progression regression.
+* Loader error-message, duplicate-ID, unknown-reference and partial-population consistency.
+* Focused maintainability review after the relevant data formats stabilize.
+* Optional JUnit and unit-testing study, which remains non-blocking.
+* Future bestiary presentation of recurring-boss and epic respawn times.
 
-* [ ] Test malformed skill and playable-class data.
-* [x] Test battles after skill, effect, class and equipment integration.
-* [x] Test party rewards and level-ups after class progression.
-* [ ] Test equipment changes during normal progression.
-* [x] Test character creation.
-* [x] Test full-party rescue.
-* [ ] Test the future level-7 class decision and equipment replacement flow.
-
-### Data validation consistency
-
-* [ ] Standardize remaining external-data loaders so validation errors report the source file, line number and content ID whenever available.
-* [ ] Standardize duplicate-ID reporting across catalogs.
-* [ ] Standardize unknown-reference reporting across external data files.
-* [ ] Confirm that every loader rejects invalid data before partially populating its catalog.
-
-### Maintainability review
-
-* [ ] Review compact functional-style code and replace it with clearer imperative code when this improves maintainability without changing behavior.
-* [ ] Review duplicated parsing and validation patterns after all V5 data formats are stable.
-* [ ] Keep presentation, orchestration, immutable definitions and mutable runtime state separated.
-* [ ] Update architecture, mechanics, data-format and project-state documentation as V5 systems are frozen.
-
----
-
-## 5. Optional unit-testing study
-
-> **Optional:** This part does not block V5 unless automated testing is explicitly adopted as a release requirement.
-
-* [ ] Study the purpose and structure of unit tests.
-* [ ] Evaluate adding JUnit to the project.
-* [ ] Create a small isolated unit-test suite as a learning exercise.
-* [ ] Compare automated unit tests with the project's existing manual functional and regression tests.
-* [ ] Evaluate crafting transactions and save-data validation as possible first automated-test subjects.
+A dedicated V6 roadmap will refine these requirements after V5 is released. Placeholder quest, class-path, flag and generalized access structures must not be introduced during V5.

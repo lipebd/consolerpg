@@ -1,18 +1,11 @@
 package rpg.persistence;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.HashSet;
 import java.util.Set;
 
-import rpg.world.shops.ShopCatalog;
-import rpg.world.shops.ShopDefinition;
-import rpg.world.shops.ShopOfferState;
-import rpg.world.shops.ShopState;
-import rpg.world.shops.ShopStateCatalog;
-import rpg.world.shops.ShopStockCatalog;
-import rpg.world.shops.ShopStockEntry;
 import rpg.battle.rewards.PartyRewardModifierState;
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
@@ -36,14 +29,16 @@ import rpg.world.inns.InnCatalog;
 import rpg.world.scenarios.City;
 import rpg.world.scenarios.Scenario;
 import rpg.world.scenarios.ScenarioCatalog;
+import rpg.world.shops.ShopCatalog;
+import rpg.world.shops.ShopDefinition;
+import rpg.world.shops.ShopOfferState;
+import rpg.world.shops.ShopState;
+import rpg.world.shops.ShopStateCatalog;
+import rpg.world.shops.ShopStockCatalog;
+import rpg.world.shops.ShopStockEntry;
 import rpg.world.travel.TravelCatalog;
 import rpg.world.travel.TravelProgress;
-import rpg.characters.Party;
-import rpg.world.WorldClock;
-import rpg.world.WorldProgress;
-import rpg.world.scenarios.Scenario;
-import rpg.world.shops.ShopStateCatalog;
-import rpg.world.travel.TravelProgress;
+import rpg.world.scenarios.DungeonProgress;
 
 // Validates campaign snapshots against current definitions and reconstructs runtime state.
 public final class CampaignSnapshotRestorer {
@@ -69,19 +64,25 @@ public final class CampaignSnapshotRestorer {
 			TravelCatalog travelCatalog,
 			ShopCatalog shopCatalog,
 			ShopStockCatalog shopStockCatalog,
-			CharacterGrowthCalculator growthCalculator
-	) {
-		this.playableClassCatalog = Objects
-				.requireNonNull(playableClassCatalog, "Playable class catalog cannot be null.");
+            CharacterGrowthCalculator growthCalculator) {
+        this.playableClassCatalog =
+                Objects.requireNonNull(
+                        playableClassCatalog, "Playable class catalog cannot be null.");
 		this.skillCatalog = Objects.requireNonNull(skillCatalog, "Skill catalog cannot be null.");
-		this.equipmentCatalog = Objects.requireNonNull(equipmentCatalog, "Equipment catalog cannot be null.");
-		this.growthCalculator = Objects.requireNonNull(growthCalculator, "Character growth calculator cannot be null.");
+        this.equipmentCatalog =
+                Objects.requireNonNull(equipmentCatalog, "Equipment catalog cannot be null.");
+        this.growthCalculator =
+                Objects.requireNonNull(
+                        growthCalculator, "Character growth calculator cannot be null.");
 		this.itemCatalog = Objects.requireNonNull(itemCatalog, "Item catalog cannot be null.");
-		this.scenarioCatalog = Objects.requireNonNull(scenarioCatalog, "Scenario catalog cannot be null.");
+        this.scenarioCatalog =
+                Objects.requireNonNull(scenarioCatalog, "Scenario catalog cannot be null.");
 		this.innCatalog = Objects.requireNonNull(innCatalog, "INN catalog cannot be null.");
-		this.travelCatalog = Objects.requireNonNull(travelCatalog, "Travel catalog cannot be null.");
+        this.travelCatalog =
+                Objects.requireNonNull(travelCatalog, "Travel catalog cannot be null.");
 		this.shopCatalog = Objects.requireNonNull(shopCatalog, "Shop catalog cannot be null.");
-		this.shopStockCatalog = Objects.requireNonNull(shopStockCatalog, "Shop stock catalog cannot be null.");
+        this.shopStockCatalog =
+                Objects.requireNonNull(shopStockCatalog, "Shop stock catalog cannot be null.");
 	}
 
 	public RestoredCampaign restore(CampaignSnapshot snapshot) {
@@ -95,6 +96,8 @@ public final class CampaignSnapshotRestorer {
 
 		TravelProgress travelProgress = restoreTravelProgress(snapshot.getWorld());
 
+        DungeonProgress dungeonProgress = restoreDungeonProgress(snapshot.getWorld());
+
 		WorldClock worldClock = restoreWorldClock(snapshot.getWorld());
 
 		ShopStateCatalog shopStateCatalog = restoreShopStates(snapshot.getShops());
@@ -104,9 +107,9 @@ public final class CampaignSnapshotRestorer {
 				currentScenario,
 				worldProgress,
 				travelProgress,
+                dungeonProgress,
 				worldClock,
-				shopStateCatalog
-		);
+                shopStateCatalog);
 	}
 
 	ShopStateCatalog restoreShopStates(List<ShopSnapshot> snapshots) {
@@ -119,7 +122,8 @@ public final class CampaignSnapshotRestorer {
 			Objects.requireNonNull(snapshot, "Shop snapshot cannot be null.");
 
 			if (!restoredShopIds.add(snapshot.getShopId())) {
-				throw new IllegalArgumentException("Shop snapshot is duplicated: " + snapshot.getShopId());
+                throw new IllegalArgumentException(
+                        "Shop snapshot is duplicated: " + snapshot.getShopId());
 			}
 
 			ShopState shopState = restoreShopState(snapshot);
@@ -129,7 +133,8 @@ public final class CampaignSnapshotRestorer {
 
 		for (ShopDefinition shopDefinition : shopCatalog.getAll()) {
 			if (!restoredShopIds.contains(shopDefinition.getId())) {
-				throw new IllegalArgumentException("Saved campaign is missing shop state: " + shopDefinition.getId());
+                throw new IllegalArgumentException(
+                        "Saved campaign is missing shop state: " + shopDefinition.getId());
 			}
 		}
 
@@ -141,8 +146,8 @@ public final class CampaignSnapshotRestorer {
 
 		if (snapshot.getActiveOffers().size() > shopDefinition.getOfferSlots()) {
 			throw new IllegalArgumentException(
-					"Saved active offers exceed the configured slots for shop: " + shopDefinition.getId()
-			);
+                    "Saved active offers exceed the configured slots for shop: "
+                            + shopDefinition.getId());
 		}
 
 		List<ShopOfferState> restoredOffers = new ArrayList<>();
@@ -151,13 +156,14 @@ public final class CampaignSnapshotRestorer {
 			ShopStockEntry stockEntry = shopStockCatalog.getById(offerSnapshot.getStockEntryId());
 
 			if (!stockEntry.getShopId().equals(shopDefinition.getId())) {
-				throw new IllegalArgumentException("Saved offer belongs to another shop: " + stockEntry.getId());
+                throw new IllegalArgumentException(
+                        "Saved offer belongs to another shop: " + stockEntry.getId());
 			}
 
 			if (offerSnapshot.getRemainingStock() > stockEntry.getInitialStock()) {
 				throw new IllegalArgumentException(
-						"Saved remaining stock exceeds the canonical initial stock: " + stockEntry.getId()
-				);
+                        "Saved remaining stock exceeds the canonical initial stock: "
+                                + stockEntry.getId());
 			}
 
 			ShopOfferState offerState = new ShopOfferState(stockEntry);
@@ -169,7 +175,8 @@ public final class CampaignSnapshotRestorer {
 			}
 
 			if (offerState.getRemainingStock() != offerSnapshot.getRemainingStock()) {
-				throw new IllegalStateException("Restored shop stock differs from the snapshot: " + stockEntry.getId());
+                throw new IllegalStateException(
+                        "Restored shop stock differs from the snapshot: " + stockEntry.getId());
 			}
 
 			restoredOffers.add(offerState);
@@ -185,14 +192,12 @@ public final class CampaignSnapshotRestorer {
 
 		if (!(currentScenario instanceof City)) {
 			throw new IllegalArgumentException(
-					"Saved current scenario is not a city: " + snapshot.getCurrentScenarioId()
-			);
+                    "Saved current scenario is not a city: " + snapshot.getCurrentScenarioId());
 		}
 
 		if (innCatalog.findByScenarioId(currentScenario.getId()).isEmpty()) {
 			throw new IllegalArgumentException(
-					"Saved current city does not provide an INN: " + currentScenario.getId()
-			);
+                    "Saved current city does not provide an INN: " + currentScenario.getId());
 		}
 
 		return currentScenario;
@@ -209,8 +214,8 @@ public final class CampaignSnapshotRestorer {
 
 		if (!worldProgress.isDiscovered(snapshot.getCurrentScenarioId())) {
 			throw new IllegalStateException(
-					"Validated current scenario was not restored as discovered: " + snapshot.getCurrentScenarioId()
-			);
+                    "Validated current scenario was not restored as discovered: "
+                            + snapshot.getCurrentScenarioId());
 		}
 
 		return worldProgress;
@@ -227,6 +232,37 @@ public final class CampaignSnapshotRestorer {
 
 		return travelProgress;
 	}
+
+    DungeonProgress restoreDungeonProgress(WorldSnapshot snapshot) {
+        Objects.requireNonNull(snapshot, "World snapshot cannot be null.");
+
+        DungeonProgress dungeonProgress = new DungeonProgress(scenarioCatalog);
+        Set<String> restoredDungeonIds = new HashSet<>();
+
+        for (DungeonProgressSnapshot dungeonSnapshot : snapshot.getDungeonProgressSnapshots()) {
+            String dungeonId = dungeonSnapshot.getDungeonId();
+
+            if (!restoredDungeonIds.add(dungeonId)) {
+                throw new IllegalArgumentException(
+                        "Dungeon progress snapshot is duplicated: " + dungeonId);
+            }
+
+            dungeonProgress.restoreState(
+                    dungeonId,
+                    dungeonSnapshot.isNarrativeBossDefeated(),
+                    dungeonSnapshot.getRecurringBossAvailableAtHour(),
+                    dungeonSnapshot.getEpicAvailableAtHour());
+        }
+
+        for (String dungeonId : dungeonProgress.getDungeonIds()) {
+            if (!restoredDungeonIds.contains(dungeonId)) {
+                throw new IllegalArgumentException(
+                        "Saved campaign is missing dungeon progress: " + dungeonId);
+            }
+        }
+
+        return dungeonProgress;
+    }
 
 	WorldClock restoreWorldClock(WorldSnapshot snapshot) {
 		Objects.requireNonNull(snapshot, "World snapshot cannot be null.");
@@ -249,7 +285,8 @@ public final class CampaignSnapshotRestorer {
 			PlayableCharacter member = restoredMembers.get(index);
 
 			if (!party.addMember(member)) {
-				throw new IllegalStateException("Validated party member could not be restored: " + member.getName());
+                throw new IllegalStateException(
+                        "Validated party member could not be restored: " + member.getName());
 			}
 		}
 
@@ -269,26 +306,29 @@ public final class CampaignSnapshotRestorer {
 
 			if (!inventory.addItem(item, snapshot.getQuantity())) {
 				throw new IllegalStateException(
-						"Validated inventory entry could not be restored: " + snapshot.getItemId()
-				);
+                        "Validated inventory entry could not be restored: " + snapshot.getItemId());
 			}
 		}
 	}
 
-	private void restoreRewardModifiers(PartyRewardModifierState modifierState, PartySnapshot snapshot) {
+    private void restoreRewardModifiers(
+            PartyRewardModifierState modifierState, PartySnapshot snapshot) {
 		RewardModifierSnapshot experienceModifier = snapshot.getExperienceRewardModifier();
 		RewardModifierSnapshot goldModifier = snapshot.getGoldRewardModifier();
 
-		if (experienceModifier.isActive() && !modifierState.activateExperienceModifier(
+        if (experienceModifier.isActive()
+                && !modifierState.activateExperienceModifier(
 				experienceModifier.getModifierPercent(),
-				experienceModifier.getVictoriesRemaining()
-		)) {
-			throw new IllegalStateException("Validated experience reward modifier could not be restored.");
+                        experienceModifier.getVictoriesRemaining())) {
+            throw new IllegalStateException(
+                    "Validated experience reward modifier could not be restored.");
 		}
 
-		if (goldModifier.isActive() && !modifierState
-				.activateGoldModifier(goldModifier.getModifierPercent(), goldModifier.getVictoriesRemaining())) {
-			throw new IllegalStateException("Validated GOLD reward modifier could not be restored.");
+        if (goldModifier.isActive()
+                && !modifierState.activateGoldModifier(
+                        goldModifier.getModifierPercent(), goldModifier.getVictoriesRemaining())) {
+            throw new IllegalStateException(
+                    "Validated GOLD reward modifier could not be restored.");
 		}
 
 		validateRewardModifiers(modifierState, experienceModifier, goldModifier);
@@ -297,14 +337,17 @@ public final class CampaignSnapshotRestorer {
 	private void validateRewardModifiers(
 			PartyRewardModifierState modifierState,
 			RewardModifierSnapshot experienceModifier,
-			RewardModifierSnapshot goldModifier
-	) {
-		boolean experienceDiffers = modifierState.getExperienceModifierPercent() != experienceModifier
-				.getModifierPercent()
-				|| modifierState.getExperienceVictoriesRemaining() != experienceModifier.getVictoriesRemaining();
+            RewardModifierSnapshot goldModifier) {
+        boolean experienceDiffers =
+                modifierState.getExperienceModifierPercent()
+                                != experienceModifier.getModifierPercent()
+                        || modifierState.getExperienceVictoriesRemaining()
+                                != experienceModifier.getVictoriesRemaining();
 
-		boolean goldDiffers = modifierState.getGoldModifierPercent() != goldModifier.getModifierPercent()
-				|| modifierState.getGoldVictoriesRemaining() != goldModifier.getVictoriesRemaining();
+        boolean goldDiffers =
+                modifierState.getGoldModifierPercent() != goldModifier.getModifierPercent()
+                        || modifierState.getGoldVictoriesRemaining()
+                                != goldModifier.getVictoriesRemaining();
 
 		if (experienceDiffers || goldDiffers) {
 			throw new IllegalStateException("Restored reward modifiers differ from the snapshot.");
@@ -316,15 +359,16 @@ public final class CampaignSnapshotRestorer {
 
 		validateProgression(snapshot);
 
-		PlayableClassDefinition classDefinition = playableClassCatalog.getById(snapshot.getClassId());
+        PlayableClassDefinition classDefinition =
+                playableClassCatalog.getById(snapshot.getClassId());
 
-		PlayableCharacter character = new PlayableCharacter(
+        PlayableCharacter character =
+                new PlayableCharacter(
 				snapshot.getName(),
 				classDefinition,
 				skillCatalog.getByClassId(classDefinition.getId()),
 				growthCalculator,
-				snapshot.getLevel()
-		);
+                        snapshot.getLevel());
 
 		restoreExperience(character, snapshot);
 		restoreLearnedSkills(character, snapshot);
@@ -343,64 +387,70 @@ public final class CampaignSnapshotRestorer {
 		if (PlayableCharacterLevelRules.isMaximumLevel(level)) {
 			if (experience != 0) {
 				throw new IllegalArgumentException(
-						"Maximum-level character experience must be zero: " + snapshot.getName()
-				);
+                        "Maximum-level character experience must be zero: " + snapshot.getName());
 			}
 
 			return;
 		}
 
-		int requiredExperience = PlayableCharacterLevelRules.getExperienceRequiredForNextLevel(level);
+        int requiredExperience =
+                PlayableCharacterLevelRules.getExperienceRequiredForNextLevel(level);
 
 		if (experience >= requiredExperience) {
 			throw new IllegalArgumentException(
-					"Character experience reaches or exceeds the next-level requirement: " + snapshot.getName()
-			);
+                    "Character experience reaches or exceeds the next-level requirement: "
+                            + snapshot.getName());
 		}
 	}
 
-	private void restoreExperience(PlayableCharacter character, PlayableCharacterSnapshot snapshot) {
+    private void restoreExperience(
+            PlayableCharacter character, PlayableCharacterSnapshot snapshot) {
 		if (snapshot.getExperience() > 0) {
 			int acceptedExperience = character.gainExperience(snapshot.getExperience());
 
 			if (acceptedExperience != snapshot.getExperience()) {
 				throw new IllegalArgumentException(
-						"Character experience could not be restored completely: " + snapshot.getName()
-				);
+                        "Character experience could not be restored completely: "
+                                + snapshot.getName());
 			}
 		}
 
-		if (character.getLevel() != snapshot.getLevel() || character.getExperience() != snapshot.getExperience()) {
+        if (character.getLevel() != snapshot.getLevel()
+                || character.getExperience() != snapshot.getExperience()) {
 			throw new IllegalArgumentException(
-					"Restored character progression differs from the snapshot: " + snapshot.getName()
-			);
+                    "Restored character progression differs from the snapshot: "
+                            + snapshot.getName());
 		}
 	}
 
-	private void restoreLearnedSkills(PlayableCharacter character, PlayableCharacterSnapshot snapshot) {
+    private void restoreLearnedSkills(
+            PlayableCharacter character, PlayableCharacterSnapshot snapshot) {
 		for (String skillId : snapshot.getLearnedSkillIds()) {
 			SkillDefinition skillDefinition = skillCatalog.getById(skillId);
 
 			if (!skillDefinition.isScrollSkill()) {
-				throw new IllegalArgumentException("Saved learned skill is not a scroll skill: " + skillId);
+                throw new IllegalArgumentException(
+                        "Saved learned skill is not a scroll skill: " + skillId);
 			}
 
 			SkillLearningResult result = character.learnSkill(skillDefinition);
 
 			if (result != SkillLearningResult.LEARNED) {
 				throw new IllegalArgumentException(
-						"Saved skill could not be restored: " + skillId + " (" + result + ")"
-				);
+                        "Saved skill could not be restored: " + skillId + " (" + result + ")");
 			}
 		}
 	}
 
 	private void restoreEquipment(PlayableCharacter character, EquipmentSnapshot snapshot) {
-		WeaponDefinition weapon = snapshot.getWeaponItemId().map(equipmentCatalog::getWeaponByItemId).orElse(null);
+        WeaponDefinition weapon =
+                snapshot.getWeaponItemId().map(equipmentCatalog::getWeaponByItemId).orElse(null);
 
-		ArmorDefinition armor = snapshot.getArmorItemId().map(equipmentCatalog::getArmorByItemId).orElse(null);
+        ArmorDefinition armor =
+                snapshot.getArmorItemId().map(equipmentCatalog::getArmorByItemId).orElse(null);
 
-		TrinketDefinition trinket = snapshot.getTrinketItemId().map(equipmentCatalog::getTrinketByItemId).orElse(null);
+        TrinketDefinition trinket =
+                snapshot.getTrinketItemId().map(equipmentCatalog::getTrinketByItemId).orElse(null);
 
 		validateEquipmentCompatibility(character, weapon, armor, trinket);
 
@@ -421,18 +471,20 @@ public final class CampaignSnapshotRestorer {
 			PlayableCharacter character,
 			WeaponDefinition weapon,
 			ArmorDefinition armor,
-			TrinketDefinition trinket
-	) {
+            TrinketDefinition trinket) {
 		if (weapon != null && !character.canEquip(weapon)) {
-			throw new IllegalArgumentException("Saved weapon is incompatible with character: " + weapon.getItemId());
+            throw new IllegalArgumentException(
+                    "Saved weapon is incompatible with character: " + weapon.getItemId());
 		}
 
 		if (armor != null && !character.canEquip(armor)) {
-			throw new IllegalArgumentException("Saved armor is incompatible with character: " + armor.getItemId());
+            throw new IllegalArgumentException(
+                    "Saved armor is incompatible with character: " + armor.getItemId());
 		}
 
 		if (trinket != null && !character.canEquip(trinket)) {
-			throw new IllegalArgumentException("Saved trinket is incompatible with character: " + trinket.getItemId());
+            throw new IllegalArgumentException(
+                    "Saved trinket is incompatible with character: " + trinket.getItemId());
 		}
 	}
 
@@ -443,8 +495,8 @@ public final class CampaignSnapshotRestorer {
 
 		if (!character.restoreAllResources()) {
 			throw new IllegalStateException(
-					"Newly reconstructed character could not restore resources: " + snapshot.getName()
-			);
+                    "Newly reconstructed character could not restore resources: "
+                            + snapshot.getName());
 		}
 
 		int spentMp = character.getMaxMp() - snapshot.getCurrentMp();
@@ -452,23 +504,26 @@ public final class CampaignSnapshotRestorer {
 		int lostHp = character.getMaxHp() - snapshot.getCurrentHp();
 
 		if (spentMp > 0 && !character.spendMp(spentMp)) {
-			throw new IllegalStateException("Character MP restoration failed: " + snapshot.getName());
+            throw new IllegalStateException(
+                    "Character MP restoration failed: " + snapshot.getName());
 		}
 
 		if (spentSp > 0 && !character.spendSp(spentSp)) {
-			throw new IllegalStateException("Character SP restoration failed: " + snapshot.getName());
+            throw new IllegalStateException(
+                    "Character SP restoration failed: " + snapshot.getName());
 		}
 
 		if (lostHp > 0 && character.takeDamage(lostHp) != lostHp) {
-			throw new IllegalStateException("Character HP restoration failed: " + snapshot.getName());
+            throw new IllegalStateException(
+                    "Character HP restoration failed: " + snapshot.getName());
 		}
 	}
 
-	private void validateResource(int currentValue, int maximumValue, String resourceName, String characterName) {
+    private void validateResource(
+            int currentValue, int maximumValue, String resourceName, String characterName) {
 		if (currentValue > maximumValue) {
 			throw new IllegalArgumentException(
-					"Saved " + resourceName + " exceeds the character maximum: " + characterName
-			);
+                    "Saved " + resourceName + " exceeds the character maximum: " + characterName);
 		}
 	}
-}
+}

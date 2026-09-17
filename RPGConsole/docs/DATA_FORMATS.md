@@ -811,28 +811,48 @@ File:
 
 `data/dungeons.txt`
 
-Each active dungeon line contains exactly 3 fields:
+Each active dungeon line contains exactly 8 fields:
 
 ```text
-# scenarioId;bossEnemyIds;epicEnemyIds
+# scenarioId;bossEnemyIds;recurringBossEnemyIds;recurringBossCooldownHours;epicEnemyIds;epicMinPosition;epicAreaRestriction;epicEnemyCooldownHours
 ```
 
 Example:
 
 ```text
-gruta_relamparrocha;mestre_eletrogoblin;relampagolem
+gruta_relamparrocha;mestre_eletrogoblin;mestre_eletrogoblin;4;relampagolem;1;ANY;6
 ```
+
+| Position | Field | Type | Example |
+|---|---|---|---|
+| 1 | Dungeon scenario ID | Stable ID | `gruta_relamparrocha` |
+| 2 | Narrative boss enemy IDs | Comma-separated ID group | `mestre_eletrogoblin` |
+| 3 | Recurring boss enemy IDs | Comma-separated ID group | `mestre_eletrogoblin` |
+| 4 | Recurring boss cooldown | Positive integer world hours | `4` |
+| 5 | Epic enemy IDs | Comma-separated ID group | `relampagolem` |
+| 6 | Epic minimum position | Positive integer | `1` |
+| 7 | Epic area restriction | `ExplorationAreaRestriction` | `ANY` |
+| 8 | Epic cooldown | Positive integer world hours | `6` |
 
 Rules:
 
 - `scenarioId` must reference an existing `DUNGEON`.
 - The dungeon must also have combat-scenario data.
-- Enemy groups use comma-separated stable enemy IDs.
-- Referenced enemies must exist.
-- Boss entries must reference enemies with the `BOSS` rank.
+- Every dungeon must define one narrative boss group, one recurring boss group and one epic group.
+- Each enemy group contains one through three comma-separated stable enemy IDs.
+- Narrative and recurring boss entries must reference enemies with the `BOSS` rank.
 - Epic entries must reference enemies with the `EPIC` rank.
-- Group sizes, empty IDs and repeated IDs are validated by `DungeonDefinition`.
+- Narrative and recurring boss groups may reference the same enemy IDs.
+- An epic enemy cannot also belong to either boss group.
+- Empty IDs and duplicates inside the same group are invalid.
+- `recurringBossCooldownHours` and `epicEnemyCooldownHours` must be positive.
+- `epicMinPosition` must be at least `1` and lower than the dungeon's final exploration position.
+- `epicAreaRestriction` must be `NORMAL_ONLY`, `SPECIAL_ONLY` or `ANY`.
+- A `SPECIAL_ONLY` epic requires a positive special-area chance and at least one intermediate exploration position.
+- Every dungeon must define a positive `epicEncounterChance` in `combat_scenarios.txt`.
 - Each dungeon can have only one dungeon definition.
+
+The narrative boss controls the dungeon's first permanent completion. Later explorations use the recurring boss group after its cooldown. Epic encounters remain random and optional for the player, independently from the mandatory final boss.
 
 ## Travel route definitions
 

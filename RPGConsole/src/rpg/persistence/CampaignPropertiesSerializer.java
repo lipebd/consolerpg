@@ -7,8 +7,7 @@ import java.util.Properties;
 // Serializes a campaign snapshot into the decrypted property format.
 public final class CampaignPropertiesSerializer {
 
-	private CampaignPropertiesSerializer() {
-	}
+    private CampaignPropertiesSerializer() {}
 
 	public static Properties serialize(CampaignSnapshot campaignSnapshot) {
 		Objects.requireNonNull(campaignSnapshot, "Campaign snapshot cannot be null.");
@@ -30,10 +29,10 @@ public final class CampaignPropertiesSerializer {
 		serializeRewardModifier(
 				properties,
 				"party.rewardModifier.experience",
-				partySnapshot.getExperienceRewardModifier()
-		);
+                partySnapshot.getExperienceRewardModifier());
 
-		serializeRewardModifier(properties, "party.rewardModifier.gold", partySnapshot.getGoldRewardModifier());
+        serializeRewardModifier(
+                properties, "party.rewardModifier.gold", partySnapshot.getGoldRewardModifier());
 
 		List<PlayableCharacterSnapshot> members = partySnapshot.getMembers();
 
@@ -57,17 +56,18 @@ public final class CampaignPropertiesSerializer {
 		}
 	}
 
-	private static void
-			serializeRewardModifier(Properties properties, String prefix, RewardModifierSnapshot modifierSnapshot) {
-		properties.setProperty(prefix + ".percent", Integer.toString(modifierSnapshot.getModifierPercent()));
+    private static void serializeRewardModifier(
+            Properties properties, String prefix, RewardModifierSnapshot modifierSnapshot) {
+        properties.setProperty(
+                prefix + ".percent", Integer.toString(modifierSnapshot.getModifierPercent()));
 
 		properties.setProperty(
 				prefix + ".remainingVictories",
-				Integer.toString(modifierSnapshot.getVictoriesRemaining())
-		);
+                Integer.toString(modifierSnapshot.getVictoriesRemaining()));
 	}
 
-	private static void serializeMember(Properties properties, int memberIndex, PlayableCharacterSnapshot member) {
+    private static void serializeMember(
+            Properties properties, int memberIndex, PlayableCharacterSnapshot member) {
 		String prefix = "party.member." + memberIndex;
 
 		properties.setProperty(prefix + ".name", member.getName());
@@ -80,39 +80,75 @@ public final class CampaignPropertiesSerializer {
 
 		EquipmentSnapshot equipment = member.getEquipment();
 
-		properties.setProperty(prefix + ".equipment.weaponItemId", equipment.getWeaponItemId().orElse(""));
+        properties.setProperty(
+                prefix + ".equipment.weaponItemId", equipment.getWeaponItemId().orElse(""));
 
-		properties.setProperty(prefix + ".equipment.armorItemId", equipment.getArmorItemId().orElse(""));
+        properties.setProperty(
+                prefix + ".equipment.armorItemId", equipment.getArmorItemId().orElse(""));
 
-		properties.setProperty(prefix + ".equipment.trinketItemId", equipment.getTrinketItemId().orElse(""));
+        properties.setProperty(
+                prefix + ".equipment.trinketItemId", equipment.getTrinketItemId().orElse(""));
 
 		List<String> learnedSkillIds = member.getLearnedSkillIds();
 
-		properties.setProperty(prefix + ".learnedSkill.count", Integer.toString(learnedSkillIds.size()));
+        properties.setProperty(
+                prefix + ".learnedSkill.count", Integer.toString(learnedSkillIds.size()));
 
 		for (int skillIndex = 0; skillIndex < learnedSkillIds.size(); skillIndex++) {
-			properties.setProperty(prefix + ".learnedSkill." + skillIndex + ".id", learnedSkillIds.get(skillIndex));
+            properties.setProperty(
+                    prefix + ".learnedSkill." + skillIndex + ".id",
+                    learnedSkillIds.get(skillIndex));
 		}
 	}
 
 	private static void serializeWorld(Properties properties, WorldSnapshot worldSnapshot) {
 		properties.setProperty("world.currentScenarioId", worldSnapshot.getCurrentScenarioId());
-		properties.setProperty("world.elapsedHours", Long.toString(worldSnapshot.getElapsedHours()));
+        properties.setProperty(
+                "world.elapsedHours", Long.toString(worldSnapshot.getElapsedHours()));
 
 		List<String> discoveredScenarioIds = worldSnapshot.getDiscoveredScenarioIds();
 
-		properties.setProperty("world.discoveredScenario.count", Integer.toString(discoveredScenarioIds.size()));
+        properties.setProperty(
+                "world.discoveredScenario.count", Integer.toString(discoveredScenarioIds.size()));
 
 		for (int index = 0; index < discoveredScenarioIds.size(); index++) {
-			properties.setProperty("world.discoveredScenario." + index + ".id", discoveredScenarioIds.get(index));
+            properties.setProperty(
+                    "world.discoveredScenario." + index + ".id", discoveredScenarioIds.get(index));
 		}
 
 		List<String> unlockedRouteIds = worldSnapshot.getUnlockedRouteIds();
 
-		properties.setProperty("travel.unlockedRoute.count", Integer.toString(unlockedRouteIds.size()));
+        properties.setProperty(
+                "travel.unlockedRoute.count", Integer.toString(unlockedRouteIds.size()));
 
 		for (int index = 0; index < unlockedRouteIds.size(); index++) {
-			properties.setProperty("travel.unlockedRoute." + index + ".id", unlockedRouteIds.get(index));
+            properties.setProperty(
+                    "travel.unlockedRoute." + index + ".id", unlockedRouteIds.get(index));
+        }
+
+        List<DungeonProgressSnapshot> dungeonProgressSnapshots =
+                worldSnapshot.getDungeonProgressSnapshots();
+
+        properties.setProperty(
+                "world.dungeon.count", Integer.toString(dungeonProgressSnapshots.size()));
+
+        for (int index = 0; index < dungeonProgressSnapshots.size(); index++) {
+            DungeonProgressSnapshot snapshot = dungeonProgressSnapshots.get(index);
+            String prefix = "world.dungeon." + index;
+
+            properties.setProperty(prefix + ".id", snapshot.getDungeonId());
+
+            properties.setProperty(
+                    prefix + ".narrativeBossDefeated",
+                    Boolean.toString(snapshot.isNarrativeBossDefeated()));
+
+            properties.setProperty(
+                    prefix + ".recurringBossAvailableAtHour",
+                    Long.toString(snapshot.getRecurringBossAvailableAtHour()));
+
+            properties.setProperty(
+                    prefix + ".epicAvailableAtHour",
+                    Long.toString(snapshot.getEpicAvailableAtHour()));
 		}
 	}
 
@@ -135,8 +171,10 @@ public final class CampaignPropertiesSerializer {
 
 				properties.setProperty(offerPrefix + ".stockEntryId", offer.getStockEntryId());
 
-				properties.setProperty(offerPrefix + ".remainingStock", Integer.toString(offer.getRemainingStock()));
+                properties.setProperty(
+                        offerPrefix + ".remainingStock",
+                        Integer.toString(offer.getRemainingStock()));
 			}
 		}
 	}
-}
+}

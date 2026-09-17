@@ -3,37 +3,72 @@ package rpg.world.scenarios;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 
 import rpg.battle.EnemyBattleGroup;
+import rpg.world.exploration.ExplorationAreaRestriction;
 
 // Stores reusable data specific to dungeons.
 public final class DungeonDefinition {
 
 	private final String scenarioId;
 	private final List<String> bossEnemyIds;
+    private final List<String> recurringBossEnemyIds;
+    private final int recurringBossCooldownHours;
 	private final List<String> epicEnemyIds;
+    private final int epicMinPosition;
+    private final ExplorationAreaRestriction epicAreaRestriction;
+    private final int epicEnemyCooldownHours;
 
-	public DungeonDefinition(String scenarioId, String bossEnemyId, String epicEnemyId) {
-		this(scenarioId, bossEnemyId == null ? null : List.of(bossEnemyId),
-				epicEnemyId == null ? null : List.of(epicEnemyId));
-	}
-
-	public DungeonDefinition(String scenarioId, List<String> bossEnemyIds, List<String> epicEnemyIds) {
+    public DungeonDefinition(
+            String scenarioId,
+            List<String> bossEnemyIds,
+            List<String> recurringBossEnemyIds,
+            int recurringBossCooldownHours,
+            List<String> epicEnemyIds,
+            int epicMinPosition,
+            ExplorationAreaRestriction epicAreaRestriction,
+            int epicEnemyCooldownHours) {
 		if (scenarioId == null || scenarioId.isBlank()) {
 			throw new IllegalArgumentException("Scenario ID cannot be empty.");
 		}
 
 		List<String> validatedBossEnemyIds = validateEnemyIds(bossEnemyIds, "Boss");
-
+        List<String> validatedRecurringBossEnemyIds =
+                validateEnemyIds(recurringBossEnemyIds, "Recurring boss");
 		List<String> validatedEpicEnemyIds = validateEnemyIds(epicEnemyIds, "Epic");
 
 		if (!Collections.disjoint(validatedBossEnemyIds, validatedEpicEnemyIds)) {
 			throw new IllegalArgumentException("Boss and epic enemy IDs must be different.");
 		}
 
+        if (!Collections.disjoint(validatedRecurringBossEnemyIds, validatedEpicEnemyIds)) {
+            throw new IllegalArgumentException(
+                    "Recurring boss and epic enemy IDs must be different.");
+        }
+
+        if (recurringBossCooldownHours <= 0) {
+            throw new IllegalArgumentException("Recurring boss cooldown hours must be positive.");
+        }
+
+        if (epicMinPosition < 1) {
+            throw new IllegalArgumentException("Epic minimum position must be positive.");
+        }
+
+        if (epicEnemyCooldownHours <= 0) {
+            throw new IllegalArgumentException("Epic enemy cooldown hours must be positive.");
+        }
+
 		this.scenarioId = scenarioId;
 		this.bossEnemyIds = validatedBossEnemyIds;
+        this.recurringBossEnemyIds = validatedRecurringBossEnemyIds;
+        this.recurringBossCooldownHours = recurringBossCooldownHours;
 		this.epicEnemyIds = validatedEpicEnemyIds;
+        this.epicMinPosition = epicMinPosition;
+        this.epicAreaRestriction =
+                Objects.requireNonNull(
+                        epicAreaRestriction, "Epic area restriction cannot be null.");
+        this.epicEnemyCooldownHours = epicEnemyCooldownHours;
 	}
 
 	private static List<String> validateEnemyIds(List<String> enemyIds, String groupName) {
@@ -43,7 +78,10 @@ public final class DungeonDefinition {
 
 		if (enemyIds.size() > EnemyBattleGroup.MAXIMUM_SIZE) {
 			throw new IllegalArgumentException(
-					groupName + " enemy group cannot contain more than " + EnemyBattleGroup.MAXIMUM_SIZE + " enemies.");
+                    groupName
+                            + " enemy group cannot contain more than "
+                            + EnemyBattleGroup.MAXIMUM_SIZE
+                            + " enemies.");
 		}
 
 		for (String enemyId : enemyIds) {
@@ -67,15 +105,39 @@ public final class DungeonDefinition {
 		return bossEnemyIds;
 	}
 
+    public List<String> getRecurringBossEnemyIds() {
+        return recurringBossEnemyIds;
+    }
+
+    public int getRecurringBossCooldownHours() {
+        return recurringBossCooldownHours;
+    }
+
 	public List<String> getEpicEnemyIds() {
 		return epicEnemyIds;
 	}
+
+    public int getEpicMinPosition() {
+        return epicMinPosition;
+    }
+
+    public ExplorationAreaRestriction getEpicAreaRestriction() {
+        return epicAreaRestriction;
+    }
+
+    public int getEpicEnemyCooldownHours() {
+        return epicEnemyCooldownHours;
+    }
 
 	public String getBossEnemyId() {
 		return bossEnemyIds.get(0);
 	}
 
+    public String getRecurringBossEnemyId() {
+        return recurringBossEnemyIds.get(0);
+    }
+
 	public String getEpicEnemyId() {
 		return epicEnemyIds.get(0);
 	}
-}
+}

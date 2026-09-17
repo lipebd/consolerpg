@@ -22,17 +22,13 @@ final class StrictPropertyReader {
 
         String readRequired(String propertyName) {
                 if (!unreadPropertyNames.remove(propertyName)) {
-                        throw new IllegalArgumentException(
-                                        "Required property is missing: " + propertyName
-                        );
+            throw new IllegalArgumentException("Required property is missing: " + propertyName);
                 }
 
                 String value = properties.getProperty(propertyName);
 
                 if (value == null) {
-                        throw new IllegalArgumentException(
-                                        "Property value is not textual: " + propertyName
-                        );
+            throw new IllegalArgumentException("Property value is not textual: " + propertyName);
                 }
 
                 return value;
@@ -47,10 +43,8 @@ final class StrictPropertyReader {
                         return Integer.parseInt(value);
                 } catch (NumberFormatException exception) {
                         throw new IllegalArgumentException(
-                                        "Property value is outside the supported integer range: "
-                                                        + propertyName,
-                                        exception
-                        );
+                    "Property value is outside the supported integer range: " + propertyName,
+                    exception);
                 }
         }
 
@@ -63,27 +57,37 @@ final class StrictPropertyReader {
                         return Long.parseLong(value);
                 } catch (NumberFormatException exception) {
                         throw new IllegalArgumentException(
-                                        "Property value is outside the supported long range: "
-                                                        + propertyName,
-                                        exception
-                        );
+                    "Property value is outside the supported long range: " + propertyName,
+                    exception);
                 }
         }
+
+    boolean readBoolean(String propertyName) {
+        String value = readRequired(propertyName);
+
+        if (value.equals("true")) {
+            return true;
+        }
+
+        if (value.equals("false")) {
+            return false;
+        }
+
+        throw new IllegalArgumentException(
+                "Property value is not a valid boolean: " + propertyName);
+    }
 
         int readCount(String propertyName) {
                 int count = readInt(propertyName);
 
                 if (count < 0) {
                         throw new IllegalArgumentException(
-                                        "Collection count cannot be negative: " + propertyName
-                        );
+                    "Collection count cannot be negative: " + propertyName);
                 }
 
                 if (count > properties.size()) {
                         throw new IllegalArgumentException(
-                                        "Collection count exceeds the available property structure: "
-                                                        + propertyName
-                        );
+                    "Collection count exceeds the available property structure: " + propertyName);
                 }
 
                 return count;
@@ -100,23 +104,16 @@ final class StrictPropertyReader {
                         return;
                 }
 
-                String firstUnexpectedProperty = unreadPropertyNames
-                                .stream()
-                                .sorted()
-                                .findFirst()
-                                .orElseThrow();
+        String firstUnexpectedProperty =
+                unreadPropertyNames.stream().sorted().findFirst().orElseThrow();
 
-                throw new IllegalArgumentException(
-                                "Unexpected property: " + firstUnexpectedProperty
-                );
+        throw new IllegalArgumentException("Unexpected property: " + firstUnexpectedProperty);
         }
 
         private void validateEntryTypes() {
                 for (Map.Entry<Object, Object> entry : properties.entrySet()) {
                         if (!(entry.getKey() instanceof String) || !(entry.getValue() instanceof String)) {
-                                throw new IllegalArgumentException(
-                                                "Property names and values must be strings."
-                                );
+                throw new IllegalArgumentException("Property names and values must be strings.");
                         }
                 }
         }
@@ -124,8 +121,7 @@ final class StrictPropertyReader {
         private void validateDecimalInteger(String value, String propertyName) {
                 if (!value.matches("-?[0-9]+")) {
                         throw new IllegalArgumentException(
-                                        "Property value is not a valid base-10 integer: " + propertyName
-                        );
+                    "Property value is not a valid base-10 integer: " + propertyName);
                 }
         }
-}
+}

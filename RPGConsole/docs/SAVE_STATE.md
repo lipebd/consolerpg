@@ -1,6 +1,6 @@
 # RPGConsole — Save State
 
-> **Implementation status:** Version-1 campaign persistence is fully integrated. The game creates complete immutable snapshots, serializes and encrypts them into `save.txt`, atomically replaces the previous save, validates and reconstructs runtime state during loading, offers campaign selection after the title screen and provides save access exclusively through INNs. The implemented persistence scope has completed manual verification. Future work is limited to schema evolution for new campaign systems and the project's optional automated-testing study.
+> **Implementation status:** Version-2 campaign persistence is fully integrated. The game creates complete immutable snapshots, including permanent dungeon progression, serializes and encrypts them into `save.txt`, atomically replaces the previous save, validates and reconstructs runtime state during loading, offers campaign selection after the title screen and provides save access exclusively through INNs. The implemented persistence scope has completed manual verification. Future work is limited to schema evolution for new campaign systems and the project's optional automated-testing study.
 
 ## Purpose
 
@@ -263,6 +263,21 @@ Persist:
 
 The current city must already be included among the discovered scenarios.
 
+### Dungeon progress
+
+Persist for every registered dungeon:
+
+* Canonical dungeon scenario ID.
+* Whether the narrative boss has been defeated.
+* Absolute elapsed world hour when the recurring boss next becomes available.
+* Absolute elapsed world hour when the epic encounter next becomes available.
+
+Every registered dungeon must appear exactly once.
+
+Before narrative completion, recurring-boss availability must be zero. After narrative completion, it must be defined as a positive elapsed-hour value. Epic availability is initially zero and becomes positive after the first epic victory.
+
+Availability values are authoritative absolute world hours. They may be lower than, equal to or greater than the saved `world.elapsedHours`, representing an encounter already available, becoming available now or remaining in cooldown.
+
 ### Shops
 
 Persist for every registered shop:
@@ -287,6 +302,7 @@ The following values are reconstructed and must not be duplicated as authoritati
 * Equipment requirements and bonuses.
 * Shop item, price, percentage, weight and initial stock.
 * Scenario names, descriptions and types.
+* Dungeon enemy groups, cooldown durations, epic minimum positions and area restrictions.
 * Travel-route definitions.
 * INN definitions.
 * Crafting definitions.
@@ -674,17 +690,17 @@ independently from the outer `containerVersion`.
 * Repeated IDs are invalid unless the schema explicitly permits them.
 * Optional equipment slots use an explicitly documented empty value.
 * Numeric values use decimal notation without grouping separators.
-* Boolean values, when introduced, use only `true` or `false`.
+* Boolean values use only the canonical lowercase forms `true` and `false`.
 * IDs are resolved through current catalogs.
 * Unknown properties are rejected unless a later format version explicitly permits them.
 * Duplicate property keys must be detected before ordinary `Properties` loading can overwrite them silently.
 
-### Version-1 property schema
+### Version-2 property schema
 
-The decrypted version-1 payload contains exactly the following property structures.
+The decrypted version-2 payload contains exactly the following property structures.
 
 ```properties
-save.formatVersion=1
+save.formatVersion=2
 
 party.gold=1250
 
@@ -725,6 +741,11 @@ world.discoveredScenario.1.id=campos_de_bree
 
 travel.unlockedRoute.count=1
 travel.unlockedRoute.0.id=bree_campos
+world.dungeon.count=1
+world.dungeon.0.id=gruta_relamparrocha
+world.dungeon.0.narrativeBossDefeated=true
+world.dungeon.0.recurringBossAvailableAtHour=35
+world.dungeon.0.epicAvailableAtHour=40
 
 shop.count=1
 shop.0.id=mercado_de_bree
@@ -743,21 +764,25 @@ Equipment-slot properties are always present. An empty value represents an unequ
 
 `party.member.<index>.learnedSkill.*` contains only explicitly learned scroll-skill IDs. Skills acquired automatically from class and level are reconstructed from current definitions and are not serialized.
 
-Party members, learned skills, inventory entries, shops and active offers preserve their runtime order. Discovered-scenario and unlocked-route order is not meaningful and must be serialized in stable ID order.
+Party members, learned skills, inventory entries, shops and active offers preserve their runtime order. Discovered scenarios, unlocked routes and dungeon-progress entries are serialized in stable ID order.
 
 Every repeated index starts at zero, is contiguous and is lower than its declared count. Missing indexes, additional indexes, duplicate IDs and duplicate property names invalidate the complete payload.
 
-Properties outside the version-1 schema invalidate the payload. This prevents misspelled or unsupported fields from being silently ignored.
+`world.dungeon.count` must cover every dungeon registered in the current `ScenarioCatalog`. Unknown dungeon IDs, missing entries, duplicated IDs and non-dungeon scenario IDs invalidate the complete payload.
+
+`world.dungeon.<index>.narrativeBossDefeated` accepts only `true` or `false`. Recurring-boss availability must be zero while this value is `false` and nonzero while it is `true`. Both availability-hour properties must be non-negative.
+
+Properties outside the version-2 schema invalidate the payload. This prevents misspelled or unsupported fields from being silently ignored.
 
 All numeric values use base-10 ASCII digits and must satisfy their documented domain boundaries.
 
 The four reward-modifier properties are always present. An inactive modifier is represented by zero percent and zero remaining victories.
 
-`world.elapsedHours` and all `shop.*` structures belong to the same snapshot. No separate restocking-cycle property is stored.
+`world.elapsedHours`, all `world.dungeon.*` structures and all `shop.*` structures belong to the same snapshot. No separate restocking-cycle property is stored.
 
 `shop.<index>.offer.count` must be positive because every valid runtime `ShopState` contains at least one active offer. Offers with zero remaining stock remain serialized.
 
-The version-1 payload contains no timestamps, display names, formatted values, derived period symbols, cryptographic fields or transient runtime state.
+The version-2 payload contains no real-world timestamps, display names, formatted values, derived period symbols, cryptographic fields or transient runtime state.
 
 ## Save-format versioning
 
@@ -775,6 +800,8 @@ Rules:
 * Missing required properties are never supplied silently unless an older-version migration defines the default.
 * Incompatible catalog-ID changes may require migration or intentional save incompatibility.
 * Raising the playable-character maximum level alone does not require a save-format change.
+
+The current implementation supports only internal format version 2. Internal version-1 development saves are rejected without migration because V5 has not yet been released. The encrypted outer-container format and its `containerVersion` remain unchanged.
 
 ## Atomic save operation
 
@@ -852,10 +879,13 @@ A valid candidate campaign must satisfy all of the following:
 * GOLD and inventory quantities fit their limits.
 * Inventory item IDs are unique within the ordered inventory entries.
 * Current scenario is a discovered city with an INN.
-* Every discovered scenario and unlocked route exists.
+* Every registered dungeon has exactly one progress entry.
+* Every saved dungeon ID resolves to a runtime `Dungeon`.
+* Narrative completion and recurring-boss availability are structurally consistent.
+* Recurring-boss and epic availability hours are non-negative.
 * Every shop has one valid restored state.
 * Every active offer belongs to its shop.
-* Validated world time and the complete validated shop catalog come from the same candidate snapshot and are installed together without load-triggered restocking.
+* Validated world time, complete dungeon progress and the complete validated shop catalog come from the same candidate snapshot and are installed together without load-triggered events.
 
 A failed invariant rejects the complete candidate.
 
@@ -889,7 +919,6 @@ Likely future persisted state includes:
 * Story decisions.
 * Permanent world flags.
 * Explicit access unlocks.
-* Completed-dungeon state.
 * Level-7 class-path decisions.
 
 Placeholder persistence structures must not be created before the supporting gameplay systems exist.
@@ -909,9 +938,10 @@ Implementation verification must cover:
 | Skills | Automatic, scroll-acquired, unknown and incompatible skills |
 | World | Current city, discovered scenarios and unlocked routes |
 | Rewards | Active and inactive global modifiers |
+| Dungeons | Complete catalog coverage, narrative completion, recurring-boss availability, epic availability and invalid state |
 | Shops | Ordered offers, zero stock, invalid entries and complete restoration |
 | Clock | Saved time, advancement boundaries and no load-triggered restock |
 | Cryptography | Invalid Base64, altered ciphertext, wrong tag and unsupported container |
 | Atomicity | Failed save preserves old file; failed load preserves runtime state |
 | Player flow | Continue, New Game confirmation, both INN save actions and exit confirmation |
-| Packaging | Root save creation and no bundled user save |
+| Packaging | Root save creation and no bundled user save |

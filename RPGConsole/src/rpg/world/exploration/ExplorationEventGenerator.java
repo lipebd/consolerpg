@@ -17,6 +17,7 @@ public final class ExplorationEventGenerator {
 
     public ExplorationEventType generate(
             ExplorationSettings settings,
+            boolean specialArea,
             boolean merchantAvailable,
             boolean epicEncounterAvailable
     ) {
@@ -44,9 +45,11 @@ public final class ExplorationEventGenerator {
                 return ExplorationEventType.MERCHANT;
             }
 
-            return ExplorationEventType.NOTHING;
+            return specialArea
+                    ? ExplorationEventType.REWARD
+                    : ExplorationEventType.NOTHING;
         }
-        
+
         accumulatedChance +=
                 settings.getEpicEncounterChance();
 
@@ -55,10 +58,12 @@ public final class ExplorationEventGenerator {
                 return ExplorationEventType.EPIC_ENCOUNTER;
             }
 
-            return ExplorationEventType.NOTHING;
+            return ExplorationEventType.BATTLE;
         }
 
-        return ExplorationEventType.NOTHING;
+        return specialArea
+                ? ExplorationEventType.REWARD
+                : ExplorationEventType.NOTHING;
     }
 
 

@@ -35,7 +35,7 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.enemies` | Enemy definitions and external enemy/drop loading | `EnemyDefinition`, `EnemyCatalog`, `EnemyLoader`, `EnemyDropCatalog`, `EnemyDropLoader` |
 | `rpg.persistence` | Immutable campaign snapshots, strict versioned property encoding, authenticated encrypted containers and atomic save-file access | `CampaignSnapshot`, `CampaignSnapshotFactory`, `CampaignPropertiesSerializer`, `CampaignPropertiesDeserializer`, `CampaignSaveCodec`, `CampaignSaveService`, `CampaignLoadService` |
 | `rpg.world` | Active world state, fictional world time, scenario discovery, rescue coordination, shop-restocking coordination and high-level gameplay flow | `World`, `WorldClock`, `WorldProgress` |
-| `rpg.world.scenarios` | External scenario definitions, runtime scenario hierarchy and scenario creation | `ScenarioDefinition`, `ScenarioDefinitionCatalog`, `ScenarioLoader`, `CombatScenarioDefinition`, `CombatScenarioLoader`, `DungeonDefinition`, `DungeonLoader`, `ScenarioFactory`, `Scenario`, `CombatScenario`, `Field`, `Dungeon`, `City`, `ScenarioCatalog`, `CombatScenarioAction`, `CityAction` |
+| `rpg.world.scenarios` | External scenario and dungeon definitions, runtime scenario hierarchy, permanent dungeon progression and scenario creation | `ScenarioDefinition`, `ScenarioDefinitionCatalog`, `ScenarioLoader`, `CombatScenarioDefinition`, `CombatScenarioLoader`, `DungeonDefinition`, `DungeonLoader`, `ScenarioFactory`, `Scenario`, `CombatScenario`, `Field`, `Dungeon`, `DungeonSettings`, `DungeonProgress`, `City`, `ScenarioCatalog`, `CombatScenarioAction`, `CityAction` |
 | `rpg.world.encounters` | Encounter availability and weighted group generation | `EncounterEntry`, `EncounterCatalog`, `EncounterLoader`, `EncounterGenerator` |
 | `rpg.world.exploration` | Exploration configuration, progress and event selection | `ExplorationSettings`, `ExplorationSession`, `ExplorationEventGenerator`, `ExplorationEventType`, `ExplorationAreaRestriction` |
 | `rpg.world.inns` | Immutable city-INN definitions, complete city coverage validation and lookup by stable or city scenario ID | `InnDefinition`, `InnCatalog`, `InnLoader` |
@@ -257,14 +257,21 @@ Scenario
 
 `Field` represents open exploration areas.
 
-`Dungeon` adds `DungeonSettings`, including:
+`Dungeon` adds immutable `DungeonSettings`, including:
 
-- A required group of one to three boss enemy IDs.
-- An optional group of one to three epic enemy IDs.
+- A required narrative boss group.
+- A required recurring boss group.
+- The recurring-boss cooldown in fictional world hours.
+- A required epic enemy group.
+- The epic minimum exploration position.
+- The epic normal, special or unrestricted area requirement.
+- The epic cooldown in fictional world hours.
+
+Narrative and recurring boss groups may reuse the same canonical enemy IDs. Epic IDs remain disjoint from both boss groups.
 
 `City` represents non-combat settlements. Cities use their own action flow, separate functional locations from adjacent exits and do not create exploration sessions. Every registered city has exactly one externally configured INN. Bree currently also provides a fixed shop, while taverns remain a future system. Paid city transport is available through the shared world flow.
 
-`ScenarioCatalog` resolves stable scenario IDs to runtime scenario objects.
+`DungeonProgress` owns mutable campaign-level progression separately from immutable `DungeonSettings` and transient `ExplorationSession` state. It registers every runtime dungeon and stores narrative completion together with the absolute elapsed-hour availability of recurring bosses and epic encounters.
 
 ## Definition and runtime separation
 
@@ -395,18 +402,18 @@ Item equality and hash codes use the stable item ID, allowing logically equal it
 ```text
 CombatScenarioMenu selects EXPLORE
         ↓
-World advances ExplorationSession
+World resolves the current ExplorationSession position
         ↓
 normal or special area is determined
         ↓
-ExplorationEventGenerator selects event
+World evaluates current merchant and epic eligibility
+        ↓
+ExplorationEventGenerator selects or redirects the event
         ↓
 World dispatches the event consequence
+        ↓
+ExplorationSession advances when the result permits
 ```
-
-A merchant roll becomes `NOTHING` after the session has already encountered its merchant.
-
-When a merchant event occurs, `World` selects uniformly among the `EXPLORATION` shops associated with the current scenario. It then resolves the selected merchant through `ShopStateCatalog` and opens the shared `ShopMenu`. The same merchant definition always resolves to the same runtime state during the current program execution.
 
 `ExplorationSettings` defines:
 
@@ -421,16 +428,31 @@ When a merchant event occurs, `World` selects uniformly among the `EXPLORATION` 
 - Normal-area message.
 - Special-area message.
 
-`ExplorationSession` stores mutable progress and session-specific state.
+`ExplorationSession` stores only transient progress and session-specific state:
 
-It also ensures that:
+- Current exploration position.
+- Whether the current area is special.
+- Whether a merchant has already been encountered.
+- Whether an epic encounter has already been offered.
 
-- A merchant cannot appear more than once per session.
-- An epic encounter cannot be offered more than once per dungeon session.
-- Exploration progress survives regular battles.
-- A failed final-boss attempt can return the session to the previous position.
+A merchant cannot appear more than once per session. A repeated merchant result becomes `NOTHING` in a normal area and `REWARD` in a special area.
 
-The final dungeon position bypasses random event generation and starts the configured boss encounter.
+Special areas never resolve without content. A direct `NOTHING` result becomes `REWARD`.
+
+For dungeon events, `World` combines transient session state with permanent `DungeonProgress` and immutable `DungeonSettings`. Epic eligibility is evaluated at the reached position using:
+
+- Minimum position.
+- Area restriction.
+- Session offer state.
+- Absolute cooldown availability.
+
+An ineligible epic result becomes a regular battle using the current area's encounter pool.
+
+The final dungeon position bypasses random event generation. `World` selects the narrative boss before first completion, the recurring boss after its cooldown, or an empty final resolution while the recurring boss remains unavailable.
+
+Boss and epic availability is not snapshotted when an exploration session begins. World-time advancement from battles earlier in the same session can make either encounter available later in that session.
+
+When a merchant event occurs, `World` selects uniformly among the `EXPLORATION` shops associated with the current scenario. It resolves the selected merchant through the active `ShopStateCatalog` and opens the shared `ShopMenu`.
 
 ## Exploration reward architecture
 
@@ -832,6 +854,8 @@ private static final int HOURS_PER_FINISHED_BATTLE = 1;
 
 Every random, epic and boss battle returns through `World.startEncounter()`. A `VICTORY` or `DEFEAT` result passes this configured duration to the general world-time operation. `FLED` does not advance time, and avoiding an optional encounter never reaches the battle integration point.
 
+After a boss or epic victory returns from `startEncounter()`, `World` records the next availability through `DungeonProgress` using the already-advanced elapsed hour. Refusal, escape and defeat do not invoke the cooldown-recording operations.
+
 When an advancement does not cross midnight, `World` advances only the clock.
 
 When an advancement crosses midnight, `World`:
@@ -1087,6 +1111,7 @@ CampaignSnapshot
 │   ├── InventoryEntrySnapshot
 │   └── RewardModifierSnapshot
 ├── WorldSnapshot
+│   └── DungeonProgressSnapshot
 └── ShopSnapshot
     └── ShopOfferSnapshot
 ```
@@ -1107,9 +1132,11 @@ CampaignSnapshot
     -> textual encrypted container
 ```
 
-The decoding flow performs the reverse transformation and produces a complete `CampaignSnapshot`. `CampaignSnapshotRestorer` then validates its catalog-backed references and reconstructs an isolated `RestoredCampaign` without modifying active runtime state. The candidate is activated only after the complete operation succeeds.
+The decoding flow performs the reverse transformation and produces a complete `CampaignSnapshot`. `CampaignSnapshotRestorer` then validates its catalog-backed references and reconstructs an isolated `RestoredCampaign`, including complete `DungeonProgress`, without modifying active runtime state. The candidate is activated only after the complete operation succeeds.
 
-`StrictPropertyReader` requires every version-1 property, parses decimal numeric values, tracks consumed fields and rejects unknown properties. `PropertyPayloadDecoder` performs strict UTF-8 decoding and rejects duplicated property names before one value can overwrite another.
+`StrictPropertyReader` requires every property of the current internal format, parses decimal numeric values and canonical booleans, tracks consumed fields and rejects unknown properties.
+
+`PropertyPayloadDecoder` performs strict UTF-8 decoding and rejects duplicated property names before one value can overwrite another.
 
 `SaveEncryptionService` uses `AES/GCM/NoPadding` with the stable 256-bit application key, a new secure random 12-byte IV for every encryption and a 128-bit authentication tag. The textual outer container exposes only its identifier, container version, Base64 IV and Base64 authenticated ciphertext.
 

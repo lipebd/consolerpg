@@ -209,12 +209,13 @@ Enemy averages consider only living enemies.
 
 Fleeing from a dungeon boss is allowed.
 
-When the party flees from the final boss:
+When the party flees from a final boss:
 
 - The boss is not defeated.
 - The dungeon is not completed.
-- The exploration session returns to the previous position.
-- The party may prepare before attempting the final position again.
+- No boss cooldown begins.
+- The exploration session remains at the final position.
+- The party may use the available menus before attempting the boss again.
 
 ## Contextual battle-result messages
 
@@ -1138,11 +1139,13 @@ Changing the visible name or symbol does not alter stored gold, prices or transa
 
 ## Campaign persistence foundation
 
-The implemented persistence foundation can capture one immutable campaign snapshot containing party, inventory, equipment, learned scroll skills, reward modifiers, world progress, travel progress, fictional time and active shop states.
+The implemented persistence foundation can capture one immutable campaign snapshot containing party, inventory, equipment, learned scroll skills, reward modifiers, world progress, travel progress, permanent dungeon progress, fictional time and active shop states.
 
 The snapshot is serialized through the versioned property schema defined in `SAVE_STATE.md`, encoded as UTF-8, authenticated and encrypted through AES-256-GCM and written through atomic save-file replacement.
 
 Loading decrypts and structurally validates the snapshot, validates every catalog-backed reference and reconstructs an isolated runtime candidate without modifying active gameplay state. A valid campaign may be continued after the title screen, while saving is available exclusively through INNs.
+
+The authenticated internal save format is currently version 2. It stores narrative dungeon completion and the absolute elapsed-world-hour availability of recurring bosses and epic encounters. Active exploration sessions remain transient and are not restored.
 
 ## World time and daily shop restocking
 
@@ -1487,18 +1490,19 @@ Defeat grants no battle rewards. Victory and escape do not activate rescue, and 
 
 ## Linear exploration
 
-Exploration works like movement through spaces on a board.
+Exploration works like movement through numbered spaces on a board.
 
-Each successful `Explore` action currently:
+For each ordinary exploration position, the game:
 
-- Advances the exploration position by one.
-- Determines whether the new position is a normal or special area.
-- Generates one exploration event.
-- Preserves the position after regular battles.
+1. Resolves the current position.
+2. Determines whether it is a normal or special area.
+3. Generates one exploration event.
+4. Applies the event consequence.
+5. Advances only when the result permits the exploration to continue.
 
-An exploration session ends when the final position is completed or when the party enters another scenario.
+Regular and accepted epic battles preserve the current position while combat is running. Victory, escape and avoided optional encounters permit normal exploration progression. Defeat activates rescue and discards the active session without advancing its failed position.
 
-The possibility of resolving the current position before advancing will be studied for V3.
+An exploration session ends when its final position is completed or when the party enters another scenario. Its current position, area result, encountered-merchant flag and offered-epic flag are transient.
 
 ## Special areas
 
@@ -1509,6 +1513,7 @@ Special areas:
 - Display a scenario-specific message.
 - Filter encounters and exploration rewards according to their area restrictions.
 - May contain enemies and rewards unavailable in normal areas.
+- Always resolve to meaningful content.
 
 Area restrictions are:
 
@@ -1520,7 +1525,7 @@ Area restrictions are:
 
 The first and final positions are not randomly converted into special areas.
 
-Special areas may produce the `Nothing` event normally.
+A direct `NOTHING` result in a special area becomes `REWARD`. A merchant result after the session has already encountered its merchant also becomes `REWARD` in a special area.
 
 ## Exploration events
 
@@ -1534,24 +1539,30 @@ Current exploration events include:
 
 The total configured event chance cannot exceed 100%.
 
-Any remaining percentage represents the `Nothing` event.
+In a normal area, any remaining percentage produces `NOTHING`. Normal-area repeated merchant results also remain `NOTHING`.
 
 A merchant may appear at most once during one exploration session. When the event occurs, one eligible `EXPLORATION` shop associated with the current scenario is selected uniformly and opened through the shared shop interface.
 
-If another roll falls within the merchant range after that encounter, it becomes `Nothing`. The one-merchant-per-session restriction does not reset or regenerate the selected shop's runtime state: later exploration sessions reuse the same offers and remaining quantities.
+The one-merchant-per-session restriction does not reset or regenerate shop state. Later exploration sessions reuse the same offers and remaining quantities until global restocking replaces the shop-state catalog.
 
 An epic encounter:
 
 - Is exclusive to dungeons.
+- Is configured for every dungeon.
+- Remains random and optional for the player.
 - May be offered at most once per exploration session.
-- Is optional.
-- Allows the party to avoid the confrontation.
+- Requires its configured minimum position.
+- Requires a compatible normal or special area.
+- Requires its persistent cooldown to have ended.
+- Remains independent from the mandatory final boss.
 
-A later epic-encounter roll becomes `Nothing` after the encounter has already been offered.
+Epic eligibility is evaluated when the event position is reached. It is not fixed when the exploration session begins.
+
+If an epic result is rolled while the encounter is ineligible, the result becomes a regular battle using the current area's encounter pool. Refusing, escaping from or losing an epic battle does not begin its cooldown. Victory begins the cooldown after the battle's one-hour world-time advancement.
 
 ## Exploration rewards
 
-The scenario's `rewardChance` determines whether an exploration reward event occurs. It does not determine which reward is granted.
+The scenario's `rewardChance` determines whether a direct exploration reward event occurs. Special-area fallback behavior may also produce `REWARD`.
 
 When a reward event occurs:
 
@@ -1576,26 +1587,49 @@ When a reward does not fit completely, the event reports the original found amou
 
 Exploration rewards are repeatable. Unique, narrative and quest rewards are not part of these pools.
 
-A scenario with zero `rewardChance` does not require reward entries. When rewards are possible, every normal or special area type that may occur must have at least one eligible entry.
+A normal-area reward pool is required when `rewardChance` is positive. A special-area reward pool is required whenever a possible special area can reach `REWARD` directly or through fallback behavior.
 
 Exploration reward selection is independent from battle rewards. Every enemy drop entry continues to perform its own independent roll after battle.
 
-## Dungeon bosses
+## Dungeon progression and bosses
 
-The final dungeon position triggers the configured boss encounter.
+Every dungeon defines:
 
-The boss encounter is mandatory to complete the dungeon.
+- A mandatory narrative boss group.
+- A mandatory recurring boss group.
+- A positive recurring-boss cooldown in fictional world hours.
+- A mandatory epic enemy group.
+- An epic minimum position and area restriction.
+- A positive epic cooldown in fictional world hours.
 
-If the party flees:
+The narrative boss blocks the final position until the dungeon is completed for the first time.
 
-- The exploration position moves back by one.
-- The dungeon remains incomplete.
-- Travel remains locked.
+Narrative-boss victory:
 
-If the boss is defeated:
+- Permanently records the dungeon's narrative completion.
+- Completes the current exploration.
+- Permanently preserves otherwise-unlocked adjacent routes.
+- Starts the first recurring-boss cooldown after the victory advances world time by one hour.
 
-- The final position remains completed.
-- Travel options become available according to the travel catalog.
+Completed dungeons remain available for reexploration.
+
+At the final position of a completed dungeon:
+
+- The recurring boss is mandatory when its cooldown has ended.
+- The exploration ends normally without a final battle when the recurring boss remains in cooldown.
+- A recurring-boss victory restarts its cooldown after the battle advances world time.
+- Escape keeps the session at the final position.
+- Defeat does not complete the session or start a cooldown.
+
+Recurring-boss availability is evaluated when the party reaches the final position. Battles won earlier in the same exploration may therefore advance world time enough for the boss to reappear.
+
+`DungeonProgress` stores permanent campaign-level state separately from immutable dungeon definitions and transient exploration sessions:
+
+- Whether the narrative boss has been defeated.
+- The absolute elapsed world hour when the recurring boss next becomes available.
+- The absolute elapsed world hour when the epic encounter next becomes available.
+
+Epic encounters begin initially available. Boss and epic respawn hours remain hidden from the player in V5.
 
 ## Random encounters
 

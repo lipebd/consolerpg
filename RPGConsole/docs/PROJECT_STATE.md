@@ -86,10 +86,14 @@ enemies.txt
 - Each combat scenario defines its exploration length and event chances.
 - Scenario-specific messages for normal and special areas.
 - Supported random events: nothing, battle, reward, merchant and optional epic encounter.
+- Special areas always resolve to content: direct nothing and repeated merchant results become rewards.
+- Unavailable epic results become regular battles using the current area's encounter pool.
 - Merchant limited to one appearance per exploration session.
 - Epic encounter limited to one offer per dungeon session.
+- Epic eligibility uses minimum position, area restriction, session state and persistent cooldown.
 - Exploration progress survives battles.
 - Exploration sessions reset when a new combat scenario session begins.
+- Active exploration position and session flags remain transient across application executions.
 
 ### Scenarios and travel
 
@@ -101,15 +105,29 @@ enemies.txt
 - Bree, Verdes Ermos and Gruta de Relamparrocha are connected.
 - Scenario descriptions are displayed when entering a map and after returning from battle.
 
+### Dungeon progression
+
+- Every dungeon defines narrative, recurring and epic enemy groups.
+- Narrative-boss victory records permanent first completion.
+- Completed dungeons remain available during recurring-boss cooldowns.
+- A ready recurring boss becomes the mandatory final encounter.
+- A dungeon exploration ends without a final boss while the recurring boss remains in cooldown.
+- Boss and epic availability is evaluated when the encounter position is reached.
+- Victories begin cooldowns after the battle's world-time advancement.
+- Refusal, escape and defeat do not begin cooldowns.
+- Respawn hours remain hidden from the player.
+- `DungeonProgress` stores narrative completion and absolute availability hours separately from transient `ExplorationSession` state.
+
 ### Gruta de Relamparrocha
 
 - Eleven-position dungeon session.
 - Random normal and special-area encounters.
-- Optional Relampagolem epic encounter.
-- Epic encounter may be accepted or avoided.
-- Mestre Eletrogoblin forced as the final boss.
-- Fleeing from the boss returns the party to the previous position and keeps travel locked.
-- Victory unlocks travel from the dungeon.
+- Optional Relampagolem epic encounter available from position 1 in either area type.
+- Relampagolem uses a six-hour victory cooldown.
+- Mestre Eletrogoblin is the narrative and recurring final boss.
+- The recurring boss uses a four-hour victory cooldown.
+- Fleeing from the boss keeps the party at the final position.
+- First completion permanently unlocks the expected travel access.
 
 ### External enemy drops
 
@@ -191,7 +209,7 @@ V2 introduced healing and revival as single-purpose hardcoded skill fields. V4 r
 - Comparative chance has configured minimum and maximum limits.
 - A failed attempt consumes the acting character's action.
 - A successful attempt removes the entire party from battle.
-- Fleeing from a dungeon boss returns the exploration session by one position.
+- Fleeing from a dungeon boss keeps the exploration session at the final position without completing the dungeon or beginning a cooldown.
 
 ### Battle rewards and progression
 
@@ -811,14 +829,16 @@ The fictional world clock and runtime shop-restocking cycle are functionally int
 
 ## Save and load
 
-The version-1 persistence foundation is implemented through `rpg.persistence`.
+The version-2 persistence foundation is implemented through `rpg.persistence`.
 
 Current completed behavior:
 
-- Immutable snapshots represent party, character, equipment, inventory, reward-modifier, world-time, discovery, travel and shop state.
-- `CampaignSnapshotFactory` captures one complete runtime snapshot without mutating gameplay state.
+- Immutable snapshots represent party, character, equipment, inventory, reward-modifier, world-time, discovery, travel, permanent dungeon progression and shop state.
+`CampaignSnapshotRestorer` validates every catalog-backed reference and reconstructs a complete isolated `RestoredCampaign`, including party order, progression, learned scroll skills, equipment, resources, inventory, reward modifiers, world progress, travel progress, dungeon progress, fictional time and finite shop stock. The reconstructed candidate becomes active only after every loading stage succeeds.
 - The versioned campaign schema uses strict indexed Java properties encoded as UTF-8.
-- Missing, duplicated, unexpected and structurally inconsistent properties are rejected.
+- Canonical booleans accept only lowercase `true` and `false`.
+- Every registered dungeon requires exactly one valid progress entry.
+- Internal version-1 development saves are rejected without migration; the encrypted outer-container version remains unchanged.
 - AES-256-GCM encrypts and authenticates the complete campaign payload.
 - Every encryption uses a new secure random 12-byte IV and a 128-bit authentication tag.
 - The textual container exposes no campaign information outside authenticated ciphertext.
@@ -832,7 +852,7 @@ Current completed behavior:
 
 After the unchanged title screen, `CampaignSelectionMenu` distinguishes absent, unreadable, invalid and valid saves. Valid campaigns may be continued or replaced through the confirmed New Game flow. Every INN provides atomic Save and Continue and Save and Exit operations, while ordinary exits require confirmation and never save implicitly.
 
-Complete encrypted round trips, campaign reconstruction, valid and invalid startup flows, preservation of previous saves, INN saving, failed writes and exit-without-saving behavior were manually validated.
+Complete encrypted round trips, campaign reconstruction, valid and invalid startup flows, preservation of previous saves, INN saving, failed writes, exit-without-saving behavior and version-2 dungeon-progress restoration were manually validated.
 
 ## Current limitations and temporary implementations
 
@@ -854,9 +874,18 @@ Complete encrypted round trips, campaign reconstruction, valid and invalid start
 
 ## Current next step
 
-The complete V5 save-and-load flow and its portable Windows integration are implemented and manually validated.
+The complete V5 gameplay scope is implemented and manually validated:
 
-The next V5 step is Part 3, `Exploration and world progression`. Its remaining behavior and progression decisions must be frozen before implementation begins. Future quest, flag and permanent-unlock systems must extend the versioned save schema before introducing new mutable runtime state.
+- Crafting integration.
+- Encrypted atomic save and load.
+- World clock and global shop restocking.
+- Special-area event guarantees.
+- Persistent dungeon completion.
+- Recurring bosses and epic cooldowns.
+
+The remaining V5 work is release closure: synchronize final documentation, review the complete Part 3 diff, create the consolidated milestone commit and validate the final portable release package.
+
+Quest-dependent class paths, narrative flags, generalized access requirements, loader-maintenance work and the optional automated-testing study are deferred to V6 planning. V6 begins with the quest system so those dependent progression features can be designed against a narrative foundation.
 
 ## Important conventions
 
