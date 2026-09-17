@@ -200,6 +200,65 @@ public class MarketplaceTransactionService {
 		return MarketplaceListingCreationResult.SUCCESS;
 	}
 
+	public List<MarketplaceListing> getListingsForCurrentPlayer() {
+		List<MarketplaceListing> playerListings =
+				new ArrayList<>();
+
+		for (MarketplaceListing listing : listings) {
+			if (listing.getSellerId().equals(playerId)
+					&& listing.getStatus() != ListingStatus.CANCELLED) {
+				
+				playerListings.add(listing);
+			}
+		}
+
+		return playerListings;
+	}
+
+	public MarketplaceListingCancellationResult cancelListing(
+			MarketplaceListing listing) {
+
+		if (listing == null) {
+			return MarketplaceListingCancellationResult.INVALID_LISTING;
+		}
+
+		if (!listing.getSellerId().equals(playerId)) {
+			return MarketplaceListingCancellationResult.NOT_LISTING_OWNER;
+		}
+
+		if (listing.getStatus() != ListingStatus.ACTIVE) {
+			return MarketplaceListingCancellationResult.LISTING_NOT_ACTIVE;
+		}
+
+		Item item;
+
+		try {
+			item = itemCatalog.getById(listing.getItemId());
+		} catch (IllegalArgumentException exception) {
+			return MarketplaceListingCancellationResult.INVALID_LISTING;
+		}
+
+		if (!party.getInventory().addItem(
+				item,
+				listing.getQuantity())) {
+
+			return MarketplaceListingCancellationResult.INVENTORY_ERROR;
+		}
+
+		try {
+			listing.cancel();
+		} catch (IllegalStateException exception) {
+			party.getInventory().removeItem(
+					item,
+					listing.getQuantity()
+					);
+
+			return MarketplaceListingCancellationResult.LISTING_NOT_ACTIVE;
+		}
+
+		return MarketplaceListingCancellationResult.SUCCESS;
+	}
+
 	public Map<Item, Integer> getInventoryItemsForListing() {
 		return party.getInventory().getContents();
 	}
