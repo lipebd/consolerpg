@@ -193,11 +193,16 @@ Quantity and target rules:
 * [x] Validate transactional delivery-step composition.
 * [x] Keep objectives nested in their owning steps without a separate catalog.
 
-### Parts 2B and 2C — Core-progress checklist
+### Part 2B — Mutable-progress checklist
 
-* [ ] Create mutable active-objective counters separate from immutable definitions.
-* [ ] Represent `NOT_STARTED`, `ACTIVE` and `COMPLETED` quest status.
-* [ ] Load complete quest definitions before mutable quest progress is created.
+* [x] Create mutable active-objective counters separate from immutable definitions.
+* [x] Represent `NOT_STARTED`, `ACTIVE` and `COMPLETED` quest status.
+* [x] Require a complete `QuestCatalog` when mutable quest progress is created.
+* [x] Enforce activation, capped progress, linear step transition and irreversible completion.
+* [x] Present active and completed quests in stable catalog order.
+
+### Part 2C — Core-service checklist
+
 * [ ] Implement `QuestProgressService` with explicit input and result objects.
 * [ ] Prevent one event from progressing both the completed step and the step it just activated.
 * [ ] Allow later ordered events to affect a newly activated step.
