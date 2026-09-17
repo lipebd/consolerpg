@@ -100,20 +100,18 @@ Use `data/quest_steps.txt`:
 * Step numbers start at 1 and are unique and consecutive within each quest.
 * The highest configured step is the final step.
 * Titles reject placeholders.
-* Descriptions support the approved placeholders and text escapes.
+* Descriptions support the approved placeholders and the `\n` line-break sequence; every other use of a backslash is invalid.
 * Objectives, dialogues, rewards and effects remain in their dedicated files.
 
 ### Implementation checklist
 
-* [ ] Create immutable quest and step definitions.
-* [ ] Create catalogs that resolve definitions by canonical ID without duplicating content state.
-* [ ] Load quest definitions before mutable quest progress is created.
-* [ ] Reject duplicated quest IDs and structurally duplicated steps.
-* [ ] Reject missing, non-positive or non-consecutive step numbers.
-* [ ] Reject unknown starting NPC and requirement-set references.
-* [ ] Reject quests without steps.
-* [ ] Reject malformed data before partially populating the catalogs.
-* [ ] Keep quest definitions independent from mutable campaign progress.
+* [x] Create immutable quest and step definitions.
+* [x] Create a catalog that resolves definitions by canonical ID without duplicating content state.
+* [x] Reject duplicated quest IDs and structurally duplicated steps.
+* [x] Reject missing, non-positive or non-consecutive step numbers.
+* [x] Reject quests without steps.
+* [x] Reject malformed data before partially populating the catalogs.
+* [x] Keep quest definitions independent from mutable campaign progress.
 
 ---
 
@@ -197,6 +195,7 @@ Quantity and target rules:
 * [ ] Return ordered, groupable progress results to the caller.
 * [ ] Load and validate immutable objective definitions.
 * [ ] Reject steps without objectives after objective loading is complete.
+* [ ] Load complete quest definitions before mutable quest progress is created.
 
 ---
 
@@ -260,6 +259,7 @@ Frozen rules:
 * [ ] Audit existing route, branch, portal and service data before choosing their exact requirement columns.
 * [ ] Add physical-access integration only where the first five quests require it.
 * [ ] Avoid a generic `access_rules.txt` layer unless the code audit demonstrates a concrete need.
+* [ ] Validate every quest availability requirement-set reference after both catalogs are available.
 
 ---
 
@@ -413,9 +413,8 @@ Dialogue rules:
 * Dialogues are external linear sequences.
 * One physical record represents one utterance.
 * Line numbers start at 1 and are unique and consecutive inside a dialogue.
-* A literal `\n` creates an intentional line break inside one utterance.
-* `\\` represents a literal backslash.
-* Unknown escape sequences are rejected.
+* The only supported text sequence is literal `\n`, which creates an intentional line break.
+* A backslash not immediately followed by `n` is invalid in external V6 text.
 * Semicolons remain reserved field separators.
 * Long text may wrap naturally in the console.
 * Each utterance advances only after Enter.
@@ -470,6 +469,7 @@ Frozen rules:
 * [ ] Present fixed NPC placement and visibility through current requirements.
 * [ ] Implement linear Enter-driven dialogue presentation.
 * [ ] Implement the stable NPC interaction submenu without a generic dialogue-choice engine.
+* [ ] Validate every quest starting NPC reference after both catalogs are available.
 
 ---
 
@@ -647,7 +647,7 @@ Frozen rules:
 * A tie is resolved uniformly among the tied highest-scoring classes using the application's injectable random source.
 * Exactly one recommendation is presented.
 * The recommendation does not restrict the final choice.
-* Question and answer text supports the approved escapes and placeholders.
+* Question and answer text supports the `\n` line-break sequence and the approved placeholders.
 * Questionnaire state remains transient until a class is successfully confirmed.
 
 ### Selection and confirmation
@@ -912,7 +912,7 @@ Create `docs/QUEST_IMPLEMENTATION_GUIDE.md` in non-technical language for conten
 * How to choose and configure objectives.
 * How to write requirements, rewards and effects.
 * How to create narrative locations, NPCs, placements and dialogues.
-* Supported escapes and placeholders.
+* The supported `\n` line-break sequence and placeholders.
 * How to connect offers, pending interactions and completions.
 * Common validation errors and how to correct them.
 * A complete content-author checklist.
