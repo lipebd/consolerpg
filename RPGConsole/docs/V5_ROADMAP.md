@@ -1,12 +1,12 @@
 # RPGConsole V5 Roadmap
 
-> **Planning status:** Parts 1 and 2 record the completed crafting and save-and-load systems. Part 3 defines the frozen remaining V5 implementation scope. Quest-dependent progression, deferred maintenance and optional unit-testing study have been transferred to future V6 planning.
+> **Release status:** V5 is complete, packaged and manually validated as release `v5.0.0`. Parts 1 through 3 record the delivered crafting, persistence, exploration and dungeon-progression scope. Quest-dependent progression, deferred maintenance and optional unit-testing study have been transferred to V6 planning.
 
 ## Release direction
 
-V5 began by integrating data-driven crafting into the V4 architecture while preserving the project's existing catalog, inventory, world and interface conventions.
+V5 integrates data-driven crafting into the V4 architecture while preserving the project's existing catalog, inventory, world and interface conventions.
 
-Crafting and save and load are complete. The remaining V5 scope implements special-area guarantees, persistent dungeon progression, recurring dungeon bosses and cooldown-aware optional epic encounters. After Part 3 is implemented, validated and documented, V5 proceeds to release preparation.
+The released scope includes crafting, save and load, special-area guarantees, persistent dungeon progression, recurring dungeon bosses and cooldown-aware optional epic encounters.
 
 The implementation should continue to favor:
 

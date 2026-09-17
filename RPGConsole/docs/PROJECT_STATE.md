@@ -2,17 +2,15 @@
 
 ## Current version
 
-V4 is complete and preserved as the current released version.
-
-V5 development is in progress.
+V5 is complete and preserved as the current released version.
 
 Current stage:
 
-`Data-driven crafting integration and validation`
+`V6 quest-system planning`
 
 Current Git branch:
 
-`feature/v5-crafting-integration`
+`master`
 
 Preserved release tags:
 
@@ -20,6 +18,7 @@ Preserved release tags:
 * `v2.0-mmvp`
 * `v3.0.0`
 * `v4.0.0`
+* `v5.0.0`
 
 ## Project objective
 
@@ -874,18 +873,25 @@ Complete encrypted round trips, campaign reconstruction, valid and invalid start
 
 ## Current next step
 
-The complete V5 gameplay scope is implemented and manually validated:
+V5 is complete, packaged and manually validated as the current release.
 
-- Crafting integration.
-- Encrypted atomic save and load.
-- World clock and global shop restocking.
+Its delivered scope includes:
+
+- Data-driven crafting.
+- Encrypted, authenticated and atomic campaign persistence.
+- Campaign selection, continuation and INN-exclusive saving.
+- Centralized recoverable console input.
+- Fictional world time and global shop restocking.
 - Special-area event guarantees.
-- Persistent dungeon completion.
-- Recurring bosses and epic cooldowns.
+- Permanent dungeon completion.
+- Recurring dungeon bosses.
+- Optional epic encounters with persistent cooldowns.
+- Internal save-format version 2.
+- A self-contained Windows x64 portable package.
 
-The remaining V5 work is release closure: synchronize final documentation, review the complete Part 3 diff, create the consolidated milestone commit and validate the final portable release package.
+The next development stage is V6 planning, beginning with the quest system.
 
-Quest-dependent class paths, narrative flags, generalized access requirements, loader-maintenance work and the optional automated-testing study are deferred to V6 planning. V6 begins with the quest system so those dependent progression features can be designed against a narrative foundation.
+Quest-dependent class paths, narrative flags, generalized access requirements, loader-maintenance work and the optional automated-testing study remain deferred to V6 so their design can use real quest and narrative progression state.
 
 ## Important conventions
 
