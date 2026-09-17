@@ -20,6 +20,13 @@ import rpg.enemies.EnemyCatalog;
 import rpg.enemies.EnemyDropCatalog;
 import rpg.enemies.EnemyDropLoader;
 import rpg.enemies.EnemyLoader;
+import rpg.flags.FlagCatalog;
+import rpg.flags.FlagLoader;
+import rpg.quests.QuestCatalog;
+import rpg.quests.QuestLoader;
+import rpg.requirements.QuestAvailabilityValidator;
+import rpg.requirements.RequirementCatalog;
+import rpg.requirements.RequirementLoader;
 import rpg.items.Item;
 import rpg.items.ItemCatalog;
 import rpg.items.ItemDefinition;
@@ -89,165 +96,256 @@ public class Main {
 
 	public static void main(String[] args) {
 		try {
-			ShopStateGenerator shopStateGenerator;
+
+			ConsoleInput consoleInput = new ConsoleInput();
+
 			CharacterNameCatalog characterNameCatalog;
-			CrafterCatalog crafterCatalog;
-			CraftingRecipeCatalog craftingRecipeCatalog;
+			PlayableClassCatalog playableClassCatalog;
+			SkillCatalog skillCatalog;
+
 			ItemCatalog itemCatalog;
 			ItemDefinitionCatalog itemDefinitionCatalog;
 			RecoveryItemDefinitionCatalog recoveryItemDefinitionCatalog;
 			SkillScrollDefinitionCatalog skillScrollDefinitionCatalog;
 			EquipmentCatalog equipmentCatalog;
 			EquipmentService equipmentService;
-			SkillCatalog skillCatalog;
-			ShopStateCatalog shopStateCatalog;
+
+			CrafterCatalog crafterCatalog;
+			CraftingRecipeCatalog craftingRecipeCatalog;
+
 			ShopCatalog shopCatalog;
 			ShopStockCatalog shopStockCatalog;
+			ShopStateCatalog shopStateCatalog;
+			ShopStateGenerator shopStateGenerator;
+
+			ScenarioCatalog scenarioCatalog;
+			ScenarioBranchCatalog scenarioBranchCatalog;
+			Scenario currentScenario;
+
 			CityTransportCatalog cityTransportCatalog;
 			TravelCatalog travelCatalog;
 			TravelProgress travelProgress;
+
 			InnCatalog innCatalog;
 			ExplorationRewardCatalog explorationRewardCatalog;
+
 			EnemyCatalog enemyCatalog;
 			EncounterCatalog encounterCatalog;
 			EnemyDropCatalog enemyDropCatalog;
-			ScenarioCatalog scenarioCatalog;
-			ScenarioBranchCatalog scenarioBranchCatalog;
-			PlayableClassCatalog playableClassCatalog;
-			Scenario currentScenario;
+
+			QuestCatalog questCatalog;
+			FlagCatalog flagCatalog;
+			RequirementCatalog requirementCatalog;
+
 			WorldProgress worldProgress;
-            DungeonProgress dungeonProgress;
-			ConsoleInput consoleInput = new ConsoleInput();
+			DungeonProgress dungeonProgress;
 
 			try {
+				// Character definitions and skills
 				CharacterNameLoader characterNameLoader = new CharacterNameLoader();
-                characterNameCatalog =
-                        characterNameLoader.load(Path.of("data", "character_names.txt"));
-				PlayableClassLoader playableClassLoader = new PlayableClassLoader();
-                playableClassCatalog =
-                        playableClassLoader.load(Path.of("data", "playable_classes.txt"));
-				SkillLoader skillLoader = new SkillLoader();
-                skillCatalog =
-                        skillLoader.load(
-						Path.of("data", "skills.txt"),
-						Path.of("data", "skill_effects.txt"),
-                                playableClassCatalog);
-				EnemyLoader enemyLoader = new EnemyLoader();
-				enemyCatalog = enemyLoader.load(Path.of("data", "enemies.txt"));
-				ItemLoader itemLoader = new ItemLoader();
-				itemDefinitionCatalog = itemLoader.load(Path.of("data", "items.txt"));
-				CraftingRecipeLoader craftingRecipeLoader = new CraftingRecipeLoader();
-                craftingRecipeCatalog =
-                        craftingRecipeLoader.load(
-                                Path.of("data", "crafting_recipes.txt"), itemDefinitionCatalog);
-				EquipmentLoader equipmentLoader = new EquipmentLoader();
+				characterNameCatalog =
+						characterNameLoader.load(Path.of("data", "character_names.txt"));
 
-                equipmentCatalog =
-                        equipmentLoader.load(
-						Path.of("data", "weapons.txt"),
-						Path.of("data", "armors.txt"),
-						Path.of("data", "trinkets.txt"),
-                                itemDefinitionCatalog);
+				PlayableClassLoader playableClassLoader = new PlayableClassLoader();
+				playableClassCatalog =
+						playableClassLoader.load(Path.of("data", "playable_classes.txt"));
+
+				SkillLoader skillLoader = new SkillLoader();
+				skillCatalog =
+						skillLoader.load(
+								Path.of("data", "skills.txt"),
+								Path.of("data", "skill_effects.txt"),
+								playableClassCatalog);
+
+				// Enemy definitions
+				EnemyLoader enemyLoader = new EnemyLoader();
+				enemyCatalog =
+						enemyLoader.load(Path.of("data", "enemies.txt"));
+
+				// Item definitions and specialized item types
+				ItemLoader itemLoader = new ItemLoader();
+				itemDefinitionCatalog =
+						itemLoader.load(Path.of("data", "items.txt"));
+
 				RecoveryItemLoader recoveryItemLoader = new RecoveryItemLoader();
-                recoveryItemDefinitionCatalog =
-                        recoveryItemLoader.load(
-                                Path.of("data", "recovery_items.txt"), itemDefinitionCatalog);
+				recoveryItemDefinitionCatalog =
+						recoveryItemLoader.load(
+								Path.of("data", "recovery_items.txt"),
+								itemDefinitionCatalog);
+
 				SkillScrollLoader skillScrollLoader = new SkillScrollLoader();
-                skillScrollDefinitionCatalog =
-                        skillScrollLoader.load(
-						Path.of("data", "skill_scrolls.txt"),
-						itemDefinitionCatalog,
-						skillCatalog,
-                                playableClassCatalog);
+				skillScrollDefinitionCatalog =
+						skillScrollLoader.load(
+								Path.of("data", "skill_scrolls.txt"),
+								itemDefinitionCatalog,
+								skillCatalog,
+								playableClassCatalog);
+
+				EquipmentLoader equipmentLoader = new EquipmentLoader();
+				equipmentCatalog =
+						equipmentLoader.load(
+								Path.of("data", "weapons.txt"),
+								Path.of("data", "armors.txt"),
+								Path.of("data", "trinkets.txt"),
+								itemDefinitionCatalog);
+
+				// Runtime item catalog and equipment service
 				itemCatalog = new ItemCatalog();
 				ItemFactory itemFactory = new ItemFactory();
 				for (ItemDefinition definition : itemDefinitionCatalog.getAll()) {
-                    Item item =
-                            itemFactory.create(
-							definition,
-							recoveryItemDefinitionCatalog,
-							skillScrollDefinitionCatalog,
-                                    skillCatalog);
+					Item item =
+							itemFactory.create(
+									definition,
+									recoveryItemDefinitionCatalog,
+									skillScrollDefinitionCatalog,
+									skillCatalog);
 					itemCatalog.register(item);
 				}
-				equipmentService = new EquipmentService(equipmentCatalog, itemCatalog);
+
+				equipmentService =
+						new EquipmentService(equipmentCatalog, itemCatalog);
+
+				// Enemy drops and encounters
 				EnemyDropLoader enemyDropLoader = new EnemyDropLoader();
-                enemyDropCatalog =
-                        enemyDropLoader.load(
-                                Path.of("data", "enemy_drops.txt"), enemyCatalog, itemCatalog);
+				enemyDropCatalog =
+						enemyDropLoader.load(
+								Path.of("data", "enemy_drops.txt"),
+								enemyCatalog,
+								itemCatalog);
+
 				EncounterLoader encounterLoader = new EncounterLoader();
-                encounterCatalog =
-                        encounterLoader.load(Path.of("data", "encounters.txt"), enemyCatalog);
+				encounterCatalog =
+						encounterLoader.load(
+								Path.of("data", "encounters.txt"),
+								enemyCatalog);
+
+				// Quests, flags, requirements, and availability validation
+				QuestLoader questLoader = new QuestLoader();
+				questCatalog =
+						questLoader.load(
+								Path.of("data", "quests.txt"),
+								Path.of("data", "quest_steps.txt"),
+								Path.of("data", "quest_objectives.txt"));
+
+				FlagLoader flagLoader = new FlagLoader();
+				flagCatalog =
+						flagLoader.load(Path.of("data", "flags.txt"));
+
+				RequirementLoader requirementLoader = new RequirementLoader();
+				requirementCatalog =
+						requirementLoader.load(
+								Path.of("data", "requirements.txt"),
+								questCatalog,
+								flagCatalog,
+								itemDefinitionCatalog);
+
+				QuestAvailabilityValidator.validate(
+						questCatalog,
+						requirementCatalog);
+
+				// Scenario definitions and world construction
 				ScenarioLoader scenarioLoader = new ScenarioLoader();
-                ScenarioDefinitionCatalog scenarioDefinitionCatalog =
-                        scenarioLoader.load(Path.of("data", "scenarios.txt"));
-				CrafterLoader crafterLoader = new CrafterLoader();
-                crafterCatalog =
-                        crafterLoader.load(
-                                Path.of("data", "crafters.txt"),
-                                scenarioDefinitionCatalog,
-                                craftingRecipeCatalog);
-				CityTransportLoader cityTransportLoader = new CityTransportLoader();
-                cityTransportCatalog =
-                        cityTransportLoader.load(
-                                Path.of("data", "city_transport.txt"), scenarioDefinitionCatalog);
+				ScenarioDefinitionCatalog scenarioDefinitionCatalog =
+						scenarioLoader.load(Path.of("data", "scenarios.txt"));
+
 				InnLoader innLoader = new InnLoader();
-				innCatalog = innLoader.load(Path.of("data", "inns.txt"), scenarioDefinitionCatalog);
+				innCatalog =
+						innLoader.load(
+								Path.of("data", "inns.txt"),
+								scenarioDefinitionCatalog);
+
 				CombatScenarioLoader combatScenarioLoader = new CombatScenarioLoader();
-                CombatScenarioDefinitionCatalog combatScenarioDefinitionCatalog =
-                        combatScenarioLoader.load(
-                                Path.of("data", "combat_scenarios.txt"),
-                                scenarioDefinitionCatalog,
-                                innCatalog);
-				ShopLoader shopLoader = new ShopLoader();
-                shopCatalog =
-                        shopLoader.load(
-                                Path.of("data", "shops.txt"),
-                                scenarioDefinitionCatalog,
-                                combatScenarioDefinitionCatalog);
-				ShopStockLoader shopStockLoader = new ShopStockLoader();
-                shopStockCatalog =
-                        shopStockLoader.load(
-                                Path.of("data", "shop_stock.txt"), shopCatalog, itemCatalog);
-                shopStateGenerator =
-                        new ShopStateGenerator(shopCatalog, shopStockCatalog, new Random());
-				ExplorationRewardLoader explorationRewardLoader = new ExplorationRewardLoader();
-                explorationRewardCatalog =
-                        explorationRewardLoader.load(
-                                Path.of("data", "exploration_rewards.txt"),
-                                combatScenarioDefinitionCatalog,
-                                itemCatalog);
+				CombatScenarioDefinitionCatalog combatScenarioDefinitionCatalog =
+						combatScenarioLoader.load(
+								Path.of("data", "combat_scenarios.txt"),
+								scenarioDefinitionCatalog,
+								innCatalog);
+
 				DungeonLoader dungeonLoader = new DungeonLoader();
-                DungeonDefinitionCatalog dungeonDefinitionCatalog =
-                        dungeonLoader.load(
-						Path.of("data", "dungeons.txt"),
-						scenarioDefinitionCatalog,
-						combatScenarioDefinitionCatalog,
-                                enemyCatalog);
+				DungeonDefinitionCatalog dungeonDefinitionCatalog =
+						dungeonLoader.load(
+								Path.of("data", "dungeons.txt"),
+								scenarioDefinitionCatalog,
+								combatScenarioDefinitionCatalog,
+								enemyCatalog);
+
 				ScenarioBranchLoader scenarioBranchLoader = new ScenarioBranchLoader();
-                scenarioBranchCatalog =
-                        scenarioBranchLoader.load(
-						Path.of("data", "scenario_branches.txt"),
-						scenarioDefinitionCatalog,
-                                combatScenarioDefinitionCatalog);
+				scenarioBranchCatalog =
+						scenarioBranchLoader.load(
+								Path.of("data", "scenario_branches.txt"),
+								scenarioDefinitionCatalog,
+								combatScenarioDefinitionCatalog);
+
 				scenarioCatalog = new ScenarioCatalog();
 				ScenarioFactory scenarioFactory = new ScenarioFactory();
 				for (ScenarioDefinition definition : scenarioDefinitionCatalog.getAll()) {
-                    Scenario scenario =
-                            scenarioFactory.create(
-                                    definition,
-                                    combatScenarioDefinitionCatalog,
-                                    dungeonDefinitionCatalog);
+					Scenario scenario =
+							scenarioFactory.create(
+									definition,
+									combatScenarioDefinitionCatalog,
+									dungeonDefinitionCatalog);
 					scenarioCatalog.register(scenario);
 				}
 
+				// World progression
 				worldProgress = new WorldProgress(scenarioCatalog);
+
+				// Travel routes and city transportation
 				TravelRouteLoader travelRouteLoader = new TravelRouteLoader();
-                travelCatalog =
-                        travelRouteLoader.load(
-						Path.of("data", "travel_routes.txt"),
-						scenarioDefinitionCatalog,
-                                combatScenarioDefinitionCatalog);
+				travelCatalog =
+						travelRouteLoader.load(
+								Path.of("data", "travel_routes.txt"),
+								scenarioDefinitionCatalog,
+								combatScenarioDefinitionCatalog);
+
+				CityTransportLoader cityTransportLoader = new CityTransportLoader();
+				cityTransportCatalog =
+						cityTransportLoader.load(
+								Path.of("data", "city_transport.txt"),
+								scenarioDefinitionCatalog);
+
+				// Crafting recipes and crafters
+				CraftingRecipeLoader craftingRecipeLoader = new CraftingRecipeLoader();
+				craftingRecipeCatalog =
+						craftingRecipeLoader.load(
+								Path.of("data", "crafting_recipes.txt"),
+								itemDefinitionCatalog);
+
+				CrafterLoader crafterLoader = new CrafterLoader();
+				crafterCatalog =
+						crafterLoader.load(
+								Path.of("data", "crafters.txt"),
+								scenarioDefinitionCatalog,
+								craftingRecipeCatalog);
+
+				// Shops, stock, and runtime state generation
+				ShopLoader shopLoader = new ShopLoader();
+				shopCatalog =
+						shopLoader.load(
+								Path.of("data", "shops.txt"),
+								scenarioDefinitionCatalog,
+								combatScenarioDefinitionCatalog);
+
+				ShopStockLoader shopStockLoader = new ShopStockLoader();
+				shopStockCatalog =
+						shopStockLoader.load(
+								Path.of("data", "shop_stock.txt"),
+								shopCatalog,
+								itemCatalog);
+
+				shopStateGenerator =
+						new ShopStateGenerator(
+								shopCatalog,
+								shopStockCatalog,
+								new Random());
+
+				// Exploration rewards
+				ExplorationRewardLoader explorationRewardLoader = new ExplorationRewardLoader();
+				explorationRewardCatalog =
+						explorationRewardLoader.load(
+								Path.of("data", "exploration_rewards.txt"),
+								combatScenarioDefinitionCatalog,
+								itemCatalog);
 
 			} catch (IOException | IllegalArgumentException exception) {
 				System.out.println("Não foi possível carregar os dados do jogo.");

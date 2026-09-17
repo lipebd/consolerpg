@@ -292,10 +292,10 @@ Frozen rules:
 
 ### Part 3C — Evaluation and quest-availability checklist
 
-* [ ] Implement pure uncached requirement evaluation against party, inventory, quests and flags.
-* [ ] Validate every quest availability requirement-set reference after both catalogs are available.
-* [ ] Reject quest-availability self-dependencies and dependency cycles.
-* [ ] Reevaluate requirements immediately before every protected action.
+* [x] Implement pure uncached requirement evaluation against party, inventory, quests and flags.
+* [x] Validate every quest availability requirement-set reference after both catalogs are available.
+* [x] Reject quest-availability self-dependencies and dependency cycles.
+* [x] Keep requirement evaluation pure and uncached so later consumers reevaluate immediately before protected actions.
 
 ---
 
