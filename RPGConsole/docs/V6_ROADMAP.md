@@ -183,6 +183,18 @@ Quantity and target rules:
 * Progress results are returned to the interface instead of being printed by the domain service.
 * Quest notifications are transient and remain outside the save schema.
 
+The initial synchronous gameplay event types are exactly:
+
+* `NPC_TALKED`
+* `ENEMY_DEFEATED`
+* `ENEMY_ANALYZED`
+* `BATTLE_WON`
+* `ITEM_OBTAINED`
+* `SCENARIO_REACHED`
+* `DUNGEON_COMPLETED`
+
+`DELIVER_ITEM` has no generic gameplay event and remains reserved for the transactional NPC-delivery flow. `NPC_TALKED` does not progress a delivery step before that transaction succeeds.
+
 ### Part 2A — Objective-definition checklist
 
 * [x] Create and validate all eight immutable objective-definition types.
@@ -203,10 +215,11 @@ Quantity and target rules:
 
 ### Part 2C — Core-service checklist
 
-* [ ] Implement `QuestProgressService` with explicit input and result objects.
-* [ ] Prevent one event from progressing both the completed step and the step it just activated.
-* [ ] Allow later ordered events to affect a newly activated step.
-* [ ] Return ordered, groupable progress results to the caller.
+* [x] Implement `QuestProgressService` with explicit input and result objects.
+* [x] Prevent one event from progressing both the completed step and the step it just activated.
+* [x] Allow later ordered events to affect a newly activated step.
+* [x] Return ordered, groupable progress results to the caller.
+* [x] Validate complete event batches before mutation and preserve event and catalog order.
 
 ---
 
