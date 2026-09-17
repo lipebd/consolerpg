@@ -212,6 +212,17 @@ public final class QuestProgress {
 		return true;
 	}
 
+	boolean isCurrentStepFinal(String questId) {
+	    QuestDefinition questDefinition =
+	            questCatalog.getById(questId);
+
+	    ActiveQuestState activeState =
+	            getActiveState(questDefinition);
+
+	    return activeState.currentStep
+	            == questDefinition.getSteps().size();
+	}
+
 	boolean advanceCompletedStep(String questId) {
 		QuestDefinition questDefinition =
 				questCatalog.getById(questId);

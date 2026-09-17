@@ -301,6 +301,8 @@ Frozen rules:
 
 ## 4. Quest rewards and permanent effects
 
+> **Frozen V6 scope:** Material rewards and permanent effects remain external definitions associated with quests. Ordinary quest lifecycle transitions use validated all-or-nothing plans. A confirmed gameplay event is not rolled back when the resulting quest completion is temporarily blocked.
+
 ### Material rewards
 
 Use `data/quest_rewards.txt`:
@@ -318,14 +320,19 @@ The initial reward types are exactly:
 Frozen rules:
 
 * GOLD is added to the shared party balance.
-* PARTY_EXP is awarded to every current party member.
+* PARTY_EXP is awarded to every party member present when the quest completes.
+* Characters recruited later do not receive quest EXP retroactively.
 * ITEM accepts any canonical entry supported by the shared inventory.
+* Reward quantities are positive and respect the supported GOLD and inventory limits.
+* GOLD and PARTY_EXP require a blank `rewardId`.
+* ITEM requires a canonical item ID.
 * Reward order starts at 1 and is unique and consecutive for each quest.
 * Duplicate `(rewardType, rewardId)` entries for one quest are rejected.
 * A quest may have no material reward.
 * Reward descriptions are derived from actual reward definitions and are not duplicated as free text.
 * Quest rewards are all-or-nothing; partial reward granting is not used for quest completion.
 * EXP follows the existing character-level and maximum-level rules.
+* Reward definitions remain separate from the central quest-definition loader.
 
 ### Permanent effects
 
@@ -335,13 +342,13 @@ Use `data/quest_effects.txt`:
 # questId;step;trigger;order;effectType;targetId;displayText
 ```
 
-The initial triggers are:
+The initial triggers are exactly:
 
 * `QUEST_START`
 * `STEP_COMPLETE`
 * `QUEST_COMPLETE`
 
-The initial effect types are:
+The initial effect types are exactly:
 
 * `SET_FLAG`
 * `UNLOCK_ROUTE`
@@ -349,32 +356,62 @@ The initial effect types are:
 Frozen rules:
 
 * Quest-level triggers use step 0.
-* `STEP_COMPLETE` uses the real positive step number.
+* `STEP_COMPLETE` uses a real positive step number belonging to the quest.
 * Effect order starts at 1 and is unique and consecutive per trigger location.
+* Duplicate `(effectType, targetId)` entries inside one trigger location are rejected.
+* The same target may appear at different trigger locations.
+* SET_FLAG requires a canonical permanent-flag ID.
+* UNLOCK_ROUTE requires a canonical travel-route ID.
+* Setting an existing flag and unlocking an existing route are idempotent.
 * `displayText` is optional and describes a visible unlock to the player.
+* Visible effect text is returned only when the effect changes campaign state.
+* Effect text supports only the literal `\n` line-break escape; other backslash uses are invalid.
 * Step effects occur atomically with the step transition.
+* The final step's STEP_COMPLETE effects join the same transaction as quest completion.
 * Quest-completion effects occur atomically with deliveries, rewards and final status mutation.
+* Quest-start effects occur atomically with quest activation.
+* Permanent-effect definitions remain separate from the central quest-definition loader.
 * `DISCOVER_SCENARIO` is not introduced unless an audit of current world discovery proves that the first five quests need a separate effect.
 * Class change and ally recruitment are dedicated typed ceremony behavior, not generic rewards or generic effects.
 
 ### Completion transaction
 
-* The complete plan is validated before campaign state changes.
+* A confirmed gameplay event updates its objective before a resulting transition is attempted.
+* The complete transition or completion plan is validated before its campaign mutations begin.
 * Required delivery items, receiving limits, rewards, effects, special ceremony changes and final quest status belong to the same transaction when they resolve together.
-* A capacity or state failure leaves items, characters, flags, routes, quest progress and rewards unchanged.
+* A capacity or state failure leaves deliveries, characters, flags, routes, rewards and quest lifecycle state unchanged from the moment the transition attempt began.
+* Objective progress already earned through the confirmed triggering event is preserved.
+* A blocked final step remains fully complete while the quest stays ACTIVE.
+* No additional pending or ready quest status is introduced.
 * The player may correct the blocking state and retry.
+* NPC interactions may naturally retry their associated completion.
+* The quest interface later provides an explicit `Concluir quest` fallback for a blocked completion outside NPC interaction.
+* Opening the quest interface alone never retries or mutates the campaign.
 * Items granted by one completed quest may emit later `OBTAIN_ITEM` events for other active quests.
-* The completed quest cannot consume its own reward event retroactively.
+* Reward-caused events are emitted only after the source quest is completed successfully.
+* The completed source quest cannot consume its own reward event retroactively.
+
+### Derived reward presentation
+
+Player-facing reward summaries are derived from canonical data, for example:
+
+```text
+- 100 GOLD
+- 50 EXP para cada integrante
+- 2x Merumã
+```
+
+Names and quantities come from the loaded reward and item definitions. No independent reward-description field is stored.
 
 ### Implementation checklist
 
-* [ ] Load and validate reward definitions.
-* [ ] Load and validate permanent-effect definitions.
-* [ ] Derive player-facing reward summaries from actual data.
-* [ ] Build and validate a complete completion plan before mutation.
-* [ ] Apply ordinary quest rewards and effects atomically.
-* [ ] Return explicit completion failures without partially changing the campaign.
-* [ ] Emit reward-caused item acquisition only after successful completion.
+* [x] Load and validate reward definitions.
+* [x] Load and validate permanent-effect definitions.
+* [x] Derive player-facing reward summaries from actual data.
+* [x] Build and validate a complete completion plan before mutation.
+* [x] Apply ordinary quest rewards and effects atomically.
+* [x] Return explicit completion failures without partially changing the campaign.
+* [x] Emit reward-caused item acquisition only after successful completion.
 
 ---
 

@@ -1,0 +1,1 @@
+# questId;step;trigger;order;effectType;targetId;displayText

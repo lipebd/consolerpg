@@ -24,6 +24,10 @@ import rpg.flags.FlagCatalog;
 import rpg.flags.FlagLoader;
 import rpg.quests.QuestCatalog;
 import rpg.quests.QuestLoader;
+import rpg.quests.effects.QuestEffectCatalog;
+import rpg.quests.effects.QuestEffectLoader;
+import rpg.quests.rewards.QuestRewardCatalog;
+import rpg.quests.rewards.QuestRewardLoader;
 import rpg.requirements.QuestAvailabilityValidator;
 import rpg.requirements.RequirementCatalog;
 import rpg.requirements.RequirementLoader;
@@ -134,6 +138,8 @@ public class Main {
 			EnemyDropCatalog enemyDropCatalog;
 
 			QuestCatalog questCatalog;
+			QuestRewardCatalog questRewardCatalog;
+			QuestEffectCatalog questEffectCatalog;
 			FlagCatalog flagCatalog;
 			RequirementCatalog requirementCatalog;
 
@@ -227,6 +233,15 @@ public class Main {
 								Path.of("data", "quest_steps.txt"),
 								Path.of("data", "quest_objectives.txt"));
 
+				QuestRewardLoader questRewardLoader =
+				        new QuestRewardLoader();
+
+				questRewardCatalog =
+				        questRewardLoader.load(
+				                Path.of("data", "quest_rewards.txt"),
+				                questCatalog,
+				                itemCatalog);
+
 				FlagLoader flagLoader = new FlagLoader();
 				flagCatalog =
 						flagLoader.load(Path.of("data", "flags.txt"));
@@ -297,6 +312,17 @@ public class Main {
 								Path.of("data", "travel_routes.txt"),
 								scenarioDefinitionCatalog,
 								combatScenarioDefinitionCatalog);
+
+				// Travel-dependent quest effects
+				QuestEffectLoader questEffectLoader =
+				        new QuestEffectLoader();
+
+				questEffectCatalog =
+				        questEffectLoader.load(
+				                Path.of("data", "quest_effects.txt"),
+				                questCatalog,
+				                flagCatalog,
+				                travelCatalog);
 
 				CityTransportLoader cityTransportLoader = new CityTransportLoader();
 				cityTransportCatalog =
