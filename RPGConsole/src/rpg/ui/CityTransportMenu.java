@@ -3,7 +3,6 @@ package rpg.ui;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Scanner;
 
 import rpg.GameCurrency;
 import rpg.characters.Party;
@@ -17,12 +16,12 @@ public final class CityTransportMenu {
 	private static final int DESTINATION_NAME_WIDTH = 26;
 
 	private final Party party;
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 	private final ScenarioCatalog scenarioCatalog;
 
-	public CityTransportMenu(Party party, Scanner scanner, ScenarioCatalog scenarioCatalog) {
+	public CityTransportMenu(Party party, ConsoleInput consoleInput, ScenarioCatalog scenarioCatalog) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 		this.scenarioCatalog = Objects.requireNonNull(scenarioCatalog, "Scenario catalog cannot be null.");
 	}
 
@@ -45,7 +44,7 @@ public final class CityTransportMenu {
 		while (true) {
 			displayMenu(destinations, destinationSlotCount, feedbackMessage);
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return Optional.empty();
@@ -131,7 +130,7 @@ public final class CityTransportMenu {
 			System.out.println("[0] Cancelar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			switch (choice) {
 			case "1" -> {

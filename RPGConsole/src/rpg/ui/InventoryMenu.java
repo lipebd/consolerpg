@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Scanner;
 import java.util.Optional;
 
 import rpg.GameCurrency;
@@ -24,19 +23,19 @@ public final class InventoryMenu {
 	private final SkillScrollUseMenu skillScrollUseMenu;
 	private final EquipmentMenu equipmentMenu;
 	private final Party party;
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 	private final RecoveryItemUseMenu recoveryItemUseMenu;
 
-	public InventoryMenu(Party party, Scanner scanner, EquipmentMenu equipmentMenu) {
+	public InventoryMenu(Party party, ConsoleInput consoleInput, EquipmentMenu equipmentMenu) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
 
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 
 		this.equipmentMenu = Objects.requireNonNull(equipmentMenu, "Equipment menu cannot be null.");
 
-		this.recoveryItemUseMenu = new RecoveryItemUseMenu(party, scanner);
+		this.recoveryItemUseMenu = new RecoveryItemUseMenu(party, consoleInput);
 
-		this.skillScrollUseMenu = new SkillScrollUseMenu(party, scanner);
+		this.skillScrollUseMenu = new SkillScrollUseMenu(party, consoleInput);
 	}
 
 	public boolean open() {
@@ -48,7 +47,7 @@ public final class InventoryMenu {
 
 			displayCategoryMenu(categories);
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return false;
@@ -110,7 +109,7 @@ public final class InventoryMenu {
 
 			displayItemPage(category, entries, firstIndex, lastIndex, currentPage, totalPages);
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return false;
@@ -186,7 +185,7 @@ public final class InventoryMenu {
 			System.out.println("[0] Voltar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return;
@@ -282,7 +281,7 @@ public final class InventoryMenu {
 
 			System.out.print("> ");
 
-			String choice = scanner.nextLine();
+			String choice = consoleInput.readLine();
 
 			if (choice.equals("0")) {
 				return false;
@@ -319,7 +318,7 @@ public final class InventoryMenu {
 			System.out.println("[0] Voltar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return false;

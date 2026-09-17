@@ -86,10 +86,14 @@ enemies.txt
 - Each combat scenario defines its exploration length and event chances.
 - Scenario-specific messages for normal and special areas.
 - Supported random events: nothing, battle, reward, merchant and optional epic encounter.
+- Special areas always resolve to content: direct nothing and repeated merchant results become rewards.
+- Unavailable epic results become regular battles using the current area's encounter pool.
 - Merchant limited to one appearance per exploration session.
 - Epic encounter limited to one offer per dungeon session.
+- Epic eligibility uses minimum position, area restriction, session state and persistent cooldown.
 - Exploration progress survives battles.
 - Exploration sessions reset when a new combat scenario session begins.
+- Active exploration position and session flags remain transient across application executions.
 
 ### Scenarios and travel
 
@@ -101,15 +105,29 @@ enemies.txt
 - Bree, Verdes Ermos and Gruta de Relamparrocha are connected.
 - Scenario descriptions are displayed when entering a map and after returning from battle.
 
+### Dungeon progression
+
+- Every dungeon defines narrative, recurring and epic enemy groups.
+- Narrative-boss victory records permanent first completion.
+- Completed dungeons remain available during recurring-boss cooldowns.
+- A ready recurring boss becomes the mandatory final encounter.
+- A dungeon exploration ends without a final boss while the recurring boss remains in cooldown.
+- Boss and epic availability is evaluated when the encounter position is reached.
+- Victories begin cooldowns after the battle's world-time advancement.
+- Refusal, escape and defeat do not begin cooldowns.
+- Respawn hours remain hidden from the player.
+- `DungeonProgress` stores narrative completion and absolute availability hours separately from transient `ExplorationSession` state.
+
 ### Gruta de Relamparrocha
 
 - Eleven-position dungeon session.
 - Random normal and special-area encounters.
-- Optional Relampagolem epic encounter.
-- Epic encounter may be accepted or avoided.
-- Mestre Eletrogoblin forced as the final boss.
-- Fleeing from the boss returns the party to the previous position and keeps travel locked.
-- Victory unlocks travel from the dungeon.
+- Optional Relampagolem epic encounter available from position 1 in either area type.
+- Relampagolem uses a six-hour victory cooldown.
+- Mestre Eletrogoblin is the narrative and recurring final boss.
+- The recurring boss uses a four-hour victory cooldown.
+- Fleeing from the boss keeps the party at the final position.
+- First completion permanently unlocks the expected travel access.
 
 ### External enemy drops
 
@@ -191,7 +209,7 @@ V2 introduced healing and revival as single-purpose hardcoded skill fields. V4 r
 - Comparative chance has configured minimum and maximum limits.
 - A failed attempt consumes the acting character's action.
 - A successful attempt removes the entire party from battle.
-- Fleeing from a dungeon boss returns the exploration session by one position.
+- Fleeing from a dungeon boss keeps the exploration session at the final position without completing the dungeon or beginning a cooldown.
 
 ### Battle rewards and progression
 
@@ -233,6 +251,8 @@ Responsibilities previously concentrated in `World` were extracted into dedicate
 - `CharacterStatusMenu`
 
 `World` coordinates scenario state, exploration events and the consequences of battle results. It no longer directly controls console input.
+
+`ConsoleInput` now replaces direct `Scanner` usage throughout the application. It centralizes UTF-8 decoding, recoverable Windows-console EOF handling and queued-command control. Timed battle and skill-scroll pauses discard complete commands entered before their following prompts, preventing delayed actions from leaking into later menus.
 
 `World` dispatches fields and dungeons to `CombatScenarioMenu` and cities to `CityMenu`. Each action list is built incrementally from the current scenario state. Both menus preserve continuous numbering, omit unavailable actions and use whitespace to separate action groups without adding unnecessary submenu layers.
 
@@ -305,7 +325,7 @@ Startup validation covers:
 - Price-calculation overflow.
 - Per-item anti-arbitrage rules.
 
-`ShopStateGenerator` creates every shop's active offers once during application initialization. It performs weighted selection without replacement and safely accumulates selection weights.
+`ShopStateGenerator` creates every shop's initial active offers during application initialization and remains available to `World` for runtime restocking. Every generation performs weighted selection without replacement and safely accumulates selection weights.
 
 The generated runtime structure is:
 
@@ -315,9 +335,13 @@ ShopStateCatalog
         -> ShopOfferState
 ```
 
-Each `ShopOfferState` preserves its remaining quantity. Active offers and quantities remain unchanged between repeated accesses during the current execution.
+Each `ShopOfferState` preserves its remaining quantity. Active offers and quantities remain unchanged between repeated accesses during the current restocking cycle.
 
-Exhausted offers disappear from the purchase list but are not replaced by unused entries. Shops remain accessible when all active offers are exhausted. Restocking and shop-state persistence remain postponed until save and load are implemented.
+Exhausted offers disappear from the purchase list but are not replaced by unused entries during the same cycle. Shops remain accessible when all active offers are exhausted.
+
+Whenever world time crosses midnight, `World` requests a complete replacement `ShopStateCatalog`. Every registered shop receives a new weighted offer selection with canonical initial stock. Old offers and remaining quantities are discarded instead of being merged into the new cycle.
+
+The replacement catalog is generated before the current clock or shop-state reference changes. A generation failure therefore preserves the complete previous runtime state.
 
 City shops:
 
@@ -490,7 +514,7 @@ The first V4 gameplay-system block is complete.
 ### External playable-class and skill definitions
 
 - All seven playable classes have stable external definitions, one validated Unicode presentation symbol and startup validation.
-- `skills.txt` stores immutable skill headers with `STARTER`, `LEVEL` or `SCROLL` acquisition types and positive level requirements.
+- `skills.txt` stores immutable skill headers with `STARTER`, `LEVEL` or `SCROLL` acquisition types and level requirements validated against the supported playable-character range.
 - `skill_effects.txt` stores ordered effect components.
 - `SkillLoader` combines and validates both files and registers complete `SkillDefinition` objects in `SkillCatalog`.
 - `PlayableCharacter` references its class and skill definitions, stores learned skills through stable IDs and automatically learns eligible non-scroll skills.
@@ -539,6 +563,21 @@ The natural-growth and level-based skill-availability block is complete.
 - `BattleRewardService` records natural stats before and after leveling, detects every newly learned non-scroll skill and restores surviving characters only after the new maximums are installed.
 - `BattleRewardScreen` displays compact stat deltas and newly learned skill names; `CharacterStatusMenu` displays the character's complete class name and symbol.
 - Experience and level arithmetic reject overflow instead of wrapping silently.
+
+## V5 playable-character level boundary
+
+The playable-character progression boundary required for save validation is implemented.
+
+- `PlayableCharacterLevelRules` centralizes the minimum level 1, current maximum level 20 and next-level experience formula.
+- `CharacterGrowthCalculator` rejects target levels outside the supported range.
+- `DevelopmentPartyFactory` rejects invalid configured levels before constructing a partial party.
+- `PlayableCharacter` stops at level 20, keeps maximum-level EXP at zero and ignores later EXP gains.
+- EXP crossing the maximum is partially accepted only up to level 20; the remainder is discarded.
+- EXP addition uses `long` intermediate arithmetic to prevent integer overflow before progression is updated.
+- `CharacterStatusMenu` displays `Nível máximo` instead of requesting progress toward level 21.
+- Normal progression, exact arrival at level 20, excess EXP, later maximum-level rewards, invalid development level 21 and out-of-range skill and equipment requirements were manually validated.
+- `SkillDefinition` and `EquipmentDefinition` reject level requirements outside the shared supported range.
+- Seven final armor definitions inherited from the earlier level-25 progression were aligned with the current level-20 ceiling.
 
 ## V4 skill-detail presentation
 
@@ -751,17 +790,78 @@ Initial content includes:
 
 The service has been validated independently for missing ingredients, exact requirements, excess owned quantities, multiple ingredients, successful consumption, single-unit output and inventory overflow. The complete interface flow has also been validated through purchase, crafting and inventory verification.
 
+## V5 numeric resource boundaries
+
+Numeric resource boundaries required for save validation are implemented.
+
+- `Party.MAXIMUM_GOLD` centralizes the liquid-GOLD maximum of `999999999`.
+- `Inventory.MAXIMUM_QUANTITY_PER_ITEM` centralizes the maximum of 999 units for each item ID.
+- The inventory continues to support an unlimited number of different item IDs and one quantity entry per ID.
+- Domain additions use `long` intermediate arithmetic and reject values that do not fit completely.
+- Battle and exploration rewards grant only the portion that fits and explicitly report discarded GOLD or items.
+- Shop purchases validate item capacity before deducting GOLD or reducing stock.
+- Shop sales validate GOLD capacity before removing items.
+- Crafting validates output capacity before consuming ingredients, including recipes whose output is also an ingredient.
+- Equipment replacement and removal are rejected when the returning item cannot fit completely in inventory.
+- Defensive rollback paths verify complete resource restoration.
+- GOLD rewards, item rewards, purchases, sales, crafting, equipment replacement and equipment removal were manually validated at their limits.
+
+## V5 world time and shop restocking
+
+The fictional world clock and runtime shop-restocking cycle are functionally integrated.
+
+- `WorldClock` stores one authoritative elapsed-hour value using `long`.
+- New campaigns begin on day 1 at 08:00.
+- Displayed day and hour values are derived using 24-hour days.
+- Non-positive advancement and elapsed-hour overflow are rejected before mutation.
+- `World.HOURS_PER_FINISHED_BATTLE` centralizes the current one-hour battle duration.
+- Victories and defeats advance world time.
+- Successful escape and avoidance before battle do not advance world time.
+- Every midnight triggers one global replacement of all registered shop states.
+- Every shop performs a complete new weighted offer selection with canonical initial stock.
+- Old offers, depleted quantities and non-selected entries are not merged into the new cycle.
+- Candidate generation completes before clock and shop-state replacement.
+- Failed candidate generation preserves the previous time and shop states.
+- City and combat-scenario menus display current world time above horizontally arranged action rows.
+- Shop main menus additionally display the exact next midnight restocking boundary.
+- `WorldTimeFormatter` displays `☼` from 06:00 through 17:59 and `☾` from 18:00 through 05:59.
+- Clock progression, midnight restocking, restored stock, escape behavior and period-symbol boundaries were manually validated.
+
+## Save and load
+
+The version-2 persistence foundation is implemented through `rpg.persistence`.
+
+Current completed behavior:
+
+- Immutable snapshots represent party, character, equipment, inventory, reward-modifier, world-time, discovery, travel, permanent dungeon progression and shop state.
+`CampaignSnapshotRestorer` validates every catalog-backed reference and reconstructs a complete isolated `RestoredCampaign`, including party order, progression, learned scroll skills, equipment, resources, inventory, reward modifiers, world progress, travel progress, dungeon progress, fictional time and finite shop stock. The reconstructed candidate becomes active only after every loading stage succeeds.
+- The versioned campaign schema uses strict indexed Java properties encoded as UTF-8.
+- Canonical booleans accept only lowercase `true` and `false`.
+- Every registered dungeon requires exactly one valid progress entry.
+- Internal version-1 development saves are rejected without migration; the encrypted outer-container version remains unchanged.
+- AES-256-GCM encrypts and authenticates the complete campaign payload.
+- Every encryption uses a new secure random 12-byte IV and a 128-bit authentication tag.
+- The textual container exposes no campaign information outside authenticated ciphertext.
+- Save replacement is performed through a completed temporary file, with atomic movement preferred and a safe fallback available.
+- Save operations return distinct encoding and file-writing failures.
+- Load operations distinguish absent, unreadable, invalid and successfully decoded saves.
+- Invalid save files are preserved instead of being deleted or corrected.
+- Snapshot, property, UTF-8, encryption, container, atomic-file and save/load service round trips were manually validated.
+
+`CampaignSnapshotRestorer` validates every catalog-backed reference and reconstructs a complete isolated `RestoredCampaign`, including party order, progression, learned scroll skills, equipment, resources, inventory, reward modifiers, world progress, travel progress, fictional time and finite shop stock. The reconstructed candidate becomes active only after every loading stage succeeds.
+
+After the unchanged title screen, `CampaignSelectionMenu` distinguishes absent, unreadable, invalid and valid saves. Valid campaigns may be continued or replaced through the confirmed New Game flow. Every INN provides atomic Save and Continue and Save and Exit operations, while ordinary exits require confirmation and never save implicitly.
+
+Complete encrypted round trips, campaign reconstruction, valid and invalid startup flows, preservation of previous saves, INN saving, failed writes, exit-without-saving behavior and version-2 dungeon-progress restoration were manually validated.
+
 ## Current limitations and temporary implementations
 
 - Permanent skill-scroll content and curated scroll drops remain absent while the draft skills await required combat mechanics and final content review.
 - The Flagelo's two temporary `STARTER` skills are not yet retired because the level-7 class-choice flow is not implemented.
-- Learned scroll skills remain runtime-only until save and load persist individual learned-skill IDs.
 - Playable-class definitions, natural growth and the complete approved 30-skill roster are external; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy turns currently use basic attacks; enemy skill selection is deferred.
 - Tavern functionality remains unavailable.
 - After a normal victory, defeated allies remain unavailable until revived by a skill, item or city INN; full-party defeat instead activates rescue and complete restoration.
-- Shop state is regenerated when the program starts and is not persisted.
-- Shops do not restock during the current execution.
 - Items sold by the player cannot be bought back.
 - Normal new games currently begin with only the protagonist; story-based recruitment of three distinct-class allies remains future work.
 - Random ally naming will reuse the implemented external-name selection after recruitment is added.
@@ -771,13 +871,21 @@ The service has been validated independently for missing ingredients, exact requ
 - Crafters are currently restricted to city scenarios.
 - Batch crafting, variable output quantities, crafting fees, recipe discovery, crafting levels, random failure and equipment enhancement are not implemented.
 
+
 ## Current next step
 
-The initial V5 crafting flow is functionally integrated from external data through city interaction and atomic inventory mutation.
+The complete V5 gameplay scope is implemented and manually validated:
 
-The next step is to complete malformed-data validation, update the remaining class-responsibility documentation and perform broader V4 regression after the `Main` and `World` integration.
+- Crafting integration.
+- Encrypted atomic save and load.
+- World clock and global shop restocking.
+- Special-area event guarantees.
+- Persistent dungeon completion.
+- Recurring bosses and epic cooldowns.
 
-The broader V5 release boundary remains preliminary until the remaining planned systems are presented and evaluated. Crafting decisions already recorded in `V5_ROADMAP.md` are definitive.
+The remaining V5 work is release closure: synchronize final documentation, review the complete Part 3 diff, create the consolidated milestone commit and validate the final portable release package.
+
+Quest-dependent class paths, narrative flags, generalized access requirements, loader-maintenance work and the optional automated-testing study are deferred to V6 planning. V6 begins with the quest system so those dependent progression features can be designed against a narrative foundation.
 
 ## Important conventions
 

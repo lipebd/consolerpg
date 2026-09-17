@@ -3,7 +3,6 @@ package rpg.ui;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Scanner;
 
 import rpg.characters.CharacterNameRules;
 import rpg.characters.CharacterNameSelector;
@@ -13,10 +12,10 @@ import rpg.classes.PlayableClassDefinition;
 public final class CharacterCreationMenu {
 
 	private final CharacterNameSelector characterNameSelector;
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 
-	public CharacterCreationMenu(Scanner scanner, CharacterNameSelector characterNameSelector) {
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+	public CharacterCreationMenu(ConsoleInput consoleInput, CharacterNameSelector characterNameSelector) {
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 
 		this.characterNameSelector = Objects
 				.requireNonNull(characterNameSelector, "Character name selector cannot be null.");
@@ -40,7 +39,7 @@ public final class CharacterCreationMenu {
 
 			displayConfirmation(proposedName, classDefinition);
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			switch (choice) {
 			case "1" -> {
@@ -80,7 +79,7 @@ public final class CharacterCreationMenu {
 			System.out.println(currentName == null ? "[0] Cancelar criação" : "[0] Voltar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			switch (choice) {
 			case "1" -> {
@@ -121,7 +120,7 @@ public final class CharacterCreationMenu {
 			System.out.println("[0] Voltar");
 			System.out.print("> ");
 
-			String enteredName = scanner.nextLine();
+			String enteredName = consoleInput.readLine();
 
 			if (enteredName.trim().equals("0")) {
 				return Optional.empty();

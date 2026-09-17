@@ -2,7 +2,6 @@ package rpg.ui;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Scanner;
 
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
@@ -13,17 +12,17 @@ import rpg.battle.rewards.PartyRewardModifierState;
 public final class PartyStatusMenu {
 
 	private final Party party;
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 	private final CharacterStatusMenu characterStatusMenu;
 
-	public PartyStatusMenu(Party party, Scanner scanner, EquipmentMenu equipmentMenu) {
+	public PartyStatusMenu(Party party, ConsoleInput consoleInput, EquipmentMenu equipmentMenu) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
 
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 
 		this.characterStatusMenu = new CharacterStatusMenu(
 				this.party,
-				scanner,
+				consoleInput,
 				Objects.requireNonNull(equipmentMenu, "Equipment menu cannot be null.")
 		);
 	}
@@ -37,7 +36,7 @@ public final class PartyStatusMenu {
 			System.out.println("\n[0] Voltar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine();
+			String choice = consoleInput.readLine();
 
 			if (choice.equals("0")) {
 				return;

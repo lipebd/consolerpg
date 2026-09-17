@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Scanner;
 
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
@@ -13,10 +12,10 @@ import rpg.items.RecoveryItem;
 //Controls party-member selection according to the current target context.
 public final class AllyTargetMenu {
 
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 
-	public AllyTargetMenu(Scanner scanner) {
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+	public AllyTargetMenu(ConsoleInput consoleInput) {
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 	}
 
 	public Optional<PlayableCharacter> selectLivingTarget(Party party) {
@@ -100,7 +99,7 @@ public final class AllyTargetMenu {
 			System.out.println("[0] Voltar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return Optional.empty();

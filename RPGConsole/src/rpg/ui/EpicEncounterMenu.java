@@ -2,17 +2,16 @@ package rpg.ui;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Scanner;
 
 import rpg.enemies.EnemyDefinition;
 
 // Displays an optional epic encounter and asks whether to fight.
 public final class EpicEncounterMenu {
 
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 
-	public EpicEncounterMenu(Scanner scanner) {
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+	public EpicEncounterMenu(ConsoleInput consoleInput) {
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 	}
 
 	public boolean confirmEncounter(EnemyDefinition epicDefinition) {
@@ -39,7 +38,7 @@ public final class EpicEncounterMenu {
 
 			System.out.print("> ");
 
-			String choice = scanner.nextLine();
+			String choice = consoleInput.readLine();
 
 			switch (choice) {
 			case "1" -> {

@@ -1,7 +1,6 @@
 package rpg.ui;
 
 import java.util.Objects;
-import java.util.Scanner;
 
 import rpg.GameCurrency;
 import rpg.characters.Party;
@@ -11,10 +10,10 @@ import rpg.world.scenarios.CombatScenario;
 // Displays the rescue flow after the entire party is defeated.
 public final class PartyRescueScreen {
 
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 
-	public PartyRescueScreen(Scanner scanner) {
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+	public PartyRescueScreen(ConsoleInput consoleInput) {
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 	}
 
 	public void show(Party party, CombatScenario defeatedScenario, City rescueDestination, int rescueCost) {
@@ -49,7 +48,7 @@ public final class PartyRescueScreen {
 		}
 
 		System.out.println(
-				"\nTodos os integrantes do grupo foram resgatados " + "e tiveram suas forças completamente restauradas."
+				"\nTodos os integrantes do grupo foram resgatados e tiveram suas forças completamente restauradas."
 		);
 	}
 
@@ -57,6 +56,6 @@ public final class PartyRescueScreen {
 		System.out.println("\nPressione ENTER para continuar...");
 
 		System.out.print("> ");
-		scanner.nextLine();
+		consoleInput.readLine();
 	}
 }

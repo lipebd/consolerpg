@@ -12,6 +12,7 @@ public final class Party {
 
 	public static final int MINIMUM_SIZE = 1;
 	public static final int MAXIMUM_SIZE = 4;
+	public static final int MAXIMUM_GOLD = 999999999;
 
 	private final List<PlayableCharacter> members;
 	private final Inventory inventory;
@@ -41,14 +42,6 @@ public final class Party {
 
 		members.add(newMember);
 		return true;
-	}
-
-	public boolean removeMember(PlayableCharacter member) {
-		if (member == null || members.size() <= MINIMUM_SIZE) {
-			return false;
-		}
-
-		return members.remove(member);
 	}
 
 	public List<PlayableCharacter> getMembers() {
@@ -93,12 +86,20 @@ public final class Party {
 		return rewardModifierState;
 	}
 
-	public void addGold(int amount) {
+	public boolean addGold(int amount) {
 		if (amount < 0) {
 			throw new IllegalArgumentException("Gold amount cannot be negative.");
 		}
 
-		gold = Math.addExact(gold, amount);
+		long resultingGold = (long) gold + amount;
+
+		if (resultingGold > MAXIMUM_GOLD) {
+			return false;
+		}
+
+		gold = (int) resultingGold;
+
+		return true;
 	}
 
 	public boolean spendGold(int amount) {
@@ -122,6 +123,10 @@ public final class Party {
 
 	public int getGold() {
 		return gold;
+	}
+
+	public int getRemainingGoldCapacity() {
+		return MAXIMUM_GOLD - gold;
 	}
 
 	public PlayableCharacter getLeader() {

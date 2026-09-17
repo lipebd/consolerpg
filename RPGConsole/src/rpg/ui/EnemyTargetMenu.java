@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Scanner;
 
 import rpg.battle.EnemyBattleGroup;
 import rpg.battle.EnemyBattleSlot;
@@ -14,10 +13,10 @@ public final class EnemyTargetMenu {
 
 	private static final String DEFAULT_MENU_TITLE = "Selecionar alvo";
 
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 
-	public EnemyTargetMenu(Scanner scanner) {
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+	public EnemyTargetMenu(ConsoleInput consoleInput) {
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 	}
 
 	public Optional<EnemyBattleSlot> selectTarget(EnemyBattleGroup enemyGroup) {
@@ -66,7 +65,7 @@ public final class EnemyTargetMenu {
 			System.out.println("[0] Voltar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return Optional.empty();

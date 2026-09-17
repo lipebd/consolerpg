@@ -2,7 +2,6 @@ package rpg.ui;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Scanner;
 
 import rpg.world.travel.TravelProgress;
 import rpg.world.travel.TravelRouteDefinition;
@@ -10,13 +9,13 @@ import rpg.world.travel.TravelRouteDefinition;
 // Displays unlocked travel routes and returns the selected scenario.
 public final class RouteMenu {
 
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 	private final TravelProgress travelProgress;
 
 	public RouteMenu(
-            Scanner scanner,
+            ConsoleInput consoleInput,
             TravelProgress travelProgress) {
-    this.scanner = scanner;
+    this.consoleInput = consoleInput;
     this.travelProgress = travelProgress;
 }
 
@@ -46,7 +45,7 @@ public final class RouteMenu {
 			System.out.println("[0] Voltar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine();
+			String choice = consoleInput.readLine();
 
 			if (choice.equals("0")) {
 				return Optional.empty();

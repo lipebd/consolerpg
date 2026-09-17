@@ -17,10 +17,10 @@ cota_de_aco;HEAVY;7;75;;;;5;;2;;
 armadura_do_barbaro;HEAVY;10;100;;;;5;;4;;
 armadura_do_templario;HEAVY;15;150;;;;6;;4;2;
 arnes_de_arthur;HEAVY;20;250;;;;10;;7;3;
-veu_da_sombra;LIGHT;25;350;;;;5;;5;15;
-manto_do_menestrel;LIGHT;25;350;;;;;;;15;15
-pele_dos_mil_rostos;LIGHT;25;350;;;;15;;;;15
-tunica_das_estacoes;MEDIUM;25;350;;;;10;;10;10;
-jaqueta_do_falcao;MEDIUM;25;350;;;;5;;5;20;
-panoplia_do_invicto;HEAVY;25;350;;;;15;;10;;
-cota_do_silencio;HEAVY;25;350;;;;;;15;10;
+veu_da_sombra;LIGHT;20;350;;;;5;;5;15;
+manto_do_menestrel;LIGHT;20;;;;;;;;15;15
+pele_dos_mil_rostos;LIGHT;20;;;;;;15;;;15
+tunica_das_estacoes;MEDIUM;20;;;;;10;;10;10;
+jaqueta_do_falcao;MEDIUM;20;;;;5;;5;;20;
+panoplia_do_invicto;HEAVY;20;;;;;15;;10;;
+cota_do_silencio;HEAVY;20;;;;;;15;10;;

@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import rpg.characters.CharacterAttribute;
 import rpg.characters.CharacterStats;
+import rpg.characters.PlayableCharacterLevelRules;
 
 // Calculates a playable character's natural stats from class and level.
 public final class CharacterGrowthCalculator {
@@ -23,9 +24,7 @@ public final class CharacterGrowthCalculator {
 	public CharacterStats calculateNaturalStats(PlayableClassDefinition classDefinition, int level) {
 		Objects.requireNonNull(classDefinition, "Playable class definition cannot be null.");
 
-		if (level < 1) {
-			throw new IllegalArgumentException("Character level must be positive.");
-		}
+		PlayableCharacterLevelRules.validateLevel(level);
 
 		CharacterStats baseStats = classDefinition.getBaseStats();
 

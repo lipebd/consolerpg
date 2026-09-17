@@ -2,7 +2,6 @@ package rpg.ui;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Scanner;
 
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
@@ -13,12 +12,12 @@ public final class CharacterStatusMenu {
 
 	private final Party party;
 	private final EquipmentMenu equipmentMenu;
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 
-	public CharacterStatusMenu(Party party, Scanner scanner, EquipmentMenu equipmentMenu) {
+	public CharacterStatusMenu(Party party, ConsoleInput consoleInput, EquipmentMenu equipmentMenu) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
 
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 
 		this.equipmentMenu = Objects.requireNonNull(equipmentMenu, "Equipment menu cannot be null.");
 	}
@@ -33,7 +32,7 @@ public final class CharacterStatusMenu {
 
 			System.out.print("> ");
 
-			String choice = scanner.nextLine();
+			String choice = consoleInput.readLine();
 
 			switch (choice) {
 			case "0" -> {
@@ -103,7 +102,7 @@ public final class CharacterStatusMenu {
 			System.out.println("\n[0] Voltar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine();
+			String choice = consoleInput.readLine();
 
 			if (choice.equals("0")) {
 				return;
@@ -137,7 +136,7 @@ public final class CharacterStatusMenu {
 			System.out.println("\n[0] Voltar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine();
+			String choice = consoleInput.readLine();
 
 			if (choice.equals("0")) {
 				return;
@@ -154,8 +153,11 @@ public final class CharacterStatusMenu {
 
 		int totalModifierPercent = Math.addExact(temporaryModifierPercent, equipmentModifierPercent);
 
-		return character.getExperience() + "/" + character.getExperienceRequiredForNextLevel() + " | M.EXP: "
-				+ RewardModifierFormatter.formatMultiplier(totalModifierPercent);
+		String experienceProgress = character.isMaximumLevel()
+				? "Nível máximo"
+				: character.getExperience() + "/" + character.getExperienceRequiredForNextLevel();
+
+		return experienceProgress + " | M.EXP: " + RewardModifierFormatter.formatMultiplier(totalModifierPercent);
 	}
 
 }

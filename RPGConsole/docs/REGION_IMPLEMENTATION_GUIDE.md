@@ -255,7 +255,7 @@ As ofertas ativas são geradas uma vez quando o programa inicia. Ofertas esgotad
 
 ## 7. Configure o pool de recompensas
 
-Esta etapa vale para `FIELD` e `DUNGEON` quando `rewardChance` for maior que zero.
+Esta etapa vale para `FIELD` e `DUNGEON` sempre que alguma área configurada puder resolver a exploração como `REWARD`, diretamente ou por fallback.
 
 Arquivo: `data/exploration_rewards.txt`
 
@@ -290,40 +290,68 @@ Regras importantes:
 - Os pesos são relativos e não precisam somar 100.
 - Exatamente uma entrada elegível é selecionada em cada evento de recompensa.
 - Entradas `ANY` complementam as entradas específicas da área atual.
-- Se `rewardChance` for zero, a região não precisa possuir entradas.
-- Se recompensas forem possíveis, toda área normal ou especial que possa ocorrer precisa possuir ao menos uma entrada elegível.
+- Uma área normal exige uma entrada elegível quando `rewardChance` for maior que zero.
+- Uma área especial exige uma entrada elegível quando puder chegar a `REWARD` pela chance direta, pelo percentual restante de `NOTHING` ou pela repetição de um mercador já encontrado.
+- Em áreas especiais, resultados diretos de `NOTHING` e repetições do evento de mercador são convertidos em `REWARD`.
+- Uma rolagem épica indisponível é convertida em batalha regular e não cria uma exigência de recompensa.
 - Entradas completamente idênticas não são permitidas.
 - O mesmo item pode aparecer em várias entradas quando algum outro campo for diferente.
 - Para desativar temporariamente uma recompensa, comente a linha em vez de definir peso zero.
 - Estes pools são repetíveis e não devem ser usados para recompensas únicas, narrativas ou de quests.
 
-## 8. Configure os chefes da masmorra
+## 8. Configure a progressão da masmorra
 
 Esta etapa vale apenas para `DUNGEON`.
 
 Arquivo: `data/dungeons.txt`
 
 ```text
-# scenarioId;bossEnemyIds;epicEnemyIds
+# scenarioId;bossEnemyIds;recurringBossEnemyIds;recurringBossCooldownHours;epicEnemyIds;epicMinPosition;epicAreaRestriction;epicEnemyCooldownHours
 ```
 
-Exemplo com batalha dupla de chefes:
+Exemplo com batalha dupla de bosses:
 
 ```text
-ruinas_sanguemar;defleto,refrata;colossangue
+ruinas_sanguemar;defleto,refrata;defleto,refrata;4;colossangue;1;ANY;6
 ```
+
+Campos:
+
+- `scenarioId`: ID da masmorra.
+- `bossEnemyIds`: grupo narrativo enfrentado na primeira conclusão.
+- `recurringBossEnemyIds`: grupo usado nas reexplorações após o cooldown.
+- `recurringBossCooldownHours`: horas fictícias necessárias para o boss recorrente reaparecer.
+- `epicEnemyIds`: grupo épico aleatório e opcional para o jogador.
+- `epicMinPosition`: primeira posição em que o épico pode ser oferecido.
+- `epicAreaRestriction`: permite `NORMAL_ONLY`, `SPECIAL_ONLY` ou `ANY`.
+- `epicEnemyCooldownHours`: horas fictícias necessárias para o épico reaparecer depois de uma vitória.
 
 Regras:
 
 - Separe IDs do mesmo grupo com vírgulas, sem espaços.
 - Cada grupo deve possuir de 1 a 3 inimigos.
 - Todos os IDs precisam existir em `enemies.txt`.
-- O grupo de boss aceita somente inimigos de rank `BOSS`.
+- Os grupos narrativo e recorrente aceitam somente inimigos de rank `BOSS`.
 - O grupo épico aceita somente inimigos de rank `EPIC`.
-- Não repita um ID dentro do grupo nem entre os dois grupos da mesma masmorra.
+- Os grupos narrativo e recorrente podem reutilizar os mesmos IDs.
+- Não repita um ID dentro do mesmo grupo.
+- Um inimigo épico não pode pertencer a nenhum dos grupos de boss.
+- Os dois cooldowns devem ser inteiros positivos.
+- `epicMinPosition` deve ser pelo menos `1` e anterior à posição final.
+- `SPECIAL_ONLY` exige uma chance positiva de área especial e ao menos uma posição intermediária.
+- Toda masmorra precisa definir `epicEncounterChance` maior que zero em `combat_scenarios.txt`.
 - Campos e cidades não recebem uma linha neste arquivo.
 
-Na última posição de uma masmorra, a exploração não gera um encontro aleatório: o jogador deve usar a ação de enfrentar o boss. A exploração só é concluída após a vitória.
+Na primeira exploração, a posição final exige a vitória contra o boss narrativo. Essa vitória registra permanentemente a conclusão da masmorra e inicia o primeiro cooldown recorrente.
+
+Nas reexplorações:
+
+- o boss recorrente é obrigatório na posição final quando estiver disponível;
+- a exploração termina sem boss final quando ele ainda estiver em cooldown;
+- a masmorra continua acessível durante o cooldown;
+- somente uma vitória reinicia o cooldown.
+
+O encontro épico permanece aleatório, independente do boss final e opcional para o jogador. Ele pode ser oferecido no máximo uma vez por sessão quando posição, área e cooldown permitirem. Recusar, fugir ou perder não inicia seu cooldown.
 
 ## 9. Monte a tabela de encontros
 
@@ -461,7 +489,7 @@ Para evitar referências quebradas, siga esta ordem:
 4. Se for uma cidade, adicione exatamente um INN em `inns.txt`.
 5. Se for uma região de combate, confirme primeiro que suas cidades de resgate e os respectivos INNs já estão cadastrados e então adicione `combat_scenarios.txt`.
 6. Se a região possuir lojas ou mercadores, adicione suas definições em `shops.txt` e suas possíveis ofertas em `shop_stock.txt`.
-7. Se `rewardChance` for maior que zero, adicione as entradas necessárias em `exploration_rewards.txt`.
+7. Se alguma área puder resolver a exploração como `REWARD`, adicione os pools elegíveis necessários em `exploration_rewards.txt`.
 8. Se for uma masmorra, adicione `dungeons.txt`.
 9. Adicione os encontros em `encounters.txt`.
 10. Adicione drops opcionais em `enemy_drops.txt`.
@@ -502,7 +530,7 @@ Se precisar interromper o trabalho antes de concluir todas as etapas, não inici
 - [ ] Todos os inimigos dos encontros existem em `enemies.txt`.
 - [ ] Há candidatos suficientes para formar os grupos configurados.
 - [ ] As restrições `NORMAL_ONLY`, `SPECIAL_ONLY` e `ANY` correspondem às áreas corretas nos encontros e pools de recompensa.
-- [ ] Se `rewardChance` for maior que zero, todas as áreas possíveis possuem ao menos uma recompensa elegível.
+- [ ] Toda área que possa resolver a exploração como `REWARD` possui ao menos uma recompensa elegível.
 - [ ] Todos os IDs de recompensas `ITEM` existem em `items.txt`.
 - [ ] Recompensas `GOLD` mantêm o campo `rewardId` vazio.
 - [ ] Quantidades e pesos das recompensas são maiores que zero e seus intervalos são válidos.
@@ -511,8 +539,13 @@ Se precisar interromper o trabalho antes de concluir todas as etapas, não inici
 ### Masmorras
 
 - [ ] A masmorra existe em `dungeons.txt`.
-- [ ] Existe de 1 a 3 bosses de rank `BOSS`.
-- [ ] Quando houver encontro épico, existe de 1 a 3 inimigos de rank `EPIC`.
+- [ ] Existem de 1 a 3 bosses narrativos de rank `BOSS`.
+- [ ] Existem de 1 a 3 bosses recorrentes de rank `BOSS`.
+- [ ] Existe de 1 a 3 inimigos épicos de rank `EPIC`.
+- [ ] Os dois cooldowns são positivos.
+- [ ] A posição mínima do épico é anterior à posição final.
+- [ ] A restrição de área do épico é compatível com a configuração da exploração.
+- [ ] `epicEncounterChance` é maior que zero.
 - [ ] A posição final foi reservada para o boss.
 - [ ] Bosses e épicos não foram incluídos nos encontros aleatórios.
 

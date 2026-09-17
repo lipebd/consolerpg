@@ -6,7 +6,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Scanner;
 
 import rpg.characters.CharacterEquipment;
 import rpg.characters.Party;
@@ -24,21 +23,21 @@ public final class EquipmentMenu {
 	private static final int ITEMS_PER_PAGE = 8;
 
 	private final Party party;
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 	private final EquipmentCatalog equipmentCatalog;
 	private final ItemCatalog itemCatalog;
 	private final EquipmentService equipmentService;
 
 	public EquipmentMenu(
 			Party party,
-			Scanner scanner,
+			ConsoleInput consoleInput,
 			EquipmentCatalog equipmentCatalog,
 			ItemCatalog itemCatalog,
 			EquipmentService equipmentService
 	) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
 
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 
 		this.equipmentCatalog = Objects.requireNonNull(equipmentCatalog, "Equipment catalog cannot be null.");
 
@@ -55,7 +54,7 @@ public final class EquipmentMenu {
 
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			switch (choice) {
 			case "0" -> {
@@ -84,7 +83,7 @@ public final class EquipmentMenu {
 			System.out.println("\n[1] Equipar | [0] Voltar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return false;
@@ -146,7 +145,7 @@ public final class EquipmentMenu {
 
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return;
@@ -247,7 +246,7 @@ public final class EquipmentMenu {
 					totalPages
 			);
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return Optional.empty();
@@ -355,7 +354,7 @@ public final class EquipmentMenu {
 			System.out.println("\n[0] Cancelar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return Optional.empty();
@@ -396,7 +395,7 @@ public final class EquipmentMenu {
 			System.out.println("\n[1] Confirmar | [0] Cancelar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return false;
@@ -441,7 +440,7 @@ public final class EquipmentMenu {
 			System.out.println("\n[1] Confirmar | [0] Cancelar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return false;
@@ -500,7 +499,7 @@ public final class EquipmentMenu {
 			System.out.println("\n[0] Voltar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return;

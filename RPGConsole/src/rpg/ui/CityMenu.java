@@ -3,17 +3,19 @@ package rpg.ui;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Scanner;
 
+import rpg.world.WorldClock;
 import rpg.world.scenarios.CityAction;
 
 // Displays the actions currently available in a city.
 public final class CityMenu {
 
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
+	private final WorldClock worldClock;
 
-	public CityMenu(Scanner scanner) {
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+	public CityMenu(ConsoleInput consoleInput, WorldClock worldClock) {
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
+		this.worldClock = Objects.requireNonNull(worldClock, "World clock cannot be null.");
 	}
 
 	public Optional<CityAction> selectAction(String cityName, List<CityAction> actions) {
@@ -21,23 +23,20 @@ public final class CityMenu {
 		Objects.requireNonNull(actions, "City actions cannot be null.");
 
 		while (true) {
-			System.out.println("\nO que deseja fazer em " + cityName + "?");
+			System.out.println("\n" + WorldTimeFormatter.formatCurrentTime(worldClock));
 
-			for (int index = 0; index < actions.size(); index++) {
-				CityAction action = actions.get(index);
+			System.out.println("\nO que deseja fazer?");
+			System.out.println();
 
-				if (index > 0 && startsNewActionGroup(action)) {
-					System.out.println();
-				}
+			int secondRowStartIndex = actions.indexOf(CityAction.INVENTORY);
 
-				System.out.println("[" + (index + 1) + "] " + action);
-			}
+			ConsoleUI.displayActionRows(actions, secondRowStartIndex);
 
 			System.out.println();
 			System.out.println("[0] Encerrar jogo");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return Optional.empty();
@@ -54,13 +53,8 @@ public final class CityMenu {
 				return Optional.of(actions.get(selectedIndex));
 
 			} catch (NumberFormatException exception) {
-				System.out.println("Digite o número de uma ação.");
+				System.out.println("Comando inválido.");
 			}
 		}
 	}
-
-	private boolean startsNewActionGroup(CityAction action) {
-		return action == CityAction.CITY_TRANSPORT || action == CityAction.INVENTORY;
-	}
-
 }

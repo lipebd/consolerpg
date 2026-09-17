@@ -12,12 +12,13 @@ import rpg.classes.PlayableClassCatalog;
 import rpg.classes.PlayableClassDefinition;
 import rpg.skills.SkillCatalog;
 import rpg.battle.rewards.PartyRewardModifierState;
+import rpg.characters.PlayableCharacterLevelRules;
 
 // Creates configurable temporary parties for development runs.
 public final class DevelopmentPartyFactory {
 
 	private static final List<MemberConfiguration> PARTY_CONFIGURATION = List.of(
-			new MemberConfiguration("Flagelinho Silva", "flagelo", 1),
+			new MemberConfiguration("Flagelinho Silva", "flagelo",1),
 			new MemberConfiguration("La Metamorfica", "metamorfo", 1),
 			new MemberConfiguration("Suzana Vieira", "atirador", 1),
 			new MemberConfiguration("Michael Jackson", "druida", 1)
@@ -64,7 +65,12 @@ public final class DevelopmentPartyFactory {
 			}
 		}
 
-		party.addGold(INITIAL_GOLD);
+		if (!party.addGold(INITIAL_GOLD)) {
+			throw new IllegalStateException(
+					"Development-party initial GOLD exceeds the supported maximum: " + INITIAL_GOLD
+			);
+		}
+
 		if (TEST_MODIFIERS) {
 			applyModifiers(
 					party,
@@ -101,8 +107,12 @@ public final class DevelopmentPartyFactory {
 		Set<String> configuredClassIds = new HashSet<>();
 
 		for (MemberConfiguration configuration : PARTY_CONFIGURATION) {
-			if (configuration.level < 1) {
-				throw new IllegalStateException("Development character level must be positive: " + configuration.name);
+			if (configuration.level < PlayableCharacterLevelRules.MINIMUM_LEVEL
+					|| configuration.level > PlayableCharacterLevelRules.MAXIMUM_LEVEL) {
+				throw new IllegalStateException(
+						"Development character level must be between " + PlayableCharacterLevelRules.MINIMUM_LEVEL
+								+ " and " + PlayableCharacterLevelRules.MAXIMUM_LEVEL + ": " + configuration.name
+				);
 			}
 
 			PlayableClassDefinition classDefinition = playableClassCatalog.getById(configuration.classId);
@@ -118,20 +128,13 @@ public final class DevelopmentPartyFactory {
 	private PlayableCharacter createCharacter(MemberConfiguration configuration) {
 		PlayableClassDefinition classDefinition = playableClassCatalog.getById(configuration.classId);
 
-		PlayableCharacter character = new PlayableCharacter(
+		return new PlayableCharacter(
 				configuration.name,
 				classDefinition,
 				skillCatalog.getByClassId(classDefinition.getId()),
-				growthCalculator
+				growthCalculator,
+				configuration.level
 		);
-
-		while (character.getLevel() < configuration.level) {
-			character.gainExperience(character.getExperienceRequiredForNextLevel());
-		}
-
-		character.restoreAllResources();
-
-		return character;
 	}
 
 	private static final class MemberConfiguration {

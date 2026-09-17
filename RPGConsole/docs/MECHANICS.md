@@ -209,12 +209,13 @@ Enemy averages consider only living enemies.
 
 Fleeing from a dungeon boss is allowed.
 
-When the party flees from the final boss:
+When the party flees from a final boss:
 
 - The boss is not defeated.
 - The dungeon is not completed.
-- The exploration session returns to the previous position.
-- The party may prepare before attempting the final position again.
+- No boss cooldown begins.
+- The exploration session remains at the final position.
+- The party may use the available menus before attempting the boss again.
 
 ## Contextual battle-result messages
 
@@ -682,9 +683,12 @@ The inventory:
 - Stores one runtime `Item` entry with its owned quantity.
 - Stacks equal items using their stable IDs.
 - Has no weight mechanic.
-- Has no capacity limit.
+- Supports an unlimited number of different item IDs.
+- Stores at most 999 units of each item ID in one quantity entry.
 - Does not require inventory expansions or external storage.
 - Keeps item prices hidden outside shop, merchant and trading contexts.
+
+Party liquid GOLD is limited to `999999999`. `Party` and `Inventory` own these limits and reject integral additions that would exceed them.
 
 ## General inventory
 
@@ -812,7 +816,7 @@ The confirmation screen displays only values that would change. Maximum-resource
 
 ### Equipment compatibility
 
-- Every equipment item requires a positive character level.
+- Every equipment level requirement must remain within the supported playable-character range, currently levels 1 through 20.
 - Every playable class may equip every weapon after meeting its level requirement.
 - Armor weight must exactly match the class's `ArmorWeight`: `LIGHT`, `MEDIUM` or `HEAVY`.
 - Every playable class may equip every trinket after meeting its level requirement.
@@ -854,11 +858,14 @@ Every party member receives the complete experience reward:
 - Living members receive EXP.
 - Defeated members also receive EXP.
 - EXP is not divided by party size.
-- Excess EXP is preserved after leveling up.
+- Below the maximum level, excess EXP is preserved after leveling up.
+- EXP exceeding the amount required to reach the maximum level is discarded.
 
 Individual EXP multipliers are calculated separately for each character. Temporary party EXP and the wearer's trinket EXP are added before that character's reward is rounded.
 
 Gold is calculated once from the temporary party GOLD modifier plus the GOLD modifiers of every equipped trinket.
+
+Free GOLD and item rewards are granted up to their applicable limits. The normal reward summary shows only quantities actually received. When part or all of a reward is discarded, a separate `Limites atingidos` section reports the discarded GOLD and items. No additional section is displayed during ordinary rewards.
 
 The reward screen:
 
@@ -917,9 +924,15 @@ Natural stats exclude equipment bonuses, temporary stages and Distorção Ancest
 
 If several levels are gained at once, the final level is determined first and the complete natural-stat set is calculated and installed once. Arithmetic overflow is rejected instead of wrapping silently.
 
+Playable-character progression currently supports levels 1 through 20. `PlayableCharacterLevelRules` is the single source of truth for the supported range and next-level experience requirements.
+
+A character below level 20 retains only EXP lower than the requirement for the next level. When one reward reaches level 20, only the EXP required to reach that level is applied, remaining EXP is discarded and current EXP becomes zero. Further EXP gains are ignored while the character remains at the maximum level. Intermediate addition uses `long` arithmetic before the final valid state is installed.
+
+At level 20, character status displays `Nível máximo` instead of progress toward an unavailable level 21.
+
 ## Skill acquisition and availability
 
-Every skill defines one acquisition type and one positive level requirement.
+Every skill defines one acquisition type and a level requirement within the supported playable-character range, currently levels 1 through 20.
 
 The acquisition types are:
 
@@ -1124,6 +1137,55 @@ The party owns one shared gold balance. `GameCurrency` centralizes only how that
 
 Changing the visible name or symbol does not alter stored gold, prices or transaction rules.
 
+## Campaign persistence foundation
+
+The implemented persistence foundation can capture one immutable campaign snapshot containing party, inventory, equipment, learned scroll skills, reward modifiers, world progress, travel progress, permanent dungeon progress, fictional time and active shop states.
+
+The snapshot is serialized through the versioned property schema defined in `SAVE_STATE.md`, encoded as UTF-8, authenticated and encrypted through AES-256-GCM and written through atomic save-file replacement.
+
+Loading decrypts and structurally validates the snapshot, validates every catalog-backed reference and reconstructs an isolated runtime candidate without modifying active gameplay state. A valid campaign may be continued after the title screen, while saving is available exclusively through INNs.
+
+The authenticated internal save format is currently version 2. It stores narrative dungeon completion and the absolute elapsed-world-hour availability of recurring bosses and epic encounters. Active exploration sessions remain transient and are not restored.
+
+## World time and daily shop restocking
+
+A new campaign starts on day 1 at 08:00.
+
+World time advances by one hour only when a battle reaches one of these completed results:
+
+* Victory.
+* Defeat.
+
+A successful escape does not advance time. Avoiding an optional encounter before battle also does not advance time.
+
+Opening or navigating menus, visiting shops, using inventory, viewing party status and performing events that do not complete a battle leave world time unchanged.
+
+The current hour cost of a finished battle is a configurable gameplay value. The general clock operation receives the applicable number of hours so future actions may advance a different amount without changing the clock's progression rules.
+
+World time uses 24-hour days. Every transition across 00:00 begins a new global shop-restocking cycle.
+
+Current time is displayed above city and combat-scenario action menus:
+
+```text
+Dia 1 — 08:00 ☼
+Dia 1 — 19:00 ☾
+```
+
+The period symbol follows these ranges:
+
+* `☼` from 06:00 through 17:59.
+* `☾` from 18:00 through 05:59.
+
+City and combat-scenario actions are organized horizontally into two rows. Scenario and navigation actions occupy the first row, while inventory and party status occupy the second row.
+
+A shop's main menu additionally displays the exact next global restocking boundary:
+
+```text
+Próxima reposição: Dia 2 — 00:00 ☾
+```
+
+Time advancement is not presented as a battle reward or as a separate post-battle message.
+
 ## Shops and merchants
 
 Fixed city shops and exploration merchants share the same definitions, runtime state, interface and transaction rules.
@@ -1139,7 +1201,7 @@ An `EXPLORATION` shop:
 - Is associated with a field or dungeon.
 - Is accessed through the existing merchant exploration event.
 - Is selected uniformly when multiple eligible merchants exist in the current scenario.
-- Uses the same persistent in-memory state whenever encountered again during the current program execution.
+- Uses the same active state whenever encountered again during the current restocking cycle.
 
 ### Commercial item prices
 
@@ -1164,7 +1226,7 @@ For every item, `shopPurchasePrice` cannot exceed its lowest configured shop sal
 
 ### Active shop offers
 
-Every shop defines a number of active offer slots. Its active offers are generated once when the application starts.
+Every shop defines a number of active offer slots. Its first active offers are generated when the campaign runtime is created. Complete new active states are generated for every registered shop whenever world time crosses midnight.
 
 Selection uses relative weights without replacement. For one selection step, the probability of entry `i` is:
 
@@ -1181,14 +1243,18 @@ Weights:
 
 If the number of slots is equal to or greater than the number of possible entries, every entry is selected.
 
-The generated offers and their remaining quantities are preserved for the whole program execution. When an offer is exhausted:
+The generated offers and their remaining quantities are preserved throughout the current restocking cycle. When an offer is exhausted:
 
 - It disappears from the visible purchase list.
 - Its slot remains empty.
-- No unused entry from `shop_stock.txt` replaces it.
+- No unused entry from `shop_stock.txt` replaces it before the next global restocking cycle.
 - The shop itself remains accessible.
 
-Shops and merchants do not restock during the current execution. Starting a new program execution generates a new active offer list and restores initial quantities. Persistent shop state and explicit restocking events remain postponed until save and load are implemented.
+At every midnight, all registered shops restock globally. Each shop performs a complete new weighted selection, and every newly selected offer begins with its canonical initial stock. Old offers and remaining quantities are discarded rather than merged with the new cycle.
+
+A replacement catalog is generated completely before world time and active shop state are committed. If generation fails, both the previous time and every previous shop state are preserved.
+
+Continuing a saved campaign restores its fictional world time and complete active shop catalog without generating new offers or triggering an additional restock. A new campaign instead starts with the initial clock value and one newly generated shop catalog.
 
 ### Buying
 
@@ -1207,7 +1273,7 @@ A purchase succeeds only when:
 - The quantity is positive and available.
 - The total price can be calculated without overflow.
 - The party has enough gold.
-- The resulting inventory quantity stays within the supported integer range.
+- The resulting inventory quantity does not exceed 999 units of the purchased item ID.
 - The player confirms the transaction.
 
 Only after every validation succeeds does the transaction deduct party gold, add the items to the shared inventory and reduce the offer's remaining stock.
@@ -1230,7 +1296,7 @@ A sale succeeds only when:
 - The selected item is valid and sellable.
 - The quantity is positive and owned.
 - The total value can be calculated without overflow.
-- The resulting party gold stays within the supported integer range.
+- The resulting party GOLD does not exceed `999999999`.
 - The player confirms the transaction.
 
 Only after every validation succeeds does the transaction remove the items from the shared inventory and add the resulting gold.
@@ -1241,7 +1307,7 @@ Items sold by the player are not added to shop stock. V3 does not implement buyb
 
 Purchases and sales are atomic from the player's perspective.
 
-Invalid, unaffordable, stale, overflowing or cancelled transactions preserve all affected state:
+Invalid, unaffordable, stale, overflowing, capacity-exceeding or cancelled transactions preserve all affected state:
 
 - Party gold.
 - Shared inventory.
@@ -1295,6 +1361,8 @@ The initial crafting content demonstrates both category-independent and multi-in
 * Three units of Madeira and five units of Ferro produce one Espada de Ferro.
 
 The initial Bree locations include an alchemist offering the potion recipe and a blacksmith offering the weapon recipe.
+
+Crafting never consumes ingredients when its output would exceed 999 owned units of the output item ID. Capacity validation considers the inventory state after consuming the recipe materials, allowing a recipe to consume and produce the same item correctly. Rollback restores every material if an unexpected output-addition failure occurs.
 
 ## Scenario discovery
 
@@ -1422,18 +1490,19 @@ Defeat grants no battle rewards. Victory and escape do not activate rescue, and 
 
 ## Linear exploration
 
-Exploration works like movement through spaces on a board.
+Exploration works like movement through numbered spaces on a board.
 
-Each successful `Explore` action currently:
+For each ordinary exploration position, the game:
 
-- Advances the exploration position by one.
-- Determines whether the new position is a normal or special area.
-- Generates one exploration event.
-- Preserves the position after regular battles.
+1. Resolves the current position.
+2. Determines whether it is a normal or special area.
+3. Generates one exploration event.
+4. Applies the event consequence.
+5. Advances only when the result permits the exploration to continue.
 
-An exploration session ends when the final position is completed or when the party enters another scenario.
+Regular and accepted epic battles preserve the current position while combat is running. Victory, escape and avoided optional encounters permit normal exploration progression. Defeat activates rescue and discards the active session without advancing its failed position.
 
-The possibility of resolving the current position before advancing will be studied for V3.
+An exploration session ends when its final position is completed or when the party enters another scenario. Its current position, area result, encountered-merchant flag and offered-epic flag are transient.
 
 ## Special areas
 
@@ -1444,6 +1513,7 @@ Special areas:
 - Display a scenario-specific message.
 - Filter encounters and exploration rewards according to their area restrictions.
 - May contain enemies and rewards unavailable in normal areas.
+- Always resolve to meaningful content.
 
 Area restrictions are:
 
@@ -1455,7 +1525,7 @@ Area restrictions are:
 
 The first and final positions are not randomly converted into special areas.
 
-Special areas may produce the `Nothing` event normally.
+A direct `NOTHING` result in a special area becomes `REWARD`. A merchant result after the session has already encountered its merchant also becomes `REWARD` in a special area.
 
 ## Exploration events
 
@@ -1469,24 +1539,30 @@ Current exploration events include:
 
 The total configured event chance cannot exceed 100%.
 
-Any remaining percentage represents the `Nothing` event.
+In a normal area, any remaining percentage produces `NOTHING`. Normal-area repeated merchant results also remain `NOTHING`.
 
 A merchant may appear at most once during one exploration session. When the event occurs, one eligible `EXPLORATION` shop associated with the current scenario is selected uniformly and opened through the shared shop interface.
 
-If another roll falls within the merchant range after that encounter, it becomes `Nothing`. The one-merchant-per-session restriction does not reset or regenerate the selected shop's runtime state: later exploration sessions reuse the same offers and remaining quantities.
+The one-merchant-per-session restriction does not reset or regenerate shop state. Later exploration sessions reuse the same offers and remaining quantities until global restocking replaces the shop-state catalog.
 
 An epic encounter:
 
 - Is exclusive to dungeons.
+- Is configured for every dungeon.
+- Remains random and optional for the player.
 - May be offered at most once per exploration session.
-- Is optional.
-- Allows the party to avoid the confrontation.
+- Requires its configured minimum position.
+- Requires a compatible normal or special area.
+- Requires its persistent cooldown to have ended.
+- Remains independent from the mandatory final boss.
 
-A later epic-encounter roll becomes `Nothing` after the encounter has already been offered.
+Epic eligibility is evaluated when the event position is reached. It is not fixed when the exploration session begins.
+
+If an epic result is rolled while the encounter is ineligible, the result becomes a regular battle using the current area's encounter pool. Refusing, escaping from or losing an epic battle does not begin its cooldown. Victory begins the cooldown after the battle's one-hour world-time advancement.
 
 ## Exploration rewards
 
-The scenario's `rewardChance` determines whether an exploration reward event occurs. It does not determine which reward is granted.
+The scenario's `rewardChance` determines whether a direct exploration reward event occurs. Special-area fallback behavior may also produce `REWARD`.
 
 When a reward event occurs:
 
@@ -1494,7 +1570,7 @@ When a reward event occurs:
 2. `ANY` entries are combined with entries specific to that area.
 3. Exactly one eligible entry is selected using its relative weight.
 4. Its quantity is randomized inclusively between the configured minimum and maximum.
-5. The selected item or gold is added directly to the party's shared resources.
+5. The selected item or GOLD is granted up to the applicable party-resource limit.
 
 Reward weights:
 
@@ -1503,32 +1579,57 @@ Reward weights:
 - Do not need to total 100.
 - Exist only within the eligible pool for the current scenario and area.
 
-Item rewards reference runtime items by their stable IDs and are added to the shared inventory.
+Item rewards reference runtime items by their stable IDs and are added up to 999 owned units of that item ID.
 
-Gold rewards do not use a reward ID and are added directly to party gold.
+Gold rewards do not use a reward ID and are added up to the liquid-GOLD maximum of `999999999`.
+
+When a reward does not fit completely, the event reports the original found amount together with the granted and discarded portions. Ordinary rewards retain the existing single-line presentation.
 
 Exploration rewards are repeatable. Unique, narrative and quest rewards are not part of these pools.
 
-A scenario with zero `rewardChance` does not require reward entries. When rewards are possible, every normal or special area type that may occur must have at least one eligible entry.
+A normal-area reward pool is required when `rewardChance` is positive. A special-area reward pool is required whenever a possible special area can reach `REWARD` directly or through fallback behavior.
 
 Exploration reward selection is independent from battle rewards. Every enemy drop entry continues to perform its own independent roll after battle.
 
-## Dungeon bosses
+## Dungeon progression and bosses
 
-The final dungeon position triggers the configured boss encounter.
+Every dungeon defines:
 
-The boss encounter is mandatory to complete the dungeon.
+- A mandatory narrative boss group.
+- A mandatory recurring boss group.
+- A positive recurring-boss cooldown in fictional world hours.
+- A mandatory epic enemy group.
+- An epic minimum position and area restriction.
+- A positive epic cooldown in fictional world hours.
 
-If the party flees:
+The narrative boss blocks the final position until the dungeon is completed for the first time.
 
-- The exploration position moves back by one.
-- The dungeon remains incomplete.
-- Travel remains locked.
+Narrative-boss victory:
 
-If the boss is defeated:
+- Permanently records the dungeon's narrative completion.
+- Completes the current exploration.
+- Permanently preserves otherwise-unlocked adjacent routes.
+- Starts the first recurring-boss cooldown after the victory advances world time by one hour.
 
-- The final position remains completed.
-- Travel options become available according to the travel catalog.
+Completed dungeons remain available for reexploration.
+
+At the final position of a completed dungeon:
+
+- The recurring boss is mandatory when its cooldown has ended.
+- The exploration ends normally without a final battle when the recurring boss remains in cooldown.
+- A recurring-boss victory restarts its cooldown after the battle advances world time.
+- Escape keeps the session at the final position.
+- Defeat does not complete the session or start a cooldown.
+
+Recurring-boss availability is evaluated when the party reaches the final position. Battles won earlier in the same exploration may therefore advance world time enough for the boss to reappear.
+
+`DungeonProgress` stores permanent campaign-level state separately from immutable dungeon definitions and transient exploration sessions:
+
+- Whether the narrative boss has been defeated.
+- The absolute elapsed world hour when the recurring boss next becomes available.
+- The absolute elapsed world hour when the epic encounter next becomes available.
+
+Epic encounters begin initially available. Boss and epic respawn hours remain hidden from the player in V5.
 
 ## Random encounters
 

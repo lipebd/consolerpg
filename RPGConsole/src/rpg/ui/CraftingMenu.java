@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Scanner;
 
 import rpg.characters.Party;
 import rpg.items.Item;
@@ -20,23 +19,23 @@ import rpg.world.crafting.CraftingService;
 public final class CraftingMenu {
 
 	private final Party party;
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 	private final ItemCatalog itemCatalog;
 	private final CraftingRecipeCatalog craftingRecipeCatalog;
 	private final CraftingService craftingService;
 
 	public CraftingMenu(
 			Party party,
-			Scanner scanner,
+			ConsoleInput consoleInput,
 			ItemCatalog itemCatalog,
 			CraftingRecipeCatalog craftingRecipeCatalog) {
 		this.party = Objects.requireNonNull(
 				party,
 				"Party cannot be null."
 		);
-		this.scanner = Objects.requireNonNull(
-				scanner,
-				"Scanner cannot be null."
+		this.consoleInput = Objects.requireNonNull(
+				consoleInput,
+				"Console input cannot be null."
 		);
 		this.itemCatalog = Objects.requireNonNull(
 				itemCatalog,
@@ -68,7 +67,7 @@ public final class CraftingMenu {
 					feedbackMessage
 			);
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return;
@@ -142,7 +141,7 @@ public final class CraftingMenu {
 		while (true) {
 			displayRecipe(recipeDefinition);
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			switch (choice) {
 			case "1" -> {

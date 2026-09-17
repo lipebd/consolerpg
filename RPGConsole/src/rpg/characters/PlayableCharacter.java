@@ -19,7 +19,6 @@ import rpg.skills.SkillLearningResult;
 // Represents a character controlled by the player.
 public class PlayableCharacter extends GameCharacter {
 
-	private static final int BASE_EXPERIENCE_REQUIREMENT = 50;
 	private static final int MAXIMUM_LEARNED_SCROLL_SKILLS = 2;
 
 	private final CharacterEquipment equipment;
@@ -37,20 +36,36 @@ public class PlayableCharacter extends GameCharacter {
 			List<SkillDefinition> classSkillDefinitions,
 			CharacterGrowthCalculator growthCalculator
 	) {
+		this(name, classDefinition, classSkillDefinitions, growthCalculator, PlayableCharacterLevelRules.MINIMUM_LEVEL);
+	}
+
+	public PlayableCharacter(
+			String name,
+			PlayableClassDefinition classDefinition,
+			List<SkillDefinition> classSkillDefinitions,
+			CharacterGrowthCalculator growthCalculator,
+			int level
+	) {
 		super(
 				CharacterNameRules.requireValid(name),
 				Objects.requireNonNull(classDefinition, "Playable class definition cannot be null.").getBaseStats()
 		);
 
-		this.classDefinition = classDefinition;
+		PlayableCharacterLevelRules.validateLevel(level);
 
+		this.classDefinition = classDefinition;
 		this.classSkillDefinitions = List
 				.copyOf(Objects.requireNonNull(classSkillDefinitions, "Class skill definitions cannot be null."));
 		this.learnedSkillIds = new LinkedHashSet<>();
 		this.growthCalculator = Objects.requireNonNull(growthCalculator, "Character growth calculator cannot be null.");
 		this.equipment = new CharacterEquipment();
-		this.level = 1;
+		this.level = level;
 		this.experience = 0;
+
+		CharacterStats naturalStats = this.growthCalculator.calculateNaturalStats(this.classDefinition, this.level);
+
+		replaceNaturalStats(naturalStats);
+		restoreAllResources();
 		learnAutomaticallyAvailableSkills();
 	}
 
@@ -156,30 +171,39 @@ public class PlayableCharacter extends GameCharacter {
 		return getLearnedScrollSkillDefinitions().size();
 	}
 
+// Grants as much experience as supported and returns the amount accepted.
 	public int gainExperience(int amount) {
-		if (amount <= 0) {
+		if (amount <= 0 || isMaximumLevel()) {
 			return 0;
 		}
 
-		experience = Math.addExact(experience, amount);
+		long pendingExperience = (long) experience + amount;
 
-		int levelsGained = 0;
+		int previousLevel = level;
 
-		while (experience >= getExperienceRequiredForNextLevel()) {
-			experience -= getExperienceRequiredForNextLevel();
+		while (!isMaximumLevel() && pendingExperience >= getExperienceRequiredForNextLevel()) {
+			pendingExperience -= getExperienceRequiredForNextLevel();
 
 			level = Math.incrementExact(level);
-			levelsGained++;
 		}
 
-		if (levelsGained > 0) {
+		int acceptedExperience = amount;
+
+		if (isMaximumLevel()) {
+			acceptedExperience = Math.toIntExact((long) amount - pendingExperience);
+			pendingExperience = 0;
+		}
+
+		experience = Math.toIntExact(pendingExperience);
+
+		if (level > previousLevel) {
 			CharacterStats naturalStats = growthCalculator.calculateNaturalStats(classDefinition, level);
 
 			replaceNaturalStats(naturalStats);
 			learnAutomaticallyAvailableSkills();
 		}
 
-		return levelsGained;
+		return acceptedExperience;
 	}
 
 	private void learnAutomaticallyAvailableSkills() {
@@ -326,7 +350,11 @@ public class PlayableCharacter extends GameCharacter {
 	}
 
 	public int getExperienceRequiredForNextLevel() {
-		return Math.multiplyExact(BASE_EXPERIENCE_REQUIREMENT, level);
+		return PlayableCharacterLevelRules.getExperienceRequiredForNextLevel(level);
+	}
+
+	public boolean isMaximumLevel() {
+		return PlayableCharacterLevelRules.isMaximumLevel(level);
 	}
 
 	public PlayableClassDefinition getPlayableClassDefinition() {

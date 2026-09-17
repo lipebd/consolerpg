@@ -23,7 +23,7 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | Package | Responsibility | Main types |
 |---|---|---|
 | `rpg` | Application entry point, dependency construction and shared currency presentation | `Main`, `GameCurrency` |
-| `rpg.characters` | Character state, name validation and selection, natural and equipment-modified attributes, equipped slots, party ownership and enemy ranks | `GameCharacter`, `CharacterStats`, `CharacterEquipment`, `PlayableCharacter`, `Party`, `Enemy`, `EnemyRank`, `CharacterNameRules`, `CharacterNameCatalog`, `CharacterNameLoader`, `CharacterNameSelector` |
+| `rpg.characters` | Character state, name validation and selection, playable-character level boundaries, natural and equipment-modified attributes, equipped slots, party ownership and enemy ranks | `GameCharacter`, `CharacterStats`, `CharacterEquipment`, `PlayableCharacter`, `PlayableCharacterLevelRules`, `Party`, `Enemy`, `EnemyRank`, `CharacterNameRules`, `CharacterNameCatalog`, `CharacterNameLoader`, `CharacterNameSelector` |
 | `rpg.classes` | Immutable playable-class definitions, symbols, external loading, lookup and natural-growth calculation | `PlayableClassDefinition`, `PlayableClassLoader`, `PlayableClassCatalog`, `CharacterGrowthCalculator` |
 | `rpg.development` | Isolated configurable party construction for development runs | `DevelopmentPartyFactory` |
 | `rpg.battle` | Battle coordination, skill execution and centralized combat calculations | `Battle`, `BattleResult`, `BattleCoordinator`, `SkillExecutor`, `SkillExecution`, `SkillExecutionContext`, `SkillEffectResult`, `DamageType`, `DamageCalculator`, `RecoveryCalculator`, `EffectResistanceCalculator`, `EnemyBattleGroup`, `BattleTurnOrder`, `BattleEscapeService` |
@@ -33,8 +33,9 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.items` | External item definitions, runtime item behavior, shared inventory and individual drop rules | `ItemDefinition`, `ItemDefinitionCatalog`, `ItemLoader`, `RecoveryItemDefinition`, `RecoveryItemLoader`, `ItemFactory`, `Item`, `BasicItem`, `RecoveryItem`, `ItemCatalog`, `Inventory`, `DropEntry` |
 | `rpg.items.equipment` | Immutable equipment specialization, loading, lookup, compatibility vocabulary and inventory-to-character transfers | `EquipmentDefinition`, `WeaponDefinition`, `ArmorDefinition`, `TrinketDefinition`, `EquipmentLoader`, `EquipmentCatalog`, `EquipmentService`, `WeaponType`, `ArmorWeight`, `TrinketType` |
 | `rpg.enemies` | Enemy definitions and external enemy/drop loading | `EnemyDefinition`, `EnemyCatalog`, `EnemyLoader`, `EnemyDropCatalog`, `EnemyDropLoader` |
-| `rpg.world` | Active world state, scenario discovery, rescue coordination and high-level gameplay coordination | `World`, `WorldProgress` |
-| `rpg.world.scenarios` | External scenario definitions, runtime scenario hierarchy and scenario creation | `ScenarioDefinition`, `ScenarioDefinitionCatalog`, `ScenarioLoader`, `CombatScenarioDefinition`, `CombatScenarioLoader`, `DungeonDefinition`, `DungeonLoader`, `ScenarioFactory`, `Scenario`, `CombatScenario`, `Field`, `Dungeon`, `City`, `ScenarioCatalog`, `CombatScenarioAction`, `CityAction` |
+| `rpg.persistence` | Immutable campaign snapshots, strict versioned property encoding, authenticated encrypted containers and atomic save-file access | `CampaignSnapshot`, `CampaignSnapshotFactory`, `CampaignPropertiesSerializer`, `CampaignPropertiesDeserializer`, `CampaignSaveCodec`, `CampaignSaveService`, `CampaignLoadService` |
+| `rpg.world` | Active world state, fictional world time, scenario discovery, rescue coordination, shop-restocking coordination and high-level gameplay flow | `World`, `WorldClock`, `WorldProgress` |
+| `rpg.world.scenarios` | External scenario and dungeon definitions, runtime scenario hierarchy, permanent dungeon progression and scenario creation | `ScenarioDefinition`, `ScenarioDefinitionCatalog`, `ScenarioLoader`, `CombatScenarioDefinition`, `CombatScenarioLoader`, `DungeonDefinition`, `DungeonLoader`, `ScenarioFactory`, `Scenario`, `CombatScenario`, `Field`, `Dungeon`, `DungeonSettings`, `DungeonProgress`, `City`, `ScenarioCatalog`, `CombatScenarioAction`, `CityAction` |
 | `rpg.world.encounters` | Encounter availability and weighted group generation | `EncounterEntry`, `EncounterCatalog`, `EncounterLoader`, `EncounterGenerator` |
 | `rpg.world.exploration` | Exploration configuration, progress and event selection | `ExplorationSettings`, `ExplorationSession`, `ExplorationEventGenerator`, `ExplorationEventType`, `ExplorationAreaRestriction` |
 | `rpg.world.inns` | Immutable city-INN definitions, complete city coverage validation and lookup by stable or city scenario ID | `InnDefinition`, `InnCatalog`, `InnLoader` |
@@ -50,7 +51,7 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 
 Initialization includes:
 
-1. Creating the shared `Scanner`.
+1. Creating the shared `ConsoleInput`.
 2. Loading and validating external random character names.
 3. Loading playable-class definitions.
 4. Loading skill headers and ordered skill-effect components and creating `SkillCatalog`.
@@ -69,7 +70,7 @@ Initialization includes:
 17. Loading adjacent travel routes and creating `TravelProgress`.
 18. Creating one shared `CharacterGrowthCalculator`.
 19. Creating either the confirmed new-game protagonist or an isolated development party according to the application arguments.
-20. Creating `World` with the required catalogs, services, shop states, progress state and shared dependencies.
+20. Creating the initial `WorldClock` and creating `World` with the required catalogs, generators, services, mutable state and shared dependencies.
 21. Starting the world loop.
 
 External data is loaded before gameplay. Invalid definitions or unresolved references prevent the game from starting with partially inconsistent catalogs.
@@ -80,7 +81,7 @@ During a normal run, `Main` repeatedly opens `TitleScreen` and `CharacterCreatio
 
 When the `--dev-party` argument is present, `Main` bypasses the normal title and creation flow and delegates party construction to `DevelopmentPartyFactory`. This development-only path supports one to four configured members with distinct classes, arbitrary positive levels, configurable initial gold and optional temporary reward modifiers while remaining isolated from normal new-game behavior.
 
-`WorldProgress`, `TravelProgress` and `ShopStateCatalog` represent separate runtime concerns. `WorldProgress` records discovered scenarios, `TravelProgress` records unlocked adjacent routes, and `ShopStateCatalog` preserves every shop's selected offers and remaining stock for the current program execution.
+`WorldProgress`, `TravelProgress`, `WorldClock` and `ShopStateCatalog` represent separate runtime concerns. `WorldProgress` records discovered scenarios, `TravelProgress` records unlocked adjacent routes, `WorldClock` stores authoritative elapsed campaign hours, and `ShopStateCatalog` preserves every shop's selected offers and remaining stock for the current restocking cycle.
 
 ## Character model
 
@@ -126,6 +127,10 @@ Maximum HP and all six regular attributes must be positive. Maximum MP and SP ma
 - Explicit `SCROLL` skill learning and replacement.
 - Natural-stat recalculation through `CharacterGrowthCalculator` after gaining one or more levels.
 
+`PlayableCharacterLevelRules` owns the supported level range and next-level experience formula. The current range is level 1 through level 20. `PlayableCharacter` delegates boundary checks and experience requirements to that rule, uses `long` intermediate arithmetic when receiving EXP and keeps current EXP at zero after reaching the maximum level.
+
+`SkillDefinition` and `EquipmentDefinition` reuse the same range validation, preventing external content from requiring an unreachable character level.
+
 Natural growth has one formula owner:
 
 ```text
@@ -166,6 +171,8 @@ Shared state belongs to `Party`:
 - Temporary global EXP and gold modifiers together with their remaining rewarded victories.
 - Future party title.
 
+`Party.MAXIMUM_GOLD` defines the liquid-GOLD ceiling of `999999999`. `Inventory.MAXIMUM_QUANTITY_PER_ITEM` defines the limit of `999` units for each stable item ID while leaving the number of different owned item IDs unlimited. Both mutation owners use `long` intermediate arithmetic and reject additions that do not fit completely.
+
 Individual state belongs to `PlayableCharacter`:
 
 - HP.
@@ -180,7 +187,7 @@ Individual state belongs to `PlayableCharacter`:
 - The individual EXP modifier supplied by its equipped trinket.
 - Temporary combat effects.
 
-This separation allows party members to enter and leave the group without duplicating shared resources.
+This separation allows future recruitment to grow the party without duplicating shared resources. The first member remains the permanent protagonist and party leader.
 
 ## Initial character creation
 
@@ -218,7 +225,7 @@ DevelopmentPartyFactory
 Party with one to four configured members
 ```
 
-`DevelopmentPartyFactory` validates party size, positive levels and distinct class IDs. It creates each character through the normal domain constructor, advances configured levels through normal progression and restores resources to the resulting maximums. The first configured member becomes the leader.
+`DevelopmentPartyFactory` validates party size, levels within the supported playable-character range and distinct class IDs. It creates each character through the normal domain constructor, advances configured levels through normal progression and restores resources to the resulting maximums. The first configured member becomes the leader.
 
 ## Scenario model
 
@@ -250,14 +257,21 @@ Scenario
 
 `Field` represents open exploration areas.
 
-`Dungeon` adds `DungeonSettings`, including:
+`Dungeon` adds immutable `DungeonSettings`, including:
 
-- A required group of one to three boss enemy IDs.
-- An optional group of one to three epic enemy IDs.
+- A required narrative boss group.
+- A required recurring boss group.
+- The recurring-boss cooldown in fictional world hours.
+- A required epic enemy group.
+- The epic minimum exploration position.
+- The epic normal, special or unrestricted area requirement.
+- The epic cooldown in fictional world hours.
+
+Narrative and recurring boss groups may reuse the same canonical enemy IDs. Epic IDs remain disjoint from both boss groups.
 
 `City` represents non-combat settlements. Cities use their own action flow, separate functional locations from adjacent exits and do not create exploration sessions. Every registered city has exactly one externally configured INN. Bree currently also provides a fixed shop, while taverns remain a future system. Paid city transport is available through the shared world flow.
 
-`ScenarioCatalog` resolves stable scenario IDs to runtime scenario objects.
+`DungeonProgress` owns mutable campaign-level progression separately from immutable `DungeonSettings` and transient `ExplorationSession` state. It registers every runtime dungeon and stores narrative completion together with the absolute elapsed-hour availability of recurring bosses and epic encounters.
 
 ## Definition and runtime separation
 
@@ -388,18 +402,18 @@ Item equality and hash codes use the stable item ID, allowing logically equal it
 ```text
 CombatScenarioMenu selects EXPLORE
         ↓
-World advances ExplorationSession
+World resolves the current ExplorationSession position
         ↓
 normal or special area is determined
         ↓
-ExplorationEventGenerator selects event
+World evaluates current merchant and epic eligibility
+        ↓
+ExplorationEventGenerator selects or redirects the event
         ↓
 World dispatches the event consequence
+        ↓
+ExplorationSession advances when the result permits
 ```
-
-A merchant roll becomes `NOTHING` after the session has already encountered its merchant.
-
-When a merchant event occurs, `World` selects uniformly among the `EXPLORATION` shops associated with the current scenario. It then resolves the selected merchant through `ShopStateCatalog` and opens the shared `ShopMenu`. The same merchant definition always resolves to the same runtime state during the current program execution.
 
 `ExplorationSettings` defines:
 
@@ -414,16 +428,31 @@ When a merchant event occurs, `World` selects uniformly among the `EXPLORATION` 
 - Normal-area message.
 - Special-area message.
 
-`ExplorationSession` stores mutable progress and session-specific state.
+`ExplorationSession` stores only transient progress and session-specific state:
 
-It also ensures that:
+- Current exploration position.
+- Whether the current area is special.
+- Whether a merchant has already been encountered.
+- Whether an epic encounter has already been offered.
 
-- A merchant cannot appear more than once per session.
-- An epic encounter cannot be offered more than once per dungeon session.
-- Exploration progress survives regular battles.
-- A failed final-boss attempt can return the session to the previous position.
+A merchant cannot appear more than once per session. A repeated merchant result becomes `NOTHING` in a normal area and `REWARD` in a special area.
 
-The final dungeon position bypasses random event generation and starts the configured boss encounter.
+Special areas never resolve without content. A direct `NOTHING` result becomes `REWARD`.
+
+For dungeon events, `World` combines transient session state with permanent `DungeonProgress` and immutable `DungeonSettings`. Epic eligibility is evaluated at the reached position using:
+
+- Minimum position.
+- Area restriction.
+- Session offer state.
+- Absolute cooldown availability.
+
+An ineligible epic result becomes a regular battle using the current area's encounter pool.
+
+The final dungeon position bypasses random event generation. `World` selects the narrative boss before first completion, the recurring boss after its cooldown, or an empty final resolution while the recurring boss remains unavailable.
+
+Boss and epic availability is not snapshotted when an exploration session begins. World-time advancement from battles earlier in the same session can make either encounter available later in that session.
+
+When a merchant event occurs, `World` selects uniformly among the `EXPLORATION` shops associated with the current scenario. It resolves the selected merchant through the active `ShopStateCatalog` and opens the shared `ShopMenu`.
 
 ## Exploration reward architecture
 
@@ -690,6 +719,8 @@ Status -> character -> equipment slot -> inventory item -> confirmation
 
 `EquipmentDetailFormatter` produces shared details and change-only confirmation comparisons. Player-facing text calls weapon base damage `Poder`; `DBA` remains internal vocabulary. Equipped units are absent from inventory rather than marked with an `(E)` flag.
 
+`EquipmentService` checks inventory capacity before returning an unequipped or replaced item. A transfer that cannot return every participating item is rejected before changing equipment, while defensive rollback checks protect items already removed from inventory.
+
 ## Battle reward architecture
 
 `BattleRewardService` calculates:
@@ -697,7 +728,7 @@ Status -> character -> equipment slot -> inventory item -> confirmation
 - Base EXP and gold after enemy-rank multiplication and aggregation.
 - Temporarily modified global EXP and gold.
 - Final EXP for each character after temporary and equipped individual modifiers are combined additively.
-- Final party gold after temporary and all equipped trinket gold modifiers are combined additively.
+- Calculated party gold after temporary and all equipped trinket gold modifiers are combined additively.
 - Individual character progression.
 - Independent drop rolls.
 - Consolidated item quantities.
@@ -711,6 +742,8 @@ Status -> character -> equipment slot -> inventory item -> confirmation
 EXP is granted individually to every party member.
 
 Gold and items are granted once to `Party`.
+
+Calculated gold and item drops are granted only up to their domain limits. `BattleRewards` stores the granted and discarded portions separately so the normal reward summary remains accurate and an additional limit notice appears only when something could not be received.
 
 `CharacterProgressionResult` stores:
 
@@ -807,6 +840,37 @@ Random and optional epic encounter methods propagate whether the current explora
 
 After confirmation, `World.changeScenario()` moves to the city, records its discovery and discards the failed `ExplorationSession`. It does not modify `TravelProgress`, shop state or other persistent runtime progress.
 
+## World time architecture
+
+`WorldClock` owns the fictional campaign time as one mutable elapsed-hour value. A new campaign starts with eight elapsed hours, representing day 1 at 08:00. Displayed days and hours are derived from this value using 24-hour days.
+
+The clock exposes a general positive-hour advancement operation and can determine whether a proposed advancement crosses midnight without mutating its state. Non-positive advancement and `long` overflow are rejected before the stored value changes.
+
+`World` owns the gameplay actions that consume time. The current finished-battle duration is centralized as:
+
+```java
+private static final int HOURS_PER_FINISHED_BATTLE = 1;
+```
+
+Every random, epic and boss battle returns through `World.startEncounter()`. A `VICTORY` or `DEFEAT` result passes this configured duration to the general world-time operation. `FLED` does not advance time, and avoiding an optional encounter never reaches the battle integration point.
+
+After a boss or epic victory returns from `startEncounter()`, `World` records the next availability through `DungeonProgress` using the already-advanced elapsed hour. Refusal, escape and defeat do not invoke the cooldown-recording operations.
+
+When an advancement does not cross midnight, `World` advances only the clock.
+
+When an advancement crosses midnight, `World`:
+
+1. Requests a complete candidate `ShopStateCatalog` from the existing `ShopStateGenerator`.
+2. Leaves the current clock and shop states unchanged while generation is in progress.
+3. Advances the clock only after complete generation succeeds.
+4. Replaces the active catalog reference with the complete candidate.
+
+`ShopStateGenerator.generate()` always creates new `ShopState` and `ShopOfferState` instances for every registered shop. New weighted selections begin with canonical initial stock and never merge with the previous cycle.
+
+The generated catalog is committed as a whole. A generation failure therefore preserves both the previous elapsed time and every previous shop state.
+
+`WorldTimeFormatter` derives the Brazilian Portuguese console presentation from `WorldClock`. It displays `☼` from 06:00 through 17:59 and `☾` from 18:00 through 05:59. These symbols and all formatted clock values are presentation-only and are not stored as campaign state.
+
 ## City, shop and INN flow
 
 `World` dispatches the current scenario to a type-specific menu:
@@ -815,7 +879,7 @@ After confirmation, `World.changeScenario()` moves to the city, records its disc
 
 - Unsupported runtime scenario types cause an internal-state error.
 
-`CityMenu` receives an incrementally built list of available `CityAction` values. It omits actions that currently have no functional destination, keeps continuous numeric selection and separates navigation actions from inventory and party status through whitespace.
+`CityMenu` receives an incrementally built list of available `CityAction` values. It omits actions that currently have no functional destination and keeps continuous numeric selection. Scenario actions appear horizontally on the first row, while inventory and party status appear on the second row. The current formatted world time is displayed immediately above the action prompt.
 
 The paid `Viajar` action is included only when at least one configured and discovered destination city is available. It opens `CityTransportMenu` without mixing paid transport with city exits or adjacent-route unlocking.
 
@@ -845,6 +909,8 @@ data/inns.txt
 
 `City`, location and INN navigation remain iterative. Returning from the INN leads back to location selection, and returning again leads back to the city menu without recursive menu calls.
 
+`CombatScenarioMenu` uses the same two-row action presentation and displays the same shared `WorldClock` state. `ConsoleUI.displayActionRows()` centralizes the numbered two-row layout without moving action availability or selection rules out of their owning menus.
+
 Current shop data and runtime flow:
 
 ```text
@@ -863,9 +929,11 @@ data/shop_stock.txt
     -> ShopTransactionService
 ```
 
+`Main` creates one reusable `ShopStateGenerator` and passes it to `World` together with the initial generated catalog. `World` is the only owner of the active catalog reference. City and exploration shop access always resolve a `ShopState` from the currently active catalog, so a successful midnight replacement affects every later shop access without leaving menus attached to an obsolete catalog.
+
 `CITY` shops are exposed through `CityLocationMenu`. `EXPLORATION` shops are exposed through the existing merchant event. Both access types resolve the same `ShopState` objects and open the same `ShopMenu`.
 
-`ShopMenu` controls player-facing navigation, deterministic sorting, pagination, quantity selection, transaction confirmation and feedback. It displays every monetary value through `GameCurrency`.
+`ShopMenu` controls player-facing navigation, deterministic sorting, pagination, quantity selection, transaction confirmation and feedback. It displays every monetary value through `GameCurrency`, the current time through `WorldTimeFormatter` and the exact next midnight restocking boundary on its main screen.
 
 `ShopTransactionService` owns the shared transaction rules:
 
@@ -874,8 +942,10 @@ data/shop_stock.txt
 - Sales validate the selected item, commercial availability, owned quantity, total and resulting party gold before changing state.
 - Successful sales remove items from the shared inventory and credit party gold.
 - Items sold by the player never enter shop stock.
-- Cancelled or rejected transactions preserve gold, inventory and shop stock.
-- Price totals, resulting gold and inventory quantities are protected against integer overflow.
+- Cancelled, rejected or capacity-exceeding transactions preserve gold, inventory and shop stock.
+- Purchase totals use overflow-checked arithmetic and receiving capacities are checked against the explicit GOLD and per-item limits.
+- Purchases and sales validate every receiving limit before spending GOLD or removing items.
+- Defensive rollback operations verify that every removed resource is restored completely.
 - Every transaction is atomic from the player's perspective.
 
 An item is sellable to every shop when it defines `shopPurchasePrice`. `KEY_ITEM` definitions cannot provide that price and the category is excluded from the sale interface.
@@ -935,6 +1005,8 @@ data/crafters.txt
 * Rejected attempts preserve the complete inventory.
 
 Crafting uses the shared inventory owned by `Party`. It does not own a second inventory, use shop prices, modify shop state or restrict ingredients and outputs by `ItemCategory`.
+
+Before consuming materials, `CraftingService` calculates the resulting output quantity against the per-item limit. When the output is also one of the ingredients, the validation accounts for the quantity consumed before adding the produced unit. A capacity failure preserves every ingredient.
 
 ## UI boundaries
 
@@ -1011,7 +1083,11 @@ Important UI components include:
 
 `RewardModifierFormatter` produces shared multiplier text. Party status and the battle-reward screen show temporary global EXP and total party GOLD; the individual character screen separately shows that character's total EXP multiplier. The battle-reward screen intentionally does not list every ally's individual EXP modifier.
 
-`World` does not store a `Scanner`. Console input is handled by the components that require it.
+`Main` creates one shared `ConsoleInput`, which is passed to every component that reads player commands. `World` does not retain the input object after constructing its menus and battle services.
+
+`ConsoleInput` decodes input explicitly as UTF-8 and uses one daemon reader thread with an internal blocking queue. This allows timed UI pauses to discard complete commands entered while the game is not accepting actions. On Windows, it reads through `CONIN$` so an accidental `Ctrl+Z` can be ignored without terminating the campaign; other environments fall back to `System.in`.
+
+`ConsoleUI.pause(long, ConsoleInput)` marks the complete pause interval as input-discarding time. Characters may still be echoed by the native terminal, but discarded commands never become actions in a later menu.
 
 ## Currency presentation
 
@@ -1020,6 +1096,55 @@ Important UI components include:
 It does not own party gold, perform transactions or define prices. Gold remains mutable party state, while prices remain part of the systems that charge or reward currency.
 
 Menus and screens call `GameCurrency.getName()` when the currency is referenced directly and `GameCurrency.format(int)` whenever a numeric amount is displayed. Changing the visible currency convention therefore requires changing only `GameCurrency`.
+
+## Persistence foundation
+
+The persistence foundation separates mutable runtime state from immutable serialized data.
+
+`CampaignSnapshotFactory` reads the current runtime objects and creates this immutable hierarchy:
+
+```text
+CampaignSnapshot
+├── PartySnapshot
+│   ├── PlayableCharacterSnapshot
+│   │   └── EquipmentSnapshot
+│   ├── InventoryEntrySnapshot
+│   └── RewardModifierSnapshot
+├── WorldSnapshot
+│   └── DungeonProgressSnapshot
+└── ShopSnapshot
+    └── ShopOfferSnapshot
+```
+
+Snapshots contain only the canonical IDs and mutable values required to reconstruct the campaign. They do not contain catalog definitions, presentation values, cryptographic metadata or transient gameplay state.
+
+The current encoding flow is:
+
+```text
+CampaignSnapshot
+    -> CampaignPropertiesSerializer
+    -> Java Properties
+    -> PropertyPayloadEncoder
+    -> UTF-8 plaintext
+    -> SaveEncryptionService
+    -> EncryptedSavePayload
+    -> SaveContainerCodec
+    -> textual encrypted container
+```
+
+The decoding flow performs the reverse transformation and produces a complete `CampaignSnapshot`. `CampaignSnapshotRestorer` then validates its catalog-backed references and reconstructs an isolated `RestoredCampaign`, including complete `DungeonProgress`, without modifying active runtime state. The candidate is activated only after the complete operation succeeds.
+
+`StrictPropertyReader` requires every property of the current internal format, parses decimal numeric values and canonical booleans, tracks consumed fields and rejects unknown properties.
+
+`PropertyPayloadDecoder` performs strict UTF-8 decoding and rejects duplicated property names before one value can overwrite another.
+
+`SaveEncryptionService` uses `AES/GCM/NoPadding` with the stable 256-bit application key, a new secure random 12-byte IV for every encryption and a 128-bit authentication tag. The textual outer container exposes only its identifier, container version, Base64 IV and Base64 authenticated ciphertext.
+
+`AtomicSaveFileWriter` completes and flushes a temporary file in the target directory before replacing `save.txt`. It prefers an atomic move and uses a backup-assisted replacement fallback when atomic moves are unavailable.
+
+`CampaignSaveService` and `CampaignLoadService` expose explicit operation results without logging the encryption key or decrypted payload. Missing, unreadable and invalid save files remain distinct load outcomes.
+
+`CampaignLoadService` reports success only after decryption, strict decoding, catalog-backed validation and complete runtime reconstruction succeed. The startup flow uses `CampaignSelectionMenu` to continue a valid campaign or begin a new one. Saving is exposed exclusively through INNs, and ordinary game exits require confirmation without performing an implicit save.
 
 ## Current temporary boundaries
 
@@ -1031,10 +1156,8 @@ The following implementations remain intentionally temporary:
 - Playable-class definitions, natural class growth and the complete approved 30-skill class-progression roster are integrated; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy actions currently use basic attacks; enemy skill selection can reuse the skill executor later but is outside the current scope.
 - Every registered city currently provides an INN, while Bree also provides a fixed shop; tavern functionality remains unavailable.
-- Shop state is regenerated when the application starts; persistence and restocking remain postponed until save and load are implemented.
-- Save and load are not implemented.
 - `Battle` remains large and may later be divided into more focused action services.
 - Permanent skill-scroll items, skills and curated enemy drops remain deferred until their draft effects receive the required combat mechanics and final content review.
 - The Flagelo's temporary `STARTER` skills remain learned until their retirement is implemented as part of the future level-7 class-choice flow.
 
-These limitations are tracked in `V4_ROADMAP.md` and should be replaced incrementally instead of through one large rewrite.
+These limitations are tracked in `V5_ROADMAP.md` and should be replaced incrementally instead of through one large rewrite.

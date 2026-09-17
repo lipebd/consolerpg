@@ -6,57 +6,71 @@ import java.util.Map;
 // Stores the items owned by the party and their quantities.
 public class Inventory {
 
-    private final Map<Item, Integer> items;
+	public static final int MAXIMUM_QUANTITY_PER_ITEM = 999;
 
-    public Inventory() {
-        this.items = new LinkedHashMap<>();
-    }
+	private final Map<Item, Integer> items;
 
-    public boolean addItem(Item item, int quantity) {
-        if (item == null || quantity <= 0) {
-            return false;
-        }
+	public Inventory() {
+		this.items = new LinkedHashMap<>();
+	}
 
-        int currentQuantity = items.getOrDefault(item, 0);
+	public boolean addItem(Item item, int quantity) {
+		if (item == null || quantity <= 0) {
+			return false;
+		}
 
-        int resultingQuantity = Math.addExact(currentQuantity, quantity);
+		int currentQuantity = items.getOrDefault(item, 0);
 
-        items.put(item, resultingQuantity);
+		long resultingQuantity = (long) currentQuantity + quantity;
 
-        return true;
-    }
+		if (resultingQuantity > MAXIMUM_QUANTITY_PER_ITEM) {
+			return false;
+		}
 
-    public boolean removeItem(Item item, int quantity) {
-        if (item == null || quantity <= 0) {
-            return false;
-        }
+		items.put(item, (int) resultingQuantity);
 
-        int currentQuantity = getQuantity(item);
+		return true;
+	}
 
-        if (currentQuantity < quantity) {
-            return false;
-        }
+	public boolean removeItem(Item item, int quantity) {
+		if (item == null || quantity <= 0) {
+			return false;
+		}
 
-        int remainingQuantity = currentQuantity - quantity;
+		int currentQuantity = getQuantity(item);
 
-        if (remainingQuantity == 0) {
-            items.remove(item);
-        } else {
-            items.put(item, remainingQuantity);
-        }
+		if (currentQuantity < quantity) {
+			return false;
+		}
 
-        return true;
-    }
+		int remainingQuantity = currentQuantity - quantity;
 
-    public int getQuantity(Item item) {
-        return items.getOrDefault(item, 0);
-    }
+		if (remainingQuantity == 0) {
+			items.remove(item);
+		} else {
+			items.put(item, remainingQuantity);
+		}
 
-    public boolean isEmpty() {
-        return items.isEmpty();
-    }
+		return true;
+	}
 
-    public Map<Item, Integer> getContents() {
-        return new LinkedHashMap<>(items);
-    }
+	public int getQuantity(Item item) {
+		return items.getOrDefault(item, 0);
+	}
+
+	public int getRemainingCapacity(Item item) {
+		if (item == null) {
+			throw new IllegalArgumentException("Item cannot be null.");
+		}
+
+		return MAXIMUM_QUANTITY_PER_ITEM - getQuantity(item);
+	}
+
+	public boolean isEmpty() {
+		return items.isEmpty();
+	}
+
+	public Map<Item, Integer> getContents() {
+		return new LinkedHashMap<>(items);
+	}
 }

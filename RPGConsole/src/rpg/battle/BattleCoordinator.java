@@ -2,7 +2,6 @@ package rpg.battle;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Scanner;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -14,6 +13,7 @@ import rpg.enemies.EnemyDefinition;
 import rpg.enemies.EnemyDropCatalog;
 import rpg.items.DropEntry;
 import rpg.ui.BattleRewardScreen;
+import rpg.ui.ConsoleInput;
 import rpg.world.scenarios.CombatScenario;
 
 // Coordinates battle creation, execution and victory rewards.
@@ -21,15 +21,15 @@ public final class BattleCoordinator {
 
 	private final Random random;
 	private final Party party;
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 	private final EnemyDropCatalog enemyDropCatalog;
 	private final BattleRewardService rewardService;
 	private final BattleRewardScreen rewardScreen;
 
-	public BattleCoordinator(Party party, Scanner scanner, EnemyDropCatalog enemyDropCatalog,
+	public BattleCoordinator(Party party, ConsoleInput consoleInput, EnemyDropCatalog enemyDropCatalog,
 			BattleRewardService rewardService, BattleRewardScreen rewardScreen, Random random) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 		this.enemyDropCatalog = Objects.requireNonNull(enemyDropCatalog, "Enemy drop catalog cannot be null.");
 		this.rewardService = Objects.requireNonNull(rewardService, "Battle reward service cannot be null.");
 		this.rewardScreen = Objects.requireNonNull(rewardScreen, "Battle reward screen cannot be null.");
@@ -55,7 +55,7 @@ public final class BattleCoordinator {
 
 		EnemyBattleGroup enemyGroup = new EnemyBattleGroup(enemies);
 
-		Battle battle = new Battle(party, enemyGroup, scanner, random);
+		Battle battle = new Battle(party, enemyGroup, consoleInput, random);
 
 		BattleResult result = battle.start();
 

@@ -16,6 +16,25 @@ This document describes the external text files used to load game data.
 - Content IDs are written in Brazilian Portuguese without accents.
 - Invalid references or malformed lines stop game initialization instead of creating partially invalid data.
 
+## Campaign save container
+
+`save.txt` is generated campaign data rather than an external game-definition file. The complete persistence contract is documented in `SAVE_STATE.md`.
+
+The implemented outer container is UTF-8 text containing exactly:
+
+```properties
+container=RPGCONSOLE_SAVE
+containerVersion=1
+iv=<Base64>
+ciphertext=<Base64>
+```
+
+The IV and authenticated ciphertext use canonical basic Base64 encoding. No campaign property is exposed outside the ciphertext.
+
+After authenticated AES-GCM decryption, the version-1 campaign payload uses strict `name=value` properties encoded as UTF-8. Property names, indexed collection structures and validation rules are defined centrally in `SAVE_STATE.md`.
+
+The encrypted codec, atomic file services, catalog-backed runtime reconstruction and gameplay integration are implemented.
+
 ## Character-name definitions
 
 Names available for random playable-character naming are loaded from:
@@ -568,7 +587,7 @@ All three formats support the same nine optional nonnegative bonuses:
 hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus
 ```
 
-An empty optional numeric field is interpreted as zero. Required numeric fields must be positive. The loader rejects unknown base IDs, category mismatches, duplicate specializations and malformed enum values during initialization.
+An empty optional numeric field is interpreted as zero. Equipment level requirements must remain within the supported playable-character range, currently levels 1 through 20. Other required numeric fields must be positive. The loader rejects unknown base IDs, category mismatches, duplicate specializations and malformed enum values during initialization.
 
 Loading flow:
 
@@ -662,7 +681,7 @@ Supported armor weights:
 Rules:
 
 - `itemId` must reference an item with category `ARMOR` in `items.txt`.
-- Level requirement must be positive.
+- Level requirement must remain within the supported playable-character range, currently levels 1 through 20.
 - `armorWeight` must match the equipped character's class weight exactly.
 - Armor protection is represented by regular stat bonuses; there is no separate base-armor field.
 
@@ -792,28 +811,48 @@ File:
 
 `data/dungeons.txt`
 
-Each active dungeon line contains exactly 3 fields:
+Each active dungeon line contains exactly 8 fields:
 
 ```text
-# scenarioId;bossEnemyIds;epicEnemyIds
+# scenarioId;bossEnemyIds;recurringBossEnemyIds;recurringBossCooldownHours;epicEnemyIds;epicMinPosition;epicAreaRestriction;epicEnemyCooldownHours
 ```
 
 Example:
 
 ```text
-gruta_relamparrocha;mestre_eletrogoblin;relampagolem
+gruta_relamparrocha;mestre_eletrogoblin;mestre_eletrogoblin;4;relampagolem;1;ANY;6
 ```
+
+| Position | Field | Type | Example |
+|---|---|---|---|
+| 1 | Dungeon scenario ID | Stable ID | `gruta_relamparrocha` |
+| 2 | Narrative boss enemy IDs | Comma-separated ID group | `mestre_eletrogoblin` |
+| 3 | Recurring boss enemy IDs | Comma-separated ID group | `mestre_eletrogoblin` |
+| 4 | Recurring boss cooldown | Positive integer world hours | `4` |
+| 5 | Epic enemy IDs | Comma-separated ID group | `relampagolem` |
+| 6 | Epic minimum position | Positive integer | `1` |
+| 7 | Epic area restriction | `ExplorationAreaRestriction` | `ANY` |
+| 8 | Epic cooldown | Positive integer world hours | `6` |
 
 Rules:
 
 - `scenarioId` must reference an existing `DUNGEON`.
 - The dungeon must also have combat-scenario data.
-- Enemy groups use comma-separated stable enemy IDs.
-- Referenced enemies must exist.
-- Boss entries must reference enemies with the `BOSS` rank.
+- Every dungeon must define one narrative boss group, one recurring boss group and one epic group.
+- Each enemy group contains one through three comma-separated stable enemy IDs.
+- Narrative and recurring boss entries must reference enemies with the `BOSS` rank.
 - Epic entries must reference enemies with the `EPIC` rank.
-- Group sizes, empty IDs and repeated IDs are validated by `DungeonDefinition`.
+- Narrative and recurring boss groups may reference the same enemy IDs.
+- An epic enemy cannot also belong to either boss group.
+- Empty IDs and duplicates inside the same group are invalid.
+- `recurringBossCooldownHours` and `epicEnemyCooldownHours` must be positive.
+- `epicMinPosition` must be at least `1` and lower than the dungeon's final exploration position.
+- `epicAreaRestriction` must be `NORMAL_ONLY`, `SPECIAL_ONLY` or `ANY`.
+- A `SPECIAL_ONLY` epic requires a positive special-area chance and at least one intermediate exploration position.
+- Every dungeon must define a positive `epicEncounterChance` in `combat_scenarios.txt`.
 - Each dungeon can have only one dungeon definition.
+
+The narrative boss controls the dungeon's first permanent completion. Later explorations use the recurring boss group after its cooldown. Epic encounters remain random and optional for the player, independently from the mandatory final boss.
 
 ## Travel route definitions
 
@@ -1073,7 +1112,7 @@ Accumulated selection weights use overflow-safe arithmetic.
 
 ### Runtime stock behavior
 
-Every shop receives one `ShopState` during application initialization:
+Every shop receives an initial `ShopState` when the campaign runtime is created:
 
 ```text
 ShopCatalog + ShopStockCatalog
@@ -1083,17 +1122,23 @@ ShopCatalog + ShopStockCatalog
     -> ShopMenu
 ```
 
+`World` retains the same `ShopStateGenerator` for later global restocking.
+
 Runtime rules:
 
-- Active offers are generated once per program execution.
+- Initial active offers are generated when the campaign runtime is created.
 - Each selected offer receives its configured initial stock.
-- Selected offers and remaining quantities are preserved throughout the execution.
+- Selected offers and remaining quantities are preserved throughout the current restocking cycle.
 - An exhausted offer disappears from the visible purchase list.
-- Exhausting an offer does not activate an unused entry from `shop_stock.txt`.
+- Exhausting an offer does not activate an unused entry from `shop_stock.txt` during the same cycle.
 - A shop remains accessible when every active offer is exhausted.
-- Shops do not restock during the current execution.
-- Starting a new program execution generates fresh shop states.
-- Shop-state persistence and restocking rules remain postponed until save and load are implemented.
+- Whenever world time crosses midnight, every registered shop receives a complete new weighted offer selection.
+- Newly selected offers begin with their configured initial stock.
+- Old offers and remaining quantities are not merged into the new cycle.
+- A complete replacement `ShopStateCatalog` is generated before world time or active shop state changes.
+- Failed replacement generation preserves the previous world time and shop states.
+- Starting a new program execution currently creates fresh clock and shop states because campaign loading is not yet connected to application initialization.
+- The snapshot schema preserves world time and active shop offers together. Catalog-backed loading restores both without generating additional shop offers or advancing fictional time.
 
 Loading flow:
 

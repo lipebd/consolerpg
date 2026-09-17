@@ -1,6 +1,7 @@
 package rpg.items.equipment;
 
 import rpg.items.ItemCategory;
+import rpg.characters.PlayableCharacterLevelRules;
 
 // Stores the immutable data shared by all equipment definitions.
 public abstract class EquipmentDefinition {
@@ -45,9 +46,7 @@ public abstract class EquipmentDefinition {
 			);
 		}
 
-		if (levelRequirement <= 0) {
-			throw new IllegalArgumentException("Equipment level requirement must be positive: " + trimmedItemId);
-		}
+		PlayableCharacterLevelRules.validateLevel(levelRequirement);
 
 		this.itemId = trimmedItemId;
 		this.levelRequirement = levelRequirement;
