@@ -6,7 +6,7 @@ V5 is complete and preserved as the current released version.
 
 Current stage:
 
-`V6 quest-system implementation — Parts 1 through 6 completed; Part 7 campaign persistence is next`
+`V6 quest-system implementation — Parts 1 through 6 completed; Part 7 level-7 class ceremony is next`
 
 Current Git branch:
 
@@ -920,12 +920,8 @@ All temporary validation content was removed after approval. The V6 data files m
 - The Flagelo's two temporary `STARTER` skills are not yet retired because the level-7 class-choice flow is not implemented.
 - Playable-class definitions, natural growth and the complete approved 30-skill roster are external; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy turns currently use basic attacks; enemy skill selection is deferred.
-- Narrative city locations and NPC interaction are implemented, but canonical tavern, NPC, dialogue and quest content has not yet been populated.
-- The general active-and-completed quest menu is deferred to V6 Part 6.
-- NPC conversation and item delivery are connected to live quest progress; battle, Analyze, item acquisition, scenario-arrival and narrative-dungeon events remain to be connected in V6 Part 6.
-- `[!]` markers currently propagate through NPCs, narrative locations and the current city's location action; displayed travel-destination propagation remains part of V6 Part 6.
-- Mutable quest progress and permanent campaign flags remain outside the internal version-2 save format until V6 Part 7.
-- `RECRUIT` is recognized as a dialogue speaker type, but its data remains invalid until recruitment-candidate definitions and state are implemented.
+- Mutable quest progress, permanent campaign flags and future recruitment-candidate state remain outside the internal version-2 save format until V6 Part 9, after every supporting gameplay system exists.
+- `RECRUIT` is recognized as a dialogue speaker type, but its data remains invalid until recruitment-candidate definitions and state are implemented in V6 Part 8.
 - After a normal victory, defeated allies remain unavailable until revived by a skill, item or city INN; full-party defeat instead activates rescue and complete restoration.
 - Items sold by the player cannot be bought back.
 - Normal new games currently begin with only the protagonist; story-based recruitment of three distinct-class allies remains future work.
@@ -941,27 +937,20 @@ All temporary validation content was removed after approval. The V6 data files m
 
 V5 remains complete, packaged and released as `v5.0.0`.
 
-V6 implementation is active on `feature/v6-quests`. Parts 1 through 5 have completed:
+V6 implementation is active on `feature/v6-quests`. Parts 1 through 6 have completed:
 
 - Quest definitions and lifecycle.
 - Quest objectives and core progress.
 - Permanent flags and reusable requirements.
 - Quest rewards and permanent effects.
 - Narrative locations, NPCs and dialogue.
+- Gameplay integration, quest journal and interaction-marker propagation.
 
-The next implementation block is V6 Part 6: gameplay integration, the general quest interface and complete interaction-marker propagation.
+The next implementation block is V6 Part 7: the level-7 class ceremony.
 
-Part 6 must:
+Campaign persistence is intentionally deferred to V6 Part 9 so that quest, flag and recruitment-candidate state can enter one complete internal version-3 save contract after every supporting gameplay system exists.
 
-- Add the quest menu to every approved stable menu.
-- Present active and completed quests.
-- Display current objectives, counters and derived reward summaries.
-- Connect confirmed battle, Analyze, item-acquisition, scenario-arrival and narrative-dungeon events.
-- Complete `[!]` propagation to immediately displayed travel destinations.
-- Confirm that hidden or unmet content never leaks through markers.
-- Reuse the progress and completion presentation already validated through NPC interaction.
-
-Quest and flag persistence remains explicitly deferred to Part 7. Class ceremony, recruitment and the first five canonical quests remain later V6 blocks.
+Quest and flag persistence remains explicitly deferred to Part 9. Class ceremony, recruitment and the first five canonical quests remain later V6 blocks.
 
 ## Important conventions
 

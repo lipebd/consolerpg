@@ -638,79 +638,7 @@ NPC-driven grouped progress presentation and local actionable-marker derivation 
 
 ---
 
-## 7. Campaign persistence
-
-### Save-format boundary
-
-* Increase the authenticated internal save-format version from 2 to 3.
-* Keep the encrypted outer-container version unchanged.
-* Reject V5 version-2 saves without migration.
-* Preserve the existing encrypted, authenticated and atomic save operation.
-* Preserve all-or-nothing candidate restoration before activating a loaded campaign.
-
-### Quest progress
-
-For active quests, persist:
-
-* Canonical quest ID.
-* Current step number.
-* Stable objective IDs belonging to the current step.
-* Current counters for those objectives.
-
-For completed quests, persist:
-
-* Canonical quest ID.
-* `COMPLETED` status.
-
-Frozen rules:
-
-* A quest absent from saved quest state is `NOT_STARTED`.
-* Completed previous steps, future steps and derived availability are not serialized.
-* Unknown or duplicated quests and objectives are rejected.
-* Saved counters must be non-negative and no greater than their current requirements.
-* An active objective must belong to the saved quest's current step.
-
-### Flags and candidates
-
-Persist:
-
-* The canonical IDs of all set permanent flags.
-* Every recruitment candidate already introduced to the narrative.
-* Each candidate's canonical ID, persistent name and recruited state.
-
-Frozen rules:
-
-* Absent flags remain unset.
-* Unknown or duplicated flag IDs are rejected.
-* Candidate names remain stable after their first generation.
-* All party and pending-candidate names must remain unique.
-* Recruited candidate state must be coherent with the restored party.
-* Derived requirements and `[!]` markers are recalculated after restoration.
-
-### Transient state
-
-Do not persist:
-
-* Open quest, NPC, dialogue, questionnaire or confirmation menus.
-* Queued quest notifications.
-* Questionnaire answers or recommendation before ceremony confirmation.
-* A partially assembled completion transaction.
-* Temporary event batches.
-* Active exploration state already excluded by the V5 contract.
-
-### Implementation checklist
-
-* [ ] Extend immutable snapshots with quest, flag and recruitment-candidate state.
-* [ ] Serialize and deserialize all new collections through stable canonical IDs.
-* [ ] Increase the authenticated internal version to 3.
-* [ ] Reject internal version 2 without migration.
-* [ ] Reconstruct and validate complete candidate state before runtime activation.
-* [ ] Supply restored quest, flag and candidate state to `World`.
-* [ ] Preserve atomic file replacement and all existing cryptographic behavior.
-
----
-
-## 8. Level-7 class ceremony
+## 7. Level-7 class ceremony
 
 ### Beginner and final Flagelo definitions
 
@@ -817,7 +745,7 @@ The full inventory consequence must be validated before any equipment, class, re
 
 ---
 
-## 9. Recruitment candidate and first ally
+## 8. Recruitment candidate and first ally
 
 ### Persistent candidate identity
 
@@ -912,6 +840,78 @@ The ally's equipped introductory items never pass through the shared inventory.
 
 ---
 
+## 9. Campaign persistence
+
+### Save-format boundary
+
+* Increase the authenticated internal save-format version from 2 to 3.
+* Keep the encrypted outer-container version unchanged.
+* Reject V5 version-2 saves without migration.
+* Preserve the existing encrypted, authenticated and atomic save operation.
+* Preserve all-or-nothing candidate restoration before activating a loaded campaign.
+
+### Quest progress
+
+For active quests, persist:
+
+* Canonical quest ID.
+* Current step number.
+* Stable objective IDs belonging to the current step.
+* Current counters for those objectives.
+
+For completed quests, persist:
+
+* Canonical quest ID.
+* `COMPLETED` status.
+
+Frozen rules:
+
+* A quest absent from saved quest state is `NOT_STARTED`.
+* Completed previous steps, future steps and derived availability are not serialized.
+* Unknown or duplicated quests and objectives are rejected.
+* Saved counters must be non-negative and no greater than their current requirements.
+* An active objective must belong to the saved quest's current step.
+
+### Flags and candidates
+
+Persist:
+
+* The canonical IDs of all set permanent flags.
+* Every recruitment candidate already introduced to the narrative.
+* Each candidate's canonical ID, persistent name and recruited state.
+
+Frozen rules:
+
+* Absent flags remain unset.
+* Unknown or duplicated flag IDs are rejected.
+* Candidate names remain stable after their first generation.
+* All party and pending-candidate names must remain unique.
+* Recruited candidate state must be coherent with the restored party.
+* Derived requirements and `[!]` markers are recalculated after restoration.
+
+### Transient state
+
+Do not persist:
+
+* Open quest, NPC, dialogue, questionnaire or confirmation menus.
+* Queued quest notifications.
+* Questionnaire answers or recommendation before ceremony confirmation.
+* A partially assembled completion transaction.
+* Temporary event batches.
+* Active exploration state already excluded by the V5 contract.
+
+### Implementation checklist
+
+* [ ] Extend immutable snapshots with quest, flag and recruitment-candidate state.
+* [ ] Serialize and deserialize all new collections through stable canonical IDs.
+* [ ] Increase the authenticated internal version to 3.
+* [ ] Reject internal version 2 without migration.
+* [ ] Reconstruct and validate complete candidate state before runtime activation.
+* [ ] Supply restored quest, flag and candidate state to `World`.
+* [ ] Preserve atomic file replacement and all existing cryptographic behavior.
+
+---
+
 ## 10. First five main quests
 
 ### Content boundary
@@ -922,7 +922,7 @@ The ally's equipped introductory items never pass through the shared inventory.
 * Each quest ends through an NPC interaction.
 * Content uses the generic supported objective, requirement, reward and effect types whenever their semantics match.
 * New Java behavior is added only for a genuine unsupported domain operation, not to encode one quest's ordinary content.
-* Quest 4, `Os Sete Caminhos`, uses the dedicated ceremony and recruitment behavior defined in Parts 8 and 9.
+* Quest 4, `Os Sete Caminhos`, uses the dedicated ceremony and recruitment behavior defined in Parts 7 and 8.
 * Exact narrative text, objectives, rewards, flags and unlocks must be reviewed and approved before each quest's data is implemented.
 
 ### Quest 4 frozen narrative sequence
