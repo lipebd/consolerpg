@@ -6,7 +6,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Random;
+import java.util.Optional;
 
+import rpg.quests.QuestProgressEvent;
+import rpg.quests.QuestProgressEventType;
 import rpg.GameCurrency;
 import rpg.battle.BattleCoordinator;
 import rpg.battle.BattleResult;
@@ -30,23 +33,21 @@ import rpg.narrative.NpcPlacementDefinition;
 import rpg.narrative.QuestDialogueCatalog;
 import rpg.narrative.QuestDialogueContext;
 import rpg.narrative.QuestDialogueDefinition;
-import rpg.quests.QuestCompletionFailure;
-import rpg.quests.QuestCompletionFailureType;
-import rpg.quests.QuestDefinition;
-import rpg.quests.QuestProgressResult;
-import rpg.quests.QuestStatus;
-import rpg.ui.QuestOfferMenu;
-import rpg.quests.QuestCatalog;
-import rpg.quests.QuestNpcInteractionResolver;
-import rpg.quests.QuestProgressService;
-import rpg.quests.effects.QuestEffectCatalog;
-import rpg.quests.rewards.QuestRewardCatalog;
-import rpg.ui.QuestProgressPresenter;
 import rpg.persistence.CampaignSaveResult;
 import rpg.persistence.CampaignSaveService;
 import rpg.persistence.CampaignSnapshot;
 import rpg.persistence.CampaignSnapshotFactory;
+import rpg.quests.QuestCatalog;
+import rpg.quests.QuestCompletionFailure;
+import rpg.quests.QuestCompletionFailureType;
+import rpg.quests.QuestDefinition;
+import rpg.quests.QuestNpcInteractionResolver;
 import rpg.quests.QuestProgress;
+import rpg.quests.QuestProgressResult;
+import rpg.quests.QuestProgressService;
+import rpg.quests.QuestStatus;
+import rpg.quests.effects.QuestEffectCatalog;
+import rpg.quests.rewards.QuestRewardCatalog;
 import rpg.requirements.RequirementCatalog;
 import rpg.requirements.RequirementEvaluator;
 import rpg.requirements.RequirementSetDefinition;
@@ -68,6 +69,10 @@ import rpg.ui.NarrativeLocationMenu;
 import rpg.ui.NpcInteractionMenu;
 import rpg.ui.PartyRescueScreen;
 import rpg.ui.PartyStatusMenu;
+import rpg.ui.QuestMenu;
+import rpg.ui.QuestOfferMenu;
+import rpg.ui.QuestProgressCoordinator;
+import rpg.ui.QuestProgressPresenter;
 import rpg.ui.RouteMenu;
 import rpg.ui.ScenarioBranchMenu;
 import rpg.ui.ShopMenu;
@@ -134,7 +139,9 @@ public class World {
 	private final NpcInteractionMenu npcInteractionMenu;
 	private final DialoguePresenter dialoguePresenter;
 	private final QuestOfferMenu questOfferMenu;
+	private final QuestProgressCoordinator questProgressCoordinator;
 	private final QuestProgressPresenter questProgressPresenter;
+	private final QuestMenu questMenu;
 
 	private final ItemCatalog itemCatalog;
 	private final CrafterCatalog crafterCatalog;
@@ -329,6 +336,17 @@ public class World {
         this.questProgressPresenter =
                 new QuestProgressPresenter(
                         consoleInput, this.questCatalog, questRewardCatalog, this.itemCatalog);
+        this.questProgressCoordinator =
+                new QuestProgressCoordinator(
+                        this.questProgressService, this.questProgressPresenter);
+        this.questMenu =
+                new QuestMenu(
+                        consoleInput,
+                        this.party,
+                        this.questProgress,
+                        questRewardCatalog,
+                        this.itemCatalog,
+                        this.questProgressCoordinator);
         this.dialoguePresenter =
                 new DialoguePresenter(
                         consoleInput,
@@ -341,9 +359,12 @@ public class World {
                         consoleInput,
                         this.itemCatalog,
                         Objects.requireNonNull(
-                                craftingRecipeCatalog, "Crafting recipe catalog cannot be null."));
+                                craftingRecipeCatalog, "Crafting recipe catalog cannot be null."),
+                        this.questProgressCoordinator);
         this.innMenu = new InnMenu(this.party, consoleInput);
-        this.shopMenu = new ShopMenu(this.party, consoleInput, this.worldClock);
+        this.shopMenu =
+                new ShopMenu(
+                        this.party, consoleInput, this.worldClock, this.questProgressCoordinator);
         this.partyRescueScreen = new PartyRescueScreen(consoleInput);
         this.exitConfirmationMenu = new ExitConfirmationMenu(consoleInput);
 
@@ -477,52 +498,51 @@ public class World {
 		executeCityAction(city, selectedAction.get());
 	}
 
-	private List<CityAction> getAvailableCityActions(City city) {
-		List<CityAction> availableActions = new ArrayList<>();
+    private List<CityAction> getAvailableCityActions(City city) {
+        List<CityAction> availableActions = new ArrayList<>();
 
-		boolean hasInn = innCatalog.findByScenarioId(city.getId()).isPresent();
+        boolean hasInn = innCatalog.findByScenarioId(city.getId()).isPresent();
 
-		boolean hasCityShop = !getCityShops(city).isEmpty();
+        boolean hasCityShop = !getCityShops(city).isEmpty();
 
-		boolean hasCrafter = !getCityCrafters(city).isEmpty();
+        boolean hasCrafter = !getCityCrafters(city).isEmpty();
 
-		boolean hasNarrativeLocation =
-		        !getVisibleNarrativeLocations(city.getId()).isEmpty();
+        boolean hasNarrativeLocation = !getVisibleNarrativeLocations(city.getId()).isEmpty();
 
-		if (hasInn
-		        || hasCityShop
-		        || hasCrafter
-		        || hasNarrativeLocation) {
-			availableActions.add(CityAction.VISIT_LOCATION);
-		}
+        if (hasInn || hasCityShop || hasCrafter || hasNarrativeLocation) {
+            availableActions.add(CityAction.VISIT_LOCATION);
+        }
 
-		if (travelProgress.hasUnlockedRoutesFrom(city.getId())) {
-			availableActions.add(CityAction.LEAVE_CITY);
-		}
+        if (travelProgress.hasUnlockedRoutesFrom(city.getId())) {
+            availableActions.add(CityAction.LEAVE_CITY);
+        }
 
-		if (!getAvailableCityTransportDestinations().isEmpty()) {
-			availableActions.add(CityAction.CITY_TRANSPORT);
-		}
+        if (!getAvailableCityTransportDestinations().isEmpty()) {
+            availableActions.add(CityAction.CITY_TRANSPORT);
+        }
 
-		availableActions.add(CityAction.INVENTORY);
-		availableActions.add(CityAction.VIEW_STATUS);
+        availableActions.add(CityAction.INVENTORY);
+        availableActions.add(CityAction.QUESTS);
+        availableActions.add(CityAction.VIEW_STATUS);
 
-		return List.copyOf(availableActions);
-	}
+        return List.copyOf(availableActions);
+    }
 
-	private void executeCityAction(City city, CityAction action) {
-		switch (action) {
-		case VISIT_LOCATION -> executeCityLocationMenu(city);
+    private void executeCityAction(City city, CityAction action) {
+        switch (action) {
+            case VISIT_LOCATION -> executeCityLocationMenu(city);
 
-		case LEAVE_CITY -> executeRouteMenu();
+            case LEAVE_CITY -> executeRouteMenu();
 
-		case INVENTORY -> inventoryMenu.open();
+            case INVENTORY -> inventoryMenu.open();
 
-		case VIEW_STATUS -> partyStatusMenu.open();
+            case QUESTS -> questMenu.open();
 
-		case CITY_TRANSPORT -> executeCityTransportMenu();
-		}
-	}
+            case VIEW_STATUS -> partyStatusMenu.open();
+
+            case CITY_TRANSPORT -> executeCityTransportMenu();
+        }
+    }
 
     private void executeCityLocationMenu(City city) {
         Optional<InnDefinition> innDefinition = innCatalog.findByScenarioId(city.getId());
@@ -1019,50 +1039,53 @@ public class World {
 			} else {
 				availableActions.add(CombatScenarioAction.EXPLORE);
 
-				if (hasAvailableScenarioBranch()) {
-					availableActions.add(CombatScenarioAction.FOLLOW_BRANCH);
-				}
-			}
+                if (hasAvailableScenarioBranch()) {
+                    availableActions.add(CombatScenarioAction.FOLLOW_BRANCH);
+                }
+            }
 
-		} else if (travelProgress.hasUnlockedRoutesFrom(currentScenario.getId())) {
-			availableActions.add(CombatScenarioAction.FOLLOW_ROUTE);
-		}
+        } else if (travelProgress.hasUnlockedRoutesFrom(currentScenario.getId())) {
+            availableActions.add(CombatScenarioAction.FOLLOW_ROUTE);
+        }
 
-		if (!getAvailableCityTransportDestinations().isEmpty()) {
-			availableActions.add(CombatScenarioAction.CITY_TRANSPORT);
-		}
-		availableActions.add(CombatScenarioAction.INVENTORY);
-		availableActions.add(CombatScenarioAction.VIEW_STATUS);
+        if (!getAvailableCityTransportDestinations().isEmpty()) {
+            availableActions.add(CombatScenarioAction.CITY_TRANSPORT);
+        }
+        availableActions.add(CombatScenarioAction.INVENTORY);
+        availableActions.add(CombatScenarioAction.QUESTS);
+        availableActions.add(CombatScenarioAction.VIEW_STATUS);
 
-		return List.copyOf(availableActions);
-	}
+        return List.copyOf(availableActions);
+    }
 
-	private boolean hasAvailableScenarioBranch() {
-		if (explorationSession == null || explorationSession.isComplete()) {
-			return false;
-		}
+    private boolean hasAvailableScenarioBranch() {
+        if (explorationSession == null || explorationSession.isComplete()) {
+            return false;
+        }
 
         return scenarioBranchCatalog.hasBranchesAt(
                 currentScenario.getId(), explorationSession.getCurrentPosition());
-	}
+    }
 
-	private void executeCombatScenarioAction(CombatScenarioAction action) {
-		switch (action) {
-		case EXPLORE -> explore();
+    private void executeCombatScenarioAction(CombatScenarioAction action) {
+        switch (action) {
+            case EXPLORE -> explore();
 
-		case FACE_BOSS -> faceBoss();
+            case FACE_BOSS -> faceBoss();
 
-		case VIEW_STATUS -> partyStatusMenu.open();
+            case INVENTORY -> inventoryMenu.open();
 
-		case INVENTORY -> inventoryMenu.open();
+            case QUESTS -> questMenu.open();
 
-		case FOLLOW_ROUTE -> executeRouteMenu();
+            case VIEW_STATUS -> partyStatusMenu.open();
 
-		case FOLLOW_BRANCH -> executeScenarioBranchMenu();
+            case FOLLOW_ROUTE -> executeRouteMenu();
 
-		case CITY_TRANSPORT -> executeCityTransportMenu();
-		}
-	}
+            case FOLLOW_BRANCH -> executeScenarioBranchMenu();
+
+            case CITY_TRANSPORT -> executeCityTransportMenu();
+        }
+    }
 
 	private void executeScenarioBranchMenu() {
 		if (!hasAvailableScenarioBranch()) {
@@ -1220,14 +1243,24 @@ public class World {
 			if (grantedQuantity > 0 && !party.getInventory().addItem(item, grantedQuantity)) {
                     throw new IllegalStateException(
                             "Validated exploration item reward could not be added.");
-			}
+                }
 
-			int discardedQuantity = Math.subtractExact(foundQuantity, grantedQuantity);
+                if (grantedQuantity > 0) {
+                    QuestProgressEvent itemEvent =
+                            new QuestProgressEvent(
+                                    QuestProgressEventType.ITEM_OBTAINED,
+                                    Optional.of(item.getId()),
+                                    grantedQuantity);
 
-			System.out.println("Você encontrou " + item.getName() + " x" + foundQuantity + "!");
+                    questProgressCoordinator.processAndDisplay(List.of(itemEvent));
+                }
 
-			if (discardedQuantity > 0) {
-				System.out.println(
+                int discardedQuantity = Math.subtractExact(foundQuantity, grantedQuantity);
+
+                System.out.println("Você encontrou " + item.getName() + " x" + foundQuantity + "!");
+
+                if (discardedQuantity > 0) {
+                    System.out.println(
                             "Recebido: x"
                                     + grantedQuantity
                                     + " | Descartado: x"

@@ -6,6 +6,7 @@ public enum CombatScenarioAction {
 	EXPLORE("Explorar"),
 	FACE_BOSS("Enfrentar o boss"),
 	INVENTORY("Inventário"),
+	QUESTS("Diário"),
 	VIEW_STATUS("Ver status"),
 	FOLLOW_ROUTE("Seguir caminho"),
 	CITY_TRANSPORT("Viajar"),

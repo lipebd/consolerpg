@@ -5,7 +5,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.OptionalInt;
+import java.util.Optional;
 
+import rpg.quests.QuestProgressEvent;
+import rpg.quests.QuestProgressEventType;
 import rpg.GameCurrency;
 import rpg.characters.Party;
 import rpg.items.Item;
@@ -23,17 +26,26 @@ public final class ShopMenu {
 	private static final int ITEMS_PER_PAGE = 8;
 	private static final int PRICE_WIDTH = 14;
 
+	private final QuestProgressCoordinator questProgressCoordinator;
 	private final WorldClock worldClock;
 	private final Party party;
 	private final ConsoleInput consoleInput;
 	private final ShopTransactionService transactionService;
 
-	public ShopMenu(Party party, ConsoleInput consoleInput, WorldClock worldClock) {
-		this.party = Objects.requireNonNull(party, "Party cannot be null.");
-		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
-		this.worldClock = Objects.requireNonNull(worldClock, "World clock cannot be null.");
-		this.transactionService = new ShopTransactionService(this.party);
-	}
+    public ShopMenu(
+            Party party,
+            ConsoleInput consoleInput,
+            WorldClock worldClock,
+            QuestProgressCoordinator questProgressCoordinator) {
+        this.party = Objects.requireNonNull(party, "Party cannot be null.");
+        this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
+        this.worldClock = Objects.requireNonNull(worldClock, "World clock cannot be null.");
+        this.questProgressCoordinator =
+                Objects.requireNonNull(
+                        questProgressCoordinator, "Quest progress coordinator cannot be null.");
+
+        this.transactionService = new ShopTransactionService(this.party);
+    }
 
 	public void open(ShopState shopState) {
 		Objects.requireNonNull(shopState, "Shop state cannot be null.");
@@ -164,7 +176,20 @@ public final class ShopMenu {
 					continue;
 				}
 
-				ShopPurchaseResult purchaseResult = transactionService.purchase(shopState, selectedOffer, quantity);
+                ShopPurchaseResult purchaseResult =
+                        transactionService.purchase(shopState, selectedOffer, quantity);
+
+                if (purchaseResult == ShopPurchaseResult.SUCCESS) {
+                    Item purchasedItem = selectedOffer.getStockEntry().getItem();
+
+                    QuestProgressEvent itemEvent =
+                            new QuestProgressEvent(
+                                    QuestProgressEventType.ITEM_OBTAINED,
+                                    Optional.of(purchasedItem.getId()),
+                                    quantity);
+
+                    questProgressCoordinator.processAndDisplay(List.of(itemEvent));
+                }
 
 				feedbackMessage = getPurchaseFeedback(purchaseResult);
 

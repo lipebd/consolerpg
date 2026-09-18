@@ -194,6 +194,36 @@ public final class QuestProgressService {
         return accumulator.createResult();
     }
 
+    public boolean canRetryQuestCompletion(String questId) {
+        Optional<QuestStepDefinition> currentStep = questProgress.getCurrentStep(questId);
+
+        if (currentStep.isEmpty()) {
+            return false;
+        }
+
+        if (!questProgress.isCurrentStepFinal(questId)
+                || !questProgress.isCurrentStepComplete(questId)) {
+            return false;
+        }
+
+        for (QuestObjectiveDefinition objective : currentStep.orElseThrow().getObjectives()) {
+            if (objective.getObjectiveType() == QuestObjectiveType.TALK_TO_NPC) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public QuestProgressResult retryQuestCompletion(String questId) {
+        if (!canRetryQuestCompletion(questId)) {
+            throw new IllegalStateException(
+                    "Quest is not eligible for manual completion retry: " + questId);
+        }
+
+        return retryCompletedStep(questId);
+    }
+
     public QuestProgressResult retryCompletedStep(String questId) {
         QuestStepDefinition currentStep =
                 questProgress
