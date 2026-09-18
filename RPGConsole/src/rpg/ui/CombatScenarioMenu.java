@@ -3,6 +3,7 @@ package rpg.ui;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import rpg.world.WorldClock;
 import rpg.world.scenarios.CombatScenarioAction;
@@ -18,8 +19,11 @@ public final class CombatScenarioMenu {
 		this.worldClock = Objects.requireNonNull(worldClock, "World clock cannot be null.");
 	}
 
-	public Optional<CombatScenarioAction> selectAction(List<CombatScenarioAction> actions) {
-		Objects.requireNonNull(actions, "Combat scenario actions cannot be null.");
+    public Optional<CombatScenarioAction> selectAction(
+            List<CombatScenarioAction> actions, Set<CombatScenarioAction> markedActions) {
+        Objects.requireNonNull(actions, "Combat scenario actions cannot be null.");
+
+        Objects.requireNonNull(markedActions, "Marked combat scenario actions cannot be null.");
 
 		while (true) {
 			System.out.println("\n" + WorldTimeFormatter.formatCurrentTime(worldClock));
@@ -27,9 +31,18 @@ public final class CombatScenarioMenu {
 			System.out.println("\nO que deseja fazer?");
 			System.out.println();
 
+			List<String> actionLabels =
+			        actions.stream()
+			                .map(
+			                        action ->
+			                                markedActions.contains(action)
+			                                        ? "[!] " + action
+			                                        : action.toString())
+			                .toList();
+
 			int secondRowStartIndex = actions.indexOf(CombatScenarioAction.INVENTORY);
 
-			ConsoleUI.displayActionRows(actions, secondRowStartIndex);
+			ConsoleUI.displayActionRows(actionLabels, secondRowStartIndex);
 
 			System.out.println();
 			System.out.println("[0] Encerrar jogo");

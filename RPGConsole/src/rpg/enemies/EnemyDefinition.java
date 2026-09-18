@@ -35,6 +35,7 @@ public final class EnemyDefinition {
 
     public Enemy createEnemy() {
         return new Enemy(
+                id,
                 name,
                 stats,
                 rank,
@@ -45,6 +46,7 @@ public final class EnemyDefinition {
 
     public Enemy createEnemy(List<DropEntry> dropTable) {
         return new Enemy(
+                id,
                 name,
                 stats,
                 rank,

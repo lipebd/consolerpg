@@ -251,4 +251,28 @@ public final class QuestProgressPresenter {
     private static QuestStepDefinition getStep(QuestDefinition questDefinition, int step) {
         return questDefinition.getSteps().get(step - 1);
     }
+
+    public void displayBattleProgress(QuestProgressResult result) {
+        Objects.requireNonNull(result, "Quest progress result cannot be null.");
+
+        if (!result.hasUpdates()
+                && !result.hasEffectDisplayTexts()
+                && !result.hasCompletionFailures()) {
+            return;
+        }
+
+        boolean requiresDedicatedScreen =
+                containsQuestCompletion(result)
+                        || result.hasEffectDisplayTexts()
+                        || result.hasCompletionFailures();
+
+        if (requiresDedicatedScreen) {
+            display(result);
+            return;
+        }
+
+        System.out.println();
+
+        displayUpdates(result.getUpdates());
+    }
 }

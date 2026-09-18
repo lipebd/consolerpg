@@ -3,6 +3,7 @@ package rpg.ui;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import rpg.world.WorldClock;
 import rpg.world.scenarios.CityAction;
@@ -20,10 +21,12 @@ public final class CityMenu {
     }
 
     public Optional<CityAction> selectAction(
-            String cityName, List<CityAction> actions, boolean hasQuestInteraction) {
+            String cityName, List<CityAction> actions, Set<CityAction> markedActions) {
         Objects.requireNonNull(cityName, "City name cannot be null.");
 
         Objects.requireNonNull(actions, "City actions cannot be null.");
+
+        Objects.requireNonNull(markedActions, "Marked city actions cannot be null.");
 
         while (true) {
             System.out.println("\n" + WorldTimeFormatter.formatCurrentTime(worldClock));
@@ -34,16 +37,10 @@ public final class CityMenu {
             List<String> actionLabels =
                     actions.stream()
                             .map(
-                                    action -> {
-                                        String label = action.toString();
-
-                                        if (action == CityAction.VISIT_LOCATION
-                                                && hasQuestInteraction) {
-                                            return "[!] " + label;
-                                        }
-
-                                        return label;
-                                    })
+                                    action ->
+                                            markedActions.contains(action)
+                                                    ? "[!] " + action
+                                                    : action.toString())
                             .toList();
 
             int secondRowStartIndex = actions.indexOf(CityAction.INVENTORY);

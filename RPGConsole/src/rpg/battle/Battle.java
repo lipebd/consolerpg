@@ -3,11 +3,13 @@ package rpg.battle;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 
 import rpg.characters.CharacterAttribute;
 import rpg.characters.Enemy;
@@ -39,6 +41,7 @@ public class Battle {
 
 	private static final String EFFECTS_LABEL = "Efeitos:";
 
+	private final Set<String> analyzedEnemyIds;
 	private BattleEscapeService escapeService;
 	private BattleTurnOrderGenerator turnOrderGenerator;
 	private BattleTurnOrderScreen turnOrderScreen;
@@ -79,6 +82,7 @@ public class Battle {
 		this.turnOrderGenerator = new BattleTurnOrderGenerator(random);
 		this.turnOrderScreen = new BattleTurnOrderScreen();
 		this.escapeService = new BattleEscapeService(random);
+		this.analyzedEnemyIds = new LinkedHashSet<>();
 	}
 
 	public BattleResult start() {
@@ -115,6 +119,10 @@ public class Battle {
 		ConsoleUI.pause(PACING_PAUSE_MILLISECONDS, consoleInput);
 
 		return result;
+	}
+
+	public List<String> getAnalyzedEnemyIds() {
+	    return List.copyOf(analyzedEnemyIds);
 	}
 
 	// sobrecarga de métodos
@@ -618,15 +626,20 @@ public class Battle {
 	}
 
 	private boolean executeEnemyAnalysis() {
-		Optional<EnemyBattleSlot> selectedSlot = enemyTargetMenu.selectTarget(enemyGroup, "Analisar inimigo");
+	    Optional<EnemyBattleSlot> selectedSlot =
+	            enemyTargetMenu.selectTarget(enemyGroup, "Analisar inimigo");
 
-		if (selectedSlot.isEmpty()) {
-			return false;
-		}
+	    if (selectedSlot.isEmpty()) {
+	        return false;
+	    }
 
-		displayEnemyAnalysis(selectedSlot.get());
+	    EnemyBattleSlot enemySlot = selectedSlot.orElseThrow();
 
-		return true;
+	    displayEnemyAnalysis(enemySlot);
+
+	    analyzedEnemyIds.add(enemySlot.getEnemy().getId());
+
+	    return true;
 	}
 
 	private void executeCurrentRound() {

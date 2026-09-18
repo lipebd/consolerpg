@@ -1717,13 +1717,26 @@ Enemy-defeat progress is produced only by confirmed victory over the applicable 
 
 `ANALYZE_ENEMY` records the confirmed analysis action against the configured enemy. It does not require defeating that enemy.
 
+Enemy identity for quest progress comes from the canonical ID retained by each runtime enemy, never from its display name.
+
+At battle end, confirmed progress is submitted in this order:
+
+1. Enemy analyses, once per canonical enemy ID analyzed during that battle.
+2. Defeated-enemy quantities grouped by canonical ID, on victory only.
+3. One `WIN_BATTLE` event, on victory only.
+4. Item quantities actually collected from battle rewards, on victory only.
+
+Escape and party defeat preserve confirmed analysis progress but produce no enemy-defeat, battle-victory or collected-drop progress.
+
 `OBTAIN_ITEM` records confirmed acquisition after the item has been received. It is not retroactive and later consumption does not reduce its accumulated progress.
+
+Valid acquisition sources are successful purchases, completed crafting, exploration rewards actually added to inventory, collected battle drops and item rewards from another completed quest. Failed or cancelled operations, discarded rewards, rollback restoration, save restoration and transfers of already owned items do not emit acquisition progress.
 
 `DELIVER_ITEM` does not advance through a generic acquisition event. It belongs to a transactional interaction with the step's configured NPC.
 
 `REACH_SCENARIO` is emitted only after the party has entered the destination successfully.
 
-`COMPLETE_DUNGEON` is produced by the dungeon's first narrative-boss completion. Recurring-boss victories do not complete that objective again.
+`COMPLETE_DUNGEON` is emitted after either a narrative or recurring boss victory updates dungeon progress and completes the current exploration. Allowing both boss forms prevents an objective from becoming permanently blocked when its quest is activated only after the narrative boss was defeated.
 
 ## NPC quest interactions
 
@@ -1889,24 +1902,57 @@ The supported placeholders are:
 
 A placeholder for a missing party position fails explicitly. It does not produce an empty name or silent fallback.
 
+## Quest journal
+
+The quest journal is available from the stable city and combat-scenario menus. Opening it, browsing its entries and returning from it do not advance world time or mutate campaign state.
+
+The first selection separates:
+
+- Active quests.
+- Completed quests.
+
+Quests that have not started are hidden.
+
+An active quest displays:
+
+- Its title and resolved description.
+- The number, title and resolved description of its current step.
+- Only the objectives belonging to that current step.
+- Current and required quantities for those objectives.
+- Its material rewards derived from the canonical reward definitions.
+
+A completed quest displays only its resolved title and description.
+
+`Concluir missão` is available only when the current step is the final step, every objective is already complete and the step does not depend on `TALK_TO_NPC`. It retries the same atomic completion plan used by automatic progression. A failed retry preserves every affected state and leaves the quest available for another attempt after the blocking capacity or condition is corrected.
+
 ## Quest interaction markers and feedback
 
-`[!]` means that at least one quest interaction is currently available beneath the marked option.
+`[!]` is the only quest-interaction marker. It may represent an offer, active progress, completion or an immediately reachable pending scenario objective.
 
-The same symbol may appear on:
+For NPC-driven interactions, the marker may appear on:
 
-- The city's `Visitar locais` action.
-- A narrative location.
 - A relevant NPC.
+- Its visible narrative location.
+- The current city's `Visitar locais` action.
 
-The symbol intentionally does not distinguish offers, active progress or completion. It is recalculated from current requirements and quest state and is never persisted.
+For an incomplete `REACH_SCENARIO` objective, the marker may appear on:
 
-Quest progress feedback is presentation derived from domain results:
+- An immediately usable unlocked route.
+- An immediately available paid-transport destination.
+- The current city's `Sair da cidade` or `Viajar` action when applicable.
+- A completed combat scenario's `Seguir caminho` or `Viajar` action when applicable.
+
+Travel markers inspect only direct destinations currently exposed by the applicable menu. They do not reveal locked routes, undiscovered transport destinations, hidden content or paths requiring multiple journeys.
+
+Every marker is recalculated from current definitions and campaign state. Marker state is never persisted.
+
+Quest progress feedback is derived from domain results:
 
 - Partial progress uses a compact notification.
-- Objective completion uses a highlighted notification without repeating the objective description.
+- Objective completion does not repeat the full objective description.
 - Step completion is reported separately.
-- Quest completion receives a dedicated screen with its actual material rewards.
-- Multiple updates caused by one gameplay resolution are grouped.
-
-The general quest journal, including separate active and completed lists, belongs to V6 Part 6 and is not yet available.
+- Multiple updates caused by one gameplay resolution remain ordered and grouped.
+- Simple progress produced by battle is appended inline after the battle outcome.
+- Quest completion, permanent effects and completion failures retain dedicated presentation.
+- Quest completion displays its actual material rewards.
+- Notifications are transient and are never persisted.

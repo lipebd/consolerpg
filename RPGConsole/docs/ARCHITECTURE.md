@@ -1068,6 +1068,8 @@ Quest steps are linear and numbered consecutively from one. Objectives are order
 
 The service returns immutable `QuestProgressResult` and `QuestProgressUpdate` values. Domain services do not print quest notifications. `QuestProgressPresenter` translates the returned updates, completion failures, effects and rewards into grouped player-facing output.
 
+`QuestProgressCoordinator` is the console-application boundary between confirmed gameplay operations, `QuestProgressService` and `QuestProgressPresenter`. It owns neither quest state nor progression rules. Callers submit confirmed events through it, and it selects standard or battle-context presentation for the returned result. The project retains explicit synchronous calls rather than introducing a global event bus.
+
 NPC interaction is resolved separately through `QuestNpcInteractionResolver`. It derives currently available quest offers and active current-step interactions from quest state, requirements and the selected canonical NPC. It does not store marker state or mutate quest progress.
 
 ### Permanent flags and reusable requirements
@@ -1161,7 +1163,17 @@ A `NarrativeLocationDefinition` associates one narrative space with a city and a
 
 Startup validation is shared between the individual narrative loaders and `NarrativeReferenceValidator`. Together, they verify narrative locations, NPC placements, dialogue speakers, default NPC dialogues, quest starting NPCs, interaction-objective NPCs and quest-dialogue coverage without exposing a partially populated catalog.
 
-`World` derives visible narrative locations, NPC placements and quest interactions from current requirements and quest state. The `[!]` marker is presentation-only derived state. It is never stored in definitions, mutable campaign state or save snapshots.
+`World` derives visible narrative locations, NPC placements and quest interactions from current requirements and quest state. It also derives incomplete `REACH_SCENARIO` targets and compares them only with currently unlocked adjacent routes and available paid-transport destinations.
+
+The `[!]` marker is presentation-only derived state. It may propagate from actionable NPCs to their visible narrative location and the current city's location action, or from a pending scenario target to an immediately usable destination and its parent travel action. It is never stored in definitions, mutable campaign state or save snapshots and does not perform multi-route pathfinding.
+
+### Gameplay quest integration
+
+Runtime `Enemy` instances retain the canonical ID of their `EnemyDefinition`. `Battle` records successfully analyzed enemy IDs once per battle, while `BattleCoordinator` converts the completed battle into one ordered event batch. Analysis events are submitted first. A victory then contributes defeated-enemy quantities grouped by canonical ID, `BATTLE_WON`, and only the item quantities actually collected as rewards. Escape and defeat contribute confirmed analysis events only.
+
+Item-producing flows submit `ITEM_OBTAINED` only after their mutation succeeds. Purchases, crafting, exploration rewards, collected battle drops and quest rewards are valid sources. Rejected operations, discarded rewards, rollback restoration, save restoration and internal transfers do not represent new acquisition.
+
+`World` submits `SCENARIO_REACHED` only after the destination has become the current scenario. It submits `DUNGEON_COMPLETED` after either a narrative or recurring boss victory has updated `DungeonProgress` and completed the exploration. Supporting both boss forms prevents a quest activated after the narrative victory from becoming permanently blocked.
 
 ## UI boundaries
 
@@ -1205,6 +1217,8 @@ Important UI components include:
 - `NpcInteractionMenu`
 - `DialoguePresenter`
 - `QuestOfferMenu`
+- `QuestMenu`
+- `QuestProgressCoordinator`
 - `QuestProgressPresenter`
 - `QuestRewardSummaryFormatter`
 
@@ -1222,11 +1236,13 @@ Narrative-location navigation remains iterative. `NarrativeLocationMenu` display
 
 `QuestOfferMenu` owns only the generated accept-or-decline choice. External dialogue data provides the surrounding `OFFER`, optional `ACCEPT` and optional `DECLINE` sequences without defining a generic branching language.
 
-`QuestProgressPresenter` displays grouped objective, step and quest updates returned by the domain. It also presents quest-start confirmation, explicit completion failures, permanent-effect messages and the dedicated quest-completion screen. Objective-completion notifications deliberately omit the full objective description.
+`QuestMenu` is a read-only view over `QuestProgress` and canonical quest and reward data. It separates active and completed quests. Active entries resolve the quest description, current step, current objective counters and material reward summaries; completed entries expose only the resolved quest description. A completed final step without `TALK_TO_NPC` may offer a manual completion retry through `QuestProgressCoordinator`. Menu navigation does not advance world time or mutate progress.
+
+`QuestProgressPresenter` displays grouped objective, step and quest updates returned by the domain. Simple progress produced during battle may be appended inline to the battle outcome, while quest completion, permanent effects and completion failures retain dedicated presentation. It also presents quest-start confirmation. Objective-completion notifications deliberately omit the full objective description.
 
 `QuestRewardSummaryFormatter` derives player-facing reward descriptions from `QuestRewardDefinition` objects and canonical item data. Quest definitions therefore do not maintain a second free-text reward summary that could diverge from the transaction.
 
-`RouteMenu` selects among unlocked adjacent routes. `CityTransportMenu` separately displays configured discovered cities, validates affordability, requests confirmation and controls payment before returning the selected paid destination.
+`RouteMenu` selects among unlocked adjacent routes and receives only the destination scenario IDs that should display a quest marker. `CityTransportMenu` receives the same presentation-only destination set while separately displaying configured discovered cities, validating affordability, requesting confirmation and controlling payment before returning the selected paid destination. Neither menu inspects quest definitions or progress directly.
 
 `InventoryMenu` controls the general inventory flow outside battle. It displays every item category in deterministic enum order, keeps empty categories selectable, reports an empty category only after it is selected, paginates non-empty contents and opens contextual item details. Recovery items may be used, equipment items may open the shared equipment flow and skill scrolls may teach their linked skill to the unique compatible party member. Empty inventory screens remain open until the player explicitly returns or closes the inventory.
 

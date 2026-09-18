@@ -42,4 +42,12 @@ public final class QuestProgressCoordinator {
 
         questProgressPresenter.display(result);
     }
+
+    public void processBattleEventsAndDisplay(
+            List<QuestProgressEvent> events) {
+        QuestProgressResult result =
+                questProgressService.processEvents(events);
+
+        questProgressPresenter.displayBattleProgress(result);
+    }
 }

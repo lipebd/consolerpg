@@ -181,7 +181,7 @@ Quantity and target rules:
 * A later event from the same gameplay resolution may affect the newly active step.
 * Enemy defeat and battle victory are not emitted after escape, defeat or a refused encounter.
 * Item acquisition is non-retroactive and does not regress after the item is consumed or sold.
-* The first narrative-boss victory emits dungeon completion; recurring-boss victories do not.
+* Every confirmed narrative- or recurring-boss victory emits dungeon completion so a quest activated after the first narrative victory cannot become permanently blocked.
 * Progress results are returned to the interface instead of being printed by the domain service.
 * Quest notifications are transient and remain outside the save schema.
 
@@ -568,48 +568,73 @@ Interaction rules:
 
 ### Quest menu
 
-* The quest menu is available from every stable menu outside battle and dialogue, including stable exploration menus.
-* Opening the quest menu does not advance time or alter campaign state.
-* The menu separates active and completed quests.
+* The quest menu is available from the stable top-level city and combat-scenario menus.
+* It is not exposed from transient or nested flows such as battle, dialogue, shops, crafting, INNs or NPC interaction.
+* Opening and navigating the quest menu does not advance time or alter campaign state.
+* The first selection separates active and completed quests.
 * Quests that have not started are hidden.
-* An active quest displays its description, current step, current objectives and material rewards.
-* Only objectives belonging to the current step are detailed.
+* Active and completed quests preserve stable catalog order.
+* An active quest displays its resolved description, current step number, title and resolved description, only the current objectives and their counters, and material rewards derived through `QuestRewardSummaryFormatter`.
+* A completed quest displays only its resolved description.
+* `Concluir missão` is available only when the final step is complete and does not depend on `TALK_TO_NPC`.
+* Manual completion retry delegates to the same atomic completion validation used by automatic progression.
 * V6 does not allow the player to select a manually tracked quest.
 
 ### Progress notifications
 
-* Partial objective progress produces a compact notification.
-* Objective and step completion produce highlighted notifications.
+* `QuestProgressCoordinator` is the interface boundary shared by confirmed gameplay emitters.
+* Partial objective progress, objective completion and step completion remain grouped in event order.
 * An objective-completion notification does not repeat the full objective text.
-* Multiple completed objectives may be summarized numerically.
+* Simple battle progress is appended inline after the battle result without clearing the screen or requiring another confirmation.
+* Quest completion, material rewards, permanent effects and completion failures use a dedicated screen.
 * Notifications produced by the same gameplay resolution are grouped.
-* Quest completion receives its own reward and effect screen.
 * Notifications are transient and are never persisted.
+
+### Gameplay event sources
+
+* Battle analysis is stored transiently in first-analysis order and deduplicated by canonical enemy ID.
+* Runtime `Enemy` instances retain the canonical ID of their `EnemyDefinition`.
+* Battle events are submitted after the battle ends in this order: analyzed enemy IDs, defeated-enemy quantities grouped by ID, one battle victory and items actually collected.
+* Escape and defeat preserve confirmed analysis events but do not emit enemy defeat, battle victory or item-drop acquisition.
+* Successful shop purchases and crafting emit item acquisition only after their transactions commit.
+* Exploration rewards emit only the quantity actually added to inventory.
+* Battle drops emit only collected quantities; discarded quantities do not progress quests.
+* Quest item rewards already emit acquisition events through the completion transaction.
+* Equipment returns, rollbacks, save restoration and transfers of already owned items do not emit acquisition events.
+* `SCENARIO_REACHED` is emitted only after `World.changeScenario(...)` confirms the destination transition.
+* A confirmed narrative- or recurring-boss victory emits `DUNGEON_COMPLETED` after boss progress and exploration completion are recorded.
+* Regular and epic encounters do not emit dungeon completion.
 
 ### `[!]` marker
 
 * `[!]` is the only quest-interaction symbol in V6.
-* The same symbol represents offer, progress and completion interactions.
-* The marker appears only when an actionable quest interaction is available at that moment.
-* It appears beside the relevant NPC and narrative location.
-* It propagates to the current city's presentation when that city contains an actionable visible interaction.
-* It propagates to a displayed travel destination and to `[#] Viajar` only when the reachable destination currently contains such an interaction.
-* It does not reveal locked, hidden or future content.
-* It does not perform global pathfinding or point through multiple routes.
+* The same symbol represents offer, progress, completion and immediate quest-relevant travel.
+* Actionable NPC markers are derived through the visible NPC, narrative location and current-city hierarchy.
+* A pending incomplete `REACH_SCENARIO` objective marks only an already unlocked route or currently available city-transport destination leading directly to its target.
+* The corresponding parent action is also marked: `Sair da cidade`, `Seguir caminho` or `Viajar`.
+* Route and transport menus receive only destination IDs to mark and do not depend on quest-domain objects.
+* Markers do not reveal locked, undiscovered, hidden or future destinations.
+* Markers do not perform global pathfinding or point through multiple routes.
+* A completed objective no longer produces a marker even if its quest remains active because final completion is blocked.
 * Marker state is derived from current definitions and campaign state and is never saved.
 
-NPC-driven grouped progress presentation and local actionable-marker derivation were required to validate the complete Part 5 interaction flow and were therefore delivered with that block. Part 6 reuses those components while adding the general quest menu, remaining gameplay event sources, immediate travel-destination propagation and hidden-content verification.
+NPC-driven grouped progress presentation and local actionable-marker derivation were required to validate the complete Part 5 interaction flow and were therefore delivered with that block. Part 6 reuses those components while adding the general quest menu, remaining gameplay event sources and immediate travel-destination propagation.
 
 ### Implementation checklist
 
-* [ ] Add quest-menu access to every applicable stable menu.
-* [ ] Implement active and completed quest presentation.
-* [ ] Display current objective counters and derived reward summaries.
+* [x] Add quest-menu access to every applicable stable menu.
+* [x] Implement active and completed quest presentation.
+* [x] Display current objective counters and derived reward summaries.
+* [x] Support eligible manual completion retry through the atomic quest service.
 * [x] Present grouped progress, step-completion and quest-completion results.
+* [x] Present simple battle progress inline while preserving dedicated important-result screens.
 * [x] Derive actionable NPC markers.
-* [ ] Propagate markers to visible locations, cities and immediate travel presentation.
-* [ ] Confirm that markers do not expose unmet requirements or inaccessible content.
-* [ ] Integrate confirmed battle outcomes, Analyze, inventory acquisition, scenario arrival and narrative dungeon completion with quest progress.
+* [x] Propagate markers to visible locations, cities, parent travel actions and immediate destinations.
+* [x] Confirm that markers do not expose unmet requirements or inaccessible content.
+* [x] Integrate confirmed battle outcomes and Analyze with quest progress.
+* [x] Integrate committed item acquisition from shops, crafting, exploration, battle and quest rewards.
+* [x] Integrate confirmed scenario arrival.
+* [x] Emit dungeon completion after narrative and recurring boss victories.
 
 ---
 

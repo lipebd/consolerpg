@@ -1,7 +1,9 @@
 package rpg.ui;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import rpg.world.travel.TravelProgress;
 import rpg.world.travel.TravelRouteDefinition;
@@ -19,12 +21,11 @@ public final class RouteMenu {
     this.travelProgress = travelProgress;
 }
 
-	public Optional<TravelRouteDefinition> open(
-            String sourceScenarioId) {
-    List<TravelRouteDefinition> routes =
-                    travelProgress.getUnlockedRoutesFrom(
-                                    sourceScenarioId
-                    );
+    public Optional<TravelRouteDefinition> open(
+            String sourceScenarioId, Set<String> markedDestinationScenarioIds) {
+        Objects.requireNonNull(
+                markedDestinationScenarioIds, "Marked destination scenario IDs cannot be null.");
+        List<TravelRouteDefinition> routes = travelProgress.getUnlockedRoutesFrom(sourceScenarioId);
 
 		if (routes.isEmpty()) {
 			System.out.println("\nNão há destinos possíveis.");
@@ -37,7 +38,13 @@ public final class RouteMenu {
 			for (int index = 0; index < routes.size(); index++) {
 				TravelRouteDefinition route = routes.get(index);
 
-				System.out.println("[" + (index + 1) + "] " + route.getDisplayName());
+				String marker =
+				        markedDestinationScenarioIds.contains(route.getDestinationScenarioId())
+				                ? "[!] "
+				                : "";
+
+				System.out.println(
+				        "[" + (index + 1) + "] " + marker + route.getDisplayName());
 
 				System.out.println("    " + route.getDescription().replace("\n", "\n    "));
 			}

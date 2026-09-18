@@ -6,7 +6,7 @@ V5 is complete and preserved as the current released version.
 
 Current stage:
 
-`V6 quest-system implementation — Parts 1 through 5 completed`
+`V6 quest-system implementation — Parts 1 through 6 completed; Part 7 campaign persistence is next`
 
 Current Git branch:
 
@@ -66,6 +66,8 @@ enemies.txt
     -> EnemyDefinition
     -> Enemy
 ```
+
+Runtime `Enemy` instances retain their canonical definition ID, allowing battle actions and outcomes to emit identity-based quest progress without relying on display names.
 
 ### Data-driven encounters
 
@@ -854,7 +856,7 @@ Complete encrypted round trips, campaign reconstruction, valid and invalid start
 
 ## V6 quest and narrative foundation
 
-V6 Parts 1 through 5 are implemented and approved.
+V6 Parts 1 through 6 are implemented and approved.
 
 The current foundation includes:
 
@@ -878,8 +880,18 @@ The current foundation includes:
 - External quest-dialogue associations for offer, acceptance, refusal, pending and completion contexts.
 - Stable NPC interaction menus preserving the permanent `Conversar` option.
 - Automatic narrative-text wrapping at 90 console columns.
-- Derived `[!]` markers on actionable NPCs, narrative locations and the current city's `Visitar locais` action.
-- Grouped NPC-interaction progress, step-completion and quest-completion presentation.
+- Read-only quest journal available from stable city and combat-scenario menus.
+- Separate active and completed quest listings with contextual quest details.
+- Current-step objective counters and material reward summaries derived from canonical data.
+- Manual retry of an already completed final non-NPC step when atomic quest completion was previously blocked.
+- `QuestProgressCoordinator` as the UI boundary between confirmed gameplay events, domain progression and contextual presentation.
+- Battle progress from confirmed analysis, enemy defeat, victory and collected-drop events.
+- Item-acquisition progress after successful purchases, crafting, exploration rewards, battle drops and quest rewards.
+- Scenario-arrival progress emitted only after a successful scenario change.
+- Dungeon-completion progress emitted after either narrative or recurring boss victory.
+- Derived `[!]` markers on actionable NPCs, narrative locations and applicable city actions.
+- Derived `[!]` markers on immediately reachable quest destinations and their parent travel actions without revealing locked or multi-step paths.
+- Compact battle progress displayed inline, with dedicated presentation retained for quest completion, effects and failures.
 
 The new external files are:
 
@@ -897,6 +909,8 @@ The new external files are:
 - `quest_dialogues.txt`
 
 The complete narrative interaction was validated through one temporary quest and NPC. Representative testing covered city, location and NPC markers; default conversation; offer refusal and later acceptance; quest activation; required completion dialogue; atomic completion; a real GOLD reward; grouped notifications; marker removal after completion; and preservation of default dialogue access.
+
+Part 6 representative testing covered journal navigation without world-time advancement; active and completed quest details; current objective counters and reward summaries; manual retry after an atomic reward-capacity failure; confirmed analysis followed by escape; grouped enemy-defeat, battle-victory and collected-item progress; immediate route and city-transport markers; scenario-arrival progress; narrative dungeon completion; marker removal after objective completion; and inline presentation of simple battle progress.
 
 All temporary validation content was removed after approval. The V6 data files may therefore remain header-only until canonical quest content is authored.
 
