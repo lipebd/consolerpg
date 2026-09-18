@@ -1147,6 +1147,8 @@ Loading decrypts and structurally validates the snapshot, validates every catalo
 
 The authenticated internal save format is currently version 2. It stores narrative dungeon completion and the absolute elapsed-world-hour availability of recurring bosses and epic encounters. Active exploration sessions remain transient and are not restored.
 
+Mutable quest progress and permanent campaign flags are not yet part of the current internal version-2 snapshot. Their versioned persistence belongs to V6 Part 7. Until then, quest and flag state is created empty when the campaign runtime is constructed.
+
 ## World time and daily shop restocking
 
 A new campaign starts on day 1 at 08:00.
@@ -1159,6 +1161,8 @@ World time advances by one hour only when a battle reaches one of these complete
 A successful escape does not advance time. Avoiding an optional encounter before battle also does not advance time.
 
 Opening or navigating menus, visiting shops, using inventory, viewing party status and performing events that do not complete a battle leave world time unchanged.
+
+Visiting narrative locations, speaking with NPCs, reading dialogue, accepting or declining quests and completing NPC interactions also leave world time unchanged.
 
 The current hour cost of a finished battle is a configurable gameplay value. The general clock operation receives the applicable number of hours so future actions may advance a different amount without changing the clock's progression rules.
 
@@ -1318,6 +1322,8 @@ The shop remains open after successful, cancelled or rejected transactions until
 ## Crafting
 
 Crafter NPCs appear as functional locations in their configured cities.
+
+Crafter is a system-specific presentation role and remains separate from canonical narrative NPC identity and placement. A character participates in narrative dialogue or quests only when separately represented through the narrative NPC data.
 
 A city may contain multiple crafters. Each NPC has its own identity, description and ordered recipe set. Entering one crafter never exposes recipes assigned exclusively to another.
 
@@ -1652,3 +1658,255 @@ The generated group size respects:
 - Each encounter entry's maximum copy count.
 
 Repeated enemies receive numbered battle names, while unique enemies retain their regular display name.
+
+## Linear quest progression
+
+Quests use sequential linear steps. Choices may occur inside one narrative interaction, but V6 does not use branching step graphs.
+
+A quest has one of three statuses:
+
+- `NOT_STARTED`
+- `ACTIVE`
+- `COMPLETED`
+
+A newly accepted quest becomes active at step 1 with every objective in that step initialized to zero. Only the current step may receive progress.
+
+When every current objective reaches its required quantity:
+
+1. The current step is completed.
+2. Its permanent step effects are applied.
+3. The next sequential step becomes current.
+4. The new step begins with fresh objective progress.
+
+If no later step exists, the final completion transaction applies and the quest becomes permanently completed. Completed quests do not become active again.
+
+Quests not yet started are omitted from progress presentation. Their availability is derived from the starting NPC, the current reusable requirement set and current campaign state.
+
+Declining a quest offer causes no mutation. The offer remains available whenever its requirements continue to succeed.
+
+## Quest objective progress
+
+The initial objective types are:
+
+- Talking to one canonical NPC.
+- Defeating a quantity of one enemy.
+- Analyzing one enemy.
+- Obtaining a quantity of one item.
+- Delivering a quantity of one item.
+- Reaching one scenario.
+- Completing one dungeon.
+- Winning a quantity of battles.
+
+Gameplay integration is synchronous and explicit. A confirmed operation produces a typed quest-progress event and immediately passes it to `QuestProgressService`. V6 does not use a global event bus.
+
+Progress rules:
+
+- Events are emitted only after the corresponding gameplay operation succeeds.
+- Cancelled, refused or rolled-back operations produce no progress.
+- Only active quests and their current steps inspect an event.
+- One event may update multiple active quests.
+- One event is not replayed after it advances a quest to its next step.
+- A later event may update the newly activated step.
+- Progress is capped at the objective's required quantity.
+- Completed objective quantities do not regress.
+- Notifications returned from one gameplay resolution remain ordered and are presented together.
+
+Enemy-defeat progress is produced only by confirmed victory over the applicable enemy. Escape, party defeat and refusal of an optional encounter do not count defeated enemies.
+
+`WIN_BATTLE` counts completed victories independently from enemy identity.
+
+`ANALYZE_ENEMY` records the confirmed analysis action against the configured enemy. It does not require defeating that enemy.
+
+`OBTAIN_ITEM` records confirmed acquisition after the item has been received. It is not retroactive and later consumption does not reduce its accumulated progress.
+
+`DELIVER_ITEM` does not advance through a generic acquisition event. It belongs to a transactional interaction with the step's configured NPC.
+
+`REACH_SCENARIO` is emitted only after the party has entered the destination successfully.
+
+`COMPLETE_DUNGEON` is produced by the dungeon's first narrative-boss completion. Recurring-boss victories do not complete that objective again.
+
+## NPC quest interactions
+
+An NPC may currently expose:
+
+- An available quest offer.
+- An interaction belonging to an active quest's current step.
+- Its permanent default `Conversar` option.
+
+Available quest titles appear in stable quest-catalog order before `Conversar`.
+
+An offer interaction follows this sequence:
+
+1. Reevaluate the quest availability requirements.
+2. Present the required `OFFER` dialogue.
+3. Ask the player to accept or decline.
+4. On refusal, present the optional `DECLINE` dialogue and preserve all state.
+5. On acceptance, validate quest-start effects.
+6. Present the optional `ACCEPT` dialogue.
+7. Activate the quest and apply its start effects.
+8. Present the quest-start notification.
+
+A current-step NPC interaction is available only when its ordinary prerequisite objectives allow that interaction.
+
+A delivery interaction checks the required current item quantities without consuming them during menu discovery. If the party lacks the required state, the optional `PENDING` dialogue may be displayed and the quest remains unchanged.
+
+A completable NPC interaction follows this sequence:
+
+1. Validate the selected NPC, active quest, current step, delivery quantities, receiving capacities, effects and rewards.
+2. Present the required `COMPLETE` dialogue.
+3. Revalidate the transaction after the dialogue.
+4. Consume delivery items when applicable.
+5. Apply rewards, effects and quest-state transitions atomically.
+6. Present the resulting grouped progress and completion information.
+
+The completion dialogue therefore occurs before mutation, while complete prevalidation prevents an already-known failure from presenting a false narrative conclusion.
+
+## Quest rewards
+
+The initial material reward types are:
+
+- Shared party GOLD.
+- EXP for every current party member.
+- Items added to the shared inventory.
+
+A quest may have no material reward.
+
+Reward descriptions are generated from the actual definitions. Quest content does not maintain a separate free-text reward list.
+
+Quest rewards are all-or-nothing:
+
+- Resulting GOLD must remain within the party maximum.
+- Resulting item quantities must remain within the per-item maximum.
+- Every capacity-sensitive reward is validated before EXP is granted.
+- EXP uses the existing level, overflow and maximum-level rules.
+- A failure preserves GOLD, inventory, character progression, permanent state and quest progress.
+
+Items received through one successfully completed quest may then produce acquisition events for other active quests. The quest that just completed cannot consume its own reward event retroactively.
+
+## Permanent quest effects
+
+The initial permanent effects are:
+
+- Setting one campaign flag.
+- Unlocking one adjacent route.
+
+Effects may occur when:
+
+- A quest starts.
+- A specific step completes.
+- A quest completes.
+
+Effects at one trigger location preserve their configured order. Optional display text reports a visible consequence without controlling whether the effect itself occurs.
+
+Flag assignment is idempotent. Setting an already active flag is a successful no-op rather than an error.
+
+Route unlocking reuses `TravelProgress`. Unlocking an already unlocked route preserves its unlocked state.
+
+Step effects belong to the same transaction as the step transition. Quest-completion effects belong to the same transaction as delivery consumption, material rewards and final status mutation.
+
+Class changes and ally recruitment are not generic effects. They remain dedicated typed ceremony behavior for a later V6 block.
+
+## Permanent flags and reusable requirements
+
+Campaign flags represent stable permanent world consequences. Every declared flag begins absent, may be set once and is never removed in V6.
+
+Quest status is not duplicated through flags. Requirements query `QuestProgress` directly when they need `NOT_STARTED`, `ACTIVE` or `COMPLETED` state.
+
+One reusable requirement set combines all its entries through logical AND. V6 does not provide OR groups, nested expressions, scripts or references between sets.
+
+The initial requirement checks are:
+
+- Minimum leader level.
+- Current quantity of one owned item.
+- Quest not started.
+- Quest active.
+- Quest completed.
+- Flag set.
+- Flag unset.
+
+Requirement evaluation is pure and uncached. It never reserves items, consumes resources, changes quest state or sets flags.
+
+Visibility and availability are recalculated from current state. They are also evaluated again immediately before a protected action so a previously displayed option cannot bypass newer campaign state.
+
+Unmet quest offers, narrative locations and NPC placements are hidden rather than displayed as blocked options.
+
+## Narrative locations and NPCs
+
+Narrative locations are city spaces dedicated to NPC interactions. They coexist with INNs, shops and crafters without replacing their definitions or interfaces.
+
+A narrative location becomes visible only when its requirement set succeeds. Its visible NPCs are then independently filtered through their placement requirements.
+
+A visible location may contain no visible NPCs. In that case, the interface displays:
+
+```text
+Não há ninguém aqui.
+```
+
+NPC identity is separate from placement:
+
+- Every ordinary NPC has one canonical ID, name, description and default dialogue.
+- One NPC may be unplaced.
+- A placed NPC has at most one fixed narrative location in V6.
+- NPCs do not move dynamically between locations.
+- An unplaced NPC may still speak in dialogue initiated by another gameplay context.
+
+The narrative-location and NPC screens display city and location headers so that short interaction menus retain their context.
+
+## Linear dialogue
+
+Dialogue consists of ordered external utterances. Each utterance has one speaker type, an optional canonical speaker ID and text.
+
+The supported speaker types are:
+
+- `NPC`
+- `ENEMY`
+- `LEADER`
+- `NARRATOR`
+- `RECRUIT`
+
+NPC and enemy names are resolved from their canonical catalogs. Leader dialogue uses the current party leader. Narrator lines have no speaker label.
+
+Recruit dialogue is structurally reserved, but recruitment-candidate references remain invalid until that later V6 system provides candidate identity and persisted generated names.
+
+Each utterance advances only after Enter. Dialogue does not advance fictional world time.
+
+Before presenting the first line, the complete dialogue resolves:
+
+- Every speaker.
+- Every supported placeholder.
+- Every required party position.
+
+A resolution failure therefore occurs before partial dialogue output or related state mutation.
+
+Literal `\n` produces an intentional line break. Other long narrative text wraps automatically at 90 console columns. V6 dialogues do not support generic choices, conditional lines, branches, timing, color or audio.
+
+The supported placeholders are:
+
+- `{leaderName}`
+- `{groupMember2}`
+- `{groupMember3}`
+- `{groupMember4}`
+
+A placeholder for a missing party position fails explicitly. It does not produce an empty name or silent fallback.
+
+## Quest interaction markers and feedback
+
+`[!]` means that at least one quest interaction is currently available beneath the marked option.
+
+The same symbol may appear on:
+
+- The city's `Visitar locais` action.
+- A narrative location.
+- A relevant NPC.
+
+The symbol intentionally does not distinguish offers, active progress or completion. It is recalculated from current requirements and quest state and is never persisted.
+
+Quest progress feedback is presentation derived from domain results:
+
+- Partial progress uses a compact notification.
+- Objective completion uses a highlighted notification without repeating the objective description.
+- Step completion is reported separately.
+- Quest completion receives a dedicated screen with its actual material rewards.
+- Multiple updates caused by one gameplay resolution are grouped.
+
+The general quest journal, including separate active and completed lists, belongs to V6 Part 6 and is not yet available.

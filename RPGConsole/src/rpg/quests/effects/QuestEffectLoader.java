@@ -10,6 +10,7 @@ import rpg.flags.FlagCatalog;
 import rpg.quests.QuestCatalog;
 import rpg.quests.QuestDefinition;
 import rpg.world.travel.TravelCatalog;
+import rpg.narrative.NarrativeTextProcessor;
 
 // Loads permanent quest-effect definitions from external data.
 public final class QuestEffectLoader {
@@ -144,31 +145,12 @@ public final class QuestEffectLoader {
             return Optional.empty();
         }
 
-        return Optional.of(decodeText(trimmedValue));
+        return Optional.of(
+                NarrativeTextProcessor.decodeLiteral(
+                        trimmedValue,
+                        "Quest effect display text"));
     }
 
-    private String decodeText(String value) {
-        StringBuilder decodedText = new StringBuilder();
-
-        for (int index = 0; index < value.length(); index++) {
-            char currentCharacter = value.charAt(index);
-
-            if (currentCharacter != '\\') {
-                decodedText.append(currentCharacter);
-                continue;
-            }
-
-            if (index + 1 >= value.length() || value.charAt(index + 1) != 'n') {
-                throw new IllegalArgumentException(
-                        "Quest effect display text contains an invalid escape sequence: " + value);
-            }
-
-            decodedText.append('\n');
-            index++;
-        }
-
-        return decodedText.toString();
-    }
 
     private int parseInteger(String value, String fieldName) {
         String normalizedValue = value.trim();

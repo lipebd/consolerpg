@@ -22,6 +22,8 @@ import rpg.enemies.EnemyDropLoader;
 import rpg.enemies.EnemyLoader;
 import rpg.flags.FlagCatalog;
 import rpg.flags.FlagLoader;
+import rpg.flags.CampaignFlags;
+import rpg.quests.QuestProgress;
 import rpg.quests.QuestCatalog;
 import rpg.quests.QuestLoader;
 import rpg.quests.effects.QuestEffectCatalog;
@@ -44,6 +46,17 @@ import rpg.items.equipment.EquipmentLoader;
 import rpg.items.equipment.EquipmentService;
 import rpg.items.SkillScrollDefinitionCatalog;
 import rpg.items.SkillScrollLoader;
+import rpg.narrative.DialogueCatalog;
+import rpg.narrative.DialogueLoader;
+import rpg.narrative.NarrativeLocationCatalog;
+import rpg.narrative.NarrativeLocationLoader;
+import rpg.narrative.NarrativeReferenceValidator;
+import rpg.narrative.NpcCatalog;
+import rpg.narrative.NpcLoader;
+import rpg.narrative.NpcPlacementCatalog;
+import rpg.narrative.NpcPlacementLoader;
+import rpg.narrative.QuestDialogueCatalog;
+import rpg.narrative.QuestDialogueLoader;
 import rpg.persistence.CampaignSaveService;
 import rpg.skills.SkillCatalog;
 import rpg.skills.SkillLoader;
@@ -142,6 +155,11 @@ public class Main {
 			QuestEffectCatalog questEffectCatalog;
 			FlagCatalog flagCatalog;
 			RequirementCatalog requirementCatalog;
+			NarrativeLocationCatalog narrativeLocationCatalog;
+			NpcCatalog npcCatalog;
+			NpcPlacementCatalog npcPlacementCatalog;
+			DialogueCatalog dialogueCatalog;
+			QuestDialogueCatalog questDialogueCatalog;
 
 			WorldProgress worldProgress;
 			DungeonProgress dungeonProgress;
@@ -262,6 +280,48 @@ public class Main {
 				ScenarioLoader scenarioLoader = new ScenarioLoader();
 				ScenarioDefinitionCatalog scenarioDefinitionCatalog =
 						scenarioLoader.load(Path.of("data", "scenarios.txt"));
+
+				// Narrative locations, NPCs, and dialogues
+				NarrativeLocationLoader narrativeLocationLoader =
+				        new NarrativeLocationLoader();
+				narrativeLocationCatalog =
+				        narrativeLocationLoader.load(
+				                Path.of("data", "narrative_locations.txt"),
+				                scenarioDefinitionCatalog,
+				                requirementCatalog);
+
+				NpcLoader npcLoader = new NpcLoader();
+				npcCatalog =
+				        npcLoader.load(Path.of("data", "npcs.txt"));
+
+				NpcPlacementLoader npcPlacementLoader =
+				        new NpcPlacementLoader();
+				npcPlacementCatalog =
+				        npcPlacementLoader.load(
+				                Path.of("data", "npc_placements.txt"),
+				                npcCatalog,
+				                narrativeLocationCatalog,
+				                requirementCatalog);
+
+				DialogueLoader dialogueLoader = new DialogueLoader();
+				dialogueCatalog =
+				        dialogueLoader.load(
+				                Path.of("data", "dialogues.txt"),
+				                npcCatalog,
+				                enemyCatalog);
+
+				QuestDialogueLoader questDialogueLoader =
+				        new QuestDialogueLoader();
+				questDialogueCatalog =
+				        questDialogueLoader.load(
+				                Path.of("data", "quest_dialogues.txt"),
+				                questCatalog,
+				                dialogueCatalog);
+
+				NarrativeReferenceValidator.validate(
+				        npcCatalog,
+				        dialogueCatalog,
+				        questCatalog);
 
 				InnLoader innLoader = new InnLoader();
 				innCatalog =
@@ -466,6 +526,13 @@ public class Main {
 				}
 			}
 
+			// Temporary V6 campaign state until save integration is implemented
+			QuestProgress questProgress =
+			        new QuestProgress(questCatalog);
+
+			CampaignFlags campaignFlags =
+			        new CampaignFlags(flagCatalog);
+
 			CampaignSaveService campaignSaveService = new CampaignSaveService();
 
             World world =
@@ -488,13 +555,26 @@ public class Main {
 					explorationRewardCatalog,
 					scenarioCatalog,
 					worldProgress,
-                            dungeonProgress,
+                    dungeonProgress,
 					worldClock,
 					cityTransportCatalog,
 					innCatalog,
 					scenarioBranchCatalog,
-                            travelProgress);
+                    travelProgress,
+                    narrativeLocationCatalog,
+                    npcCatalog,
+                    npcPlacementCatalog,
+                    dialogueCatalog,
+                    requirementCatalog,
+                    questProgress,
+                    campaignFlags,
+                    questCatalog,
+                    questRewardCatalog,
+                    questEffectCatalog,
+                    questDialogueCatalog);
+
 			world.start();
+
 		} catch (ConsoleInput.EndOfInputException exception) {
 
 			System.out.println();

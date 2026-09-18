@@ -7,6 +7,7 @@ import java.util.Objects;
 public final class ConsoleUI {
 
 	private static final int ACTION_MENU_COLUMN_WIDTH = 25;
+	private static final int TEXT_COLUMN_WIDTH = 90;
 
 	private ConsoleUI() {
 	}
@@ -69,4 +70,56 @@ public final class ConsoleUI {
 		System.out.println("Ctrl+Z ignorado.");
 		System.out.print("> ");
 	}
+
+	public static void displayWrappedText(String text) {
+	    Objects.requireNonNull(
+	            text,
+	            "Displayed text cannot be null.");
+
+	    String[] paragraphs = text.split("\n", -1);
+
+	    for (String paragraph : paragraphs) {
+	        if (paragraph.isBlank()) {
+	            System.out.println();
+	            continue;
+	        }
+
+	        displayWrappedParagraph(paragraph);
+	    }
+	}
+
+	private static void displayWrappedParagraph(String paragraph) {
+	    String[] words = paragraph.trim().split("\\s+");
+	    StringBuilder currentLine = new StringBuilder();
+
+	    for (String word : words) {
+	        if (currentLine.isEmpty()) {
+	            currentLine.append(word);
+	            continue;
+	        }
+
+	        int resultingLength =
+	                currentLine.codePointCount(
+	                        0,
+	                        currentLine.length())
+	                        + 1
+	                        + word.codePointCount(
+	                                0,
+	                                word.length());
+
+	        if (resultingLength <= TEXT_COLUMN_WIDTH) {
+	            currentLine.append(' ').append(word);
+	            continue;
+	        }
+
+	        System.out.println(currentLine);
+	        currentLine.setLength(0);
+	        currentLine.append(word);
+	    }
+
+	    if (!currentLine.isEmpty()) {
+	        System.out.println(currentLine);
+	    }
+	}
+
 }

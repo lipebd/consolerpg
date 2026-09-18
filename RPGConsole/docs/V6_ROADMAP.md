@@ -1,6 +1,8 @@
 # RPGConsole V6 Roadmap
 
-> **Planning status:** V5 was released as `v5.0.0`. V6 is in frozen-scope planning and has not entered implementation. This roadmap records the approved quest-system contract, the first five main quests as the release content boundary, and the remaining decisions that must be resolved only when their implementation block is reached.
+> **Implementation status:** V5 was released as `v5.0.0`. V6 implementation is active on `feature/v6-quests`. Parts 1 through 5 are complete and approved. Part 6 — gameplay integration, quest interface and interaction markers — is the next implementation block.
+
+> **Scope rule:** The complete V6 release boundary is approved, but each remaining block is reviewed and frozen again when its implementation begins. Roadblocks may reopen a specific decision without expanding unrelated scope.
 
 > **Checklist convention:** Contract bullets describe approved behavior and do not mean that code already exists. Unchecked boxes represent implementation, verification, documentation or release work. A box is checked only after the corresponding behavior has been implemented and approved.
 
@@ -533,18 +535,32 @@ Frozen rules:
 * An NPC with multiple quest interactions opens a stable submenu containing quest titles and `Conversar`.
 * `Conversar` always preserves access to the NPC's default dialogue.
 
+Interaction rules:
+
+* `OFFER`, `ACCEPT` and `DECLINE` use step 0; `PENDING` and `COMPLETE` use a real positive quest step.
+* Every quest has exactly one `OFFER`; `ACCEPT` and `DECLINE` remain optional.
+* Every step containing `TALK_TO_NPC` has exactly one `COMPLETE`.
+* `PENDING` is optional and restricted to steps containing `DELIVER_ITEM`.
+* A quest interaction becomes available only after every ordinary non-dialogue objective required before the NPC interaction is complete.
+* Delivery interactions remain available with insufficient items so they can present their pending state.
+* Applicable quests follow stable quest-catalog order, followed by `Conversar`.
+* Quest markers exist only when at least one quest interaction is currently available.
+* Required dialogue text and placeholders are resolved before the related campaign mutation.
+* Completion is prevalidated before its dialogue; the already-validated transaction is applied only after the dialogue finishes.
+* `RECRUIT` remains a recognized speaker type, but its data rows are rejected until recruitment-candidate definitions are introduced and can validate the canonical reference.
+
 ### Implementation checklist
 
-* [ ] Implement narrative-location, NPC, placement, dialogue and quest-dialogue definitions and loaders.
-* [ ] Validate every reference, line order, context, speaker and placeholder during startup.
-* [ ] Decode supported text escapes consistently with existing external text behavior.
-* [ ] Display empty narrative locations correctly.
-* [ ] Present fixed NPC placement and visibility through current requirements.
-* [ ] Implement linear Enter-driven dialogue presentation.
-* [ ] Implement the stable NPC interaction submenu without a generic dialogue-choice engine.
-* [ ] Validate every quest starting NPC reference after both catalogs are available.
-* [ ] Integrate confirmed NPC conversations and transactional item delivery with quest progress.
-* [ ] Integrate requirement evaluation with quest offers, narrative locations and NPC placements.
+* [x] Implement narrative-location, NPC, placement, dialogue and quest-dialogue definitions and loaders.
+* [x] Validate every reference, line order, context, speaker and placeholder during startup.
+* [x] Decode supported text escapes consistently with existing external text behavior.
+* [x] Display empty narrative locations correctly.
+* [x] Present fixed NPC placement and visibility through current requirements.
+* [x] Implement linear Enter-driven dialogue presentation.
+* [x] Implement the stable NPC interaction submenu without a generic dialogue-choice engine.
+* [x] Validate every quest starting NPC reference after both catalogs are available.
+* [x] Integrate confirmed NPC conversations and transactional item delivery with quest progress.
+* [x] Integrate requirement evaluation with quest offers, narrative locations and NPC placements.
 
 ---
 
@@ -582,13 +598,15 @@ Frozen rules:
 * It does not perform global pathfinding or point through multiple routes.
 * Marker state is derived from current definitions and campaign state and is never saved.
 
+NPC-driven grouped progress presentation and local actionable-marker derivation were required to validate the complete Part 5 interaction flow and were therefore delivered with that block. Part 6 reuses those components while adding the general quest menu, remaining gameplay event sources, immediate travel-destination propagation and hidden-content verification.
+
 ### Implementation checklist
 
 * [ ] Add quest-menu access to every applicable stable menu.
 * [ ] Implement active and completed quest presentation.
 * [ ] Display current objective counters and derived reward summaries.
-* [ ] Present grouped progress, step-completion and quest-completion results.
-* [ ] Derive actionable NPC markers.
+* [x] Present grouped progress, step-completion and quest-completion results.
+* [x] Derive actionable NPC markers.
 * [ ] Propagate markers to visible locations, cities and immediate travel presentation.
 * [ ] Confirm that markers do not expose unmet requirements or inaccessible content.
 * [ ] Integrate confirmed battle outcomes, Analyze, inventory acquisition, scenario arrival and narrative dungeon completion with quest progress.
@@ -762,7 +780,7 @@ The full inventory consequence must be validated before any equipment, class, re
 
 ### Implementation checklist
 
-* [ ] Add and validate the beginner Flagelo definition and natural skills.
+* [x] Add and validate the beginner Flagelo definition and natural skills.
 * [ ] Audit and remove the `STARTER` skill-acquisition type if it has no remaining consumer.
 * [ ] Freeze the exact external schema for level-7 introductory class equipment.
 * [ ] Define introductory weapon and armor for every final path.
@@ -995,6 +1013,8 @@ Create `docs/QUEST_IMPLEMENTATION_GUIDE.md` in non-technical language for conten
 * Common validation errors and how to correct them.
 * A complete content-author checklist.
 * How to test a new quest without modifying Java code.
+
+General documentation is maintained incrementally when each coherent implementation block closes. The final checklist below remains unchecked until every named document also contains the later persistence, ceremony, recruitment and canonical-content behavior required for the complete V6 release.
 
 ### Documentation checklist
 

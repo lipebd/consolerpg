@@ -1,0 +1,132 @@
+package rpg.ui;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+import rpg.characters.Party;
+import rpg.enemies.EnemyCatalog;
+import rpg.narrative.DialogueCatalog;
+import rpg.narrative.DialogueDefinition;
+import rpg.narrative.DialogueLineDefinition;
+import rpg.narrative.NarrativeTextProcessor;
+import rpg.narrative.NpcCatalog;
+
+// Presents external linear dialogues one utterance at a time.
+public final class DialoguePresenter {
+
+    private final ConsoleInput consoleInput;
+    private final DialogueCatalog dialogueCatalog;
+    private final NpcCatalog npcCatalog;
+    private final EnemyCatalog enemyCatalog;
+
+    public DialoguePresenter(
+            ConsoleInput consoleInput,
+            DialogueCatalog dialogueCatalog,
+            NpcCatalog npcCatalog,
+            EnemyCatalog enemyCatalog) {
+        this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
+
+        this.dialogueCatalog =
+                Objects.requireNonNull(dialogueCatalog, "Dialogue catalog cannot be null.");
+
+        this.npcCatalog = Objects.requireNonNull(npcCatalog, "NPC catalog cannot be null.");
+
+        this.enemyCatalog = Objects.requireNonNull(enemyCatalog, "Enemy catalog cannot be null.");
+    }
+
+    public void display(String dialogueId, Party party) {
+        display(dialogueId, party, List.of());
+    }
+
+    public void display(String dialogueId, Party party, List<String> headerLines) {
+        Objects.requireNonNull(party, "Party cannot be null.");
+
+        Objects.requireNonNull(headerLines, "Dialogue header lines cannot be null.");
+
+        List<String> validatedHeaderLines = validateHeaderLines(headerLines);
+
+        DialogueDefinition dialogueDefinition = dialogueCatalog.getById(dialogueId);
+
+        List<RenderedDialogueLine> renderedLines = prepareLines(dialogueDefinition, party);
+
+        for (RenderedDialogueLine renderedLine : renderedLines) {
+            displayLine(renderedLine, validatedHeaderLines);
+        }
+    }
+
+    private static List<String> validateHeaderLines(List<String> headerLines) {
+        List<String> validatedHeaderLines = new ArrayList<>();
+
+        for (String headerLine : headerLines) {
+            if (headerLine == null || headerLine.isBlank()) {
+                throw new IllegalArgumentException("Dialogue header line cannot be empty.");
+            }
+
+            validatedHeaderLines.add(headerLine.trim());
+        }
+
+        return List.copyOf(validatedHeaderLines);
+    }
+
+    private List<RenderedDialogueLine> prepareLines(
+            DialogueDefinition dialogueDefinition, Party party) {
+        List<RenderedDialogueLine> renderedLines = new ArrayList<>();
+
+        for (DialogueLineDefinition lineDefinition : dialogueDefinition.getLines()) {
+            String speakerName = resolveSpeakerName(lineDefinition, party);
+
+            String text = NarrativeTextProcessor.resolve(lineDefinition.getText(), party);
+
+            renderedLines.add(new RenderedDialogueLine(speakerName, text));
+        }
+
+        return List.copyOf(renderedLines);
+    }
+
+    private String resolveSpeakerName(DialogueLineDefinition lineDefinition, Party party) {
+        return switch (lineDefinition.getSpeakerType()) {
+            case NPC -> npcCatalog.getById(lineDefinition.getSpeakerId().orElseThrow()).getName();
+
+            case ENEMY ->
+                    enemyCatalog.getById(lineDefinition.getSpeakerId().orElseThrow()).getName();
+
+            case LEADER -> party.getLeader().getName();
+
+            case NARRATOR -> null;
+
+            case RECRUIT ->
+                    throw new IllegalStateException(
+                            "RECRUIT dialogue speakers are unavailable until recruitment candidates are implemented.");
+        };
+    }
+
+    private void displayLine(RenderedDialogueLine renderedLine, List<String> headerLines) {
+        ConsoleUI.clearScreen();
+        for (String headerLine : headerLines) {
+            System.out.println("[" + headerLine + "]");
+        }
+
+        if (!headerLines.isEmpty()) {
+            System.out.println();
+        }
+        if (renderedLine.speakerName() != null) {
+            System.out.println(renderedLine.speakerName());
+            System.out.println();
+        }
+
+        ConsoleUI.displayWrappedText(renderedLine.text());
+        System.out.println();
+        System.out.print("[Enter] Continuar");
+
+        consoleInput.readLine();
+    }
+
+    private record RenderedDialogueLine(String speakerName, String text) {
+        private RenderedDialogueLine {
+            if (text == null || text.isBlank()) {
+                throw new IllegalArgumentException("Rendered dialogue text cannot be empty.");
+            }
+        }
+    }
+}

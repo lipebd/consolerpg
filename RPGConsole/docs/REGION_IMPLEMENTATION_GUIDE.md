@@ -4,6 +4,8 @@ Este guia explica quais arquivos devem ser atualizados ao adicionar uma nova cid
 
 O carregamento é orientado por dados: normalmente, uma região nova não exige uma nova classe Java. Ela precisa apenas de um conjunto coerente de registros nos arquivos da pasta `data`.
 
+Cidades também podem possuir locais narrativos e NPCs. Esses conteúdos permanecem separados dos sistemas de INN, loja e artesanato, mesmo quando representam espaços semelhantes, como tavernas, oficinas ou becos.
+
 ## 1. Escolha o ID estável
 
 Antes de editar os arquivos, defina um ID único para a região.
@@ -31,6 +33,8 @@ ID estável: ruinas_sanguemar
 | Masmorra | `DUNGEON` | `scenarios.txt`, `combat_scenarios.txt`, `dungeons.txt`, `encounters.txt` e `travel_routes.txt` |
 
 Lojas são opcionais. Quando uma região possuir uma loja fixa ou mercador de exploração, também será necessário atualizar `shops.txt` e `shop_stock.txt`.
+
+Locais narrativos e NPCs também são opcionais. Quando uma cidade possuir esse conteúdo, poderão ser necessários `narrative_locations.txt`, `npcs.txt`, `npc_placements.txt`, `dialogues.txt` e `requirements.txt`.
 
 Se a região introduzir inimigos novos, eles também devem ser cadastrados em `enemies.txt` antes de serem referenciados. Tabelas de drops em `enemy_drops.txt` são opcionais.
 
@@ -103,6 +107,113 @@ Regras:
 - Uma cidade não pode possuir mais de um INN.
 - `InnLoader` rejeita a inicialização quando qualquer cidade registrada não possui um INN.
 - Descrições aceitam sequências literais `\n`.
+
+### Locais narrativos opcionais das cidades
+
+Um local narrativo representa um espaço urbano destinado a conversas e interações de quest.
+
+Arquivo: `data/narrative_locations.txt`
+
+```text
+# id;cityId;name;description;requirementSetId
+```
+
+Exemplo:
+
+```text
+taverna_nova_cidade;nova_cidade;Taverna da Nova Cidade;Um salão movimentado onde viajantes trocam histórias.;
+```
+
+Regras:
+
+- O ID do local deve ser único e seguir a convenção de IDs estáveis.
+- `cityId` deve referenciar uma região `CITY`.
+- Nome e descrição não podem estar vazios.
+- A descrição aceita a sequência literal `\n`.
+- Um `requirementSetId` vazio deixa o local visível sem requisito reutilizável.
+- Um requisito informado precisa existir em `requirements.txt`.
+- Uma cidade pode possuir vários locais narrativos.
+- Um local visível pode permanecer vazio e exibirá `Não há ninguém aqui.`.
+- INNs, lojas e artesãos não devem ser recadastrados como locais narrativos apenas para aparecerem no menu.
+
+### NPCs narrativos opcionais
+
+A identidade de um NPC é cadastrada separadamente de sua localização.
+
+Arquivo: `data/npcs.txt`
+
+```text
+# id;name;description;defaultDialogueId
+```
+
+Exemplo:
+
+```text
+npc_nova_cidade;Morador da Nova Cidade;Um habitante acostumado ao movimento das ruas.;dialogo_npc_nova_cidade
+```
+
+Todo NPC precisa possuir:
+
+- ID canônico único.
+- Nome.
+- Descrição.
+- Um diálogo padrão existente em `dialogues.txt`.
+
+O NPC pode existir sem posicionamento urbano. Isso permite que personagens falem em outros contextos sem aparecer permanentemente em um local narrativo.
+
+### Posicionamento fixo de NPCs
+
+Arquivo: `data/npc_placements.txt`
+
+```text
+# npcId;narrativeLocationId;requirementSetId
+```
+
+Exemplo:
+
+```text
+npc_nova_cidade;taverna_nova_cidade;
+```
+
+Regras:
+
+- O NPC e o local narrativo precisam existir.
+- Um NPC pode possuir no máximo um posicionamento fixo na V6.
+- Vários NPCs podem compartilhar o mesmo local.
+- Um requisito vazio deixa o NPC visível sempre que o próprio local estiver visível.
+- Quando local e NPC possuem requisitos, os dois precisam ser satisfeitos.
+- A V6 não movimenta NPCs dinamicamente entre locais.
+
+### Diálogo padrão
+
+Arquivo: `data/dialogues.txt`
+
+```text
+# dialogueId;line;speakerType;speakerId;text
+```
+
+Exemplo:
+
+```text
+dialogo_npc_nova_cidade;1;NPC;npc_nova_cidade;Ainda há muito movimento nas estradas.
+dialogo_npc_nova_cidade;2;LEADER;;Você ouviu alguma notícia importante?
+dialogo_npc_nova_cidade;3;NPC;npc_nova_cidade;Nada que eu possa afirmar com certeza.
+```
+
+Para um diálogo urbano comum:
+
+- As linhas começam em 1 e são consecutivas.
+- `NPC` usa o ID canônico do personagem.
+- `LEADER` e `NARRATOR` deixam `speakerId` vazio.
+- Literal `\n` cria uma quebra intencional.
+- Outras barras invertidas são inválidas.
+- Cada fala avança somente após Enter.
+- Textos longos quebram automaticamente na largura atual do console.
+- Ponto e vírgula não pode aparecer dentro da fala.
+
+Os marcadores `[!]` não são cadastrados em nenhum arquivo. Eles são derivados automaticamente quando o NPC possui uma interação de quest disponível naquele momento.
+
+Este guia cobre apenas a associação regional. Ofertas, objetivos, contextos de quest e diálogos de conclusão serão explicados no futuro `QUEST_IMPLEMENTATION_GUIDE.md`.
 
 ## 5. Configure a exploração da região de combate
 
@@ -487,14 +598,15 @@ Para evitar referências quebradas, siga esta ordem:
 2. Cadastre novos inimigos e itens, quando necessários, em seus arquivos correspondentes.
 3. Cadastre a região em `scenarios.txt`.
 4. Se for uma cidade, adicione exatamente um INN em `inns.txt`.
-5. Se for uma região de combate, confirme primeiro que suas cidades de resgate e os respectivos INNs já estão cadastrados e então adicione `combat_scenarios.txt`.
-6. Se a região possuir lojas ou mercadores, adicione suas definições em `shops.txt` e suas possíveis ofertas em `shop_stock.txt`.
-7. Se alguma área puder resolver a exploração como `REWARD`, adicione os pools elegíveis necessários em `exploration_rewards.txt`.
-8. Se for uma masmorra, adicione `dungeons.txt`.
-9. Adicione os encontros em `encounters.txt`.
-10. Adicione drops opcionais em `enemy_drops.txt`.
-11. Por último, conecte a região em `travel_routes.txt` e `scenario_branches.txt`, quando aplicável.
-12. Inicialize o jogo e realize o teste manual.
+5. Se a cidade possuir conteúdo narrativo, cadastre os requisitos necessários, os locais, os NPCs, seus diálogos padrão e seus posicionamentos.
+6. Se for uma região de combate, confirme primeiro que suas cidades de resgate e os respectivos INNs já estão cadastrados e então adicione `combat_scenarios.txt`.
+7. Se a região possuir lojas ou mercadores, adicione suas definições em `shops.txt` e suas possíveis ofertas em `shop_stock.txt`.
+8. Se alguma área puder resolver a exploração como `REWARD`, adicione os pools elegíveis necessários em `exploration_rewards.txt`.
+9. Se for uma masmorra, adicione `dungeons.txt`.
+10. Adicione os encontros em `encounters.txt`.
+11. Adicione drops opcionais em `enemy_drops.txt`.
+12. Por último, conecte a região em `travel_routes.txt` e `scenario_branches.txt`, quando aplicável.
+13. Inicialize o jogo e realize o teste manual.
 
 Se precisar interromper o trabalho antes de concluir todas as etapas, não inicialize o jogo enquanto houver arquivos que referenciem dados ainda inexistentes.
 
@@ -519,6 +631,15 @@ Se precisar interromper o trabalho antes de concluir todas as etapas, não inici
 - [ ] A cidade possui exatamente um INN em `inns.txt`.
 - [ ] O ID, o nome e a descrição do INN não estão vazios.
 - [ ] O preço do INN é maior que zero.
+- [ ] Todo local narrativo referencia a cidade correta.
+- [ ] IDs, nomes e descrições dos locais narrativos são válidos.
+- [ ] Todo requisito de visibilidade informado existe.
+- [ ] Todo NPC posicionado existe e referencia um local narrativo válido.
+- [ ] Nenhum NPC possui mais de um posicionamento.
+- [ ] Todo NPC possui um diálogo padrão válido.
+- [ ] Linhas de diálogo começam em 1 e são consecutivas.
+- [ ] Tipos e IDs de locutores correspondem aos catálogos corretos.
+- [ ] Nenhum `[!]` foi codificado manualmente nos dados.
 
 ### Campos e masmorras
 
@@ -559,6 +680,12 @@ Se precisar interromper o trabalho antes de concluir todas as etapas, não inici
 - [ ] Os encontros respeitam posição, área e tamanho do grupo.
 - [ ] Em masmorras, fugir do boss mantém o jogador na posição final.
 - [ ] Vencer o boss conclui a exploração e libera a viagem esperada.
+- [ ] Locais narrativos aparecem somente quando seus requisitos são satisfeitos.
+- [ ] NPCs aparecem somente quando os requisitos do local e do posicionamento são satisfeitos.
+- [ ] Um local narrativo vazio exibe `Não há ninguém aqui.`.
+- [ ] O diálogo padrão resolve corretamente locutores, placeholders e quebras de linha.
+- [ ] Retornar do NPC leva ao local narrativo e retornar novamente leva à seleção de locais da cidade.
+- [ ] Marcadores `[!]` aparecem somente quando existe uma interação de quest acionável.
 - [ ] `git diff --check` não aponta whitespace errors.
 - [ ] Recompensas de item e ouro respeitam cenário, área, peso e intervalo de quantidade.
 - [ ] Lojas urbanas aparecem entre os locais funcionais da cidade.

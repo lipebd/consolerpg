@@ -100,6 +100,65 @@ public final class QuestProgressService {
         return accumulator.createResult();
     }
 
+    public List<QuestCompletionFailure> validateNpcInteractionCompletion(
+            String questId, String npcId) {
+        if (npcId == null || npcId.isBlank()) {
+            throw new IllegalArgumentException("NPC ID cannot be empty.");
+        }
+
+        QuestStepDefinition currentStep =
+                questProgress
+                        .getCurrentStep(questId)
+                        .orElseThrow(
+                                () -> new IllegalStateException("Quest is not active: " + questId));
+
+        String normalizedNpcId = npcId.trim();
+
+        Map<Item, Integer> deliveredItems;
+
+        if (containsDeliveryObjective(currentStep)) {
+            validateDeliveryInteraction(questId, normalizedNpcId, currentStep);
+
+            deliveredItems = collectDeliveredItems(questId, currentStep);
+        } else {
+            validateTalkInteraction(questId, normalizedNpcId, currentStep);
+
+            deliveredItems = Map.of();
+        }
+
+        return List.copyOf(validateCompletionPlan(questId, deliveredItems));
+    }
+
+    public QuestProgressResult completeNpcInteraction(String questId, String npcId) {
+        if (npcId == null || npcId.isBlank()) {
+            throw new IllegalArgumentException("NPC ID cannot be empty.");
+        }
+
+        QuestStepDefinition currentStep =
+                questProgress
+                        .getCurrentStep(questId)
+                        .orElseThrow(
+                                () -> new IllegalStateException("Quest is not active: " + questId));
+
+        String normalizedNpcId = npcId.trim();
+
+        if (containsDeliveryObjective(currentStep)) {
+            return completeDelivery(questId, normalizedNpcId);
+        }
+
+        validateTalkInteraction(questId, normalizedNpcId, currentStep);
+
+        if (questProgress.isCurrentStepComplete(questId)) {
+            return retryCompletedStep(questId);
+        }
+
+        QuestProgressEvent event =
+                new QuestProgressEvent(
+                        QuestProgressEventType.NPC_TALKED, Optional.of(normalizedNpcId), 1);
+
+        return processEvents(List.of(event));
+    }
+
     public QuestProgressResult completeDelivery(String questId, String npcId) {
         if (npcId == null || npcId.isBlank()) {
             throw new IllegalArgumentException("NPC ID cannot be empty.");
@@ -442,6 +501,32 @@ public final class QuestProgressService {
                 yield !alreadyUnlocked;
             }
         };
+    }
+
+    private void validateTalkInteraction(
+            String questId, String npcId, QuestStepDefinition currentStep) {
+        boolean matchingTalkObjective = false;
+
+        for (QuestObjectiveDefinition objective : currentStep.getObjectives()) {
+            if (objective.getObjectiveType() == QuestObjectiveType.TALK_TO_NPC) {
+                matchingTalkObjective = objective.getTargetId().orElseThrow().equals(npcId);
+
+                continue;
+            }
+
+            int currentProgress = questProgress.getObjectiveProgress(questId, objective.getId());
+
+            if (currentProgress < objective.getRequiredQuantity()) {
+                throw new IllegalStateException(
+                        "Quest NPC interaction cannot proceed before the other objectives are complete: "
+                                + questId);
+            }
+        }
+
+        if (!matchingTalkObjective) {
+            throw new IllegalStateException(
+                    "NPC does not complete the current quest interaction: " + npcId);
+        }
     }
 
     private void validateDeliveryInteraction(

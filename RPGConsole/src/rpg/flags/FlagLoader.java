@@ -79,8 +79,7 @@ public final class FlagLoader {
 
             if (index + 1 >= normalizedValue.length() || normalizedValue.charAt(index + 1) != 'n') {
                 throw new IllegalArgumentException(
-                        "Flag description can only use backslashes as "
-                                + "the \\\\n line-break sequence.");
+                        "Flag description can only use backslashes as the \\\\n line-break sequence.");
             }
 
             description.append('\n');

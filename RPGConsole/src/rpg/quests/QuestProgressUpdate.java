@@ -107,7 +107,7 @@ public final class QuestProgressUpdate {
 
                 if (requiredQuantity <= 0 || currentQuantity != requiredQuantity) {
                     throw new IllegalArgumentException(
-                            "Objective completion update must equal the " + "required quantity.");
+                            "Objective completion update must equal the required quantity.");
                 }
 
                 break;

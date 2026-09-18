@@ -6,11 +6,11 @@ V5 is complete and preserved as the current released version.
 
 Current stage:
 
-`V6 quest-system planning`
+`V6 quest-system implementation — Parts 1 through 5 completed`
 
 Current Git branch:
 
-`master`
+`feature/v6-quests`
 
 Preserved release tags:
 
@@ -833,7 +833,6 @@ The version-2 persistence foundation is implemented through `rpg.persistence`.
 Current completed behavior:
 
 - Immutable snapshots represent party, character, equipment, inventory, reward-modifier, world-time, discovery, travel, permanent dungeon progression and shop state.
-`CampaignSnapshotRestorer` validates every catalog-backed reference and reconstructs a complete isolated `RestoredCampaign`, including party order, progression, learned scroll skills, equipment, resources, inventory, reward modifiers, world progress, travel progress, dungeon progress, fictional time and finite shop stock. The reconstructed candidate becomes active only after every loading stage succeeds.
 - The versioned campaign schema uses strict indexed Java properties encoded as UTF-8.
 - Canonical booleans accept only lowercase `true` and `false`.
 - Every registered dungeon requires exactly one valid progress entry.
@@ -853,13 +852,66 @@ After the unchanged title screen, `CampaignSelectionMenu` distinguishes absent, 
 
 Complete encrypted round trips, campaign reconstruction, valid and invalid startup flows, preservation of previous saves, INN saving, failed writes, exit-without-saving behavior and version-2 dungeon-progress restoration were manually validated.
 
+## V6 quest and narrative foundation
+
+V6 Parts 1 through 5 are implemented and approved.
+
+The current foundation includes:
+
+- Complete immutable quest definitions assembled from external quest, step and objective files.
+- Sequential linear quest steps and eight closed objective types.
+- Mutable campaign-level `QuestProgress` separated from immutable definitions.
+- `NOT_STARTED`, `ACTIVE` and `COMPLETED` quest lifecycle.
+- Explicit synchronous quest-progress events and ordered result objects.
+- Permanent external flag definitions and mutable set-only `CampaignFlags`.
+- Reusable external AND requirement sets.
+- Pure uncached requirement evaluation against leader level, inventory, quest status and flags.
+- Quest-availability validation rejecting missing sets, self-dependencies and dependency cycles.
+- External material quest rewards for GOLD, party EXP and items.
+- External permanent effects for setting flags and unlocking adjacent routes.
+- Complete completion-plan validation before campaign mutation.
+- Atomic delivery consumption, reward application, permanent effects and quest-state transition.
+- Explicit completion failures that preserve every affected state.
+- External narrative city locations with requirement-controlled visibility.
+- Canonical NPC identities separated from fixed city placements.
+- External linear dialogues with canonical speakers and party-name placeholders.
+- External quest-dialogue associations for offer, acceptance, refusal, pending and completion contexts.
+- Stable NPC interaction menus preserving the permanent `Conversar` option.
+- Automatic narrative-text wrapping at 90 console columns.
+- Derived `[!]` markers on actionable NPCs, narrative locations and the current city's `Visitar locais` action.
+- Grouped NPC-interaction progress, step-completion and quest-completion presentation.
+
+The new external files are:
+
+- `quests.txt`
+- `quest_steps.txt`
+- `quest_objectives.txt`
+- `flags.txt`
+- `requirements.txt`
+- `quest_rewards.txt`
+- `quest_effects.txt`
+- `narrative_locations.txt`
+- `npcs.txt`
+- `npc_placements.txt`
+- `dialogues.txt`
+- `quest_dialogues.txt`
+
+The complete narrative interaction was validated through one temporary quest and NPC. Representative testing covered city, location and NPC markers; default conversation; offer refusal and later acceptance; quest activation; required completion dialogue; atomic completion; a real GOLD reward; grouped notifications; marker removal after completion; and preservation of default dialogue access.
+
+All temporary validation content was removed after approval. The V6 data files may therefore remain header-only until canonical quest content is authored.
+
 ## Current limitations and temporary implementations
 
 - Permanent skill-scroll content and curated scroll drops remain absent while the draft skills await required combat mechanics and final content review.
 - The Flagelo's two temporary `STARTER` skills are not yet retired because the level-7 class-choice flow is not implemented.
 - Playable-class definitions, natural growth and the complete approved 30-skill roster are external; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy turns currently use basic attacks; enemy skill selection is deferred.
-- Tavern functionality remains unavailable.
+- Narrative city locations and NPC interaction are implemented, but canonical tavern, NPC, dialogue and quest content has not yet been populated.
+- The general active-and-completed quest menu is deferred to V6 Part 6.
+- NPC conversation and item delivery are connected to live quest progress; battle, Analyze, item acquisition, scenario-arrival and narrative-dungeon events remain to be connected in V6 Part 6.
+- `[!]` markers currently propagate through NPCs, narrative locations and the current city's location action; displayed travel-destination propagation remains part of V6 Part 6.
+- Mutable quest progress and permanent campaign flags remain outside the internal version-2 save format until V6 Part 7.
+- `RECRUIT` is recognized as a dialogue speaker type, but its data remains invalid until recruitment-candidate definitions and state are implemented.
 - After a normal victory, defeated allies remain unavailable until revived by a skill, item or city INN; full-party defeat instead activates rescue and complete restoration.
 - Items sold by the player cannot be bought back.
 - Normal new games currently begin with only the protagonist; story-based recruitment of three distinct-class allies remains future work.
@@ -873,25 +925,29 @@ Complete encrypted round trips, campaign reconstruction, valid and invalid start
 
 ## Current next step
 
-V5 is complete, packaged and manually validated as the current release.
+V5 remains complete, packaged and released as `v5.0.0`.
 
-Its delivered scope includes:
+V6 implementation is active on `feature/v6-quests`. Parts 1 through 5 have completed:
 
-- Data-driven crafting.
-- Encrypted, authenticated and atomic campaign persistence.
-- Campaign selection, continuation and INN-exclusive saving.
-- Centralized recoverable console input.
-- Fictional world time and global shop restocking.
-- Special-area event guarantees.
-- Permanent dungeon completion.
-- Recurring dungeon bosses.
-- Optional epic encounters with persistent cooldowns.
-- Internal save-format version 2.
-- A self-contained Windows x64 portable package.
+- Quest definitions and lifecycle.
+- Quest objectives and core progress.
+- Permanent flags and reusable requirements.
+- Quest rewards and permanent effects.
+- Narrative locations, NPCs and dialogue.
 
-The next development stage is V6 planning, beginning with the quest system.
+The next implementation block is V6 Part 6: gameplay integration, the general quest interface and complete interaction-marker propagation.
 
-Quest-dependent class paths, narrative flags, generalized access requirements, loader-maintenance work and the optional automated-testing study remain deferred to V6 so their design can use real quest and narrative progression state.
+Part 6 must:
+
+- Add the quest menu to every approved stable menu.
+- Present active and completed quests.
+- Display current objectives, counters and derived reward summaries.
+- Connect confirmed battle, Analyze, item-acquisition, scenario-arrival and narrative-dungeon events.
+- Complete `[!]` propagation to immediately displayed travel destinations.
+- Confirm that hidden or unmet content never leaks through markers.
+- Reuse the progress and completion presentation already validated through NPC interaction.
+
+Quest and flag persistence remains explicitly deferred to Part 7. Class ceremony, recruitment and the first five canonical quests remain later V6 blocks.
 
 ## Important conventions
 
@@ -904,6 +960,5 @@ Quest-dependent class paths, narrative flags, generalized access requirements, l
 - External references are validated during game initialization.
 - Inventory and gold belong to `Party`.
 - Character resources and progression belong to `PlayableCharacter`.
-- Git operations are performed through Git Bash.
 - Git operations and manual compilation are performed through Git Bash.
 - Eclipse is used to edit, compile and run the Java project.

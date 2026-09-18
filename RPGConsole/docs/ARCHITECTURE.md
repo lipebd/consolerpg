@@ -33,8 +33,14 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.items` | External item definitions, runtime item behavior, shared inventory and individual drop rules | `ItemDefinition`, `ItemDefinitionCatalog`, `ItemLoader`, `RecoveryItemDefinition`, `RecoveryItemLoader`, `ItemFactory`, `Item`, `BasicItem`, `RecoveryItem`, `ItemCatalog`, `Inventory`, `DropEntry` |
 | `rpg.items.equipment` | Immutable equipment specialization, loading, lookup, compatibility vocabulary and inventory-to-character transfers | `EquipmentDefinition`, `WeaponDefinition`, `ArmorDefinition`, `TrinketDefinition`, `EquipmentLoader`, `EquipmentCatalog`, `EquipmentService`, `WeaponType`, `ArmorWeight`, `TrinketType` |
 | `rpg.enemies` | Enemy definitions and external enemy/drop loading | `EnemyDefinition`, `EnemyCatalog`, `EnemyLoader`, `EnemyDropCatalog`, `EnemyDropLoader` |
+| `rpg.flags` | Immutable permanent-flag definitions, external loading and mutable set-only campaign flag state | `FlagDefinition`, `FlagCatalog`, `FlagLoader`, `CampaignFlags` |
+| `rpg.requirements` | Immutable reusable requirement sets, external loading, pure runtime evaluation and quest-availability dependency validation | `RequirementDefinition`, `RequirementSetDefinition`, `RequirementCatalog`, `RequirementLoader`, `RequirementEvaluator`, `QuestAvailabilityValidator` |
+| `rpg.quests` | Immutable quest, step and objective definitions, mutable campaign progress, synchronous gameplay-event processing and NPC-interaction resolution | `QuestDefinition`, `QuestStepDefinition`, `QuestObjectiveDefinition`, `QuestCatalog`, `QuestLoader`, `QuestProgress`, `QuestProgressService`, `QuestNpcInteractionResolver` |
+| `rpg.quests.effects` | Immutable permanent quest effects, trigger vocabulary, external loading and ordered lookup | `QuestEffectDefinition`, `QuestEffectCatalog`, `QuestEffectLoader`, `QuestEffectTrigger`, `QuestEffectType` |
+| `rpg.quests.rewards` | Immutable material quest rewards, external loading, ordered lookup and reward-type vocabulary | `QuestRewardDefinition`, `QuestRewardCatalog`, `QuestRewardLoader`, `QuestRewardType` |
+| `rpg.narrative` | Narrative locations, NPC identity and placement, linear dialogues, quest-dialogue associations, text processing and cross-catalog narrative validation | `NarrativeLocationDefinition`, `NarrativeLocationCatalog`, `NpcDefinition`, `NpcCatalog`, `NpcPlacementDefinition`, `NpcPlacementCatalog`, `DialogueDefinition`, `DialogueCatalog`, `QuestDialogueDefinition`, `QuestDialogueCatalog`, `NarrativeTextProcessor`, `NarrativeReferenceValidator` |
 | `rpg.persistence` | Immutable campaign snapshots, strict versioned property encoding, authenticated encrypted containers and atomic save-file access | `CampaignSnapshot`, `CampaignSnapshotFactory`, `CampaignPropertiesSerializer`, `CampaignPropertiesDeserializer`, `CampaignSaveCodec`, `CampaignSaveService`, `CampaignLoadService` |
-| `rpg.world` | Active world state, fictional world time, scenario discovery, rescue coordination, shop-restocking coordination and high-level gameplay flow | `World`, `WorldClock`, `WorldProgress` |
+| `rpg.world` | Active world state, fictional world time, scenario discovery, rescue coordination, shop-restocking coordination, narrative interaction and high-level gameplay flow | `World`, `WorldClock`, `WorldProgress` |
 | `rpg.world.scenarios` | External scenario and dungeon definitions, runtime scenario hierarchy, permanent dungeon progression and scenario creation | `ScenarioDefinition`, `ScenarioDefinitionCatalog`, `ScenarioLoader`, `CombatScenarioDefinition`, `CombatScenarioLoader`, `DungeonDefinition`, `DungeonLoader`, `ScenarioFactory`, `Scenario`, `CombatScenario`, `Field`, `Dungeon`, `DungeonSettings`, `DungeonProgress`, `City`, `ScenarioCatalog`, `CombatScenarioAction`, `CityAction` |
 | `rpg.world.encounters` | Encounter availability and weighted group generation | `EncounterEntry`, `EncounterCatalog`, `EncounterLoader`, `EncounterGenerator` |
 | `rpg.world.exploration` | Exploration configuration, progress and event selection | `ExplorationSettings`, `ExplorationSession`, `ExplorationEventGenerator`, `ExplorationEventType`, `ExplorationAreaRestriction` |
@@ -43,7 +49,7 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.world.rewards` | External exploration reward pools, validation and weighted selection | `ExplorationRewardEntry`, `ExplorationRewardCatalog`, `ExplorationRewardLoader`, `ExplorationRewardGenerator`, `ExplorationReward`, `ExplorationRewardType` |
 | `rpg.world.travel` | External directed-route definitions, loading and runtime unlock progress | `TravelRouteDefinition`, `TravelCatalog`, `TravelRouteLoader`, `TravelProgress` |
 | `rpg.world.transport` | External paid city-transport definitions, loading and destination lookup | `CityTransportDefinition`, `CityTransportCatalog`, `CityTransportLoader` |
-| `rpg.ui` | Console menus, character creation, navigation, target selection, shared formatters and information screens | `TitleScreen`, `CharacterCreationMenu`, `PartyRescueScreen`, `CombatScenarioMenu`, `CityMenu`, `CityLocationMenu`, `InnMenu`, `RouteMenu`, `CityTransportMenu`, `InventoryMenu`, `EquipmentMenu`, `BattleItemMenu`, `RecoveryItemUseMenu`, `EpicEncounterMenu`, `BattleRewardScreen`, `BattleTurnOrderScreen`, `PartyStatusMenu`, `CharacterStatusMenu`, `PlayableClassDetailFormatter`, `EquipmentDetailFormatter`, `SkillDetailFormatter`, `RewardModifierFormatter`, `ShopMenu` |
+| `rpg.ui` | Console menus, character creation, navigation, dialogue presentation, quest interaction, target selection, shared formatters and information screens | `TitleScreen`, `CharacterCreationMenu`, `PartyRescueScreen`, `CombatScenarioMenu`, `CityMenu`, `CityLocationMenu`, `NarrativeLocationMenu`, `NpcInteractionMenu`, `DialoguePresenter`, `QuestOfferMenu`, `QuestProgressPresenter`, `QuestRewardSummaryFormatter`, `InventoryMenu`, `EquipmentMenu`, `ShopMenu` |
 
 ## Application initialization
 
@@ -51,27 +57,25 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 
 Initialization includes:
 
-1. Creating the shared `ConsoleInput`.
-2. Loading and validating external random character names.
-3. Loading playable-class definitions.
-4. Loading skill headers and ordered skill-effect components and creating `SkillCatalog`.
-5. Loading enemy and base item definitions.
-6. Loading equipment, recovery-item and skill-scroll specialized definitions.
-7. Creating the runtime `ItemCatalog` through `ItemFactory`.
-8. Creating `EquipmentService` from the item and equipment catalogs.
-9. Loading enemy drops and encounter definitions.
-10. Loading common scenario definitions.
-11. Loading city-transport definitions, INN definitions with complete city coverage and combat-scenario definitions whose rescue destinations are validated against scenario and INN catalogs.
-12. Loading shop definitions and their possible stock entries.
-13. Generating one runtime state for every shop through `ShopStateGenerator`.
-14. Loading exploration-reward, dungeon and scenario-branch definitions.
-15. Creating and registering runtime scenarios through `ScenarioFactory`.
-16. Resolving the initial scenario and creating `WorldProgress`.
-17. Loading adjacent travel routes and creating `TravelProgress`.
-18. Creating one shared `CharacterGrowthCalculator`.
-19. Creating either the confirmed new-game protagonist or an isolated development party according to the application arguments.
-20. Creating the initial `WorldClock` and creating `World` with the required catalogs, generators, services, mutable state and shared dependencies.
-21. Starting the world loop.
+Initialization follows dependency order:
+
+1. Create the shared `ConsoleInput`.
+2. Load foundational character-name, playable-class, skill, enemy and item definitions.
+3. Load equipment, recovery-item, skill-scroll, enemy-drop and encounter definitions against their required foundational catalogs.
+4. Load common scenario, transport, INN, shop, crafting, exploration-reward, dungeon, branch and adjacent-route definitions.
+5. Load complete quest definitions from quest headers, sequential steps and ordered objectives.
+6. Load permanent-flag definitions and reusable requirement sets.
+7. Validate requirement references and quest-availability dependencies after quest, item and flag catalogs are available.
+8. Load ordered quest rewards and permanent quest effects after their item and route references are available.
+9. Load narrative locations, NPC identities, fixed NPC placements and linear dialogues.
+10. Load quest-dialogue associations and perform cross-catalog narrative validation, including speakers, starting NPCs, interaction objectives and dialogue contexts.
+11. Create runtime item, scenario, shop and other catalog-backed objects.
+12. Resolve or reconstruct the active party and existing persisted world state.
+13. Create the current `QuestProgress` and `CampaignFlags` campaign state. Their persistence remains deferred until the V6 save-format integration.
+14. Construct `World` with the required immutable catalogs, mutable campaign state, generators, services and shared dependencies.
+15. Start the world loop.
+
+Each loader builds a complete candidate result before returning its catalog. Cross-catalog validators run only after all definitions required by that validation are available.
 
 External data is loaded before gameplay. Invalid definitions or unresolved references prevent the game from starting with partially inconsistent catalogs.
 
@@ -82,6 +86,8 @@ During a normal run, `Main` repeatedly opens `TitleScreen` and `CharacterCreatio
 When the `--dev-party` argument is present, `Main` bypasses the normal title and creation flow and delegates party construction to `DevelopmentPartyFactory`. This development-only path supports one to four configured members with distinct classes, arbitrary positive levels, configurable initial gold and optional temporary reward modifiers while remaining isolated from normal new-game behavior.
 
 `WorldProgress`, `TravelProgress`, `WorldClock` and `ShopStateCatalog` represent separate runtime concerns. `WorldProgress` records discovered scenarios, `TravelProgress` records unlocked adjacent routes, `WorldClock` stores authoritative elapsed campaign hours, and `ShopStateCatalog` preserves every shop's selected offers and remaining stock for the current restocking cycle.
+
+`QuestProgress` and `CampaignFlags` add two independent campaign-level concerns. `QuestProgress` stores quest lifecycle, current sequential steps and objective quantities. `CampaignFlags` stores only permanent set-only world consequences declared by `FlagCatalog`. Neither object duplicates immutable content from its definition catalog.
 
 ## Character model
 
@@ -269,7 +275,7 @@ Scenario
 
 Narrative and recurring boss groups may reuse the same canonical enemy IDs. Epic IDs remain disjoint from both boss groups.
 
-`City` represents non-combat settlements. Cities use their own action flow, separate functional locations from adjacent exits and do not create exploration sessions. Every registered city has exactly one externally configured INN. Bree currently also provides a fixed shop, while taverns remain a future system. Paid city transport is available through the shared world flow.
+`City` represents non-combat settlements. Cities use their own action flow, separate visitable locations from adjacent exits and do not create exploration sessions. Every registered city has exactly one externally configured INN and may also expose shops, crafters and requirement-controlled narrative locations. Narrative spaces such as taverns use the narrative-location system instead of becoming new scenario types or being mixed into shop, INN or crafting definitions. Paid city transport remains available through the shared world flow.
 
 `DungeonProgress` owns mutable campaign-level progression separately from immutable `DungeonSettings` and transient `ExplorationSession` state. It registers every runtime dungeon and stores narrative completion together with the absolute elapsed-hour availability of recurring bosses and epic encounters.
 
@@ -889,7 +895,29 @@ The city flow separates three navigation concepts:
 - Leaving through an unlocked adjacent route.
 - Traveling directly to another discovered city through paid transport.
 
-`CityLocationMenu` displays the names of currently functional locations. Location descriptions and actions are shown only after the player enters the selected location. The list may combine the city's optional INN, every associated `CITY` shop and every associated crafter NPC, while unfinished services such as taverns remain absent instead of appearing as placeholders.
+`CityLocationMenu` displays every currently accessible destination associated with the city. The list may combine the city's INN, `CITY` shops, crafters and visible narrative locations while preserving continuous numbering. Descriptions and destination-specific actions are shown only after the player enters the selected location.
+
+System locations preserve their existing definitions and dedicated menus. Narrative locations are resolved separately through `NarrativeLocationCatalog` and filtered through their current requirement sets. A visible narrative location may contain no visible NPCs, in which case its menu displays `Não há ninguém aqui.` without treating the data as invalid.
+
+Current narrative-location flow:
+
+```text
+data/narrative_locations.txt
+    -> NarrativeLocationLoader
+    -> NarrativeLocationCatalog
+                         \
+data/npcs.txt             \
+    -> NpcLoader           -> World
+    -> NpcCatalog         /     -> CityLocationMenu
+                         /      -> NarrativeLocationMenu
+data/npc_placements.txt /       -> NpcInteractionMenu
+    -> NpcPlacementLoader        -> DialoguePresenter
+    -> NpcPlacementCatalog
+```
+
+Location and placement requirement sets are evaluated when their menus are built and again before protected interaction. Hidden locations and NPCs do not occupy menu positions.
+
+`World` derives whether any visible quest interaction exists beneath the current city action, narrative location or NPC. `CityMenu`, `CityLocationMenu` and `NarrativeLocationMenu` display `[!]` from that derived result. The marker does not distinguish offer, progress or completion and disappears immediately when no currently available quest interaction remains.
 
 Current INN data flow:
 
@@ -1008,6 +1036,133 @@ Crafting uses the shared inventory owned by `Party`. It does not own a second in
 
 Before consuming materials, `CraftingService` calculates the resulting output quantity against the per-item limit. When the output is also one of the ingredients, the validation accounts for the quantity consumed before adding the produced unit. A capacity failure preserves every ingredient.
 
+## Quest, requirement and narrative architecture
+
+The V6 quest foundation separates external immutable content from mutable state belonging to one campaign.
+
+```text
+QuestDefinition
+└── ordered QuestStepDefinition
+    └── ordered QuestObjectiveDefinition
+
+QuestProgress
+└── mutable state only for active and completed quests
+```
+
+`QuestLoader` assembles complete definitions from `quests.txt`, `quest_steps.txt` and `quest_objectives.txt`. The loader uses private drafts while all three files are being read and exposes only fully validated `QuestDefinition` objects through `QuestCatalog`.
+
+Quest steps are linear and numbered consecutively from one. Objectives are ordered inside their step and use one of the closed initial types:
+
+- `TALK_TO_NPC`
+- `DEFEAT_ENEMY`
+- `ANALYZE_ENEMY`
+- `OBTAIN_ITEM`
+- `DELIVER_ITEM`
+- `REACH_SCENARIO`
+- `COMPLETE_DUNGEON`
+- `WIN_BATTLE`
+
+`QuestProgress` stores only mutable lifecycle and objective progress. A quest is `NOT_STARTED`, `ACTIVE` or `COMPLETED`. Only the current step of an active quest has mutable objective quantities. Advancing a completed step creates the state of the next step; completing the final step moves the quest permanently to the completed collection.
+
+`QuestProgressService` is the synchronous integration boundary between confirmed gameplay operations and quest state. Callers explicitly submit typed `QuestProgressEvent` values after the corresponding operation succeeds. One event may update multiple active quests, but it is evaluated only against each quest's current step and is not replayed against a step unlocked by that same event.
+
+The service returns immutable `QuestProgressResult` and `QuestProgressUpdate` values. Domain services do not print quest notifications. `QuestProgressPresenter` translates the returned updates, completion failures, effects and rewards into grouped player-facing output.
+
+NPC interaction is resolved separately through `QuestNpcInteractionResolver`. It derives currently available quest offers and active current-step interactions from quest state, requirements and the selected canonical NPC. It does not store marker state or mutate quest progress.
+
+### Permanent flags and reusable requirements
+
+Permanent flags use the same definition-and-state separation:
+
+```text
+data/flags.txt
+    -> FlagLoader
+    -> FlagDefinition
+    -> FlagCatalog
+
+FlagCatalog + active IDs
+    -> CampaignFlags
+```
+
+Every defined flag begins absent. `CampaignFlags` accepts only IDs registered in `FlagCatalog`, sets each flag at most once and treats repeated assignment as an idempotent no-op. V6 flags are never removed.
+
+Requirements are reusable immutable AND groups:
+
+```text
+data/requirements.txt
+    -> RequirementLoader
+    -> ordered RequirementDefinition objects
+    -> RequirementSetDefinition
+    -> RequirementCatalog
+```
+
+The initial requirement vocabulary is:
+
+- `LEADER_LEVEL_AT_LEAST`
+- `ITEM_QUANTITY_AT_LEAST`
+- `QUEST_NOT_STARTED`
+- `QUEST_ACTIVE`
+- `QUEST_COMPLETED`
+- `FLAG_SET`
+- `FLAG_UNSET`
+
+`RequirementEvaluator` reads the current party, inventory, quest progress and campaign flags without mutating or caching them. A blank requirement-set reference means unrestricted access. Every protected interaction is evaluated again immediately before it occurs.
+
+`QuestAvailabilityValidator` runs after quest and requirement catalogs are available. It rejects missing requirement sets, direct self-dependencies and indirect cycles among quest-availability requirements before gameplay begins.
+
+Requirement results are derived state. They are not stored in campaign snapshots or copied into quest, location or NPC definitions.
+
+### Quest rewards, effects and completion transactions
+
+Material rewards and permanent effects remain separate from quest identity:
+
+```text
+data/quest_rewards.txt
+    -> QuestRewardLoader
+    -> QuestRewardCatalog
+
+data/quest_effects.txt
+    -> QuestEffectLoader
+    -> QuestEffectCatalog
+```
+
+The initial material reward types are `GOLD`, `PARTY_EXP` and `ITEM`. Rewards preserve their declared order for each quest. Player-facing reward summaries are derived through `QuestRewardSummaryFormatter` instead of duplicated as free narrative text.
+
+The initial permanent effect types are `SET_FLAG` and `UNLOCK_ROUTE`. Effects are associated with the `QUEST_START`, `STEP_COMPLETE` or `QUEST_COMPLETE` trigger and preserve their declared order at each trigger location.
+
+Quest completion uses one coordinated plan. Before changing campaign state, `QuestProgressService` validates delivery quantities, reward receiving limits, effect applicability and the expected current quest state. EXP is not granted before capacity-sensitive GOLD and item rewards are known to be valid.
+
+Only after complete validation does the service consume delivery items, grant rewards, apply effects and advance the quest state. A rejected completion returns an explicit `QuestCompletionFailure` and preserves inventory, GOLD, character progression, flags, routes and quest progress.
+
+Items granted by a completed quest may produce later acquisition events for other active quests after the transaction succeeds. The completed quest does not consume its own reward event retroactively.
+
+### Narrative locations, NPCs and dialogues
+
+Narrative content separates place, character identity, placement and speech:
+
+```text
+NarrativeLocationDefinition
+NpcDefinition
+NpcPlacementDefinition
+DialogueDefinition
+└── ordered DialogueLineDefinition
+QuestDialogueDefinition
+```
+
+A `NarrativeLocationDefinition` associates one narrative space with a city and an optional visibility requirement set. It does not replace INNs, shops or crafters.
+
+`NpcDefinition` owns stable identity, display name, description and default dialogue. `NpcPlacementDefinition` independently associates that NPC with at most one narrative location and an optional visibility requirement set. This separation permits an NPC to exist as a dialogue speaker without being placed in a city.
+
+`DialogueDefinition` contains an ordered immutable sequence of utterances. Speaker types are `NPC`, `ENEMY`, `LEADER`, `NARRATOR` and `RECRUIT`. Ordinary NPC and enemy speakers resolve canonical catalog identities. Leader and narrator lines do not define speaker IDs. Recruit references remain invalid until recruitment-candidate definitions are implemented.
+
+`NarrativeTextProcessor` centralizes the supported literal `\n` decoding, placeholder validation and runtime replacement. The current placeholders are `{leaderName}`, `{groupMember2}`, `{groupMember3}` and `{groupMember4}`. Resolution fails before mutation when a referenced party position does not exist.
+
+`QuestDialogueCatalog` associates quest state with external dialogues through the `OFFER`, `ACCEPT`, `DECLINE`, `PENDING` and `COMPLETE` contexts. Accept and decline choices are interface behavior rather than a generic branching-dialogue language.
+
+Startup validation is shared between the individual narrative loaders and `NarrativeReferenceValidator`. Together, they verify narrative locations, NPC placements, dialogue speakers, default NPC dialogues, quest starting NPCs, interaction-objective NPCs and quest-dialogue coverage without exposing a partially populated catalog.
+
+`World` derives visible narrative locations, NPC placements and quest interactions from current requirements and quest state. The `[!]` marker is presentation-only derived state. It is never stored in definitions, mutable campaign state or save snapshots.
+
 ## UI boundaries
 
 The UI package contains console-specific behavior:
@@ -1046,6 +1201,12 @@ Important UI components include:
 - `RewardModifierFormatter`
 - `PartyRescueScreen`
 - `ShopMenu`
+- `NarrativeLocationMenu`
+- `NpcInteractionMenu`
+- `DialoguePresenter`
+- `QuestOfferMenu`
+- `QuestProgressPresenter`
+- `QuestRewardSummaryFormatter`
 
 `CharacterCreationMenu` controls manual or random protagonist naming, name changes, cancellation and confirmation. It does not create partial character state: the confirmed name returns to `Main`, which constructs the protagonist and `Party`.
 
@@ -1054,6 +1215,16 @@ Important UI components include:
 `PartyRescueScreen` receives already resolved rescue information from `World`. It does not calculate costs, spend gold, restore characters, discover scenarios or change the current scenario.
 
 `World` selects the appropriate menu according to the runtime scenario type. Combat actions are built incrementally from exploration progress, available branches, unlocked routes and paid-transport availability, then displayed by `CombatScenarioMenu`. City actions are built from functional locations, unlocked exits and paid-transport availability, then displayed by `CityMenu`. Both menus preserve continuous numbering, omit unavailable actions and separate action groups through whitespace.
+
+Narrative-location navigation remains iterative. `NarrativeLocationMenu` displays the city and location headers, visible NPCs and the empty-location message. `NpcInteractionMenu` displays the same contextual headers, the selected NPC's identity and description, currently available quest interactions in stable quest-catalog order and the permanent `Conversar` option after them.
+
+`DialoguePresenter` resolves every speaker and placeholder before displaying the first utterance. This prevents a later invalid line from interrupting a dialogue after partial presentation or after a related mutation. Each utterance advances only after Enter. Narrative-location dialogues include city and location headers, while the presenter remains reusable for dialogues initiated outside those locations.
+
+`QuestOfferMenu` owns only the generated accept-or-decline choice. External dialogue data provides the surrounding `OFFER`, optional `ACCEPT` and optional `DECLINE` sequences without defining a generic branching language.
+
+`QuestProgressPresenter` displays grouped objective, step and quest updates returned by the domain. It also presents quest-start confirmation, explicit completion failures, permanent-effect messages and the dedicated quest-completion screen. Objective-completion notifications deliberately omit the full objective description.
+
+`QuestRewardSummaryFormatter` derives player-facing reward descriptions from `QuestRewardDefinition` objects and canonical item data. Quest definitions therefore do not maintain a second free-text reward summary that could diverge from the transaction.
 
 `RouteMenu` selects among unlocked adjacent routes. `CityTransportMenu` separately displays configured discovered cities, validates affordability, requests confirmation and controls payment before returning the selected paid destination.
 
@@ -1082,6 +1253,8 @@ Important UI components include:
 `SkillDetailFormatter` derives one shared player-facing skill sheet from `SkillDefinition` and its ordered components. It uses the first displayable `PRIMARY` component as the main type, power and target, while the external narrative description explains secondary effects. `CharacterStatusMenu` and battle confirmation reuse the same formatted details instead of maintaining separate translations.
 
 `RewardModifierFormatter` produces shared multiplier text. Party status and the battle-reward screen show temporary global EXP and total party GOLD; the individual character screen separately shows that character's total EXP multiplier. The battle-reward screen intentionally does not list every ally's individual EXP modifier.
+
+Narrative text currently uses shared automatic wrapping at 90 console columns. Intentional line breaks decoded from literal `\n` remain paragraph boundaries. Applying the same wrapping and consistent screen-clearing behavior to every older description screen is deferred to the post-V6 interface review.
 
 `Main` creates one shared `ConsoleInput`, which is passed to every component that reads player commands. `World` does not retain the input object after constructing its menus and battle services.
 
@@ -1146,18 +1319,27 @@ The decoding flow performs the reverse transformation and produces a complete `C
 
 `CampaignLoadService` reports success only after decryption, strict decoding, catalog-backed validation and complete runtime reconstruction succeed. The startup flow uses `CampaignSelectionMenu` to continue a valid campaign or begin a new one. Saving is exposed exclusively through INNs, and ordinary game exits require confirmation without performing an implicit save.
 
+Quest definitions, rewards, effects, requirements, narrative content and dialogue associations are immutable external data and do not belong in campaign snapshots. Mutable `QuestProgress` and `CampaignFlags` will require explicit versioned persistence in V6 Part 7. Until that integration is completed, both states are created empty when a campaign runtime is constructed and the authenticated internal save format remains version 2.
+
 ## Current temporary boundaries
 
 The following implementations remain intentionally temporary:
 
 - Reward-modifier potions are deferred. Their future item behavior will activate the existing `PartyRewardModifierState` rather than duplicate reward calculation or duration state.
-- New games currently begin with only the confirmed protagonist. Story-based ally recruitment, random ally classes and party-title acquisition remain future work.
+- New games currently begin with only the confirmed protagonist. Story-based ally recruitment, random ally classes and party-title acquisition remain future V6 work.
 - `character_names.txt` currently contains only temporary entries pending creative-team curation.
 - Playable-class definitions, natural class growth and the complete approved 30-skill class-progression roster are integrated; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy actions currently use basic attacks; enemy skill selection can reuse the skill executor later but is outside the current scope.
-- Every registered city currently provides an INN, while Bree also provides a fixed shop; tavern functionality remains unavailable.
+- Every registered city provides an INN, while other system and narrative locations depend on their external definitions. Canonical narrative-location and NPC content has not yet been populated.
+- Quest, objective, reward, effect, flag, requirement, narrative and dialogue definitions are implemented, but the temporary validation quest and NPC were removed after representative end-to-end testing.
+- NPC conversation and delivery interactions are connected to live quest progress. Remaining gameplay event call sites will be connected in their applicable V6 implementation blocks.
+- The general quest journal remains deferred to V6 Part 6.
+- `QuestProgress` and `CampaignFlags` remain outside campaign snapshots until the versioned save integration in V6 Part 7.
+- `RECRUIT` dialogue references remain invalid until recruitment-candidate definitions and persisted candidate identity exist.
+- Class-choice ceremony behavior and story-based recruitment remain dedicated future V6 systems rather than generic quest rewards or effects.
+- Narrative text uses automatic wrapping, while older map, enemy, item and other description screens retain their existing presentation until the post-V6 interface review.
 - `Battle` remains large and may later be divided into more focused action services.
 - Permanent skill-scroll items, skills and curated enemy drops remain deferred until their draft effects receive the required combat mechanics and final content review.
 - The Flagelo's temporary `STARTER` skills remain learned until their retirement is implemented as part of the future level-7 class-choice flow.
 
-These limitations are tracked in `V5_ROADMAP.md` and should be replaced incrementally instead of through one large rewrite.
+These limitations are tracked in `V6_ROADMAP.md` and should be replaced incrementally instead of through one large rewrite.

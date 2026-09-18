@@ -6,6 +6,10 @@ This document describes the external text files used to load game data.
 
 - Files use UTF-8 encoding.
 - Fields are separated by semicolons (`;`).
+- Semicolons are reserved separators and cannot appear inside field text.
+- Where explicitly supported, the literal sequence `\n` creates an intentional line break.
+- A backslash not immediately followed by `n` is invalid in V6 external narrative text.
+- Placeholders are supported only in the fields explicitly documented for them.
 - Empty lines are ignored.
 - Lines beginning with `#` are comments.
 - Stable IDs use lowercase letters and underscores.
@@ -31,7 +35,7 @@ ciphertext=<Base64>
 
 The IV and authenticated ciphertext use canonical basic Base64 encoding. No campaign property is exposed outside the ciphertext.
 
-After authenticated AES-GCM decryption, the version-1 campaign payload uses strict `name=value` properties encoded as UTF-8. Property names, indexed collection structures and validation rules are defined centrally in `SAVE_STATE.md`.
+After authenticated AES-GCM decryption, the current internal version-2 campaign payload uses strict `name=value` properties encoded as UTF-8. Property names, indexed collection structures and validation rules are defined centrally in `SAVE_STATE.md`.
 
 The encrypted codec, atomic file services, catalog-backed runtime reconstruction and gameplay integration are implemented.
 
@@ -1137,7 +1141,7 @@ Runtime rules:
 - Old offers and remaining quantities are not merged into the new cycle.
 - A complete replacement `ShopStateCatalog` is generated before world time or active shop state changes.
 - Failed replacement generation preserves the previous world time and shop states.
-- Starting a new program execution currently creates fresh clock and shop states because campaign loading is not yet connected to application initialization.
+- A new campaign creates the initial clock and shop states, while continuing a valid saved campaign restores both states without generating new offers.
 - The snapshot schema preserves world time and active shop offers together. Catalog-backed loading restores both without generating additional shop offers or advancing fictional time.
 
 Loading flow:
@@ -1425,3 +1429,654 @@ skills.txt + skill_effects.txt
     -> ordered SkillEffectDefinition components
     -> SkillCatalog
 ```
+
+## Quest definitions
+
+Complete immutable quest definitions are assembled from three external files.
+
+### Quest headers
+
+Quest identity and availability are loaded from:
+
+`data/quests.txt`
+
+Header:
+
+```text
+# id;title;description;startingNpcId;availabilityRequirementSetId
+```
+
+Each valid line contains exactly 5 fields:
+
+| Position | Field | Java type | Empty value |
+| ---: | --- | --- | --- |
+| 1 | Quest ID | `String` | Not allowed |
+| 2 | Title | `String` | Not allowed |
+| 3 | Description | `String` | Not allowed |
+| 4 | Starting NPC ID | `String` | Not allowed |
+| 5 | Availability requirement-set ID | `String` | Allowed |
+
+Rules:
+
+- Quest IDs follow the stable-ID convention and must be unique.
+- Titles cannot contain placeholders or backslashes.
+- Descriptions support literal `\n` and the documented party placeholders.
+- Every starting NPC ID is validated after `NpcCatalog` is available.
+- A blank availability requirement-set ID means that the quest offer has no reusable access requirement.
+- A non-empty requirement-set ID must reference `RequirementCatalog`.
+- Availability dependencies cannot refer to the same quest or form direct or indirect cycles.
+- Every quest must define at least one sequential step.
+- Declaration order is preserved by `QuestCatalog`.
+
+### Quest steps
+
+Sequential quest steps are loaded from:
+
+`data/quest_steps.txt`
+
+Header:
+
+```text
+# questId;step;title;description
+```
+
+Each valid line contains exactly 4 fields:
+
+| Position | Field | Java type | Empty value |
+| ---: | --- | --- | --- |
+| 1 | Quest ID | `String` | Not allowed |
+| 2 | Step number | `int` | Not allowed |
+| 3 | Step title | `String` | Not allowed |
+| 4 | Step description | `String` | Not allowed |
+
+Rules:
+
+- Every quest ID must reference `quests.txt`.
+- Step numbers begin at 1 and are unique and consecutive inside each quest.
+- Step titles cannot contain placeholders or backslashes.
+- Step descriptions support literal `\n` and the documented party placeholders.
+- Every step must define at least one objective.
+- Quests are linear; V6 does not define alternative step branches.
+
+### Quest objectives
+
+Ordered objectives are loaded from:
+
+`data/quest_objectives.txt`
+
+Header:
+
+```text
+# id;questId;step;order;objectiveType;targetId;requiredQuantity;text
+```
+
+Each valid line contains exactly 8 fields:
+
+| Position | Field | Java type | Empty value |
+| ---: | --- | --- | --- |
+| 1 | Objective ID | `String` | Not allowed |
+| 2 | Quest ID | `String` | Not allowed |
+| 3 | Step number | `int` | Not allowed |
+| 4 | Objective order | `int` | Not allowed |
+| 5 | Objective type | `QuestObjectiveType` | Not allowed |
+| 6 | Target ID | `String` | Type-dependent |
+| 7 | Required quantity | `int` | Not allowed |
+| 8 | Player-facing text | `String` | Not allowed |
+
+The initial objective types are exactly:
+
+- `TALK_TO_NPC`
+- `DEFEAT_ENEMY`
+- `ANALYZE_ENEMY`
+- `OBTAIN_ITEM`
+- `DELIVER_ITEM`
+- `REACH_SCENARIO`
+- `COMPLETE_DUNGEON`
+- `WIN_BATTLE`
+
+Target and quantity rules:
+
+| Objective type | Target | Required quantity |
+| --- | --- | --- |
+| `TALK_TO_NPC` | Canonical NPC ID | Exactly `1` |
+| `DEFEAT_ENEMY` | Canonical enemy ID | Positive |
+| `ANALYZE_ENEMY` | Canonical enemy ID | Exactly `1` |
+| `OBTAIN_ITEM` | Canonical item ID | Positive |
+| `DELIVER_ITEM` | Canonical item ID | Positive |
+| `REACH_SCENARIO` | Canonical scenario ID | Exactly `1` |
+| `COMPLETE_DUNGEON` | Canonical dungeon scenario ID | Exactly `1` |
+| `WIN_BATTLE` | Blank | Positive |
+
+Additional rules:
+
+- Objective IDs are globally unique.
+- Objective order begins at 1 and is unique and consecutive inside each step.
+- One step cannot repeat the same objective type and target.
+- One step supports at most one `TALK_TO_NPC` objective.
+- A step containing `DELIVER_ITEM` must contain exactly one `TALK_TO_NPC` objective identifying the receiving NPC.
+- Objective text supports literal `\n` and the documented party placeholders.
+- Target references are validated against their canonical catalogs before gameplay.
+- `OBTAIN_ITEM` records confirmed acquisition and does not regress after later consumption.
+- `DELIVER_ITEM` describes a transactional NPC interaction rather than an acquisition event.
+
+Loading flow:
+
+```text
+quests.txt
+quest_steps.txt
+quest_objectives.txt
+        ↓
+QuestLoader
+        ↓
+private quest and step drafts
+        ↓
+QuestDefinition
+└── ordered QuestStepDefinition
+    └── ordered QuestObjectiveDefinition
+        ↓
+QuestCatalog
+```
+
+## Permanent-flag definitions
+
+Permanent flag identities are loaded from:
+
+`data/flags.txt`
+
+Header:
+
+```text
+# id;description
+```
+
+Each valid line contains exactly 2 fields:
+
+| Position | Field | Java type | Empty value |
+| ---: | --- | --- | --- |
+| 1 | Flag ID | `String` | Not allowed |
+| 2 | Description | `String` | Not allowed |
+
+Rules:
+
+- Flag IDs follow the stable-ID convention and must be unique.
+- Descriptions support literal `\n`.
+- Definitions describe stable permanent world consequences.
+- Every flag begins absent from a new `CampaignFlags` state.
+- Flags are set-only and are never removed in V6.
+- Quest lifecycle is represented by `QuestProgress` and is not duplicated through flags.
+
+Loading flow:
+
+```text
+flags.txt
+    -> FlagLoader
+    -> FlagDefinition
+    -> FlagCatalog
+```
+
+## Reusable requirement definitions
+
+Reusable requirement sets are loaded from:
+
+`data/requirements.txt`
+
+Header:
+
+```text
+# setId;order;requirementType;targetId;requiredValue
+```
+
+Each valid line contains exactly 5 fields:
+
+| Position | Field | Java type | Empty value |
+| ---: | --- | --- | --- |
+| 1 | Requirement-set ID | `String` | Not allowed |
+| 2 | Order | `int` | Not allowed |
+| 3 | Requirement type | `RequirementType` | Not allowed |
+| 4 | Target ID | `String` | Type-dependent |
+| 5 | Required value | `int` | Type-dependent |
+
+The initial requirement types are exactly:
+
+- `LEADER_LEVEL_AT_LEAST`
+- `ITEM_QUANTITY_AT_LEAST`
+- `QUEST_NOT_STARTED`
+- `QUEST_ACTIVE`
+- `QUEST_COMPLETED`
+- `FLAG_SET`
+- `FLAG_UNSET`
+
+Field rules by type:
+
+| Requirement type | Target ID | Required value |
+| --- | --- | --- |
+| `LEADER_LEVEL_AT_LEAST` | Blank | Positive supported character level |
+| `ITEM_QUANTITY_AT_LEAST` | Canonical item ID | Positive quantity |
+| `QUEST_NOT_STARTED` | Canonical quest ID | Blank |
+| `QUEST_ACTIVE` | Canonical quest ID | Blank |
+| `QUEST_COMPLETED` | Canonical quest ID | Blank |
+| `FLAG_SET` | Canonical flag ID | Blank |
+| `FLAG_UNSET` | Canonical flag ID | Blank |
+
+Additional rules:
+
+- Every row belonging to one set is combined through logical AND.
+- Order begins at 1 and is unique and consecutive inside each set.
+- Requirement-set declaration order follows the first appearance of each set ID.
+- Duplicate or contradictory requirements inside one set are rejected.
+- References are validated against item, quest and flag catalogs.
+- A blank requirement-set reference in a consuming definition means unrestricted access; it is not represented by an empty set row.
+- Sets cannot reference other sets.
+- V6 does not support OR groups, nested expressions or scripts.
+- Item requirements inspect current ownership without reserving or consuming items.
+- Requirement evaluation is pure, uncached and repeated immediately before protected actions.
+- Evaluation results are derived and are never persisted.
+
+Loading flow:
+
+```text
+requirements.txt
+    -> RequirementLoader
+    -> ordered RequirementDefinition objects
+    -> RequirementSetDefinition
+    -> RequirementCatalog
+```
+
+## Quest reward definitions
+
+Material quest rewards are loaded from:
+
+`data/quest_rewards.txt`
+
+Header:
+
+```text
+# questId;order;rewardType;rewardId;quantity
+```
+
+Each valid line contains exactly 5 fields:
+
+| Position | Field | Java type | Empty value |
+| ---: | --- | --- | --- |
+| 1 | Quest ID | `String` | Not allowed |
+| 2 | Reward order | `int` | Not allowed |
+| 3 | Reward type | `QuestRewardType` | Not allowed |
+| 4 | Reward ID | `String` | Type-dependent |
+| 5 | Quantity | `int` | Not allowed |
+
+The initial reward types are exactly:
+
+- `GOLD`
+- `PARTY_EXP`
+- `ITEM`
+
+Field rules by type:
+
+| Reward type | Reward ID | Quantity |
+| --- | --- | --- |
+| `GOLD` | Blank | Positive and at most the supported party GOLD maximum |
+| `PARTY_EXP` | Blank | Positive `int` |
+| `ITEM` | Canonical item ID | Positive and at most the per-item inventory maximum |
+
+Additional rules:
+
+- Every quest ID must reference `QuestCatalog`.
+- Reward order begins at 1 and is unique and consecutive inside each quest.
+- Duplicate `(rewardType, rewardId)` entries for one quest are rejected.
+- A quest may define no material reward.
+- `PARTY_EXP` is awarded to every party member present when the quest completes.
+- Player-facing reward summaries are derived from these definitions.
+- Reward text is not duplicated in `quests.txt`.
+- Receiving capacity is validated before any reward is granted.
+
+Loading flow:
+
+```text
+quest_rewards.txt
+    -> QuestRewardLoader
+    -> QuestRewardDefinition
+    -> QuestRewardCatalog
+```
+
+## Quest permanent-effect definitions
+
+Permanent effects caused by quest progression are loaded from:
+
+`data/quest_effects.txt`
+
+Header:
+
+```text
+# questId;step;trigger;order;effectType;targetId;displayText
+```
+
+Each valid line contains exactly 7 fields:
+
+| Position | Field | Java type | Empty value |
+| ---: | --- | --- | --- |
+| 1 | Quest ID | `String` | Not allowed |
+| 2 | Step number | `int` | Not allowed |
+| 3 | Trigger | `QuestEffectTrigger` | Not allowed |
+| 4 | Effect order | `int` | Not allowed |
+| 5 | Effect type | `QuestEffectType` | Not allowed |
+| 6 | Target ID | `String` | Not allowed |
+| 7 | Player-facing display text | `String` | Allowed |
+
+The initial triggers are exactly:
+
+- `QUEST_START`
+- `STEP_COMPLETE`
+- `QUEST_COMPLETE`
+
+The initial effect types are exactly:
+
+- `SET_FLAG`
+- `UNLOCK_ROUTE`
+
+Rules:
+
+- Every quest ID must reference `QuestCatalog`.
+- `QUEST_START` and `QUEST_COMPLETE` use step `0`.
+- `STEP_COMPLETE` uses a real positive step belonging to the referenced quest.
+- Effect order begins at 1 and is unique and consecutive for each quest, step and trigger location.
+- `SET_FLAG` targets a canonical flag ID.
+- `UNLOCK_ROUTE` targets a canonical adjacent-route ID.
+- Duplicate applications of the same effect type and target at one trigger location are rejected.
+- Display text is optional and describes a visible permanent consequence.
+- An absent display text does not suppress the effect itself.
+- Step effects belong atomically to their step transition.
+- Quest-completion effects belong atomically to delivery consumption, material rewards and final quest status mutation.
+- Class change and ally recruitment are not represented as generic effects.
+
+Loading flow:
+
+```text
+quest_effects.txt
+    -> QuestEffectLoader
+    -> QuestEffectDefinition
+    -> QuestEffectCatalog
+```
+
+## Narrative-location definitions
+
+Narrative city spaces are loaded from:
+
+`data/narrative_locations.txt`
+
+Header:
+
+```text
+# id;cityId;name;description;requirementSetId
+```
+
+Each valid line contains exactly 5 fields:
+
+| Position | Field | Java type | Empty value |
+| ---: | --- | --- | --- |
+| 1 | Narrative-location ID | `String` | Not allowed |
+| 2 | City scenario ID | `String` | Not allowed |
+| 3 | Name | `String` | Not allowed |
+| 4 | Description | `String` | Not allowed |
+| 5 | Visibility requirement-set ID | `String` | Allowed |
+
+Rules:
+
+- Narrative-location IDs follow the stable-ID convention and must be unique.
+- The city ID must reference an existing `CITY` scenario.
+- More than one narrative location may belong to the same city.
+- Names cannot contain placeholders or backslashes.
+- Descriptions support literal `\n`.
+- A blank requirement-set ID makes the location visible without a reusable requirement.
+- A non-empty requirement-set ID must reference `RequirementCatalog`.
+- A visible narrative location may contain zero visible NPCs.
+- Narrative locations do not replace or duplicate INNs, shops or crafters.
+- Declaration order is preserved for city-menu presentation.
+
+Loading flow:
+
+```text
+narrative_locations.txt
+    -> NarrativeLocationLoader
+    -> NarrativeLocationDefinition
+    -> NarrativeLocationCatalog
+        -> lookup by ID
+        -> ordered lookup by city scenario ID
+```
+
+## NPC definitions
+
+Canonical narrative NPC identity is loaded from:
+
+`data/npcs.txt`
+
+Header:
+
+```text
+# id;name;description;defaultDialogueId
+```
+
+Each valid line contains exactly 4 fields:
+
+| Position | Field | Java type | Empty value |
+| ---: | --- | --- | --- |
+| 1 | NPC ID | `String` | Not allowed |
+| 2 | Name | `String` | Not allowed |
+| 3 | Description | `String` | Not allowed |
+| 4 | Default dialogue ID | `String` | Not allowed |
+
+Rules:
+
+- NPC IDs follow the stable-ID convention and must be unique.
+- Names cannot contain placeholders or backslashes.
+- Descriptions support literal `\n`.
+- Every NPC requires a default dialogue.
+- Default dialogue references are validated after `DialogueCatalog` is available.
+- NPC identity is independent from placement.
+- An NPC may remain unplaced and may still speak in a dialogue.
+- A non-hostile named character speaking outside a narrative location still uses the canonical NPC identity.
+
+Loading flow:
+
+```text
+npcs.txt
+    -> NpcLoader
+    -> NpcDefinition
+    -> NpcCatalog
+```
+
+## NPC placement definitions
+
+Fixed V6 city placement is loaded from:
+
+`data/npc_placements.txt`
+
+Header:
+
+```text
+# npcId;narrativeLocationId;requirementSetId
+```
+
+Each valid line contains exactly 3 fields:
+
+| Position | Field | Java type | Empty value |
+| ---: | --- | --- | --- |
+| 1 | NPC ID | `String` | Not allowed |
+| 2 | Narrative-location ID | `String` | Not allowed |
+| 3 | Visibility requirement-set ID | `String` | Allowed |
+
+Rules:
+
+- Every NPC ID must reference `NpcCatalog`.
+- Every narrative-location ID must reference `NarrativeLocationCatalog`.
+- One NPC may have at most one placement in V6.
+- Multiple NPCs may share one narrative location.
+- A blank requirement-set ID makes the placement visible whenever its location is visible.
+- A non-empty requirement-set ID must reference `RequirementCatalog`.
+- Placement requirements do not override location requirements; both must succeed.
+- NPC movement and conditional alternative placements are not supported in V6.
+- Declaration order is preserved inside each narrative location.
+
+Loading flow:
+
+```text
+npc_placements.txt
+    -> NpcPlacementLoader
+    -> NpcPlacementDefinition
+    -> NpcPlacementCatalog
+        -> lookup by NPC ID
+        -> ordered lookup by narrative-location ID
+```
+
+## Linear dialogue definitions
+
+External linear dialogue is loaded from:
+
+`data/dialogues.txt`
+
+Header:
+
+```text
+# dialogueId;line;speakerType;speakerId;text
+```
+
+Each valid line contains exactly 5 fields:
+
+| Position | Field | Java type | Empty value |
+| ---: | --- | --- | --- |
+| 1 | Dialogue ID | `String` | Not allowed |
+| 2 | Line number | `int` | Not allowed |
+| 3 | Speaker type | `DialogueSpeakerType` | Not allowed |
+| 4 | Speaker ID | `String` | Type-dependent |
+| 5 | Utterance text | `String` | Not allowed |
+
+The initial speaker types are exactly:
+
+- `NPC`
+- `ENEMY`
+- `LEADER`
+- `NARRATOR`
+- `RECRUIT`
+
+Speaker rules:
+
+| Speaker type | Speaker ID |
+| --- | --- |
+| `NPC` | Canonical NPC ID |
+| `ENEMY` | Canonical enemy ID |
+| `LEADER` | Blank |
+| `NARRATOR` | Blank |
+| `RECRUIT` | Canonical recruitment-candidate ID |
+
+Additional rules:
+
+- Dialogue IDs follow the stable-ID convention.
+- Every dialogue contains at least one line.
+- Line numbers begin at 1 and are unique and consecutive inside each dialogue.
+- Dialogue order follows each dialogue's first declaration, while utterances are stored and presented in validated numeric line order.
+- `NPC` speakers may reference NPCs that are not placed in a narrative location.
+- `ENEMY` speakers resolve their display names through `EnemyCatalog`.
+- `LEADER` resolves the active party leader at presentation time.
+- `NARRATOR` displays no speaker label.
+- `RECRUIT` resolves the candidate's persisted generated name.
+- Until recruitment-candidate definitions are implemented, every `RECRUIT` speaker reference is rejected during startup.
+- Utterance text supports literal `\n` and the documented party placeholders.
+- Dialogue definitions contain no choices, conditions, branching, timing, color or audio.
+- One physical record represents one complete utterance.
+- Each utterance advances only after Enter during presentation.
+
+Loading flow:
+
+```text
+dialogues.txt
+    -> DialogueLoader
+    -> ordered DialogueLineDefinition objects
+    -> DialogueDefinition
+    -> DialogueCatalog
+```
+
+## Quest-dialogue definitions
+
+Quest interaction contexts are associated with external dialogues through:
+
+`data/quest_dialogues.txt`
+
+Header:
+
+```text
+# questId;step;context;dialogueId
+```
+
+Each valid line contains exactly 4 fields:
+
+| Position | Field | Java type | Empty value |
+| ---: | --- | --- | --- |
+| 1 | Quest ID | `String` | Not allowed |
+| 2 | Step number | `int` | Not allowed |
+| 3 | Context | `QuestDialogueContext` | Not allowed |
+| 4 | Dialogue ID | `String` | Not allowed |
+
+The initial contexts are exactly:
+
+- `OFFER`
+- `ACCEPT`
+- `DECLINE`
+- `PENDING`
+- `COMPLETE`
+
+Context rules:
+
+| Context | Step | Requirement |
+| --- | ---: | --- |
+| `OFFER` | `0` | Required exactly once for every quest |
+| `ACCEPT` | `0` | Optional |
+| `DECLINE` | `0` | Optional |
+| `PENDING` | Positive real step | Optional and allowed only for a delivery step |
+| `COMPLETE` | Positive real step | Required for every step completed through NPC interaction |
+
+Additional rules:
+
+- Every quest ID must reference `QuestCatalog`.
+- Every positive step must belong to the referenced quest.
+- Every dialogue ID must reference `DialogueCatalog`.
+- One quest, step and context combination may appear at most once.
+- Acceptance and refusal choices are generated by `QuestOfferMenu`; they are not dialogue-line choices.
+- A declined offer does not start the quest and may be offered again while its requirements remain satisfied.
+- A missing optional `ACCEPT`, `DECLINE` or `PENDING` dialogue does not prevent the corresponding interaction.
+- `COMPLETE` dialogue is presented after complete transaction prevalidation and before mutation.
+- The transaction is revalidated after the dialogue before state changes are applied.
+- Default NPC dialogue remains available through `Conversar`, independently from quest-dialogue associations.
+
+Loading flow:
+
+```text
+quest_dialogues.txt
+    -> QuestDialogueLoader
+    -> QuestDialogueDefinition
+    -> QuestDialogueCatalog
+```
+
+## Narrative placeholders
+
+The following placeholders are supported in quest descriptions, step descriptions, objective text and dialogue utterances:
+
+- `{leaderName}`
+- `{groupMember2}`
+- `{groupMember3}`
+- `{groupMember4}`
+
+Rules:
+
+- Placeholders are resolved from the current party only when text is presented.
+- A referenced missing party member causes resolution to fail before related mutation.
+- Unsupported placeholder names are rejected during startup.
+- Unmatched or malformed braces are rejected.
+- Placeholders are not supported in technical IDs, names or titles.
+- `{groupName}` is reserved conceptually for future support and is rejected in V6.
+- Literal `\n` decoding occurs independently from placeholder replacement.
+- Complete dialogue text is resolved before its first line is displayed.
+
+## Empty V6 content catalogs
+
+The V6 definition files may temporarily contain only comments and headers while canonical content is still being authored.
+
+An empty catalog is valid only when no loaded definition requires one of its entries. Once a quest, NPC, placement, dialogue, requirement, reward or effect references another catalog, that reference remains mandatory and is validated during startup.

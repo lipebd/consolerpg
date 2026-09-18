@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import rpg.narrative.NarrativeTextProcessor;
+
 // Loads complete quest definitions from external quest, step and objective data.
 public final class QuestLoader {
 
@@ -336,47 +338,11 @@ public final class QuestLoader {
     }
 
     private String parseTitle(String value, String fieldName) {
-        String normalizedValue = requireText(value, fieldName);
-
-        if (normalizedValue.contains("\\")) {
-            throw new IllegalArgumentException(fieldName + " cannot contain backslashes.");
-        }
-
-        return normalizedValue;
+        return NarrativeTextProcessor.requireLiteral(value, fieldName);
     }
 
     private String parseDescription(String value, String fieldName) {
-        String normalizedValue = requireText(value, fieldName);
-        StringBuilder description = new StringBuilder();
-
-        for (int index = 0; index < normalizedValue.length(); index++) {
-            char character = normalizedValue.charAt(index);
-
-            if (character != '\\') {
-                description.append(character);
-                continue;
-            }
-
-            if (index + 1 >= normalizedValue.length() || normalizedValue.charAt(index + 1) != 'n') {
-                throw new IllegalArgumentException(
-                        fieldName
-                                + " can only use backslashes as the \\\\n "
-                                + "line-break sequence.");
-            }
-
-            description.append('\n');
-            index++;
-        }
-
-        return description.toString();
-    }
-
-    private String requireText(String value, String fieldName) {
-        if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException(fieldName + " cannot be empty.");
-        }
-
-        return value.trim();
+        return NarrativeTextProcessor.decodeTemplate(value, fieldName);
     }
 
     private int parseInteger(String value, String fieldName) {

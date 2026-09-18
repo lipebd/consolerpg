@@ -77,6 +77,10 @@ public final class QuestStepDefinition {
                 hasDeliveryObjective = true;
             }
         }
+        if (talkObjectiveCount > 1) {
+            throw new IllegalArgumentException(
+                    "Quest step cannot contain more than one TALK_TO_NPC objective.");
+        }
 
         if (hasDeliveryObjective && talkObjectiveCount != 1) {
             throw new IllegalArgumentException(
