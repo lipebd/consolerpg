@@ -12,6 +12,7 @@ import rpg.items.ItemCatalog;
 import rpg.marketplace.repository.MarketplaceRepository;
 import rpg.marketplace.api.CreateListingRequest;
 import rpg.marketplace.api.MarketplaceApiClient;
+import rpg.marketplace.api.MarketplaceApiException;
 import rpg.marketplace.api.MarketplaceListingResponse;
 
 public class MarketplaceTransactionService {
@@ -48,11 +49,11 @@ public class MarketplaceTransactionService {
 				repository,
 				"Marketplace repository cannot be null."
 				);
-		
+
 		this.marketplaceApiClient = Objects.requireNonNull(
-	            marketplaceApiClient,
-	            "Marketplace API client cannot be null."
-	    );
+				marketplaceApiClient,
+				"Marketplace API client cannot be null."
+				);
 	}
 
 	public MarketplacePurchaseResult purchase(
@@ -147,70 +148,70 @@ public class MarketplaceTransactionService {
 	}
 
 	public MarketplaceListingCreationResult createListing(
-	        String itemId,
-	        int quantity,
-	        int unitPrice) {
+			String itemId,
+			int quantity,
+			int unitPrice) {
 
-	    if (itemId == null || itemId.isBlank()) {
-	        return MarketplaceListingCreationResult.INVALID_ITEM;
-	    }
+		if (itemId == null || itemId.isBlank()) {
+			return MarketplaceListingCreationResult.INVALID_ITEM;
+		}
 
-	    if (quantity <= 0) {
-	        return MarketplaceListingCreationResult.INVALID_QUANTITY;
-	    }
+		if (quantity <= 0) {
+			return MarketplaceListingCreationResult.INVALID_QUANTITY;
+		}
 
-	    if (unitPrice <= 0) {
-	        return MarketplaceListingCreationResult.INVALID_UNIT_PRICE;
-	    }
+		if (unitPrice <= 0) {
+			return MarketplaceListingCreationResult.INVALID_UNIT_PRICE;
+		}
 
-	    Item item;
+		Item item;
 
-	    try {
-	        item = itemCatalog.getById(itemId);
-	    } catch (IllegalArgumentException exception) {
-	        return MarketplaceListingCreationResult.INVALID_ITEM;
-	    }
+		try {
+			item = itemCatalog.getById(itemId);
+		} catch (IllegalArgumentException exception) {
+			return MarketplaceListingCreationResult.INVALID_ITEM;
+		}
 
-	    if (party.getInventory().getQuantity(item) < quantity) {
-	        return MarketplaceListingCreationResult.INSUFFICIENT_ITEMS;
-	    }
+		if (party.getInventory().getQuantity(item) < quantity) {
+			return MarketplaceListingCreationResult.INSUFFICIENT_ITEMS;
+		}
 
-	    if (!party.getInventory().removeItem(item, quantity)) {
-	        return MarketplaceListingCreationResult.INVENTORY_ERROR;
-	    }
+		if (!party.getInventory().removeItem(item, quantity)) {
+			return MarketplaceListingCreationResult.INVENTORY_ERROR;
+		}
 
-	    CreateListingRequest request =
-	            new CreateListingRequest(
-	                    playerId,
-	                    itemId,
-	                    quantity,
-	                    unitPrice
-	            );
+		CreateListingRequest request =
+				new CreateListingRequest(
+						playerId,
+						itemId,
+						quantity,
+						unitPrice
+						);
 
-	    MarketplaceListingResponse response;
+		MarketplaceListingResponse response;
 
-	    try {
-	        response = marketplaceApiClient.createListing(request);
+		try {
+			response = marketplaceApiClient.createListing(request);
 
-	    } catch (InterruptedException exception) {
-	        Thread.currentThread().interrupt();
+		} catch (InterruptedException exception) {
+			Thread.currentThread().interrupt();
 
-	        party.getInventory().addItem(item, quantity);
+			party.getInventory().addItem(item, quantity);
 
-	        return MarketplaceListingCreationResult.API_UNAVAILABLE;
+			return MarketplaceListingCreationResult.API_UNAVAILABLE;
 
-	    } catch (IOException exception) {
-	        party.getInventory().addItem(item, quantity);
+		} catch (IOException exception) {
+			party.getInventory().addItem(item, quantity);
 
-	        return MarketplaceListingCreationResult.API_UNAVAILABLE;
-	    }
+			return MarketplaceListingCreationResult.API_UNAVAILABLE;
+		}
 
-	    MarketplaceListing listing =
-	            response.toMarketplaceListing();
+		MarketplaceListing listing =
+				response.toMarketplaceListing();
 
-	    repository.addListing(listing);
+		repository.addListing(listing);
 
-	    return MarketplaceListingCreationResult.SUCCESS;
+		return MarketplaceListingCreationResult.SUCCESS;
 	}
 
 	public List<MarketplaceListing> getListingsForCurrentPlayer() {
@@ -229,19 +230,18 @@ public class MarketplaceTransactionService {
 		return playerListings;
 	}
 
-	public List<MarketplaceListing> getActiveListings() {
-		List<MarketplaceListing> activeListings =
-				new ArrayList<>();
+	public List<MarketplaceListing> getActiveListings()
+			throws IOException, InterruptedException {
 
-		for (MarketplaceListing listing
-				: repository.getAllListings()) {
+		return marketplaceApiClient
+				.getActiveListings()
+				.stream()
+				.map(
+						MarketplaceListingResponse
+						::toMarketplaceListing
+						)
 
-			if (listing.getStatus() == ListingStatus.ACTIVE) {
-				activeListings.add(listing);
-			}
-		}
-
-		return activeListings;
+				.toList();
 	}
 
 	public MarketplaceListingCancellationResult cancelListing(
@@ -267,6 +267,42 @@ public class MarketplaceTransactionService {
 			return MarketplaceListingCancellationResult.INVALID_LISTING;
 		}
 
+		MarketplaceListingResponse response;
+
+		try {
+			response = marketplaceApiClient.cancelListing(
+					listing.getId(),
+					playerId
+					);
+
+		} catch (MarketplaceApiException exception) {
+			return switch (exception.getStatusCode()) {
+			case 404 ->
+			MarketplaceListingCancellationResult.INVALID_LISTING;
+
+			case 403 ->
+			MarketplaceListingCancellationResult.NOT_LISTING_OWNER;
+
+			case 409 ->
+			MarketplaceListingCancellationResult.LISTING_NOT_ACTIVE;
+
+			default ->
+			MarketplaceListingCancellationResult.API_UNAVAILABLE;
+			};
+
+		} catch (InterruptedException exception) {
+			Thread.currentThread().interrupt();
+
+			return MarketplaceListingCancellationResult.API_UNAVAILABLE;
+
+		} catch (IOException exception) {
+			return MarketplaceListingCancellationResult.API_UNAVAILABLE;
+		}
+
+		if (!response.status().equals("CANCELLED")) {
+			return MarketplaceListingCancellationResult.API_UNAVAILABLE;
+		}
+
 		if (!party.getInventory().addItem(
 				item,
 				listing.getQuantity())) {
@@ -274,16 +310,7 @@ public class MarketplaceTransactionService {
 			return MarketplaceListingCancellationResult.INVENTORY_ERROR;
 		}
 
-		try {
-			listing.cancel();
-		} catch (IllegalStateException exception) {
-			party.getInventory().removeItem(
-					item,
-					listing.getQuantity()
-					);
-
-			return MarketplaceListingCancellationResult.LISTING_NOT_ACTIVE;
-		}
+		listing.cancel();
 
 		return MarketplaceListingCancellationResult.SUCCESS;
 	}

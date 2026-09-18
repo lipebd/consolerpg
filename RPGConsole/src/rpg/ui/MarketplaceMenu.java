@@ -5,6 +5,7 @@ import java.util.Scanner;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
+import java.io.IOException;
 
 import rpg.marketplace.MarketplaceListing;
 import rpg.marketplace.MarketplaceTransactionService;
@@ -86,9 +87,37 @@ public final class MarketplaceMenu {
 	}
 
 	private void showListings() {
-		System.out.println("\n[ANÚNCIOS]");
+	    System.out.println("\n[ANÚNCIOS]");
 
-		List<MarketplaceListing> activeListings = transactionService.getActiveListings();
+	    List<MarketplaceListing> activeListings;
+
+	    try {
+	        activeListings =
+	                transactionService.getActiveListings();
+
+	    } catch (InterruptedException exception) {
+	        Thread.currentThread().interrupt();
+
+	        System.out.println();
+	        System.out.println(
+	                "A atualização dos anúncios foi interrompida."
+	        );
+
+	        waitForReturn();
+	        return;
+
+	    } catch (IOException exception) {
+	        System.out.println();
+	        System.out.println(
+	                "Não foi possível acessar o posto de trocas."
+	        );
+	        System.out.println(
+	                "Verifique se a Marketplace API está ligada."
+	        );
+
+	        waitForReturn();
+	        return;
+	    }
 
 		if (activeListings.isEmpty()) {
 			System.out.println();
@@ -222,7 +251,6 @@ public final class MarketplaceMenu {
 		waitForReturn();
 	}
 
-
 	private void createListing() {
 		System.out.println("\n[CRIAR ANÚNCIO]");
 
@@ -231,7 +259,9 @@ public final class MarketplaceMenu {
 
 		if (inventoryItems.isEmpty()) {
 			System.out.println();
-			System.out.println("Você não possui itens disponíveis para venda.");
+			System.out.println(
+					"Você não possui itens disponíveis para venda."
+					);
 
 			waitForReturn();
 			return;
@@ -245,27 +275,37 @@ public final class MarketplaceMenu {
 			int quantity = inventoryItems.get(item);
 
 			System.out.println();
-			System.out.println("[" + (i + 1) + "] " + item.getName());
-			System.out.println("Quantidade disponível: " + quantity);
+			System.out.println(
+					"[" + (i + 1) + "] " + item.getName()
+					);
+			System.out.println(
+					"Quantidade disponível: " + quantity
+					);
 		}
 
-		System.out.println();
-		System.out.println("[0] Voltar");
-		System.out.print("> ");
+		while (true) {
+			System.out.println();
+			System.out.println("[0] Voltar");
+			System.out.print("> ");
 
-		String input = scanner.nextLine().trim();
+			String input = scanner.nextLine().trim();
 
-		if (input.equals("0")) {
-			return;
-		}
+			if (input.equals("0")) {
+				return;
+			}
 
-		try {
-			int option = Integer.parseInt(input);
+			int option;
+
+			try {
+				option = Integer.parseInt(input);
+			} catch (NumberFormatException exception) {
+				System.out.println("\nOpção inválida.");
+				continue;
+			}
 
 			if (option < 1 || option > availableItems.size()) {
 				System.out.println("\nOpção inválida.");
-				waitForReturn();
-				return;
+				continue;
 			}
 
 			Item selectedItem =
@@ -279,9 +319,7 @@ public final class MarketplaceMenu {
 					availableQuantity
 					);
 
-		} catch (NumberFormatException exception) {
-			System.out.println("\nOpção inválida.");
-			waitForReturn();
+			return;
 		}
 	}
 
@@ -547,6 +585,12 @@ public final class MarketplaceMenu {
 		case INVENTORY_ERROR ->
 		System.out.println(
 				"\nNão foi possível devolver os itens ao inventário."
+				);
+
+		case API_UNAVAILABLE ->
+		System.out.println(
+				"\nNão foi possível acessar o posto de trocas."
+						+ "\nO anúncio continua ativo e nenhum item foi devolvido."
 				);
 		}
 

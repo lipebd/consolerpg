@@ -88,4 +88,50 @@ public class MarketplaceApiClient {
 				MarketplaceListingResponse.class
 				);
 	}
+
+	public MarketplaceListingResponse cancelListing(
+			String listingId,
+			String sellerId
+			) throws IOException, InterruptedException {
+
+		CancelListingRequest cancelRequest =
+				new CancelListingRequest(sellerId);
+
+		String requestJson = gson.toJson(cancelRequest);
+
+		HttpRequest request = HttpRequest.newBuilder()
+				.uri(
+						URI.create(
+								baseUrl
+								+ "/api/listings/"
+								+ listingId
+								+ "/cancel"
+								)
+						)
+				.timeout(Duration.ofSeconds(5))
+				.header("Content-Type", "application/json")
+				.POST(
+						HttpRequest.BodyPublishers.ofString(
+								requestJson
+								)
+						)
+				.build();
+
+		HttpResponse<String> response = httpClient.send(
+				request,
+				HttpResponse.BodyHandlers.ofString()
+				);
+
+		if (response.statusCode() != 200) {
+			throw new MarketplaceApiException(
+					response.statusCode(),
+					response.body()
+					);
+		}
+
+		return gson.fromJson(
+				response.body(),
+				MarketplaceListingResponse.class
+				);
+	}
 }

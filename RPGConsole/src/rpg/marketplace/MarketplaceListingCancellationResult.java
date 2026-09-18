@@ -6,6 +6,6 @@ public enum MarketplaceListingCancellationResult {
     INVALID_LISTING,
     NOT_LISTING_OWNER,
     LISTING_NOT_ACTIVE,
-    INVENTORY_ERROR
-
+    INVENTORY_ERROR,
+    API_UNAVAILABLE
 }

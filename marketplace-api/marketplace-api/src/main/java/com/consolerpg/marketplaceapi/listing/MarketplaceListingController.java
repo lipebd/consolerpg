@@ -1,7 +1,9 @@
 package com.consolerpg.marketplaceapi.listing;
 
 import java.util.List;
+import java.util.UUID;
 
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,28 +18,39 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/listings")
 public class MarketplaceListingController {
 
-    private final MarketplaceListingService service;
+	private final MarketplaceListingService service;
 
-    public MarketplaceListingController(
-            MarketplaceListingService service) {
+	public MarketplaceListingController(
+			MarketplaceListingService service) {
 
-        this.service = service;
-    }
+		this.service = service;
+	}
 
-    @GetMapping
-    public List<ListingResponse> getActiveListings() {
-        return service.getActiveListings();
-    }
+	@GetMapping
+	public List<ListingResponse> getActiveListings() {
+		return service.getActiveListings();
+	}
 
-    @PostMapping
-    public ResponseEntity<ListingResponse> createListing(
-            @Valid @RequestBody CreateListingRequest request) {
+	@PostMapping
+	public ResponseEntity<ListingResponse> createListing(
+			@Valid @RequestBody CreateListingRequest request) {
 
-        ListingResponse response =
-                service.createListing(request);
+		ListingResponse response =
+				service.createListing(request);
 
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(response);
-    }
+		return ResponseEntity
+				.status(HttpStatus.CREATED)
+				.body(response);
+	}
+
+	@PostMapping("/{listingId}/cancel")
+	public ListingResponse cancelListing(
+			@PathVariable UUID listingId,
+			@Valid @RequestBody CancelListingRequest request) {
+
+		return service.cancelListing(
+				listingId,
+				request
+				);
+	}
 }
