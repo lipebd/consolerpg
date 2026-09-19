@@ -1548,5 +1548,6 @@ The following implementations remain intentionally temporary:
 - Narrative text uses automatic wrapping, while older map, enemy, item and other description screens retain their existing presentation until the post-V6 interface review.
 - `Battle` remains large and may later be divided into more focused action services.
 - Permanent skill-scroll items, skills and curated enemy drops remain deferred until their draft effects receive the required combat mechanics and final content review. Scroll-skill preservation across class transition is structurally implemented but cannot yet be exercised with canonical content.
+- Only the first ceremony-composed recruitment currently has runtime orchestration. Although `quest_recruitments.txt` structurally accepts up to three definitions, second- and third-ally records must wait for their narrative recruitment dispatcher.
 
 These limitations are tracked in `V6_ROADMAP.md` and should be replaced incrementally instead of through one large rewrite.

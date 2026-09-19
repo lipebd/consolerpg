@@ -2094,6 +2094,7 @@ Rules:
 - `speakerId` in `dialogues.txt` identifies a declared candidate but does not independently dispatch or complete recruitment.
 - The first canonical recruitment uses level 7 and composes with the protagonist's class-path ceremony.
 - Later narrative recruitment orchestration remains separate from the first ceremony while reusing the generic recruitment definition and domain services.
+- Part 8 provides runtime dispatch only for the first ceremony-composed recruitment. Second- and third-ally records must not be authored until their narrative recruitment orchestration is implemented.
 
 Loading flow:
 
