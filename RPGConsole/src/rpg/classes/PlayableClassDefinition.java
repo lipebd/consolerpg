@@ -181,6 +181,10 @@ public final class PlayableClassDefinition {
 		return symbol;
 	}
 
+	public String getTitle() {
+		return symbol + " " + name;
+	}
+
 	public CharacterStats getBaseStats() {
 		return baseStats;
 	}

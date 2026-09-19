@@ -785,7 +785,7 @@ Learning follows these rules:
 When both scroll slots are occupied:
 
 - The player must select one learned `SCROLL` skill to replace.
-- `STARTER` and `LEVEL` skills cannot be selected or forgotten.
+- `LEVEL` skills cannot be selected or forgotten.
 - The replacement requires explicit confirmation.
 - Returning from either selection or confirmation preserves the inventory and all learned skills.
 - A confirmed replacement forgets the selected skill, learns the new skill and consumes exactly one new scroll.
@@ -936,29 +936,30 @@ Every skill defines one acquisition type and a level requirement within the supp
 
 The acquisition types are:
 
-- `STARTER` — learned automatically when its requirement is met and used for temporary pre-class-choice progression.
-- `LEVEL` — learned automatically when its requirement is met and retained as a permanent class skill.
+- `LEVEL` — learned automatically when its requirement is met.
 - `SCROLL` — learned only from its linked skill scroll after the minimum level requirement is met.
 
 `PlayableCharacter` stores the stable IDs of learned skills. The corresponding `SkillDefinition` remains unique in `SkillCatalog`; learning does not create or duplicate skill definitions.
 
-Automatically available `STARTER` and `LEVEL` skills are learned during character creation and after level gains. When one reward crosses several levels, every automatically learned skill whose requirement is above the previous level and at or below the new level is reported as newly learned.
+Automatically available `LEVEL` skills are learned during character creation, after level gains and after a class transition installs the new natural skill roster. When one reward crosses several levels, every automatically learned skill whose requirement is above the previous level and at or below the new level is reported as newly learned.
 
 `SCROLL` skills are never granted by level alone. Reaching their configured level only makes their linked scroll usable.
 
-The Flagelo currently uses two temporary foundational skills before the level-7 class choice:
+The beginner Flagelo owns two natural `LEVEL` skills:
 
-- `Investida` — `STARTER`, level 1.
-- `Quebra-Armadura` — `STARTER`, level 3.
+- `Investida` — level 1.
+- `Quebra-Armadura` — level 3.
 
-Its four permanent level skills are:
+The final Flagelo path owns its separate permanent natural roster:
 
-- `Golpe Experiente` — `LEVEL`, level 7.
-- `Grito de Guerra` — `LEVEL`, level 10.
-- `Perseverança` — `LEVEL`, level 15.
-- `Lenda Viva` — `LEVEL`, level 20.
+- `Golpe Experiente` — level 7.
+- `Grito de Guerra` — level 10.
+- `Perseverança` — level 15.
+- `Lenda Viva` — level 20.
 
-Every other playable class has four permanent `LEVEL` skills. Retirement of the Flagelo's two `STARTER` skills remains deferred to the future level-7 class-choice flow.
+Choosing a final class path removes the beginner natural roster and installs the natural skills belonging to the selected final class. Every final path therefore derives its available natural skills exclusively from its current class definition and level.
+
+Previously learned scroll skills are preserved across the protagonist's class transition and continue counting toward the maximum of two learned scroll skills. Future scroll learning must be compatible with the protagonist's new class.
 
 ### Skill-detail presentation
 
@@ -971,7 +972,7 @@ Available skills are first displayed as a compact selectable list. Selecting one
 - MP and SP cost.
 - External narrative description.
 
-For `STARTER` and `LEVEL` skills, the displayed level is the automatic learning level. For `SCROLL` skills, it is the minimum level required to use the linked scroll.
+For `LEVEL` skills, the displayed level is the automatic learning level. For `SCROLL` skills, it is the minimum level required to use the linked scroll.
 
 The first displayable component in `PRIMARY` defines the summary type, power and action target. If a future valid skill has no displayable `PRIMARY` component, the first displayable component in execution order is used as a fallback. Secondary effects remain part of the narrative description and do not replace the main classification.
 
@@ -1052,10 +1053,11 @@ City locations and city exits remain separate navigation paths. Adjacent exits r
 
 A normal new game creates only the protagonist. The protagonist:
 
-- Is always created as a level-1 Flagelo.
+- Is always created at level 1 with the internal `flagelo_iniciante` class.
+- Is presented to the player simply as a Flagelo.
 - Begins with full HP, MP and SP.
 - Becomes the first member and leader of the `Party`.
-- Receives the Flagelo skills automatically available at level 1.
+- Receives the beginner Flagelo skills automatically available at level 1.
 - Is the only initial party member.
 
 The player may either enter the protagonist's name or ask the game to select one uniformly from `character_names.txt`.
@@ -1077,16 +1079,92 @@ When random naming is selected, names already supplied by the caller are exclude
 Before confirmation, the interface displays:
 
 - The proposed character name.
-- The complete Flagelo class name.
+- The Flagelo symbol and player-facing class name.
+- The compatible armor weight.
 - The primary specialization marked with `↑↑`.
 - The secondary specialization marked with `↑`.
-- The external Flagelo description.
+- The external beginner Flagelo description.
+
+The internal beginner class is not presented as a separate path. Its visible name, symbol, base attributes, growth specializations and armor weight match the final Flagelo path.
 
 The player may confirm the character, change the proposed name or cancel. Changing the name returns to the manual-or-random choice. Cancelling returns to the title screen. No `PlayableCharacter` or `Party` is created until confirmation succeeds.
 
 Story-based ally recruitment, random ally classes and party-title acquisition are not part of the initial creation flow.
 
 The `--dev-party` argument activates a separate development-only shortcut. It bypasses the title and normal creation interface and produces one to four configured characters with distinct classes, positive levels and fully restored resources. This shortcut is not a player-facing game mechanic.
+
+## Level-7 class-path ceremony
+
+The protagonist begins with the internal `flagelo_iniciante` class. The ceremony may be resolved only when:
+
+- The protagonist remains in that beginner class.
+- The protagonist has reached at least level 7.
+- The permanent ceremony-completion flag is not set.
+
+The final `flagelo` class remains one of the seven selectable paths. Although the beginner and final Flagelo definitions share the same player-facing identity and natural-stat rules, they have separate canonical IDs and natural skill rosters.
+
+### Questionnaire and recommendation
+
+The ceremony questionnaire contains seven sequential questions:
+
+- Four questions with three answers each.
+- Three questions with two answers each.
+- Eighteen answer positions in total.
+- Six recommendable final classes appearing exactly three times each.
+- No answer recommending the final Flagelo path.
+
+Each selected answer grants exactly one point to exactly one final class. Answers do not change attributes, probabilities, ally behavior or any other campaign state.
+
+Questions cannot be revisited during one attempt. Invalid input repeats only the current question. Question and answer text may use intentional `\n` line breaks and the supported party placeholders, which are completely resolved before the first question is presented.
+
+The class or classes with the highest score form the questionnaire result:
+
+- One highest-scoring class produces a direct recommendation.
+- A two-way or three-way tie presents every tied class explicitly.
+- The player resolves a tie directly; no random tiebreak is used.
+- Refusing every tied class continues to unrestricted final-path selection.
+
+The canonical questionnaire distribution guarantees that a highest-score tie cannot contain more than three classes.
+
+A resolved recommendation receives one staged narrative revelation. The compact decision screen then displays the class summary and allows the player to open its full description without replaying the revelation.
+
+The player may embrace the recommended path or refuse the call. Refusal does not automatically select Flagelo: it opens all seven final paths, including Flagelo, for free inspection and selection.
+
+Once unrestricted selection begins, the ceremony cannot be cancelled. Final confirmation allows only confirming the displayed path or choosing again.
+
+Questionnaire answers, scores, tied results, the recommendation and an unconfirmed selection are transient. They do not mutate campaign state and are not persisted.
+
+### Protagonist class transition
+
+A confirmed final path prepares one complete transition before any campaign mutation.
+
+The transition preserves:
+
+- The protagonist's name.
+- Current level.
+- Current EXP.
+- Learned scroll skills.
+- First party position.
+- Leader identity.
+
+The transition applies:
+
+- Replacement of the beginner class with the selected final class.
+- Replacement of the beginner natural skill roster with the selected class's natural roster.
+- Recalculation of natural attributes for the preserved level.
+- Automatic learning of the selected class's currently available natural skills.
+- Full restoration of HP, MP and SP.
+- Return of the equipped weapon, armor and trinket to the shared inventory.
+- Removal of all three equipped items from the protagonist.
+- Addition of the selected path's introductory weapon and armor to the shared inventory.
+- No introductory trinket.
+- Setting of the permanent ceremony-completion flag.
+
+The complete inventory consequence is calculated before mutation. Returned equipment and introductory equipment are consolidated by canonical item ID so that their resulting quantities can be checked against the per-item maximum.
+
+An invalid current class, insufficient level, previously completed ceremony or insufficient inventory capacity rejects the complete transition. Equipment, inventory, class, skills, resources and flags remain unchanged.
+
+The standalone transition can prepare and apply this state atomically. Its normal story resolution will compose the same prepared plan with the mandatory first-ally recruitment, quest transition, rewards and permanent effects so that Quest 4 cannot commit only part of the ceremony.
 
 ## Party status
 
@@ -1116,7 +1194,7 @@ The individual character screen displays:
 - HP, MP and SP.
 - ATK, DEF and VEL.
 - MAG, RES and LCK.
-- Learned `STARTER`, `LEVEL` and `SCROLL` skills.
+- Learned `LEVEL` and `SCROLL` skills.
 - Equipped weapon, armor and trinket through the equipment submenu.
 - Total effective individual M.EXP, including temporary and equipped sources.
 
@@ -1147,7 +1225,9 @@ Loading decrypts and structurally validates the snapshot, validates every catalo
 
 The authenticated internal save format is currently version 2. It stores narrative dungeon completion and the absolute elapsed-world-hour availability of recurring bosses and epic encounters. Active exploration sessions remain transient and are not restored.
 
-Mutable quest progress and permanent campaign flags are not yet part of the current internal version-2 snapshot. Their versioned persistence belongs to V6 Part 7. Until then, quest and flag state is created empty when the campaign runtime is constructed.
+Mutable quest progress, permanent campaign flags and future recruitment-candidate state are not yet part of the current internal version-2 snapshot. Their coordinated versioned persistence belongs to V6 Part 9. Until then, quest and flag state is created empty when the campaign runtime is constructed.
+
+A confirmed playable class already belongs to the persisted character state through its canonical class ID. The future version-3 contract will additionally validate its coherence with the permanent ceremony-completion flag and recruitment state.
 
 ## World time and daily shop restocking
 
@@ -1817,7 +1897,7 @@ Route unlocking reuses `TravelProgress`. Unlocking an already unlocked route pre
 
 Step effects belong to the same transaction as the step transition. Quest-completion effects belong to the same transaction as delivery consumption, material rewards and final status mutation.
 
-Class changes and ally recruitment are not generic effects. They remain dedicated typed ceremony behavior for a later V6 block.
+Class changes and ally recruitment are not generic quest effects. The protagonist's class-path transition uses its dedicated validated plan, while the final Quest 4 resolution will compose that plan with the dedicated recruitment transaction.
 
 ## Permanent flags and reusable requirements
 

@@ -1,1 +1,2 @@
 # id;description
+class_path_ceremony_completed;The protagonist completed the level-7 class-path ceremony.

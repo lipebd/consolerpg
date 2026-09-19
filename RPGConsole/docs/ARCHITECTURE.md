@@ -129,7 +129,7 @@ Maximum HP and all six regular attributes must be positive. Maximum MP and SP ma
 - Its three equipment slots.
 - Immutable class skill definitions.
 - Learned skill IDs stored in acquisition order.
-- Automatic `STARTER` and `LEVEL` skill acquisition.
+- Automatic `LEVEL` skill acquisition.
 - Explicit `SCROLL` skill learning and replacement.
 - Natural-stat recalculation through `CharacterGrowthCalculator` after gaining one or more levels.
 
@@ -633,13 +633,13 @@ Skill content is split between two external files and two immutable definition t
 
 `SkillAcquisitionType` distinguishes:
 
-- `STARTER` skills, which temporarily support the Flagelo before the level-7 class choice.
+- Beginner `LEVEL` skills, which belong exclusively to the internal `flagelo_iniciante` class before the level-7 transition.
 - `LEVEL` skills, which are learned automatically when their configured level requirement is reached.
 - `SCROLL` skills, whose configured level is a minimum requirement and which must be learned explicitly from an item.
 
 `PlayableCharacter` stores learned skills through stable IDs while continuing to reference the unique definitions owned by `SkillCatalog`. Automatically available skills are learned during character construction and after level gains. Available skills are displayed with non-scroll skills first, followed by learned scroll skills in learning order.
 
-A character may learn at most two `SCROLL` skills. Once both slots are occupied, a new scroll skill can replace only another learned `SCROLL` skill; `STARTER` and `LEVEL` skills cannot be replaced through this flow.
+A character may learn at most two `SCROLL` skills. Once both slots are occupied, a new scroll skill can replace only another learned `SCROLL` skill; `LEVEL` skills cannot be replaced through this flow.
 
 Skill-scroll specialization uses a separate external link:
 
@@ -1175,6 +1175,82 @@ Item-producing flows submit `ITEM_OBTAINED` only after their mutation succeeds. 
 
 `World` submits `SCENARIO_REACHED` only after the destination has become the current scenario. It submits `DUNGEON_COMPLETED` after either a narrative or recurring boss victory has updated `DungeonProgress` and completed the exploration. Supporting both boss forms prevents a quest activated after the narrative victory from becoming permanently blocked.
 
+### Level-7 class-path architecture
+
+The class-path system belongs to `rpg.classes.paths` and separates immutable external definitions, transient questionnaire resolution and validated campaign mutation.
+
+The protagonist uses two required canonical class definitions:
+
+```text
+flagelo_iniciante
+    -> initial protagonist class
+    -> natural level-1 and level-3 skills
+
+flagelo
+    -> final selectable Flagelo path
+    -> final natural skill roster beginning at level 7
+```
+
+`ClassPathRequiredClassValidator` runs immediately after playable-class loading and before dependent skills or equipment. It requires both canonical IDs and verifies that they share player-facing name, symbol, base statistics, primary and secondary attributes and armor weight. Their descriptions and natural-skill rosters may differ.
+
+The obsolete `STARTER` skill-acquisition type is removed. Beginner and final natural skills use the ordinary `LEVEL` acquisition rule while remaining attached to their respective internal classes.
+
+Final path equipment is external:
+
+```text
+data/class_paths.txt
+    -> ClassPathLoader
+    -> ClassPathDefinition
+    -> ClassPathCatalog
+```
+
+Every non-beginner playable class has exactly one path definition containing one level-7 introductory weapon and armor. `ClassPathLoader` validates complete final-class coverage, equipment categories, level requirements and armor-weight compatibility. `flagelo_iniciante` is explicitly forbidden as a final path.
+
+The questionnaire is assembled from two external files:
+
+```text
+data/class_path_questions.txt
+data/class_path_answers.txt
+    -> ClassPathQuestionnaireLoader
+    -> ordered ClassPathQuestionDefinition
+        -> ordered ClassPathAnswerDefinition
+    -> ClassPathQuestionnaireCatalog
+```
+
+A question is an immutable aggregate that owns at least two consecutive ordered answers. Each answer references exactly one recommendable final class and contributes exactly one point. Final Flagelo cannot be an answer target, although it remains available during unrestricted final selection.
+
+Question and answer text reuses `NarrativeTextProcessor` for literal line breaks, supported placeholders and complete pre-presentation resolution.
+
+`ClassPathRecommendationService` validates one canonical answer for every question, totals points by class ID and returns `ClassPathRecommendationResult`. The result preserves every highest-scoring path in stable `ClassPathCatalog` order. It does not choose randomly or make the final player decision.
+
+A single leader proceeds directly to revelation. Two-way and three-way ties remain explicit transient results and are resolved by the player through the interface. Rejecting a direct or tied recommendation opens unrestricted selection among all seven final paths.
+
+`PlayableCharacter.changeClass(...)` is the controlled character-level transition boundary. It requires empty equipment slots, replaces the internal class and natural class-skill definitions, preserves learned scroll skills, recalculates natural statistics at the existing level, learns newly available natural skills and fully restores resources. It does not transfer equipment, grant items or set campaign flags.
+
+Campaign consequences are coordinated separately:
+
+```text
+ClassPathTransitionService.prepare(...)
+    -> eligibility validation
+    -> returned-equipment calculation
+    -> introductory-item calculation
+    -> complete inventory-capacity validation
+    -> ClassPathTransitionPlan or ordered failures
+
+ClassPathTransitionService.apply(...)
+    -> complete revalidation
+    -> equipment return
+    -> introductory-item grant
+    -> controlled character class change
+    -> permanent completion flag
+```
+
+`ClassPathTransitionPlan` retains the protagonist, target class, target natural skills, returned equipment, introductory items and total inventory additions. Exposing the combined additions allows Part 8 to validate them together with recruitment equipment and other transaction consequences before any mutation.
+
+The standalone transition rejects an already completed ceremony, a non-beginner protagonist, insufficient level and item-capacity overflow. Application reconstructs and compares the current plan before mutation so a stale plan cannot silently commit against changed campaign state.
+
+Class change and recruitment remain dedicated typed behavior rather than generic quest effects. Part 8 composes the validated protagonist plan with mandatory ally recruitment, quest progression, rewards and effects so the final Quest 4 resolution does not commit either character outcome independently.
+
 ## UI boundaries
 
 The UI package contains console-specific behavior:
@@ -1208,6 +1284,12 @@ Important UI components include:
 - `CharacterStatusMenu`
 - `CharacterCreationMenu`
 - `PlayableClassDetailFormatter`
+- `ClassPathQuestionnaireMenu`
+- `ClassPathTieMenu`
+- `ClassPathRecommendationMenu`
+- `ClassPathSelectionMenu`
+- `ClassPathConfirmationMenu`
+- `ClassPathChoiceCoordinator`
 - `SkillDetailFormatter`
 - `EquipmentDetailFormatter`
 - `RewardModifierFormatter`
@@ -1222,9 +1304,19 @@ Important UI components include:
 - `QuestProgressPresenter`
 - `QuestRewardSummaryFormatter`
 
-`CharacterCreationMenu` controls manual or random protagonist naming, name changes, cancellation and confirmation. It does not create partial character state: the confirmed name returns to `Main`, which constructs the protagonist and `Party`.
+`CharacterCreationMenu` controls manual or random protagonist naming, name changes, cancellation and confirmation. It does not create partial character state: the confirmed name returns to `Main`, which constructs the protagonist and `Party`. Its class presentation reuses `PlayableClassDetailFormatter` so initial creation and later class-path selection cannot diverge.
 
-`PlayableClassDetailFormatter` presents a class's primary and secondary attribute specializations using shared arrow notation. It derives the displayed attributes from `PlayableClassDefinition` and does not own growth rules.
+`PlayableClassDetailFormatter` produces one compact class summary containing icon, player-facing name, armor weight and primary and secondary attribute tendencies. Its complete presentation adds the multiline class description. Character creation, recommendation details and class-path confirmation reuse these formats without owning class rules.
+
+`ClassPathQuestionnaireMenu` resolves every question and answer template before displaying the first question. It presents questions sequentially, repeats only the current question after invalid input and returns an ordered immutable list of canonical answers without calculating scores or changing campaign state.
+
+`ClassPathTieMenu` presents the two or three highest-scoring marks in stable class-path order. Its timed narrative sequence runs once; invalid input repeats only the prompt. Selecting zero rejects every tied mark and returns control for unrestricted path selection.
+
+`ClassPathRecommendationMenu` presents the resolved direct or player-selected recommendation through a one-time timed revelation. The subsequent decision screen contains only the compact class summary, optional complete description access, acceptance and rejection. Opening the description or entering invalid input does not replay the revelation.
+
+`ClassPathSelectionMenu` lists all seven final paths derived from `ClassPathCatalog`; the beginner Flagelo is structurally absent. `ClassPathConfirmationMenu` displays the selected class and permits confirmation or another unrestricted selection without offering ceremony cancellation.
+
+`ClassPathChoiceCoordinator` owns the transient interface sequence: questionnaire, score evaluation, optional tie resolution, recommendation revelation, rejection and unrestricted selection. It returns one confirmed `PlayableClassDefinition` but does not change the protagonist, inventory, flags, quest state or recruitment state.
 
 `PartyRescueScreen` receives already resolved rescue information from `World`. It does not calculate costs, spend gold, restore characters, discover scenarios or change the current scenario.
 
@@ -1335,7 +1427,7 @@ The decoding flow performs the reverse transformation and produces a complete `C
 
 `CampaignLoadService` reports success only after decryption, strict decoding, catalog-backed validation and complete runtime reconstruction succeed. The startup flow uses `CampaignSelectionMenu` to continue a valid campaign or begin a new one. Saving is exposed exclusively through INNs, and ordinary game exits require confirmation without performing an implicit save.
 
-Quest definitions, rewards, effects, requirements, narrative content and dialogue associations are immutable external data and do not belong in campaign snapshots. Mutable `QuestProgress` and `CampaignFlags` will require explicit versioned persistence in V6 Part 7. Until that integration is completed, both states are created empty when a campaign runtime is constructed and the authenticated internal save format remains version 2.
+Quest definitions, rewards, effects, requirements, narrative content, dialogue associations, class-path definitions and questionnaire content are immutable external data and do not belong in campaign snapshots. Mutable `QuestProgress`, `CampaignFlags`, the protagonist's confirmed internal class and future recruitment-candidate state require explicit versioned persistence in V6 Part 9. Until that complete integration is implemented, quest and flag state are created empty when a campaign runtime is constructed and the authenticated internal save format remains version 2.
 
 ## Current temporary boundaries
 
@@ -1346,16 +1438,13 @@ The following implementations remain intentionally temporary:
 - `character_names.txt` currently contains only temporary entries pending creative-team curation.
 - Playable-class definitions, natural class growth and the complete approved 30-skill class-progression roster are integrated; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy actions currently use basic attacks; enemy skill selection can reuse the skill executor later but is outside the current scope.
-- Every registered city provides an INN, while other system and narrative locations depend on their external definitions. Canonical narrative-location and NPC content has not yet been populated.
-- Quest, objective, reward, effect, flag, requirement, narrative and dialogue definitions are implemented, but the temporary validation quest and NPC were removed after representative end-to-end testing.
-- NPC conversation and delivery interactions are connected to live quest progress. Remaining gameplay event call sites will be connected in their applicable V6 implementation blocks.
-- The general quest journal remains deferred to V6 Part 6.
-- `QuestProgress` and `CampaignFlags` remain outside campaign snapshots until the versioned save integration in V6 Part 7.
-- `RECRUIT` dialogue references remain invalid until recruitment-candidate definitions and persisted candidate identity exist.
-- Class-choice ceremony behavior and story-based recruitment remain dedicated future V6 systems rather than generic quest rewards or effects.
+- Every registered city provides an INN, while other system and narrative locations depend on their external definitions. Canonical campaign narrative-location and NPC content remains scheduled with the first five quests.
+- Quest, objective, reward, effect, flag, requirement, narrative, dialogue and gameplay-integration infrastructure is implemented. The temporary validation quest and NPC were removed after representative end-to-end testing; the first five canonical quests remain V6 Part 10 content.
+- Canonical class-path equipment and questionnaire content are integrated. The class-path interface and standalone protagonist transition are implemented but remain unreachable through normal campaign play until the mandatory Part 8 recruitment transaction and canonical Quest 4 trigger are connected.
+- `RECRUIT` dialogue references remain invalid until recruitment-candidate definitions and persistent candidate identity are implemented in V6 Part 8.
+- `QuestProgress`, `CampaignFlags`, the protagonist's confirmed class path and recruitment-candidate state remain outside campaign snapshots until the complete internal version-3 integration in V6 Part 9.
 - Narrative text uses automatic wrapping, while older map, enemy, item and other description screens retain their existing presentation until the post-V6 interface review.
 - `Battle` remains large and may later be divided into more focused action services.
-- Permanent skill-scroll items, skills and curated enemy drops remain deferred until their draft effects receive the required combat mechanics and final content review.
-- The Flagelo's temporary `STARTER` skills remain learned until their retirement is implemented as part of the future level-7 class-choice flow.
+- Permanent skill-scroll items, skills and curated enemy drops remain deferred until their draft effects receive the required combat mechanics and final content review. Scroll-skill preservation across class transition is structurally implemented but cannot yet be exercised with canonical content.
 
 These limitations are tracked in `V6_ROADMAP.md` and should be replaced incrementally instead of through one large rewrite.

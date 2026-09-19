@@ -919,7 +919,9 @@ Likely future persisted state includes:
 * Story decisions.
 * Permanent world flags.
 * Explicit access unlocks.
-* Level-7 class-path decisions.
+* Recruitment-candidate identities and recruited states.
+
+The protagonist's confirmed class already uses the persisted canonical playable-class ID. The future version-3 integration must validate that final class against the permanent ceremony-completion flag and the restored recruitment transaction state instead of serializing a second independent class-path decision.
 
 Placeholder persistence structures must not be created before the supporting gameplay systems exist.
 
@@ -944,4 +946,4 @@ Implementation verification must cover:
 | Cryptography | Invalid Base64, altered ciphertext, wrong tag and unsupported container |
 | Atomicity | Failed save preserves old file; failed load preserves runtime state |
 | Player flow | Continue, New Game confirmation, both INN save actions and exit confirmation |
-| Packaging | Root save creation and no bundled user save |
+| Packaging | Root save creation and no bundled user save |

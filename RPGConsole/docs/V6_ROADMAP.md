@@ -663,7 +663,27 @@ golpe_experiente;flagelo;LEVEL;7;...
 * Reaching level 7 as `flagelo_iniciante` does not grant `golpe_experiente`.
 * Choosing the final Flagelo path replaces beginner natural skills with the final class's natural roster.
 * Scroll-learned skills are preserved across the protagonist's class transition.
-* Remove the `STARTER` acquisition type only after confirming that no remaining definition or runtime path depends on it.
+* `STARTER` has no remaining definition or runtime consumer and is removed; natural beginner skills use `LEVEL`.
+
+### Introductory class equipment
+
+Use `data/class_paths.txt`:
+
+```text
+# classId;weaponItemId;armorItemId
+```
+
+Frozen rules:
+
+* Every non-beginner playable class has exactly one final class-path definition.
+* `flagelo_iniciante` cannot be registered as a final path.
+* Final Flagelo remains a required selectable path.
+* Every introductory weapon and armor must be equippable at level 7.
+* Introductory armor must match the final class's armor-weight category.
+* The introductory equipment is granted to the shared inventory and is not automatically equipped.
+* No introductory trinket is granted.
+* The beginner and final Flagelo definitions are required canonical content and are validated before dependent data is loaded.
+* They must share player-facing name, symbol, base statistics, attribute specializations and armor weight.
 
 ### Questionnaire data
 
@@ -684,27 +704,38 @@ Frozen rules:
 * The questionnaire is narrative and does not modify attributes, probability or ally behavior.
 * Questions are sequential and cannot be revisited during one attempt.
 * Every question has at least two answers.
-* Invalid input repeats the current question.
+* Invalid input repeats the current question without replaying earlier questions.
 * Every selected answer gives exactly one point to exactly one final class.
-* Only final classes referenced by at least one answer can be recommended.
-* The questionnaire is not required to cover all seven selectable paths.
-* Flagelo is intentionally absent from the initial questionnaire and can never be recommended.
+* Flagelo is absent from questionnaire answers and can never be recommended.
 * Flagelo remains freely selectable as the protagonist's personal rejection of the offered paths.
-* The highest score determines the recommendation.
-* A tie is resolved uniformly among the tied highest-scoring classes using the application's injectable random source.
-* Exactly one recommendation is presented.
+* The highest score determines the directly recommended path or the set of tied leading paths.
+* Ties are never resolved randomly.
+* A two-way or three-way tie presents every tied mark in stable class-path order.
+* The player may choose one tied mark or reject every tied mark and open free selection.
+* Choosing a tied mark produces the same final revelation used by a direct winner.
+* The initial canonical questionnaire uses seven questions: four with three answers and three with two answers.
+* Each of the six recommendable classes appears once among the binary questions and twice among the ternary questions.
+* This distribution gives every recommendable class three scoring opportunities and prevents ties among more than three classes.
 * The recommendation does not restrict the final choice.
 * Question and answer text supports the `\n` line-break sequence and the approved placeholders.
-* Questionnaire state remains transient until a class is successfully confirmed.
+* Every questionnaire template is resolved before the first question is presented.
+* Questionnaire answers, scores, tied results and the confirmed choice remain transient until the complete Quest 4 transaction succeeds.
 
 ### Selection and confirmation
 
-* The player may accept the recommended class or inspect and choose any of the seven final paths.
-* The ceremony cannot be cancelled after reaching this decision.
-* Final confirmation offers only `Confirmar` and `Escolher novamente`.
-* The confirmation screen reuses the complete class presentation from character creation: icon, name, weight, attribute tendencies and multiline description.
-* Confirming the presentation freezes the protagonist's choice for the current uninterrupted Quest 4 resolution but does not commit partial campaign state by itself.
-* A technical or capacity failure ends the interaction without mutation and allows a later retry.
+* A unique highest score proceeds directly to the final class revelation.
+* A tied result first asks the player to choose one of the tied marks or reject them all.
+* The resolved recommendation is presented through a one-time timed narrative sequence.
+* The decision screen then displays a compact class summary: icon, name, armor weight and attribute tendencies.
+* The complete multiline description remains available through an explicit menu option.
+* Description access does not replay the timed revelation.
+* The player may embrace the resolved recommendation or reject its call.
+* Rejecting the recommendation opens unrestricted selection among all seven final paths.
+* Rejecting every tied mark also opens unrestricted selection.
+* Manual selection uses the complete shared class presentation and permits `Confirmar` or `Escolher novamente`.
+* The ceremony cannot be cancelled after reaching the questionnaire.
+* Confirming a path freezes the protagonist's choice for the current uninterrupted Quest 4 resolution but does not commit partial campaign state by itself.
+* A technical or capacity failure ends the interaction without mutation and allows a later complete retry.
 
 ### Protagonist transition
 
@@ -731,17 +762,21 @@ Apply atomically:
 
 The full inventory consequence must be validated before any equipment, class, resource, flag or quest state changes.
 
+The standalone protagonist transition plan and application are implemented and verified. Part 8 composes that validated plan with mandatory ally recruitment so Quest 4 can commit both outcomes through one complete transaction rather than applying the protagonist transition early.
+
 ### Implementation checklist
 
-* [x] Add and validate the beginner Flagelo definition and natural skills.
-* [ ] Audit and remove the `STARTER` skill-acquisition type if it has no remaining consumer.
-* [ ] Freeze the exact external schema for level-7 introductory class equipment.
-* [ ] Define introductory weapon and armor for every final path.
-* [ ] Load and validate questions, answers and recommendation targets.
-* [ ] Implement questionnaire scoring and deterministic tie testing.
-* [ ] Reuse class presentation for recommendation, free selection and confirmation.
-* [ ] Build and validate the complete protagonist transition before mutation.
-* [ ] Apply the confirmed transition exactly once and atomically.
+* [x] Add and validate the beginner and final Flagelo definitions and natural skills.
+* [x] Audit and remove the unused `STARTER` skill-acquisition type.
+* [x] Freeze and load the external schema for level-7 introductory class equipment.
+* [x] Define introductory weapon and armor for every final path.
+* [x] Load and validate questions, answers and recommendation targets.
+* [x] Implement questionnaire scoring and ordered player-controlled tie resolution.
+* [x] Reuse complete class presentation across creation, recommendation and free selection.
+* [x] Implement compact recommendation presentation with optional description access.
+* [x] Build, revalidate and apply the complete standalone protagonist transition atomically.
+* [x] Verify capacity failure, equipment return, introductory items, class replacement, natural skills, full restoration and repeated-application prevention.
+* [ ] Compose the confirmed protagonist transition with mandatory recruitment in Part 8.
 
 ---
 

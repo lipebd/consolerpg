@@ -12,6 +12,11 @@ import rpg.characters.CharacterNameCatalog;
 import rpg.characters.CharacterNameLoader;
 import rpg.characters.CharacterNameSelector;
 import rpg.classes.CharacterGrowthCalculator;
+import rpg.classes.paths.ClassPathCatalog;
+import rpg.classes.paths.ClassPathRequiredClassValidator;
+import rpg.classes.paths.ClassPathLoader;
+import rpg.classes.paths.ClassPathQuestionnaireCatalog;
+import rpg.classes.paths.ClassPathQuestionnaireLoader;
 import rpg.classes.PlayableClassCatalog;
 import rpg.classes.PlayableClassLoader;
 import rpg.classes.PlayableClassDefinition;
@@ -109,7 +114,7 @@ import rpg.world.scenarios.DungeonProgress;
 
 // Starts the game and controls its initial execution.
 public class Main {
-    private static final String DEVELOPMENT_PARTY_ARGUMENT = "-dev-party";
+    private static final String DEVELOPMENT_PARTY_ARGUMENT = "--dev-party";
 
 	public static void main(String[] args) {
 		try {
@@ -118,7 +123,9 @@ public class Main {
 
 			CharacterNameCatalog characterNameCatalog;
 			PlayableClassCatalog playableClassCatalog;
+			ClassPathCatalog classPathCatalog;
 			SkillCatalog skillCatalog;
+			ClassPathQuestionnaireCatalog classPathQuestionnaireCatalog;
 
 			ItemCatalog itemCatalog;
 			ItemDefinitionCatalog itemDefinitionCatalog;
@@ -171,8 +178,12 @@ public class Main {
 						characterNameLoader.load(Path.of("data", "character_names.txt"));
 
 				PlayableClassLoader playableClassLoader = new PlayableClassLoader();
+
 				playableClassCatalog =
-						playableClassLoader.load(Path.of("data", "playable_classes.txt"));
+				        playableClassLoader.load(
+				                Path.of("data", "playable_classes.txt"));
+
+				ClassPathRequiredClassValidator.validate(playableClassCatalog);
 
 				SkillLoader skillLoader = new SkillLoader();
 				skillCatalog =
@@ -212,6 +223,22 @@ public class Main {
 								Path.of("data", "armors.txt"),
 								Path.of("data", "trinkets.txt"),
 								itemDefinitionCatalog);
+
+				ClassPathLoader classPathLoader = new ClassPathLoader();
+                classPathCatalog =
+                        classPathLoader.load(
+                                Path.of("data", "class_paths.txt"),
+                                playableClassCatalog,
+                                equipmentCatalog);
+
+                ClassPathQuestionnaireLoader classPathQuestionnaireLoader =
+                        new ClassPathQuestionnaireLoader();
+
+                classPathQuestionnaireCatalog =
+                        classPathQuestionnaireLoader.load(
+                                Path.of("data", "class_path_questions.txt"),
+                                Path.of("data", "class_path_answers.txt"),
+                                classPathCatalog);
 
 				// Runtime item catalog and equipment service
 				itemCatalog = new ItemCatalog();

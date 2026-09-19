@@ -6,7 +6,7 @@ V5 is complete and preserved as the current released version.
 
 Current stage:
 
-`V6 quest-system implementation — Parts 1 through 6 completed; Part 7 level-7 class ceremony is next`
+`V6 quest-system implementation — Parts 1 through 7 completed; Part 8 recruitment candidate and first ally is next`
 
 Current Git branch:
 
@@ -515,12 +515,12 @@ The first V4 gameplay-system block is complete.
 ### External playable-class and skill definitions
 
 - All seven playable classes have stable external definitions, one validated Unicode presentation symbol and startup validation.
-- `skills.txt` stores immutable skill headers with `STARTER`, `LEVEL` or `SCROLL` acquisition types and level requirements validated against the supported playable-character range.
+- `skills.txt` stores immutable skill headers with `LEVEL` or `SCROLL` acquisition types and level requirements validated against the supported playable-character range.
 - `skill_effects.txt` stores ordered effect components.
 - `SkillLoader` combines and validates both files and registers complete `SkillDefinition` objects in `SkillCatalog`.
 - `PlayableCharacter` references its class and skill definitions, stores learned skills through stable IDs and automatically learns eligible non-scroll skills.
 - The old hardcoded `Skill` and `RecoveryType` types were removed.
-- All 30 approved class-progression skills are registered externally: two temporary Flagelo `STARTER` skills and 28 permanent `LEVEL` skills.
+- All 30 approved natural class-progression skills are registered externally: two beginner Flagelo `LEVEL` skills and 28 final-path `LEVEL` skills.
 - Skill powers and resource costs remain provisional until the general balance pass.
 
 ### Skill execution
@@ -560,7 +560,7 @@ The natural-growth and level-based skill-availability block is complete.
 - Growth is calculated directly from class base stats and final level, avoiding incremental drift when several levels are gained at once.
 - Natural stats remain separate from temporary effects and implemented equipment bonuses.
 - `PlayableCharacter` keeps its immutable class and skill definitions while storing the stable IDs of skills it has actually learned.
-- Eligible `STARTER` and `LEVEL` skills are learned during construction and after level gains; `SCROLL` skills are never granted automatically.
+- Eligible `LEVEL` skills are learned during construction, after level gains and when a controlled class transition installs a new natural skill roster; `SCROLL` skills are never granted automatically.
 - `BattleRewardService` records natural stats before and after leveling, detects every newly learned non-scroll skill and restores surviving characters only after the new maximums are installed.
 - `BattleRewardScreen` displays compact stat deltas and newly learned skill names; `CharacterStatusMenu` displays the character's complete class name and symbol.
 - Experience and level arithmetic reject overflow instead of wrapping silently.
@@ -587,7 +587,7 @@ The playable-character progression boundary required for save validation is impl
 - The main display component is the first effective component in `PRIMARY`; secondary components remain described by the external narrative text.
 - Character status and battle confirmation reuse the same formatted skill sheet.
 - Narrative descriptions avoid promising final damage or recovery amounts that depend on effective attributes and combat formulas.
-- The displayed level represents automatic acquisition for `STARTER` and `LEVEL` skills and the minimum scroll-use requirement for `SCROLL` skills.
+- The displayed level represents automatic acquisition for `LEVEL` skills and the minimum scroll-use requirement for `SCROLL` skills.
 - Skill-scroll details reuse the same formatter instead of maintaining a separate technical presentation.
 
 ## V4 skill-scroll integration
@@ -602,7 +602,7 @@ The local skill-scroll architecture and behavior are complete.
 - `SkillLearningResult` reports successful and rejected learning outcomes.
 - `SkillScrollService` consumes one owned scroll only after successful learning or replacement.
 - `SkillScrollUseMenu` supports class and level rejection, duplicate rejection, a maximum of two learned scroll skills, cancellation and confirmed replacement.
-- Only learned `SCROLL` skills may be replaced; `STARTER` and `LEVEL` skills remain protected.
+- Only learned `SCROLL` skills may be replaced; `LEVEL` skills remain protected.
 - Forgotten scroll skills do not return their original item.
 - Scroll-learned skills reuse normal status display, battle selection and skill execution.
 - Skill scrolls remain outside battle inventory and can use the existing enemy-drop system.
@@ -856,7 +856,7 @@ Complete encrypted round trips, campaign reconstruction, valid and invalid start
 
 ## V6 quest and narrative foundation
 
-V6 Parts 1 through 6 are implemented and approved.
+V6 Parts 1 through 7 are implemented and approved. The final Quest 4 commit will compose the completed class-path transition with the mandatory recruitment transaction implemented in Part 8.
 
 The current foundation includes:
 
@@ -892,6 +892,20 @@ The current foundation includes:
 - Derived `[!]` markers on actionable NPCs, narrative locations and applicable city actions.
 - Derived `[!]` markers on immediately reachable quest destinations and their parent travel actions without revealing locked or multi-step paths.
 - Compact battle progress displayed inline, with dedicated presentation retained for quest completion, effects and failures.
+- Required canonical `flagelo_iniciante` and final `flagelo` definitions, validated before dependent class data is loaded.
+- Shared beginner and final Flagelo presentation, base statistics, specializations and armor weight with separate natural-skill rosters.
+- External final class-path definitions associating every selectable path with level-7 introductory weapon and armor.
+- Immutable external class-path questions and answers with supported narrative line breaks and party placeholders.
+- Seven-question canonical questionnaire content balanced across the six recommendable final classes.
+- One-point questionnaire scoring with ordered direct and tied highest-score results.
+- Player-controlled resolution of two-way and three-way ties without random recommendation.
+- Unrestricted access to all seven final paths after rejecting the questionnaire result.
+- Shared complete class presentation across character creation, recommendation details and free selection.
+- Timed one-time class revelation followed by compact acceptance, rejection and optional-description presentation.
+- Transient questionnaire, recommendation and confirmation state with no partial campaign mutation.
+- Validated protagonist class transition preserving identity, level, EXP and scroll skills while replacing natural class state.
+- Atomic equipment return, introductory-item grant, resource restoration and permanent ceremony-flag assignment.
+- Explicit inventory-capacity failure and repeated-application prevention before transition mutation.
 
 The new external files are:
 
@@ -907,20 +921,27 @@ The new external files are:
 - `npc_placements.txt`
 - `dialogues.txt`
 - `quest_dialogues.txt`
+- `class_paths.txt`
+- `class_path_questions.txt`
+- `class_path_answers.txt`
 
 The complete narrative interaction was validated through one temporary quest and NPC. Representative testing covered city, location and NPC markers; default conversation; offer refusal and later acceptance; quest activation; required completion dialogue; atomic completion; a real GOLD reward; grouped notifications; marker removal after completion; and preservation of default dialogue access.
 
 Part 6 representative testing covered journal navigation without world-time advancement; active and completed quest details; current objective counters and reward summaries; manual retry after an atomic reward-capacity failure; confirmed analysis followed by escape; grouped enemy-defeat, battle-victory and collected-item progress; immediate route and city-transport markers; scenario-arrival progress; narrative dungeon completion; marker removal after objective completion; and inline presentation of simple battle progress.
 
-All temporary validation content was removed after approval. The V6 data files may therefore remain header-only until canonical quest content is authored.
+All temporary quest and NPC validation content was removed after approval. Quest and narrative files without canonical campaign content may therefore remain header-only until the first five main quests are authored.
+
+Part 7 representative testing covered required beginner and final Flagelo validation; complete final-path equipment coverage; questionnaire loading, line-break decoding and placeholder preservation; direct scoring; ordered three-way ties; player-controlled tie resolution; unrestricted rejection and free selection; shared class presentation; optional description access; invalid-input handling without replaying timed sequences; inventory-capacity rejection without mutation; equipped-item return; introductory-item grants; class and natural-skill replacement; complete resource restoration; permanent-flag assignment; and repeated-transition prevention.
+
+The canonical class-path equipment definitions and canonical seven-question questionnaire are retained as real V6 content. The standalone protagonist transition is implemented and verified, while its final gameplay commit remains deliberately deferred to the complete Part 8 recruitment transaction.
 
 ## Current limitations and temporary implementations
 
 - Permanent skill-scroll content and curated scroll drops remain absent while the draft skills await required combat mechanics and final content review.
-- The Flagelo's two temporary `STARTER` skills are not yet retired because the level-7 class-choice flow is not implemented.
+- The class-path questionnaire, recommendation interface and standalone protagonist transition are implemented but are not yet reachable through normal campaign play; their final commit must be composed with mandatory recruitment in V6 Part 8 and later invoked by canonical Quest 4 content.
 - Playable-class definitions, natural growth and the complete approved 30-skill roster are external; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy turns currently use basic attacks; enemy skill selection is deferred.
-- Mutable quest progress, permanent campaign flags and future recruitment-candidate state remain outside the internal version-2 save format until V6 Part 9, after every supporting gameplay system exists.
+- Mutable quest progress, permanent campaign flags, the confirmed protagonist class path and recruitment-candidate state remain outside the internal version-2 save format until V6 Part 9, after every supporting gameplay system exists.
 - `RECRUIT` is recognized as a dialogue speaker type, but its data remains invalid until recruitment-candidate definitions and state are implemented in V6 Part 8.
 - After a normal victory, defeated allies remain unavailable until revived by a skill, item or city INN; full-party defeat instead activates rescue and complete restoration.
 - Items sold by the player cannot be bought back.
@@ -937,7 +958,7 @@ All temporary validation content was removed after approval. The V6 data files m
 
 V5 remains complete, packaged and released as `v5.0.0`.
 
-V6 implementation is active on `feature/v6-quests`. Parts 1 through 6 have completed:
+V6 implementation is active on `feature/v6-quests`. Parts 1 through 7 have completed:
 
 - Quest definitions and lifecycle.
 - Quest objectives and core progress.
@@ -945,12 +966,15 @@ V6 implementation is active on `feature/v6-quests`. Parts 1 through 6 have compl
 - Quest rewards and permanent effects.
 - Narrative locations, NPCs and dialogue.
 - Gameplay integration, quest journal and interaction-marker propagation.
+- Level-7 class-path definitions, questionnaire, player-controlled recommendation and atomic protagonist transition.
 
-The next implementation block is V6 Part 7: the level-7 class ceremony.
+The next implementation block is V6 Part 8: the persistent recruitment candidate and first playable ally.
 
-Campaign persistence is intentionally deferred to V6 Part 9 so that quest, flag and recruitment-candidate state can enter one complete internal version-3 save contract after every supporting gameplay system exists.
+Part 8 will compose the already validated protagonist transition with candidate identity, ally creation, introductory equipment, party insertion and mandatory recruitment through one complete transaction. The protagonist transition must not be committed independently during the final Quest 4 resolution.
 
-Quest and flag persistence remains explicitly deferred to Part 9. Class ceremony, recruitment and the first five canonical quests remain later V6 blocks.
+Campaign persistence remains intentionally deferred to V6 Part 9 so that quest progress, permanent flags, the confirmed protagonist class path and recruitment-candidate state can enter one complete internal version-3 save contract after every supporting gameplay system exists.
+
+The first five canonical quests, including the final gameplay trigger for the class-path and recruitment transaction, remain scheduled for V6 Part 10.
 
 ## Important conventions
 

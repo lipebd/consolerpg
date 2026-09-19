@@ -125,7 +125,7 @@ BattleCoordinator
 | `CharacterEquipment` | Estado de equipamentos | Guarda as definições da arma, armadura e berloque equipados por um personagem. Expõe slots opcionais, soma bônus estruturais e fornece os modificadores de recompensa do berloque. A mutação direta é restrita ao pacote de personagens. |
 | `Enemy` | Inimigo de execução | Estende `GameCharacter` e representa uma ocorrência mutável de um inimigo dentro de uma batalha. Retém o ID canônico de `EnemyDefinition` para integrações baseadas em identidade, além de rank, descrição e tabela de drops, e é colocado em `EnemyBattleSlot`. Vários objetos `Enemy` podem nascer da mesma definição sem compartilhar HP. |
 | `EnemyRank` | Enum de domínio | Define os ranks válidos dos inimigos, como comum, veterano, líder, boss, épico e lendário. É usado por loaders, definições, recompensas e validações de dungeon. |
-| `PlayableCharacter` | Personagem jogável | Estende `GameCharacter` com nome normalizado validado, nível, EXP, definição de classe, equipamentos, definições de habilidade e IDs das habilidades efetivamente aprendidas. Aprende automaticamente habilidades `STARTER` e `LEVEL`, permite aprender ou substituir habilidades `SCROLL`, preserva sua ordem e limita pergaminhos a duas vagas. Ao ganhar níveis, substitui somente os atributos naturais pelo resultado final de `CharacterGrowthCalculator`. |
+| `PlayableCharacter` | Personagem jogável | Estende `GameCharacter` com nome normalizado validado, nível, EXP, definição mutável de classe, equipamentos, definições de habilidade e IDs das habilidades efetivamente aprendidas. Aprende automaticamente habilidades `LEVEL`, permite aprender ou substituir habilidades `SCROLL`, preserva sua ordem e limita pergaminhos a duas vagas. Ao ganhar níveis, recalcula os atributos naturais por meio de `CharacterGrowthCalculator`. Sua transição controlada de classe exige equipamentos vazios, preserva nível, EXP e habilidades de pergaminho, substitui a classe e o repertório natural, recalcula os atributos e restaura completamente os recursos. |
 | `Party` | Estado compartilhado do grupo | Armazena de um a quatro `PlayableCharacter`, inventário, ouro e modificadores temporários compartilhados. Rejeita integrantes repetidos e nomes equivalentes sem diferenciar maiúsculas e minúsculas; o primeiro integrante é o líder. Também soma os bônus de GOLD dos berloques equipados e centraliza, por meio de `fullyRestoreMembers()`, a ressurreição e a restauração completa de HP, MP e SP de todos os integrantes. |
 | `CharacterNameRules` | Regras de domínio | Centraliza normalização NFC, limite de 16 pontos de código Unicode, caracteres permitidos, validação e comparação sem diferenciação de maiúsculas e minúsculas para nomes de personagens jogáveis. |
 | `CharacterNameCatalog` | Catálogo | Armazena os nomes externos já normalizados e validados, preservando sua ordem e rejeitando duplicatas sem diferenciar maiúsculas e minúsculas. |
@@ -142,6 +142,30 @@ BattleCoordinator
 | `CharacterGrowthCalculator` | Calculador de domínio | Calcula todos os atributos naturais de uma classe em um nível-alvo a partir dos atributos-base e das regras globais de crescimento. Centraliza os intervalos primário e secundário, os bônus de recursos por especialização e a proteção contra overflow. |
 | `PlayableClassLoader` | Carregamento de dados | Lê as definições de classe de `playable_classes.txt`, interpreta o símbolo e descrições com `\n`, cria `CharacterStats`, valida os dados e acrescenta linha e ID ao erro quando um cadastro é inválido. |
 | `PlayableClassCatalog` | Catálogo | Registra e localiza `PlayableClassDefinition` por ID estável e permite que `SkillLoader` valide a classe associada a cada habilidade. |
+
+---
+
+## Pacote `rpg.classes.paths`
+
+| Classe | Categoria | Finalidade e relações principais |
+|---|---|---|
+| `ClassPathRules` | Constantes de domínio | Centraliza os IDs obrigatórios de `flagelo_iniciante` e `flagelo`, o nível mínimo da transição e o ID da flag permanente de conclusão. |
+| `ClassPathRequiredClassValidator` | Validador cruzado | Confirma durante a inicialização que as definições obrigatórias do Flagelo iniciante e final existem e compartilham nome visível, símbolo, atributos-base, especializações e peso de armadura. Permite descrições e repertórios naturais diferentes. |
+| `ClassPathDefinition` | Definição imutável | Associa uma classe final ao equipamento introdutório composto por uma arma e uma armadura. Não armazena escolha nem estado de campanha. |
+| `ClassPathCatalog` | Catálogo | Registra os sete caminhos finais em ordem externa estável e permite resolução pelo ID canônico da classe. |
+| `ClassPathLoader` | Carregamento de dados | Lê `class_paths.txt`, rejeita o Flagelo iniciante, valida cobertura exata das sete classes finais, equipamentos, requisitos de nível e compatibilidade do peso da armadura. |
+| `ClassPathAnswerDefinition` | Definição imutável | Representa uma resposta ordenada, seu texto narrativo e a classe final que recebe exatamente um ponto quando ela é escolhida. |
+| `ClassPathQuestionDefinition` | Definição agregada imutável | Agrupa uma pergunta ordenada e ao menos duas respostas consecutivas, preservando a ordem externa. |
+| `ClassPathQuestionnaireCatalog` | Catálogo | Armazena as perguntas completas do questionário em ordem estável e permite resolver suas respostas canônicas. |
+| `ClassPathQuestionnaireLoader` | Carregamento agregado | Lê `class_path_questions.txt` e `class_path_answers.txt`, usa drafts privados, resolve quebras e placeholders narrativos e valida perguntas, respostas, ordens e alvos recomendáveis. |
+| `ClassPathQuestionnaireVerifier` | Validador estrutural | Confirma a distribuição canônica de sete perguntas, quatro ternárias, três binárias, dezoito respostas e exposição simétrica das seis classes recomendáveis. Também garante que o Flagelo final não seja recomendado e que nenhum empate máximo possa ultrapassar três classes. |
+| `ClassPathRecommendationResult` | Resultado imutável | Reúne as classes com a maior pontuação em ordem estável, representando tanto uma recomendação direta quanto um empate de duas ou três classes sem sorteio. |
+| `ClassPathRecommendationService` | Serviço de cálculo puro | Recebe uma resposta canônica para cada pergunta, concede um ponto por resposta e produz todas as classes empatadas na maior pontuação. Não altera personagem nem campanha. |
+| `ClassPathTransitionFailureType` | Enum de falha | Distingue cerimônia já concluída, classe atual inelegível, nível insuficiente e capacidade de inventário insuficiente. |
+| `ClassPathTransitionFailure` | Resultado de falha | Transporta a causa confirmada de uma transição recusada sem exigir que a interface deduza novamente a regra. |
+| `ClassPathTransitionPlan` | Plano imutável | Registra a classe final, o equipamento devolvido, o kit introdutório e as adições consolidadas ao inventário já validadas para uma possível aplicação. |
+| `ClassPathTransitionPreparation` | Resultado de preparação | Contém um plano completo ou uma falha explícita, permitindo que a futura transação composta da Quest 4 valide a transição sem mutar a campanha. |
+| `ClassPathTransitionService` | Serviço transacional | Prepara e revalida a transição completa, devolve equipamentos por meio de `EquipmentService`, concede o kit, solicita a troca controlada de classe, restaura os recursos e define a flag permanente sem permitir mutação parcial. |
 
 ---
 
@@ -333,9 +357,9 @@ Identidade, posicionamento e fala são conceitos separados. Um NPC pode existir 
 |---|---|---|
 | `SkillDefinition` | Definição imutável | Combina identidade, classe, tipo de aquisição, requisito de nível, custos, nome, descrição e lista ordenada de componentes. Pode ser referenciada diretamente pelo personagem porque o estado mutável de cada uso fica em `SkillExecution`. |
 | `SkillEffectDefinition` | Definição imutável de componente | Representa um componente de dano, recuperação, estágio, purificação, dissipação, modificador ou estado especial. Valida quais campos são obrigatórios, opcionais ou proibidos para cada tipo. |
-| `SkillLoader` | Carregamento de dados | Lê `skills.txt` e `skill_effects.txt`, interpreta `STARTER`, `LEVEL` e `SCROLL`, valida requisitos de nível, IDs de classe, cabeçalhos, componentes, sequência, fases e referências cruzadas e registra habilidades completas. |
+| `SkillLoader` | Carregamento de dados | Lê `skills.txt` e `skill_effects.txt`, interpreta `LEVEL` e `SCROLL`, valida requisitos de nível, IDs de classe, cabeçalhos, componentes, sequência, fases e referências cruzadas e registra habilidades completas. |
 | `SkillCatalog` | Catálogo | Registra `SkillDefinition` por ID estável e oferece as definições carregadas aos personagens e sistemas consumidores. |
-| `SkillAcquisitionType` | Enum de aquisição | Distingue habilidades temporárias iniciais (`STARTER`), habilidades aprendidas automaticamente por nível (`LEVEL`) e habilidades ensinadas exclusivamente por pergaminho (`SCROLL`). |
+| `SkillAcquisitionType` | Enum de aquisição | Distingue habilidades aprendidas automaticamente por nível (`LEVEL`) e habilidades ensinadas exclusivamente por pergaminho (`SCROLL`). |
 | `SkillLearningResult` | Enum de resultado | Representa aprendizagem, substituição e rejeições por duplicidade, classe incompatível, nível insuficiente ou limite de pergaminhos. Permite que domínio, serviço e interface compartilhem o mesmo resultado sem depender de mensagens. |
 | `SkillEffectType` | Enum de domínio | Define os tipos fechados de componente reconhecidos pelo executor. |
 | `SkillTargetType` | Enum de alvo | Define alvos como usuário, aliado, inimigo, grupos completos ou alvos aleatórios. Orienta a seleção feita uma única vez para a execução. |
@@ -418,7 +442,7 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 | `ConsoleInput` | Entrada compartilhada | Centraliza leitura UTF-8 por uma thread daemon e fila bloqueante. Permite descartar comandos durante pausas, trata `Ctrl+Z` recuperável no console Windows e substitui leitores independentes nos menus. |
 | `ConsoleUI` | Utilitário de interface | Centraliza operações gerais do console, como limpeza, pausa, disposição compartilhada de ações e quebra automática de texto em 90 colunas. Preserva quebras intencionais já existentes e não decide regras de domínio. |
 | `TitleScreen` | Tela | Exibe a apresentação inicial do jogo e controla a entrada necessária para começar. É chamada durante a inicialização antes de `World`. |
-| `CharacterCreationMenu` | Menu de criação | Permite digitar ou sortear o nome do protagonista, repetir o sorteio, alterar a proposta, confirmar ou cancelar. Exibe nome, classe Flagelo, especializações e descrição, mas devolve apenas o nome confirmado; `Main` cria o personagem e a `Party` posteriormente. |
+| `CharacterCreationMenu` | Menu de criação | Permite digitar ou sortear o nome do protagonista, repetir o sorteio, alterar a proposta, confirmar ou cancelar. Exibe nome e a apresentação completa do Flagelo iniciante por meio de `PlayableClassDetailFormatter`, mas devolve apenas o nome confirmado; `Main` cria o personagem e a `Party` posteriormente. |
 | `PartyRescueScreen` | Tela | Apresenta o resgate após a derrota completa da `Party`. Recebe o grupo, o `CombatScenario` derrotado, a cidade escolhida e o custo calculado; exibe narrativa, destino, restauração e custo por meio de `GameCurrency`, adapta a mensagem ao tamanho da party e exige ENTER. Não altera ouro, personagens, cenário ou progresso. |
 | `CombatScenarioMenu` | Menu de cenário de combate | Recebe as ações de `CombatScenarioAction` permitidas e o conjunto de ações com marcador derivado. Mantém numeração contínua, separa grupos visualmente, pode marcar `Seguir caminho` ou `Viajar` e oferece acesso ao diário sem avançar o tempo. Não é usado por cidades. |
 | `CityMenu` | Menu de cidade | Recebe o nome da cidade, as ações disponíveis e o conjunto de ações com marcador derivado. Omite ações sem destino funcional, preserva numeração contínua, pode marcar `Visitar locais`, `Sair da cidade` ou `Viajar` e oferece acesso ao diário sem avançar o tempo. |
@@ -448,7 +472,13 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 | `AllyTargetMenu` | Menu de alvo | Exibe aliados vivos ou derrotados conforme o contexto e devolve o `PlayableCharacter` escolhido. Um aliado vivo pode ser selecionado mesmo com HP cheio porque componentes compostos ainda podem purificá-lo ou fortalecê-lo. |
 | `EnemyTargetMenu` | Menu de alvo | Exibe apenas inimigos vivos de `EnemyBattleGroup` e devolve o `EnemyBattleSlot` escolhido. É usado por ataques, habilidades e análise. |
 | `CombatEffectFormatter` | Formatador de interface | Produz a apresentação compartilhada dos estágios ativos e da Distorção Ancestral sem mover regras de duração ou atributo para a interface. |
-| `PlayableClassDetailFormatter` | Formatador de interface | Produz a notação compartilhada das especializações de uma classe, exibindo o atributo primário com `↑↑` e o secundário com `↑`. Consulta `PlayableClassDefinition`, mas não calcula crescimento. |
+| `PlayableClassDetailFormatter` | Formatador de interface | Produz o resumo compartilhado de uma classe com símbolo, nome, peso de armadura e especializações, além da apresentação completa com descrição. Exibe o atributo primário com `↑↑` e o secundário com `↑`, consulta `PlayableClassDefinition` e não calcula crescimento. |
+| `ClassPathQuestionnaireMenu` | Menu de questionário | Resolve previamente todos os textos narrativos e apresenta as sete perguntas sequencialmente. Repete somente a pergunta atual após entrada inválida e devolve as respostas canônicas sem calcular pontuação. |
+| `ClassPathTieMenu` | Menu de desempate | Apresenta uma única revelação temporizada para as duas ou três classes empatadas e permite selecionar uma delas ou rejeitar todas. Entrada inválida repete apenas o prompt, sem reproduzir a animação. |
+| `ClassPathRecommendationMenu` | Menu de recomendação | Apresenta uma única revelação temporizada da marca escolhida e depois mantém uma tela compacta para consultar a descrição, abraçar o caminho ou recusar o chamado. Não altera a classe do protagonista. |
+| `ClassPathSelectionMenu` | Menu de seleção livre | Lista os sete caminhos finais em ordem de catálogo, permite consultar suas apresentações e devolve a classe escolhida. O Flagelo iniciante nunca aparece como opção. |
+| `ClassPathConfirmationMenu` | Menu de confirmação | Exibe a apresentação completa do caminho escolhido e permite apenas confirmar ou escolher novamente. Não oferece cancelamento da cerimônia. |
+| `ClassPathChoiceCoordinator` | Coordenador de interface | Encadeia questionário, cálculo, desempate explícito, revelação, aceitação ou seleção livre e confirmação. Devolve uma definição final de classe sem aplicar a transição nem alterar estado de campanha. |
 | `SkillDetailFormatter` | Formatador de interface | Produz a ficha compartilhada de uma habilidade com requisito de nível, tipo principal, poder, alvo, custo e descrição narrativa. Deriva os campos técnicos do primeiro componente efetivo de `PRIMARY` e é reutilizado pelo status, pela confirmação em batalha e pelos pergaminhos. |
 | `RewardModifierFormatter` | Formatador de interface | Produz a notação compacta compartilhada de `M.EXP` e `M.GOLD`, combinando fontes permanentes e temporárias para apresentação sem calcular ou alterar recompensas. |
 | `EpicEncounterMenu` | Menu de confirmação | Recebe uma lista de uma a três `EnemyDefinition`, apresenta nomes e descrições do encontro épico e pergunta se o jogador deseja enfrentá-lo. Devolve apenas a decisão; `World` inicia a batalha. |
@@ -767,11 +797,15 @@ World                   = mudança efetiva para a cidade escolhida
 | Validação de nome jogável | `CharacterNameRules` | entrada ou arquivo externo → normalização → validação → nome canônico |
 | Nomes aleatórios | `CharacterNameSelector` | `character_names.txt` → loader → catálogo → exclusões → sorteio uniforme |
 | Criação inicial | `CharacterCreationMenu` | tela inicial → nome manual/aleatório → confirmação → `Main` → protagonista → `Party` |
+| Definições de caminhos finais | `ClassPathCatalog` | `class_paths.txt` → `ClassPathLoader` → classe final + arma e armadura introdutórias |
+| Questionário de caminhos | `ClassPathQuestionnaireCatalog` | perguntas + respostas externas → seleção sequencial → `ClassPathRecommendationService` |
+| Escolha final de caminho | `ClassPathChoiceCoordinator` | questionário → resultado direto ou desempate → recomendação ou seleção livre → classe confirmada |
+| Transição do protagonista | `ClassPathTransitionService` | classe confirmada + estado atual → preparação completa → revalidação → aplicação atômica |
 | Party de desenvolvimento | `DevelopmentPartyFactory` | `--dev-party` → configuração isolada → progressão → recursos completos → `Party` |
 | Fluxo geral do jogo | `World` | cenário → exploração/rotas/transporte → batalha |
 | Dados de um inimigo | `EnemyDefinition` | `EnemyLoader` → `EnemyCatalog` → `EnemyDefinition` |
 | Dados de uma classe jogável | `PlayableClassDefinition` | `playable_classes.txt` → `PlayableClassLoader` → `PlayableClassCatalog` |
-| Apresentação de uma classe | `PlayableClassDetailFormatter` | `PlayableClassDefinition` → símbolo e especializações → criação/status |
+| Apresentação de uma classe | `PlayableClassDetailFormatter` | `PlayableClassDefinition` → símbolo, nome, armadura, especializações e descrição → criação/cerimônia/status |
 | Crescimento natural de um personagem | `CharacterGrowthCalculator` | definição de classe + nível → `CharacterStats` → `PlayableCharacter` |
 | Inimigo perdendo HP | `Enemy` | `EnemyDefinition` → `BattleCoordinator` → `Enemy` |
 | Sorteio de inimigos | `EncounterGenerator` | `EncounterCatalog` → filtros/pesos → definições |

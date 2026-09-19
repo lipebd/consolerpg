@@ -1,0 +1,8 @@
+# id;order;text
+legado;1;Durante a cerimônia, sua sombra começa a agir sozinha. Como você reage?
+protecao;2;Uma estrela cai no centro da cermônia e continua pulsando como um coração. O que você faz?
+confronto;3;Runas surgem sobre sua pele e começam a conduzir seus movimentos. Como você reage?
+ambicao;4;Uma máscara flutua diante de você e promete revelar seu verdadeiro rosto. O que você faz?
+subversao;5;Três sinos invisíveis ressoam no salão, mas apenas um deles parece verdadeiro. Como você o encontraria?
+adaptacao;6;Um espelho revela uma versão sua que se move um instante antes de você. Como reage?
+lideranca;7;O salão repete cada palavra que você pronuncia, mas as devolve com significados diferentes. O que você diz?

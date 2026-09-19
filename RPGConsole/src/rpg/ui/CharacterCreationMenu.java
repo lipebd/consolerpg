@@ -140,12 +140,9 @@ public final class CharacterCreationMenu {
 
 		System.out.println();
 		System.out.println("Nome: " + proposedName);
-		System.out.println("Classe: " + classDefinition.getName());
-		System.out.println(PlayableClassDetailFormatter.formatSpecializations(classDefinition));
-
 		System.out.println();
-		System.out.println("Descrição:");
-		System.out.println(classDefinition.getDescription());
+		ConsoleUI.displayWrappedText(
+		        PlayableClassDetailFormatter.formatPresentation(classDefinition));
 
 		System.out.println();
 		System.out.println("[1] Confirmar");

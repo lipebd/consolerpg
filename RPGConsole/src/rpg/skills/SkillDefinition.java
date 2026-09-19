@@ -177,10 +177,6 @@ public final class SkillDefinition {
 		return levelRequirement;
 	}
 
-	public boolean isStarterSkill() {
-		return acquisitionType == SkillAcquisitionType.STARTER;
-	}
-
 	public boolean isLevelSkill() {
 		return acquisitionType == SkillAcquisitionType.LEVEL;
 	}
