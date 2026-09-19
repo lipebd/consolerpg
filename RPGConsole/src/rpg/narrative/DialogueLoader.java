@@ -11,14 +11,19 @@ import java.util.Map;
 import java.util.Optional;
 
 import rpg.enemies.EnemyCatalog;
+import rpg.recruitment.QuestRecruitmentCatalog;
 
 // Loads complete linear dialogues from external utterance data.
 public final class DialogueLoader {
 
     private static final int EXPECTED_FIELD_COUNT = 5;
 
-    public DialogueCatalog load(Path filePath, NpcCatalog npcCatalog, EnemyCatalog enemyCatalog)
-            throws IOException {
+	public DialogueCatalog load(
+			Path filePath,
+			NpcCatalog npcCatalog,
+			EnemyCatalog enemyCatalog,
+			QuestRecruitmentCatalog recruitmentCatalog
+			) throws IOException {
         if (filePath == null) {
             throw new IllegalArgumentException("Dialogue file path cannot be null.");
         }
@@ -30,6 +35,12 @@ public final class DialogueLoader {
         if (enemyCatalog == null) {
             throw new IllegalArgumentException("Enemy catalog cannot be null.");
         }
+
+		if (recruitmentCatalog == null) {
+			throw new IllegalArgumentException(
+					"Quest recruitment catalog cannot be null."
+					);
+		}
 
         Map<String, List<DialogueLineDraft>> draftsByDialogueId = new LinkedHashMap<>();
 
@@ -43,7 +54,12 @@ public final class DialogueLoader {
             }
 
             try {
-                DialogueLineDefinition definition = parseDefinition(line, npcCatalog, enemyCatalog);
+				DialogueLineDefinition definition =
+						parseDefinition(
+								line,
+								npcCatalog,
+								enemyCatalog,
+								recruitmentCatalog);
 
                 draftsByDialogueId
                         .computeIfAbsent(definition.getDialogueId(), ignored -> new ArrayList<>())
@@ -58,7 +74,11 @@ public final class DialogueLoader {
     }
 
     private DialogueLineDefinition parseDefinition(
-            String line, NpcCatalog npcCatalog, EnemyCatalog enemyCatalog) {
+			String line,
+			NpcCatalog npcCatalog,
+			EnemyCatalog enemyCatalog,
+			QuestRecruitmentCatalog recruitmentCatalog
+			) {
         String[] fields = line.split(";", -1);
 
         if (fields.length != EXPECTED_FIELD_COUNT) {
@@ -85,26 +105,31 @@ public final class DialogueLoader {
                         speakerId,
                         fields[4]);
 
-        validateSpeakerReference(definition, npcCatalog, enemyCatalog);
+		validateSpeakerReference(
+				definition,
+				npcCatalog,
+				enemyCatalog,
+				recruitmentCatalog);
 
         return definition;
     }
 
     private void validateSpeakerReference(
-            DialogueLineDefinition definition, NpcCatalog npcCatalog, EnemyCatalog enemyCatalog) {
+			DialogueLineDefinition definition,
+			NpcCatalog npcCatalog,
+			EnemyCatalog enemyCatalog,
+			QuestRecruitmentCatalog recruitmentCatalog) {
         switch (definition.getSpeakerType()) {
             case NPC -> npcCatalog.getById(definition.getSpeakerId().orElseThrow());
 
             case ENEMY -> enemyCatalog.getById(definition.getSpeakerId().orElseThrow());
 
+		case RECRUIT ->
+		recruitmentCatalog.getByCandidateId(definition.getSpeakerId().orElseThrow());
+
             case LEADER, NARRATOR -> {
                 // These speaker types do not reference a catalog entry.
             }
-
-            case RECRUIT ->
-                    throw new IllegalArgumentException(
-                            "RECRUIT dialogue speakers are unavailable until recruitment-candidate definitions are loaded: "
-                                    + definition.getSpeakerId().orElseThrow());
         }
     }
 

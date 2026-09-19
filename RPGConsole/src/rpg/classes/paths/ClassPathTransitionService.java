@@ -105,26 +105,13 @@ public final class ClassPathTransitionService {
         return ClassPathTransitionPreparation.ready(plan);
     }
 
-    public void apply(ClassPathTransitionPlan plan) {
-        Objects.requireNonNull(plan, "Class path transition plan cannot be null.");
-
-        ClassPathTransitionPreparation currentPreparation =
-                prepare(plan.getParty(), plan.getTargetClassDefinition().getId());
-
-        if (!currentPreparation.isReady()) {
-            throw new IllegalStateException("Class path transition plan is no longer applicable.");
+	public void validate(ClassPathTransitionPlan plan) {
+		requireCurrentPlan(plan);
         }
 
-        ClassPathTransitionPlan currentPlan = currentPreparation.getPlan();
-
-        if (currentPlan.getProtagonist() != plan.getProtagonist()
-                || !currentPlan
-                        .getReturnedEquipmentDefinitions()
-                        .equals(plan.getReturnedEquipmentDefinitions())
-                || !currentPlan.getInventoryAdditions().equals(plan.getInventoryAdditions())) {
-            throw new IllegalStateException(
-                    "Class path transition state changed after preparation.");
-        }
+	public void apply(ClassPathTransitionPlan plan) {
+		ClassPathTransitionPlan currentPlan =
+				requireCurrentPlan(plan);
 
         unequipAll(currentPlan);
 
@@ -136,10 +123,54 @@ public final class ClassPathTransitionService {
                         currentPlan.getTargetClassDefinition(),
                         currentPlan.getTargetClassSkillDefinitions());
 
-        if (!campaignFlags.set(ClassPathRules.COMPLETION_FLAG_ID)) {
-            throw new IllegalStateException("Class path completion flag changed after validation.");
+		if (!campaignFlags.set(
+				ClassPathRules.COMPLETION_FLAG_ID)) {
+			throw new IllegalStateException(
+					"Class path completion flag changed after validation."
+					);
         }
     }
+
+	private ClassPathTransitionPlan requireCurrentPlan(
+			ClassPathTransitionPlan plan
+			) {
+		Objects.requireNonNull(
+				plan,
+				"Class path transition plan cannot be null.");
+
+		ClassPathTransitionPreparation currentPreparation =
+				prepare(
+						plan.getParty(),
+						plan
+						.getTargetClassDefinition()
+						.getId());
+
+		if (!currentPreparation.isReady()) {
+			throw new IllegalStateException(
+					"Class path transition plan is no longer applicable."
+					);
+		}
+
+		ClassPathTransitionPlan currentPlan =
+				currentPreparation.getPlan();
+
+		if (currentPlan.getProtagonist()
+				!= plan.getProtagonist()
+				|| !currentPlan
+				.getReturnedEquipmentDefinitions()
+				.equals(
+						plan.getReturnedEquipmentDefinitions())
+				|| !currentPlan
+				.getInventoryAdditions()
+				.equals(
+						plan.getInventoryAdditions())) {
+			throw new IllegalStateException(
+					"Class path transition state changed after preparation."
+					);
+		}
+
+		return currentPlan;
+	}
 
     private List<ClassPathTransitionFailure> validateEligibility(PlayableCharacter protagonist) {
         List<ClassPathTransitionFailure> failures = new ArrayList<>();

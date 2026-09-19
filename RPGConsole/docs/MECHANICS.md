@@ -1166,6 +1166,114 @@ An invalid current class, insufficient level, previously completed ceremony or i
 
 The standalone transition can prepare and apply this state atomically. Its normal story resolution will compose the same prepared plan with the mandatory first-ally recruitment, quest transition, rewards and permanent effects so that Quest 4 cannot commit only part of the ceremony.
 
+## Recruitment candidates and playable allies
+
+A recruitment candidate represents one narratively known future ally before that character joins the party.
+
+Candidate state contains only:
+
+- A canonical candidate ID.
+- One persistent generated name.
+- Whether recruitment has already occurred.
+
+Before recruitment, a candidate has no class, level, EXP, attributes, resources, skills, equipment or party position.
+
+Candidate identity is created at the first displayed dialogue containing that candidate as a `RECRUIT` speaker. Creation is idempotent: later dialogue appearances resolve the same state and never reroll the name.
+
+The shared `character_names.txt` list supplies random names for both protagonist creation and candidates. Candidate introduction excludes every name already used by the party or another candidate. Name comparison follows the shared case-insensitive character-name rules. If no unique name remains, introduction fails before candidate-state mutation.
+
+Recruitment dispatch is associated with quest progress through `quest_recruitments.txt`. Each record identifies:
+
+- Quest.
+- Step.
+- Candidate.
+- Ally entry level.
+
+The catalog supports at most three records because a four-member party contains one leader and at most three recruited allies. Candidate name, recruited state and selected class are campaign state and do not belong in the external definition.
+
+### Ally class selection
+
+Ally class selection occurs only while a recruitment plan is being prepared.
+
+The generic eligible pool excludes:
+
+- `flagelo_iniciante`.
+- Final Flagelo.
+- Every class already represented in the current party.
+- Any additional class excluded by the current narrative composition.
+
+For the first recruitment, the protagonist's confirmed target class is an additional exclusion because the protagonist still technically owns `flagelo_iniciante` while the complete transaction is being prepared.
+
+Selection is uniform among the remaining classes. Questionnaire answers do not influence the ally, and the player cannot reroll, reject or manually replace the selected result.
+
+Later recruitment flows can reuse the same selection rule against the larger existing party without repeating the protagonist's class ceremony.
+
+### Ally playable state
+
+A recruited ally is constructed only during recruitment preparation.
+
+The generic factory receives the canonical candidate, selected class and externally configured entry level. It creates:
+
+- Current EXP 0.
+- Natural attributes calculated normally at the entry level.
+- Every natural class skill available at that level.
+- No scroll-learned skills.
+- The class-path introductory weapon equipped directly.
+- The class-path introductory armor equipped directly.
+- An empty trinket slot.
+- Fully restored HP, MP and SP.
+- No additional inventory items.
+
+The ally's introductory equipment never enters the shared inventory. Equipped items remain separate from inventory quantities.
+
+The first canonical ally uses level 7 and enters the second party position. The external level field exists so later content can select another supported entry level without changing Java code.
+
+### First-ally ceremony and atomic commit
+
+The first recruitment is composed with the protagonist's level-7 class-path ceremony and final quest interaction.
+
+The player-facing order is:
+
+1. Complete the questionnaire.
+2. Resolve the recommendation or tie.
+3. Confirm the protagonist's final class.
+4. Prepare the complete protagonist, quest and ally transaction.
+5. Display the ceremony ending and ally conversation.
+6. Present the single mandatory action `Aceitar sua companhia`.
+7. Apply the complete transaction.
+8. Present quest completion, rewards and effects.
+
+Preparation validates before campaign mutation:
+
+- Protagonist eligibility.
+- Equipment return.
+- Protagonist introductory-item capacity.
+- Quest interaction eligibility.
+- Delivery requirements.
+- Reward capacity.
+- Permanent effects.
+- Candidate identity and unrecruited state.
+- Party capacity and name uniqueness.
+- Eligible ally-class pool.
+- Ally level, class definitions and introductory equipment.
+
+The completion validator includes the protagonist's pending inventory additions when checking quest rewards. For example, one introductory item and a reward of 999 units of the same item are rejected because their combined result would exceed the per-item inventory maximum.
+
+After mandatory acceptance, application occurs in this order:
+
+1. Apply the protagonist transition.
+2. Complete the quest and apply rewards and effects.
+3. Insert the ally into the party.
+4. Mark the candidate as recruited.
+
+The ally is inserted after quest rewards and therefore does not receive the completing quest's `PARTY_EXP`. The ally retains EXP 0.
+
+An expected validation failure preserves protagonist class, equipment, resources, inventory, party membership, candidate recruited state, quest progress, flags and routes. The already introduced candidate identity remains unchanged and available for a later complete retry.
+
+Questionnaire answers, scores, recommendations, confirmed transient choice, selected ally class, constructed uncommitted ally and prepared plans are transient. They are neither independent campaign state nor save data.
+
+The first ceremony-specific composition does not make later recruitments class ceremonies. Candidate identity, class selection, ally construction and party insertion remain generic components for future narrative recruitment flows.
+
 ## Party status
 
 The party status interface is available outside battle.
@@ -1225,7 +1333,7 @@ Loading decrypts and structurally validates the snapshot, validates every catalo
 
 The authenticated internal save format is currently version 2. It stores narrative dungeon completion and the absolute elapsed-world-hour availability of recurring bosses and epic encounters. Active exploration sessions remain transient and are not restored.
 
-Mutable quest progress, permanent campaign flags and future recruitment-candidate state are not yet part of the current internal version-2 snapshot. Their coordinated versioned persistence belongs to V6 Part 9. Until then, quest and flag state is created empty when the campaign runtime is constructed.
+Mutable quest progress, permanent campaign flags and recruitment-candidate state are not yet part of the current internal version-2 snapshot. Although the existing party snapshot can structurally encode multiple playable members, a coherently recruited ally also depends on quest, flag and candidate state. Their coordinated versioned persistence belongs to V6 Part 9. Until then, quest, flag and candidate state is created empty when the campaign runtime is constructed.
 
 A confirmed playable class already belongs to the persisted character state through its canonical class ID. The future version-3 contract will additionally validate its coherence with the permanent ceremony-completion flag and recruitment state.
 
@@ -1959,7 +2067,7 @@ The supported speaker types are:
 
 NPC and enemy names are resolved from their canonical catalogs. Leader dialogue uses the current party leader. Narrator lines have no speaker label.
 
-Recruit dialogue is structurally reserved, but recruitment-candidate references remain invalid until that later V6 system provides candidate identity and persisted generated names.
+Recruit dialogue references canonical candidate IDs declared in `quest_recruitments.txt`. When such a dialogue is first displayed, the candidate receives one persistent generated name. Later appearances resolve that same name from candidate state. The speaker reference identifies who is talking; it does not independently dispatch or complete recruitment.
 
 Each utterance advances only after Enter. Dialogue does not advance fictional world time.
 

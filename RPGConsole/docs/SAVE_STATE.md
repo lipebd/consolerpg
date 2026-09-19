@@ -803,6 +803,45 @@ Rules:
 
 The current implementation supports only internal format version 2. Internal version-1 development saves are rejected without migration because V5 has not yet been released. The encrypted outer-container format and its `containerVersion` remain unchanged.
 
+### V6 Part 8 persistence boundary
+
+V6 Part 8 does not change the internal save format.
+
+The implemented version-2 party snapshot can structurally serialize multiple playable characters, including their classes, levels, EXP, resources, skills and equipment. That is not sufficient to persist recruitment coherently.
+
+A recruited ally also depends on mutable campaign state that version 2 does not contain:
+
+- Quest progress proving that the recruitment step completed.
+- Permanent flags produced by the same transaction.
+- Candidate canonical ID.
+- Candidate persistent generated name.
+- Candidate recruited state.
+- Coherence between the recruited candidate and one party member.
+
+Saving only the resulting party member would lose the candidate identity and quest transaction that created that member. Loading such a partial state could allow duplicated dialogue identity, repeated recruitment or disagreement between party, quest and flags.
+
+For that reason, Part 8 preserves `save.formatVersion=2` and adds no candidate properties, placeholder snapshot objects or partial compatibility behavior. Normal campaign content cannot currently reach recruitment because canonical Quest 4 remains scheduled for V6 Part 10.
+
+The following Part 8 values are transient and must never be serialized:
+
+- Questionnaire answers.
+- Recommendation scores and ties.
+- Uncommitted protagonist class choice.
+- Random uncommitted ally class.
+- Constructed ally not yet inserted into the party.
+- `ClassPathTransitionPlan`.
+- `AllyRecruitmentPlan`.
+- `ClassPathRecruitmentPlan`.
+- Every preparation result used only during the uninterrupted interaction.
+
+The following candidate values are persistent campaign state and must enter internal version 3 in Part 9:
+
+- Canonical candidate ID.
+- Persistent generated name.
+- Recruited state.
+
+`quest_recruitments.txt` remains immutable external definition data. Quest ID, step and configured ally level are reloaded from the current catalog and are not copied into the save payload.
+
 ## Atomic save operation
 
 Saving follows this order:
@@ -910,18 +949,35 @@ A feature introducing persistent state must define:
 8. Restart-based verification tests.
 9. Documentation updates.
 
-Likely future persisted state includes:
+The next internal format version must add the implemented V6 campaign state as one coordinated contract:
 
-* Started quests.
-* Completed quests.
-* Quest stages and objective counters.
-* Pending mandatory rewards.
-* Story decisions.
+* Active quest IDs.
+* Current quest steps.
+* Current objective counters.
+* Completed quest IDs.
 * Permanent world flags.
-* Explicit access unlocks.
-* Recruitment-candidate identities and recruited states.
+* Recruitment-candidate IDs.
+* Recruitment-candidate persistent names.
+* Recruitment-candidate recruited states.
+
+Pending transaction plans, random uncommitted choices and derived availability remain excluded.
 
 The protagonist's confirmed class already uses the persisted canonical playable-class ID. The future version-3 integration must validate that final class against the permanent ceremony-completion flag and the restored recruitment transaction state instead of serializing a second independent class-path decision.
+
+Version-3 restoration must also validate:
+
+* Every restored candidate ID exists in `QuestRecruitmentCatalog`.
+* Candidate IDs are unique.
+* Candidate names satisfy current character-name rules.
+* Candidate names are unique against every party member and other candidate.
+* A pending candidate does not already appear as its recruited party member.
+* A recruited candidate corresponds coherently to one restored ally.
+* The first recruited candidate is consistent with the completed ceremony flag, protagonist final class and recruitment quest state.
+* The protagonist and every ally retain distinct playable classes.
+* Party order remains leader first followed by recruited allies.
+* No transient preparation or random-selection state is reconstructed.
+
+Every quest, flag and candidate object must be reconstructed and cross-validated in an isolated candidate campaign before `World` receives the restored state.
 
 Placeholder persistence structures must not be created before the supporting gameplay systems exist.
 

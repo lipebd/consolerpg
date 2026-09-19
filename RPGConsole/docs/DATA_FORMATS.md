@@ -1978,7 +1978,9 @@ Additional rules:
 - `LEADER` resolves the active party leader at presentation time.
 - `NARRATOR` displays no speaker label.
 - `RECRUIT` resolves the candidate's persisted generated name.
-- Until recruitment-candidate definitions are implemented, every `RECRUIT` speaker reference is rejected during startup.
+- Every `RECRUIT` speaker ID must reference a candidate declared by `QuestRecruitmentCatalog`.
+- The candidate is created idempotently when first introduced by a displayed dialogue.
+- `DialoguePresenter` resolves the already established candidate state and does not create or reroll candidate identity.
 - Utterance text supports literal `\n` and the documented party placeholders.
 - Dialogue definitions contain no choices, conditions, branching, timing, color or audio.
 - One physical record represents one complete utterance.
@@ -2053,6 +2055,55 @@ quest_dialogues.txt
     -> QuestDialogueLoader
     -> QuestDialogueDefinition
     -> QuestDialogueCatalog
+```
+
+## Quest-recruitment definitions
+
+Recruitment dispatch is declared through:
+
+`data/quest_recruitments.txt`
+
+Header:
+
+```text
+# questId;step;candidateId;allyLevel
+```
+
+Each valid line contains exactly 4 fields:
+
+| Position | Field | Java type | Empty value |
+| ---: | --- | --- | --- |
+| 1 | Quest ID | `String` | Not allowed |
+| 2 | Step number | `int` | Not allowed |
+| 3 | Candidate ID | `String` | Not allowed |
+| 4 | Ally entry level | `int` | Not allowed |
+
+Rules:
+
+- Quest ID must reference `QuestCatalog`.
+- Step must be positive and belong to the referenced quest.
+- Candidate ID follows the stable lowercase ID convention.
+- Ally level must remain between the supported minimum and maximum playable-character levels.
+- One quest-and-step combination may appear at most once.
+- One candidate ID may appear at most once.
+- The catalog accepts at most three records, matching the three non-leader party positions.
+- The file may remain header-only before canonical recruitment quests are authored.
+- Candidate name and recruited state are mutable campaign data and are not stored in this file.
+- Candidate class is selected at recruitment time and is not stored in this file.
+- Introductory equipment is resolved from the selected class path and is not stored in this file.
+- `speakerId` in `dialogues.txt` identifies a declared candidate but does not independently dispatch or complete recruitment.
+- The first canonical recruitment uses level 7 and composes with the protagonist's class-path ceremony.
+- Later narrative recruitment orchestration remains separate from the first ceremony while reusing the generic recruitment definition and domain services.
+
+Loading flow:
+
+```text
+quest_recruitments.txt
+    -> QuestRecruitmentLoader
+    -> QuestRecruitmentDefinition
+    -> QuestRecruitmentCatalog
+        -> lookup by quest and step
+        -> lookup by candidate ID
 ```
 
 ## Narrative placeholders

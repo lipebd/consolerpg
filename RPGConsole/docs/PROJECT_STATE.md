@@ -6,7 +6,7 @@ V5 is complete and preserved as the current released version.
 
 Current stage:
 
-`V6 quest-system implementation — Parts 1 through 7 completed; Part 8 recruitment candidate and first ally is next`
+`V6 quest-system implementation — Parts 1 through 8 completed; Part 9 campaign persistence is next`
 
 Current Git branch:
 
@@ -856,7 +856,7 @@ Complete encrypted round trips, campaign reconstruction, valid and invalid start
 
 ## V6 quest and narrative foundation
 
-V6 Parts 1 through 7 are implemented and approved. The final Quest 4 commit will compose the completed class-path transition with the mandatory recruitment transaction implemented in Part 8.
+V6 Parts 1 through 8 are implemented and approved. The protagonist class-path transition, persistent candidate identity and mandatory first-ally recruitment are composed through one validated transaction. Canonical Quest 4 content remains scheduled for Part 10.
 
 The current foundation includes:
 
@@ -906,6 +906,24 @@ The current foundation includes:
 - Validated protagonist class transition preserving identity, level, EXP and scroll skills while replacing natural class state.
 - Atomic equipment return, introductory-item grant, resource restoration and permanent ceremony-flag assignment.
 - Explicit inventory-capacity failure and repeated-application prevention before transition mutation.
+- External quest-step recruitment definitions with canonical candidate IDs and configurable ally entry levels.
+- Structural limit of three recruitment records derived from party capacity.
+- Minimal mutable candidate state containing canonical ID, persistent generated name and recruited status.
+- Idempotent candidate introduction at the first displayed `RECRUIT` dialogue.
+- Shared unique-name selection across party members and pending candidates.
+- Runtime resolution of `RECRUIT` speakers from established candidate state.
+- Generic ally-class selection excluding beginner Flagelo, final Flagelo, party classes and caller-provided classes.
+- Generic complete ally construction at the externally configured level.
+- Natural attributes and skills calculated through the existing progression classes.
+- Introductory weapon and armor equipped directly without passing through shared inventory.
+- Empty ally trinket slot, zero EXP and fully restored resources.
+- Generic recruitment plans and services reusable by later narrative allies.
+- Ceremony-specific composition isolated in `ClassPathRecruitmentService`.
+- Joint validation of protagonist inventory additions and quest rewards before mutation.
+- Mandatory `Aceitar sua companhia` action without a false refusal branch.
+- Ordered atomic commit of protagonist transition, quest completion, rewards, effects, ally insertion and recruited state.
+- Party EXP applied before ally insertion so the newly recruited ally remains at zero EXP.
+- Expected ceremony and quest failures presented without partial campaign mutation.
 
 The new external files are:
 
@@ -924,6 +942,7 @@ The new external files are:
 - `class_paths.txt`
 - `class_path_questions.txt`
 - `class_path_answers.txt`
+- `quest_recruitments.txt`
 
 The complete narrative interaction was validated through one temporary quest and NPC. Representative testing covered city, location and NPC markers; default conversation; offer refusal and later acceptance; quest activation; required completion dialogue; atomic completion; a real GOLD reward; grouped notifications; marker removal after completion; and preservation of default dialogue access.
 
@@ -933,20 +952,24 @@ All temporary quest and NPC validation content was removed after approval. Quest
 
 Part 7 representative testing covered required beginner and final Flagelo validation; complete final-path equipment coverage; questionnaire loading, line-break decoding and placeholder preservation; direct scoring; ordered three-way ties; player-controlled tie resolution; unrestricted rejection and free selection; shared class presentation; optional description access; invalid-input handling without replaying timed sequences; inventory-capacity rejection without mutation; equipped-item return; introductory-item grants; class and natural-skill replacement; complete resource restoration; permanent-flag assignment; and repeated-transition prevention.
 
-The canonical class-path equipment definitions and canonical seven-question questionnaire are retained as real V6 content. The standalone protagonist transition is implemented and verified, while its final gameplay commit remains deliberately deferred to the complete Part 8 recruitment transaction.
+Part 8 representative testing covered header-only startup; candidate creation at the first recruit dialogue; stable candidate name across repeated offer refusal and acceptance; fresh random identity after application restart while candidate persistence remains intentionally outside save version 2; multiple valid ally-class draws; exclusion of beginner Flagelo, final Flagelo and the protagonist's confirmed class; complete level-7 ally state; direct introductory equipment; empty trinket slot; second-position party insertion; mandatory acceptance; quest reward and effect application; zero ally EXP after `PARTY_EXP`; prevention of repeated recruitment; combined protagonist-item and quest-reward capacity rejection without mutation; minimum-level ceremony rejection without mutation; maximum three-record enforcement; duplicate candidate rejection; duplicate quest-step rejection; and invalid ally-level rejection.
+
+All temporary Part 8 quest, NPC, dialogue, flag, requirement, reward, effect, recruitment and validation-class fixtures were removed after approval. `quest_recruitments.txt` therefore remains header-only until canonical recruitment content is authored.
+
+The canonical class-path equipment definitions and canonical seven-question questionnaire are retained as real V6 content. The protagonist transition is now composed with the complete first recruitment transaction. Normal campaign access remains absent only because canonical Quest 4 content is scheduled for Part 10.
 
 ## Current limitations and temporary implementations
 
 - Permanent skill-scroll content and curated scroll drops remain absent while the draft skills await required combat mechanics and final content review.
-- The class-path questionnaire, recommendation interface and standalone protagonist transition are implemented but are not yet reachable through normal campaign play; their final commit must be composed with mandatory recruitment in V6 Part 8 and later invoked by canonical Quest 4 content.
+- The class-path questionnaire, recommendation interface and first-recruitment transaction are implemented and validated but are not yet reachable through normal campaign play because canonical Quest 4 content remains Part 10 work.
 - Playable-class definitions, natural growth and the complete approved 30-skill roster are external; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy turns currently use basic attacks; enemy skill selection is deferred.
-- Mutable quest progress, permanent campaign flags, the confirmed protagonist class path and recruitment-candidate state remain outside the internal version-2 save format until V6 Part 9, after every supporting gameplay system exists.
-- `RECRUIT` is recognized as a dialogue speaker type, but its data remains invalid until recruitment-candidate definitions and state are implemented in V6 Part 8.
+- Mutable quest progress, permanent campaign flags and recruitment-candidate state remain outside the internal version-2 save format until their coordinated version-3 integration in V6 Part 9.
+- `RECRUIT` references are now validated through `QuestRecruitmentCatalog` and resolved through candidate state, but no canonical recruit dialogue exists while `quest_recruitments.txt` remains header-only.
 - After a normal victory, defeated allies remain unavailable until revived by a skill, item or city INN; full-party defeat instead activates rescue and complete restoration.
 - Items sold by the player cannot be bought back.
-- Normal new games currently begin with only the protagonist; story-based recruitment of three distinct-class allies remains future work.
-- Random ally naming will reuse the implemented external-name selection after recruitment is added.
+- Normal new games currently begin with only the protagonist because the canonical recruitment quests have not yet been authored. The first-ally runtime behavior is implemented; later allies remain future narrative content.
+- Candidate naming reuses the implemented shared external-name selection and preserves one generated name during the active campaign.
 - The four current random character names remain temporary pending creative-team curation.
 - Party-title acquisition and character-history presentation remain future narrative work.
 - Initial crafting content is limited to two Bree crafters and two recipes pending broader creative and balance curation.
@@ -958,7 +981,7 @@ The canonical class-path equipment definitions and canonical seven-question ques
 
 V5 remains complete, packaged and released as `v5.0.0`.
 
-V6 implementation is active on `feature/v6-quests`. Parts 1 through 7 have completed:
+V6 implementation is active on `feature/v6-quests`. Parts 1 through 8 have completed:
 
 - Quest definitions and lifecycle.
 - Quest objectives and core progress.
@@ -967,14 +990,15 @@ V6 implementation is active on `feature/v6-quests`. Parts 1 through 7 have compl
 - Narrative locations, NPCs and dialogue.
 - Gameplay integration, quest journal and interaction-marker propagation.
 - Level-7 class-path definitions, questionnaire, player-controlled recommendation and atomic protagonist transition.
+- Persistent recruitment-candidate identity, generic ally construction and the atomic first-ally transaction.
 
-The next implementation block is V6 Part 8: the persistent recruitment candidate and first playable ally.
+The next implementation block is V6 Part 9: campaign persistence.
 
-Part 8 will compose the already validated protagonist transition with candidate identity, ally creation, introductory equipment, party insertion and mandatory recruitment through one complete transaction. The protagonist transition must not be committed independently during the final Quest 4 resolution.
+Part 9 will evolve the authenticated internal save format from version 2 to version 3 and persist quest progress, permanent flags and recruitment-candidate state together. Restoration must validate coherence between the protagonist's final class, ceremony flag, completed recruitment quest, recruited candidate and party ally before activating `World`.
 
-Campaign persistence remains intentionally deferred to V6 Part 9 so that quest progress, permanent flags, the confirmed protagonist class path and recruitment-candidate state can enter one complete internal version-3 save contract after every supporting gameplay system exists.
+Questionnaire answers, recommendation scores, uncommitted class choices, random uncommitted ally classes, constructed pending allies and prepared transaction plans remain transient and must not enter the save format.
 
-The first five canonical quests, including the final gameplay trigger for the class-path and recruitment transaction, remain scheduled for V6 Part 10.
+The first five canonical quests, including the real content trigger for the class-path and recruitment transaction, remain scheduled for V6 Part 10.
 
 ## Important conventions
 

@@ -126,7 +126,7 @@ BattleCoordinator
 | `Enemy` | Inimigo de execução | Estende `GameCharacter` e representa uma ocorrência mutável de um inimigo dentro de uma batalha. Retém o ID canônico de `EnemyDefinition` para integrações baseadas em identidade, além de rank, descrição e tabela de drops, e é colocado em `EnemyBattleSlot`. Vários objetos `Enemy` podem nascer da mesma definição sem compartilhar HP. |
 | `EnemyRank` | Enum de domínio | Define os ranks válidos dos inimigos, como comum, veterano, líder, boss, épico e lendário. É usado por loaders, definições, recompensas e validações de dungeon. |
 | `PlayableCharacter` | Personagem jogável | Estende `GameCharacter` com nome normalizado validado, nível, EXP, definição mutável de classe, equipamentos, definições de habilidade e IDs das habilidades efetivamente aprendidas. Aprende automaticamente habilidades `LEVEL`, permite aprender ou substituir habilidades `SCROLL`, preserva sua ordem e limita pergaminhos a duas vagas. Ao ganhar níveis, recalcula os atributos naturais por meio de `CharacterGrowthCalculator`. Sua transição controlada de classe exige equipamentos vazios, preserva nível, EXP e habilidades de pergaminho, substitui a classe e o repertório natural, recalcula os atributos e restaura completamente os recursos. |
-| `Party` | Estado compartilhado do grupo | Armazena de um a quatro `PlayableCharacter`, inventário, ouro e modificadores temporários compartilhados. Rejeita integrantes repetidos e nomes equivalentes sem diferenciar maiúsculas e minúsculas; o primeiro integrante é o líder. Também soma os bônus de GOLD dos berloques equipados e centraliza, por meio de `fullyRestoreMembers()`, a ressurreição e a restauração completa de HP, MP e SP de todos os integrantes. |
+| `Party` | Estado compartilhado do grupo | Armazena de um a quatro `PlayableCharacter`, inventário, ouro e modificadores temporários compartilhados. Rejeita integrantes repetidos e nomes equivalentes sem diferenciar maiúsculas e minúsculas; o primeiro integrante é o líder. Também soma os bônus de GOLD dos berloques equipados e centraliza, por meio de `fullyRestoreMembers()`, a ressurreição e a restauração completa de HP, MP e SP de todos os integrantes. `canAddMember()` expõe a mesma validação sem mutação para planos transacionais, enquanto `addMember()` reutiliza essa validação antes da inserção. |
 | `CharacterNameRules` | Regras de domínio | Centraliza normalização NFC, limite de 16 pontos de código Unicode, caracteres permitidos, validação e comparação sem diferenciação de maiúsculas e minúsculas para nomes de personagens jogáveis. |
 | `CharacterNameCatalog` | Catálogo | Armazena os nomes externos já normalizados e validados, preservando sua ordem e rejeitando duplicatas sem diferenciar maiúsculas e minúsculas. |
 | `CharacterNameLoader` | Carregamento de dados | Lê `character_names.txt`, ignora comentários e linhas vazias, aplica `CharacterNameRules`, acrescenta arquivo e linha aos erros e exige nomes suficientes para uma `Party` completa. |
@@ -164,8 +164,28 @@ BattleCoordinator
 | `ClassPathTransitionFailureType` | Enum de falha | Distingue cerimônia já concluída, classe atual inelegível, nível insuficiente e capacidade de inventário insuficiente. |
 | `ClassPathTransitionFailure` | Resultado de falha | Transporta a causa confirmada de uma transição recusada sem exigir que a interface deduza novamente a regra. |
 | `ClassPathTransitionPlan` | Plano imutável | Registra a classe final, o equipamento devolvido, o kit introdutório e as adições consolidadas ao inventário já validadas para uma possível aplicação. |
-| `ClassPathTransitionPreparation` | Resultado de preparação | Contém um plano completo ou uma falha explícita, permitindo que a futura transação composta da Quest 4 valide a transição sem mutar a campanha. |
+| `ClassPathTransitionPreparation` | Resultado de preparação | Contém um plano completo ou falhas explícitas, permitindo que a transição seja validada isoladamente ou incorporada à transação composta de recrutamento sem mutar a campanha. |
 | `ClassPathTransitionService` | Serviço transacional | Prepara e revalida a transição completa, devolve equipamentos por meio de `EquipmentService`, concede o kit, solicita a troca controlada de classe, restaura os recursos e define a flag permanente sem permitir mutação parcial. |
+
+---
+
+## Pacote `rpg.recruitment`
+
+| Classe | Categoria | Finalidade e relações principais |
+|---|---|---|
+| `QuestRecruitmentDefinition` | Definição imutável | Associa uma quest e etapa reais a um ID canônico de candidato e ao nível de entrada do futuro aliado. Não guarda nome, classe sorteada nem estado mutável. |
+| `QuestRecruitmentCatalog` | Catálogo de relações | Registra no máximo três recrutamentos, preserva a ordem externa e permite busca por quest e etapa ou por candidato. Rejeita chaves e candidatos duplicados. |
+| `QuestRecruitmentLoader` | Carregamento de dados | Lê `quest_recruitments.txt`, valida os quatro campos, referências de quest e etapa, IDs canônicos, nível jogável suportado e o limite estrutural de três registros. |
+| `RecruitmentCandidateState` | Estado mutável mínimo | Guarda o ID canônico, o nome gerado imutável e o indicador mutável de recrutamento de um candidato já apresentado à narrativa. Não contém estado de batalha. |
+| `RecruitmentCandidateStateCatalog` | Catálogo de estado de campanha | Mantém os candidatos já introduzidos, valida que todos pertencem ao catálogo de recrutamentos e impede IDs ou nomes equivalentes repetidos. |
+| `RecruitmentCandidateIntroductionService` | Serviço de campanha | Introduz um candidato de forma idempotente, reúne nomes da party e de outros candidatos, solicita um nome único ao `CharacterNameSelector` e registra o estado somente após seleção válida. |
+| `AllyClassSelector` | Seletor aleatório | Seleciona uniformemente uma classe elegível, excluindo o Flagelo iniciante, o Flagelo final, todas as classes já presentes na party e IDs adicionais fornecidos pelo fluxo consumidor. |
+| `RecruitmentAllyFactory` | Fábrica de domínio | Constrói um aliado completo no nível declarado, calcula atributos e habilidades naturais, equipa diretamente arma e armadura introdutórias, mantém o amuleto vazio e restaura todos os recursos. |
+| `AllyRecruitmentPlan` | Plano imutável | Registra a party e seus integrantes originais, a definição canônica, o candidato persistente e o aliado completo ainda não inserido. Valida coerência de ID, nome e nível. |
+| `AllyRecruitmentService` | Serviço transacional genérico | Prepara, revalida e aplica recrutamentos reutilizáveis. Coordena catálogo, candidato, capacidade da party, seleção de classe, fábrica de aliado, inserção e marcação do candidato sem conhecer a cerimônia do protagonista. |
+| `ClassPathRecruitmentPlan` | Plano composto imutável | Reúne a transição confirmada do protagonista e o plano do primeiro aliado sob a mesma interação de quest, exigindo classes finais diferentes. |
+| `ClassPathRecruitmentPreparation` | Resultado composto | Contém um plano completo ou falhas esperadas da transição de classe e da conclusão da quest, sem realizar mutação parcial. |
+| `ClassPathRecruitmentService` | Serviço transacional composto | Coordena a primeira cerimônia, a validação conjunta de inventário e recompensas, a criação do aliado e o commit ordenado de transição, quest, recompensas, efeitos, inserção na party e estado recrutado. |
 
 ---
 
@@ -297,7 +317,7 @@ Efeitos de passo pertencem à transição do passo. Efeitos finais pertencem à 
 | `DialogueLineDefinition` | Definição imutável | Representa uma fala com número, tipo de locutor, ID opcional e texto processado. |
 | `DialogueDefinition` | Definição agregada imutável | Agrupa falas ordenadas e consecutivas sob um ID de diálogo. |
 | `DialogueCatalog` | Catálogo | Registra diálogos completos por ID estável. |
-| `DialogueLoader` | Carregamento de dados | Lê `dialogues.txt`, monta sequências lineares e valida ordem, locutores e textos. Referências `RECRUIT` permanecem inválidas até existirem candidatos de recrutamento. |
+| `DialogueLoader` | Carregamento de dados | Lê `dialogues.txt`, monta sequências lineares e valida ordem, locutores e textos. Referências `RECRUIT` devem apontar para candidatos declarados em `QuestRecruitmentCatalog`. |
 | `QuestDialogueContext` | Enum narrativo | Define `OFFER`, `ACCEPT`, `DECLINE`, `PENDING` e `COMPLETE`. |
 | `QuestDialogueDefinition` | Definição de relação | Associa quest, passo e contexto a um diálogo canônico. |
 | `QuestDialogueCatalog` | Catálogo de relações | Resolve diálogos contextuais por quest, passo e contexto sem duplicar o conteúdo de `DialogueDefinition`. |
@@ -449,7 +469,7 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 | `CityLocationMenu` | Menu de navegação urbana | Exibe INN, lojas, crafters e locais narrativos atualmente acessíveis em uma lista contínua. Acrescenta `[!]` aos locais narrativos acionáveis e devolve a posição selecionada sem executar regras internas. |
 | `NarrativeLocationMenu` | Menu narrativo | Exibe cabeçalhos de cidade e local, NPCs atualmente visíveis e seus marcadores derivados. Quando nenhum NPC está visível, apresenta `Não há ninguém aqui.`. |
 | `NpcInteractionMenu` | Menu narrativo | Exibe contexto, identidade e descrição do NPC, seguido pelas interações de quest disponíveis em ordem de catálogo e pela opção permanente `Conversar`. |
-| `DialoguePresenter` | Apresentador linear | Resolve previamente locutores, placeholders e posições da party; depois apresenta falas externas em sequência, com cabeçalhos opcionais, quebra automática e avanço somente por Enter. |
+| `DialoguePresenter` | Apresentador linear | Resolve previamente locutores, placeholders e posições da party; depois apresenta falas externas em sequência, com cabeçalhos opcionais, quebra automática e avanço somente por Enter. Locutores `RECRUIT` são resolvidos pelo estado de candidato já existente, sem criação ou novo sorteio. |
 | `QuestOfferMenu` | Menu de decisão | Gera somente as opções de aceitar ou recusar uma oferta após o diálogo externo. Não implementa uma linguagem genérica de escolhas ou ramificações. |
 | `QuestMenu` | Menu de consulta | Separa quests ativas e concluídas sem exibir quests não iniciadas. Apresenta descrição resolvida, etapa atual, objetivos e contadores, recompensas materiais derivadas e, quando elegível, a repetição manual da conclusão por meio de `QuestProgressCoordinator`. Não avança o relógio nem altera progresso durante a navegação. |
 | `QuestProgressCoordinator` | Coordenador de interface | Recebe eventos confirmados ou pedidos de repetição, delega toda regra e mutação a `QuestProgressService` e encaminha o resultado para a apresentação comum ou específica de batalha. Não armazena progresso nem reimplementa regras de quest. |
@@ -479,6 +499,8 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 | `ClassPathSelectionMenu` | Menu de seleção livre | Lista os sete caminhos finais em ordem de catálogo, permite consultar suas apresentações e devolve a classe escolhida. O Flagelo iniciante nunca aparece como opção. |
 | `ClassPathConfirmationMenu` | Menu de confirmação | Exibe a apresentação completa do caminho escolhido e permite apenas confirmar ou escolher novamente. Não oferece cancelamento da cerimônia. |
 | `ClassPathChoiceCoordinator` | Coordenador de interface | Encadeia questionário, cálculo, desempate explícito, revelação, aceitação ou seleção livre e confirmação. Devolve uma definição final de classe sem aplicar a transição nem alterar estado de campanha. |
+| `ClassPathTransitionFailurePresenter` | Apresentador de falhas | Exibe causas esperadas que impedem a cerimônia, incluindo nível insuficiente, classe inelegível, repetição e capacidade de inventário, sem recalcular regras de domínio. |
+| `AllyRecruitmentMenu` | Menu de confirmação obrigatória | Apresenta o nome persistente e a classe sorteada do aliado preparado e oferece somente `Aceitar sua companhia`. Não executa inserção nem altera candidato ou quest. |
 | `SkillDetailFormatter` | Formatador de interface | Produz a ficha compartilhada de uma habilidade com requisito de nível, tipo principal, poder, alvo, custo e descrição narrativa. Deriva os campos técnicos do primeiro componente efetivo de `PRIMARY` e é reutilizado pelo status, pela confirmação em batalha e pelos pergaminhos. |
 | `RewardModifierFormatter` | Formatador de interface | Produz a notação compacta compartilhada de `M.EXP` e `M.GOLD`, combinando fontes permanentes e temporárias para apresentação sem calcular ou alterar recompensas. |
 | `EpicEncounterMenu` | Menu de confirmação | Recebe uma lista de uma a três `EnemyDefinition`, apresenta nomes e descrições do encontro épico e pergunta se o jogador deseja enfrentá-lo. Devolve apenas a decisão; `World` inicia a batalha. |
@@ -492,7 +514,7 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
-| `World` | Coordenador principal do jogo | Mantém o cenário atual, a sessão de exploração e o loop do mundo. Coordena exploração, tempo, lojas, crafting, rotas, transporte, batalhas, resgate e navegação urbana. Filtra conteúdo narrativo por requisitos, resolve interações de NPC, deriva marcadores locais e de destinos imediatamente acessíveis, emite progresso confirmado de chegada e conclusão de dungeon e encaminha mutações de quest por `QuestProgressCoordinator`. |
+| `World` | Coordenador principal do jogo | Mantém o cenário atual, a sessão de exploração e o loop do mundo. Coordena exploração, tempo, lojas, crafting, rotas, transporte, batalhas, resgate e navegação urbana. Filtra conteúdo narrativo por requisitos, resolve interações de NPC, introduz candidatos encontrados em diálogos, deriva marcadores, emite progresso confirmado e despacha conclusões comuns ou a transação composta da primeira cerimônia e recrutamento. Não implementa internamente as regras de candidato, aliado, classe ou quest. |
 | `WorldProgress` | Estado mutável | Registra os IDs dos cenários descobertos na execução atual, valida referências por meio de `ScenarioCatalog` e expõe uma cópia não modificável do progresso. Permanece separado de `TravelProgress`, pois descoberta e desbloqueio de rotas são conceitos independentes. |
 | `WorldClock` | Estado temporal mutável | Armazena horas fictícias decorridas, calcula dia e hora derivados e valida avanços contra overflow. `World` o avança somente após batalha concluída e coordena reposição global quando o avanço atravessa meia-noite. |
 
@@ -855,6 +877,10 @@ World                   = mudança efetiva para a cidade escolhida
 | Estado comercial atual | `ShopStateCatalog` | `ShopStateCatalog` → `ShopState` → `ShopOfferState` |
 | Interface comercial | `ShopMenu` | `World` → `ShopMenu` → `ShopTransactionService` |
 | Transações comerciais | `ShopTransactionService` | validação → `Party`, `Inventory` e `ShopOfferState` |
+| Introdução de candidato | `RecruitmentCandidateIntroductionService` | candidato declarado + nomes reservados → nome persistente único → estado mínimo |
+| Preparação genérica de aliado | `AllyRecruitmentService` | candidato + party + exclusões → classe elegível → aliado completo → plano |
+| Primeiro recrutamento | `ClassPathRecruitmentService` | escolha do protagonista + transição + quest + aliado → revalidação → commit composto |
+| Confirmação do aliado | `AllyRecruitmentMenu` | aliado preparado → `Aceitar sua companhia` → retorno ao coordenador |
 
 ## Regra prática para novas classes
 

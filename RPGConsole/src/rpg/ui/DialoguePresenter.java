@@ -11,10 +11,12 @@ import rpg.narrative.DialogueDefinition;
 import rpg.narrative.DialogueLineDefinition;
 import rpg.narrative.NarrativeTextProcessor;
 import rpg.narrative.NpcCatalog;
+import rpg.recruitment.RecruitmentCandidateStateCatalog;
 
 // Presents external linear dialogues one utterance at a time.
 public final class DialoguePresenter {
 
+	private final RecruitmentCandidateStateCatalog candidateStateCatalog;
     private final ConsoleInput consoleInput;
     private final DialogueCatalog dialogueCatalog;
     private final NpcCatalog npcCatalog;
@@ -24,15 +26,18 @@ public final class DialoguePresenter {
             ConsoleInput consoleInput,
             DialogueCatalog dialogueCatalog,
             NpcCatalog npcCatalog,
-            EnemyCatalog enemyCatalog) {
+			EnemyCatalog enemyCatalog,
+			RecruitmentCandidateStateCatalog candidateStateCatalog
+			) {
         this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
-
         this.dialogueCatalog =
                 Objects.requireNonNull(dialogueCatalog, "Dialogue catalog cannot be null.");
-
         this.npcCatalog = Objects.requireNonNull(npcCatalog, "NPC catalog cannot be null.");
-
         this.enemyCatalog = Objects.requireNonNull(enemyCatalog, "Enemy catalog cannot be null.");
+		this.candidateStateCatalog =
+				Objects.requireNonNull(
+						candidateStateCatalog,
+						"Recruitment candidate state catalog cannot be null.");
     }
 
     public void display(String dialogueId, Party party) {
@@ -86,18 +91,22 @@ public final class DialoguePresenter {
 
     private String resolveSpeakerName(DialogueLineDefinition lineDefinition, Party party) {
         return switch (lineDefinition.getSpeakerType()) {
-            case NPC -> npcCatalog.getById(lineDefinition.getSpeakerId().orElseThrow()).getName();
+		case NPC -> npcCatalog.getById(lineDefinition.getSpeakerId().orElseThrow())
+		.getName();
 
             case ENEMY ->
-                    enemyCatalog.getById(lineDefinition.getSpeakerId().orElseThrow()).getName();
+		enemyCatalog.getById(lineDefinition.getSpeakerId().orElseThrow())
+		.getName();
 
-            case LEADER -> party.getLeader().getName();
+		case LEADER -> party.getLeader()
+		.getName();
 
             case NARRATOR -> null;
 
             case RECRUIT ->
-                    throw new IllegalStateException(
-                            "RECRUIT dialogue speakers are unavailable until recruitment candidates are implemented.");
+		candidateStateCatalog
+		.getByCandidateId(lineDefinition.getSpeakerId().orElseThrow())
+		.getName();
         };
     }
 

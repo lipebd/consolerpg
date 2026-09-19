@@ -3,41 +3,33 @@ package rpg;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
-import java.util.Random;
 import java.util.Optional;
+import java.util.Random;
 
-import rpg.characters.Party;
-import rpg.characters.PlayableCharacter;
 import rpg.characters.CharacterNameCatalog;
 import rpg.characters.CharacterNameLoader;
 import rpg.characters.CharacterNameSelector;
+import rpg.characters.Party;
+import rpg.characters.PlayableCharacter;
 import rpg.classes.CharacterGrowthCalculator;
+import rpg.classes.PlayableClassCatalog;
+import rpg.classes.PlayableClassDefinition;
+import rpg.classes.PlayableClassLoader;
 import rpg.classes.paths.ClassPathCatalog;
-import rpg.classes.paths.ClassPathRequiredClassValidator;
 import rpg.classes.paths.ClassPathLoader;
 import rpg.classes.paths.ClassPathQuestionnaireCatalog;
 import rpg.classes.paths.ClassPathQuestionnaireLoader;
-import rpg.classes.PlayableClassCatalog;
-import rpg.classes.PlayableClassLoader;
-import rpg.classes.PlayableClassDefinition;
+import rpg.classes.paths.ClassPathRecommendationService;
+import rpg.classes.paths.ClassPathRequiredClassValidator;
+import rpg.classes.paths.ClassPathTransitionService;
 import rpg.development.DevelopmentPartyFactory;
 import rpg.enemies.EnemyCatalog;
 import rpg.enemies.EnemyDropCatalog;
 import rpg.enemies.EnemyDropLoader;
 import rpg.enemies.EnemyLoader;
+import rpg.flags.CampaignFlags;
 import rpg.flags.FlagCatalog;
 import rpg.flags.FlagLoader;
-import rpg.flags.CampaignFlags;
-import rpg.quests.QuestProgress;
-import rpg.quests.QuestCatalog;
-import rpg.quests.QuestLoader;
-import rpg.quests.effects.QuestEffectCatalog;
-import rpg.quests.effects.QuestEffectLoader;
-import rpg.quests.rewards.QuestRewardCatalog;
-import rpg.quests.rewards.QuestRewardLoader;
-import rpg.requirements.QuestAvailabilityValidator;
-import rpg.requirements.RequirementCatalog;
-import rpg.requirements.RequirementLoader;
 import rpg.items.Item;
 import rpg.items.ItemCatalog;
 import rpg.items.ItemDefinition;
@@ -46,11 +38,11 @@ import rpg.items.ItemFactory;
 import rpg.items.ItemLoader;
 import rpg.items.RecoveryItemDefinitionCatalog;
 import rpg.items.RecoveryItemLoader;
+import rpg.items.SkillScrollDefinitionCatalog;
+import rpg.items.SkillScrollLoader;
 import rpg.items.equipment.EquipmentCatalog;
 import rpg.items.equipment.EquipmentLoader;
 import rpg.items.equipment.EquipmentService;
-import rpg.items.SkillScrollDefinitionCatalog;
-import rpg.items.SkillScrollLoader;
 import rpg.narrative.DialogueCatalog;
 import rpg.narrative.DialogueLoader;
 import rpg.narrative.NarrativeLocationCatalog;
@@ -62,21 +54,54 @@ import rpg.narrative.NpcPlacementCatalog;
 import rpg.narrative.NpcPlacementLoader;
 import rpg.narrative.QuestDialogueCatalog;
 import rpg.narrative.QuestDialogueLoader;
+import rpg.persistence.CampaignLoadResult;
+import rpg.persistence.CampaignLoadService;
 import rpg.persistence.CampaignSaveService;
+import rpg.persistence.CampaignSnapshotRestorer;
+import rpg.persistence.RestoredCampaign;
+import rpg.quests.QuestCatalog;
+import rpg.quests.QuestLoader;
+import rpg.quests.QuestProgress;
+import rpg.quests.QuestProgressService;
+import rpg.quests.effects.QuestEffectCatalog;
+import rpg.quests.effects.QuestEffectLoader;
+import rpg.quests.rewards.QuestRewardCatalog;
+import rpg.quests.rewards.QuestRewardLoader;
+import rpg.recruitment.AllyClassSelector;
+import rpg.recruitment.AllyRecruitmentService;
+import rpg.recruitment.ClassPathRecruitmentService;
+import rpg.recruitment.QuestRecruitmentCatalog;
+import rpg.recruitment.QuestRecruitmentLoader;
+import rpg.recruitment.RecruitmentAllyFactory;
+import rpg.recruitment.RecruitmentCandidateIntroductionService;
+import rpg.recruitment.RecruitmentCandidateStateCatalog;
+import rpg.requirements.QuestAvailabilityValidator;
+import rpg.requirements.RequirementCatalog;
+import rpg.requirements.RequirementLoader;
 import rpg.skills.SkillCatalog;
 import rpg.skills.SkillLoader;
+import rpg.ui.AllyRecruitmentMenu;
+import rpg.ui.CampaignSelectionMenu;
+import rpg.ui.CharacterCreationMenu;
+import rpg.ui.ClassPathChoiceCoordinator;
+import rpg.ui.ClassPathConfirmationMenu;
+import rpg.ui.ClassPathQuestionnaireMenu;
+import rpg.ui.ClassPathRecommendationMenu;
+import rpg.ui.ClassPathSelectionMenu;
+import rpg.ui.ClassPathTieMenu;
+import rpg.ui.ClassPathTransitionFailurePresenter;
 import rpg.ui.ConsoleInput;
 import rpg.ui.ConsoleUI;
 import rpg.ui.TitleScreen;
-import rpg.ui.CharacterCreationMenu;
 import rpg.world.World;
+import rpg.world.WorldClock;
 import rpg.world.WorldProgress;
 import rpg.world.branches.ScenarioBranchCatalog;
 import rpg.world.branches.ScenarioBranchLoader;
-import rpg.world.crafting.CraftingRecipeCatalog;
-import rpg.world.crafting.CraftingRecipeLoader;
 import rpg.world.crafting.CrafterCatalog;
 import rpg.world.crafting.CrafterLoader;
+import rpg.world.crafting.CraftingRecipeCatalog;
+import rpg.world.crafting.CraftingRecipeLoader;
 import rpg.world.encounters.EncounterCatalog;
 import rpg.world.encounters.EncounterLoader;
 import rpg.world.inns.InnCatalog;
@@ -87,6 +112,7 @@ import rpg.world.scenarios.CombatScenarioDefinitionCatalog;
 import rpg.world.scenarios.CombatScenarioLoader;
 import rpg.world.scenarios.DungeonDefinitionCatalog;
 import rpg.world.scenarios.DungeonLoader;
+import rpg.world.scenarios.DungeonProgress;
 import rpg.world.scenarios.Scenario;
 import rpg.world.scenarios.ScenarioCatalog;
 import rpg.world.scenarios.ScenarioDefinition;
@@ -104,13 +130,6 @@ import rpg.world.transport.CityTransportLoader;
 import rpg.world.travel.TravelCatalog;
 import rpg.world.travel.TravelProgress;
 import rpg.world.travel.TravelRouteLoader;
-import rpg.world.WorldClock;
-import rpg.persistence.CampaignLoadResult;
-import rpg.persistence.CampaignLoadService;
-import rpg.persistence.CampaignSnapshotRestorer;
-import rpg.persistence.RestoredCampaign;
-import rpg.ui.CampaignSelectionMenu;
-import rpg.world.scenarios.DungeonProgress;
 
 // Starts the game and controls its initial execution.
 public class Main {
@@ -158,6 +177,7 @@ public class Main {
 			EnemyDropCatalog enemyDropCatalog;
 
 			QuestCatalog questCatalog;
+			QuestRecruitmentCatalog questRecruitmentCatalog;
 			QuestRewardCatalog questRewardCatalog;
 			QuestEffectCatalog questEffectCatalog;
 			FlagCatalog flagCatalog;
@@ -278,6 +298,14 @@ public class Main {
 								Path.of("data", "quest_steps.txt"),
 								Path.of("data", "quest_objectives.txt"));
 
+				QuestRecruitmentLoader questRecruitmentLoader =
+						new QuestRecruitmentLoader();
+
+				questRecruitmentCatalog =
+						questRecruitmentLoader.load(
+								Path.of("data", "quest_recruitments.txt"),
+								questCatalog);
+
 				QuestRewardLoader questRewardLoader =
 				        new QuestRewardLoader();
 
@@ -335,7 +363,8 @@ public class Main {
 				        dialogueLoader.load(
 				                Path.of("data", "dialogues.txt"),
 				                npcCatalog,
-				                enemyCatalog);
+								enemyCatalog,
+								questRecruitmentCatalog);
 
 				QuestDialogueLoader questDialogueLoader =
 				        new QuestDialogueLoader();
@@ -557,8 +586,95 @@ public class Main {
 			QuestProgress questProgress =
 			        new QuestProgress(questCatalog);
 
-			CampaignFlags campaignFlags =
-			        new CampaignFlags(flagCatalog);
+			CampaignFlags campaignFlags = new CampaignFlags(flagCatalog);
+
+			RecruitmentCandidateStateCatalog candidateStateCatalog =
+					new RecruitmentCandidateStateCatalog(questRecruitmentCatalog);
+
+			CharacterNameSelector recruitmentNameSelector =
+					new CharacterNameSelector(characterNameCatalog, new Random());
+
+			RecruitmentCandidateIntroductionService candidateIntroductionService =
+					new RecruitmentCandidateIntroductionService(
+							recruitmentNameSelector, candidateStateCatalog, party);
+
+			QuestProgressService questProgressService =
+					new QuestProgressService(
+							questProgress,
+							questRewardCatalog,
+							questEffectCatalog,
+							party,
+							itemCatalog,
+							campaignFlags,
+							travelProgress);
+
+			ClassPathTransitionService classPathTransitionService =
+					new ClassPathTransitionService(
+							classPathCatalog,
+							playableClassCatalog,
+							skillCatalog,
+							itemCatalog,
+							equipmentService,
+							campaignFlags);
+
+			AllyClassSelector allyClassSelector =
+					new AllyClassSelector(
+							classPathCatalog,
+							playableClassCatalog,
+							new Random());
+
+			RecruitmentAllyFactory recruitmentAllyFactory =
+					new RecruitmentAllyFactory(
+							classPathCatalog,
+							playableClassCatalog,
+							skillCatalog,
+							equipmentCatalog,
+							characterGrowthCalculator);
+
+			AllyRecruitmentService allyRecruitmentService =
+					new AllyRecruitmentService(
+							party,
+							questRecruitmentCatalog,
+							candidateStateCatalog,
+							allyClassSelector,
+							recruitmentAllyFactory);
+
+			ClassPathRecruitmentService classPathRecruitmentService =
+					new ClassPathRecruitmentService(
+							party,
+							questProgress,
+							questRecruitmentCatalog,
+							classPathTransitionService,
+							allyRecruitmentService,
+							questProgressService);
+
+			ClassPathRecommendationService classPathRecommendationService =
+					new ClassPathRecommendationService(
+							classPathQuestionnaireCatalog,
+							classPathCatalog);
+
+			ClassPathChoiceCoordinator classPathChoiceCoordinator =
+					new ClassPathChoiceCoordinator(
+							party,
+							playableClassCatalog,
+							classPathQuestionnaireCatalog,
+							classPathRecommendationService,
+							new ClassPathQuestionnaireMenu(consoleInput),
+							new ClassPathTieMenu(consoleInput),
+							new ClassPathRecommendationMenu(consoleInput),
+							new ClassPathSelectionMenu(
+									consoleInput,
+									classPathCatalog,
+									playableClassCatalog),
+							new ClassPathConfirmationMenu(consoleInput));
+
+			AllyRecruitmentMenu allyRecruitmentMenu =
+					new AllyRecruitmentMenu(consoleInput);
+
+			ClassPathTransitionFailurePresenter classPathTransitionFailurePresenter =
+					new ClassPathTransitionFailurePresenter(
+							consoleInput,
+							itemCatalog);
 
 			CampaignSaveService campaignSaveService = new CampaignSaveService();
 
@@ -595,9 +711,15 @@ public class Main {
                     requirementCatalog,
                     questProgress,
                     campaignFlags,
+							candidateStateCatalog,
+							candidateIntroductionService,
+							questProgressService,
+							classPathChoiceCoordinator,
+							classPathRecruitmentService,
+							allyRecruitmentMenu,
+							classPathTransitionFailurePresenter,
                     questCatalog,
                     questRewardCatalog,
-                    questEffectCatalog,
                     questDialogueCatalog);
 
 			world.start();

@@ -14,6 +14,9 @@ import rpg.battle.BattleCoordinator;
 import rpg.battle.BattleResult;
 import rpg.battle.rewards.BattleRewardService;
 import rpg.characters.Party;
+import rpg.classes.PlayableClassDefinition;
+import rpg.recruitment.ClassPathRecruitmentPlan;
+import rpg.recruitment.ClassPathRecruitmentPreparation;
 import rpg.enemies.EnemyCatalog;
 import rpg.enemies.EnemyDefinition;
 import rpg.enemies.EnemyDropCatalog;
@@ -23,6 +26,9 @@ import rpg.items.ItemCatalog;
 import rpg.items.equipment.EquipmentCatalog;
 import rpg.items.equipment.EquipmentService;
 import rpg.narrative.DialogueCatalog;
+import rpg.narrative.DialogueDefinition;
+import rpg.narrative.DialogueLineDefinition;
+import rpg.narrative.DialogueSpeakerType;
 import rpg.narrative.NarrativeLocationCatalog;
 import rpg.narrative.NarrativeLocationDefinition;
 import rpg.narrative.NpcCatalog;
@@ -50,15 +56,20 @@ import rpg.quests.QuestProgressResult;
 import rpg.quests.QuestProgressService;
 import rpg.quests.QuestStatus;
 import rpg.quests.QuestStepDefinition;
-import rpg.quests.effects.QuestEffectCatalog;
 import rpg.quests.rewards.QuestRewardCatalog;
+import rpg.recruitment.ClassPathRecruitmentService;
+import rpg.recruitment.RecruitmentCandidateIntroductionService;
+import rpg.recruitment.RecruitmentCandidateStateCatalog;
 import rpg.requirements.RequirementCatalog;
 import rpg.requirements.RequirementEvaluator;
 import rpg.requirements.RequirementSetDefinition;
+import rpg.ui.AllyRecruitmentMenu;
 import rpg.ui.BattleRewardScreen;
 import rpg.ui.CityLocationMenu;
 import rpg.ui.CityMenu;
 import rpg.ui.CityTransportMenu;
+import rpg.ui.ClassPathChoiceCoordinator;
+import rpg.ui.ClassPathTransitionFailurePresenter;
 import rpg.ui.CombatScenarioMenu;
 import rpg.ui.ConsoleInput;
 import rpg.ui.ConsoleUI;
@@ -123,6 +134,8 @@ public class World {
 	private final CampaignSaveService campaignSaveService;
 	private final QuestProgressService questProgressService;
 	private final QuestNpcInteractionResolver questNpcInteractionResolver;
+	private final RecruitmentCandidateStateCatalog candidateStateCatalog;
+	private final RecruitmentCandidateIntroductionService candidateIntroductionService;
 
 	private final CityLocationMenu cityLocationMenu;
 	private final CityMenu cityMenu;
@@ -142,10 +155,15 @@ public class World {
 	private final NarrativeLocationMenu narrativeLocationMenu;
 	private final NpcInteractionMenu npcInteractionMenu;
 	private final DialoguePresenter dialoguePresenter;
+	private final DialogueCatalog dialogueCatalog;
 	private final QuestOfferMenu questOfferMenu;
 	private final QuestProgressCoordinator questProgressCoordinator;
 	private final QuestProgressPresenter questProgressPresenter;
 	private final QuestMenu questMenu;
+	private final ClassPathChoiceCoordinator classPathChoiceCoordinator;
+	private final ClassPathRecruitmentService classPathRecruitmentService;
+	private final AllyRecruitmentMenu allyRecruitmentMenu;
+	private final ClassPathTransitionFailurePresenter classPathTransitionFailurePresenter;
 
 	private final ItemCatalog itemCatalog;
 	private final CrafterCatalog crafterCatalog;
@@ -217,9 +235,15 @@ public class World {
 			RequirementCatalog requirementCatalog,
 			QuestProgress questProgress,
 			CampaignFlags campaignFlags,
+			RecruitmentCandidateStateCatalog candidateStateCatalog,
+			RecruitmentCandidateIntroductionService candidateIntroductionService,
+			QuestProgressService questProgressService,
+			ClassPathChoiceCoordinator classPathChoiceCoordinator,
+			ClassPathRecruitmentService classPathRecruitmentService,
+			AllyRecruitmentMenu allyRecruitmentMenu,
+			ClassPathTransitionFailurePresenter classPathTransitionFailurePresenter,
 			QuestCatalog questCatalog,
 			QuestRewardCatalog questRewardCatalog,
-			QuestEffectCatalog questEffectCatalog,
 			QuestDialogueCatalog questDialogueCatalog) {
 
 		Objects.requireNonNull(consoleInput, "Console input cannot be null.");
@@ -258,20 +282,23 @@ public class World {
                 Objects.requireNonNull(questProgress, "Quest progress cannot be null.");
         this.campaignFlags =
                 Objects.requireNonNull(campaignFlags, "Campaign flags cannot be null.");
+		this.candidateStateCatalog =
+				Objects.requireNonNull(
+						candidateStateCatalog,
+						"Recruitment candidate state catalog cannot be null.");
+		this.candidateIntroductionService =
+				Objects.requireNonNull(
+						candidateIntroductionService,
+						"Recruitment candidate introduction service cannot be null.");
         this.questCatalog = Objects.requireNonNull(questCatalog, "Quest catalog cannot be null.");
         this.questDialogueCatalog =
                 Objects.requireNonNull(
                         questDialogueCatalog, "Quest dialogue catalog cannot be null.");
         this.requirementEvaluator = new RequirementEvaluator(this.itemCatalog);
         this.questProgressService =
-                new QuestProgressService(
-                        this.questProgress,
-                        questRewardCatalog,
-                        questEffectCatalog,
-                        this.party,
-                        this.itemCatalog,
-                        this.campaignFlags,
-                        this.travelProgress);
+				Objects.requireNonNull(
+						questProgressService,
+						"Quest progress service cannot be null.");
         this.questNpcInteractionResolver =
                 new QuestNpcInteractionResolver(
                         this.questCatalog,
@@ -291,6 +318,8 @@ public class World {
                         cityTransportCatalog, "City transport catalog cannot be null.");
         this.worldProgress.discover(this.currentScenario.getId());
         this.worldClock = Objects.requireNonNull(worldClock, "World clock cannot be null.");
+		this.dialogueCatalog =
+				Objects.requireNonNull(dialogueCatalog, "Dialogue catalog cannot be null.");
 
         // Shared random generator and gameplay services
         this.random = new Random();
@@ -303,7 +332,18 @@ public class World {
         this.campaignSaveService =
         Objects.requireNonNull(campaignSaveService, "Campaign save service cannot be null.");
         Objects.requireNonNull(questRewardCatalog, "Quest reward catalog cannot be null.");
-        Objects.requireNonNull(questEffectCatalog, "Quest effect catalog cannot be null.");
+		this.classPathChoiceCoordinator =
+				Objects.requireNonNull(
+						classPathChoiceCoordinator,
+						"Class path choice coordinator cannot be null.");
+		this.classPathRecruitmentService =
+				Objects.requireNonNull(
+						classPathRecruitmentService,
+						"Class path recruitment service cannot be null.");
+		this.classPathTransitionFailurePresenter =
+				Objects.requireNonNull(
+						classPathTransitionFailurePresenter,
+						"Class path transition failure presenter cannot be null.");
 
         // User interface
         this.epicEncounterMenu = new EpicEncounterMenu(consoleInput);
@@ -355,9 +395,10 @@ public class World {
         this.dialoguePresenter =
                 new DialoguePresenter(
                         consoleInput,
-                        Objects.requireNonNull(dialogueCatalog, "Dialogue catalog cannot be null."),
+						this.dialogueCatalog,
                         this.npcCatalog,
-                        this.enemyCatalog);
+						this.enemyCatalog,
+						this.candidateStateCatalog);
         this.craftingMenu =
                 new CraftingMenu(
                         this.party,
@@ -372,6 +413,10 @@ public class World {
                         this.party, consoleInput, this.worldClock, this.questProgressCoordinator);
         this.partyRescueScreen = new PartyRescueScreen(consoleInput);
         this.exitConfirmationMenu = new ExitConfirmationMenu(consoleInput);
+		this.allyRecruitmentMenu =
+				Objects.requireNonNull(
+						allyRecruitmentMenu,
+						"Ally recruitment menu cannot be null.");
 
         // Initial exploration state
         if (this.currentScenario instanceof CombatScenario combatScenario) {
@@ -690,9 +735,8 @@ public class World {
 
             switch (selection.action()) {
                 case TALK ->
-                        dialoguePresenter.display(
+			displayDialogue(
                                 npcDefinition.getDefaultDialogueId(),
-                                party,
                                 createNarrativeHeaders(city, locationDefinition));
 
                 case QUEST -> {
@@ -905,6 +949,29 @@ public class World {
             NarrativeLocationDefinition locationDefinition,
             NpcDefinition npcDefinition,
             QuestDefinition questDefinition) {
+		if (classPathRecruitmentService.hasRecruitmentForCurrentStep(
+				questDefinition.getId())) {
+			executeClassPathRecruitmentInteraction(
+					city,
+					locationDefinition,
+					npcDefinition,
+					questDefinition);
+
+			return;
+		}
+
+		executeStandardQuestInteraction(
+				city,
+				locationDefinition,
+				npcDefinition,
+				questDefinition);
+	}
+
+	private void executeStandardQuestInteraction(
+			City city,
+			NarrativeLocationDefinition locationDefinition,
+			NpcDefinition npcDefinition,
+			QuestDefinition questDefinition) {
         int currentStep =
                 questProgress.getCurrentStep(questDefinition.getId()).orElseThrow().getStep();
 
@@ -948,10 +1015,84 @@ public class World {
         questProgressPresenter.display(result);
     }
 
+	private void executeClassPathRecruitmentInteraction(
+			City city,
+			NarrativeLocationDefinition locationDefinition,
+			NpcDefinition npcDefinition,
+			QuestDefinition questDefinition) {
+		int currentStep =
+				questProgress
+				.getCurrentStep(questDefinition.getId())
+				.orElseThrow()
+				.getStep();
+
+		List<String> headers =
+				createNarrativeHeaders(city, locationDefinition);
+
+		QuestDialogueDefinition completionDialogue =
+				getRequiredQuestDialogue(
+						questDefinition.getId(),
+						currentStep,
+						QuestDialogueContext.COMPLETE);
+
+		PlayableClassDefinition selectedClass =
+				classPathChoiceCoordinator.chooseClassPath();
+
+		ClassPathRecruitmentPreparation preparation =
+				classPathRecruitmentService.prepare(
+						questDefinition.getId(),
+						npcDefinition.getId(),
+						selectedClass.getId());
+
+		if (!preparation.isReady()) {
+			displayClassPathRecruitmentFailures(preparation);
+			return;
+		}
+
+		ClassPathRecruitmentPlan plan = preparation.getPlan();
+
+		displayDialogue(
+				completionDialogue.getDialogueId(),
+				headers);
+
+		allyRecruitmentMenu.confirm(
+				plan.getAllyRecruitmentPlan().getAlly());
+
+		QuestProgressResult result =
+				classPathRecruitmentService.apply(plan);
+
+		questProgressPresenter.display(result);
+	}
+
+	private void displayClassPathRecruitmentFailures(
+			ClassPathRecruitmentPreparation preparation) {
+		if (!preparation.getClassPathFailures().isEmpty()) {
+			classPathTransitionFailurePresenter.display(
+					preparation.getClassPathFailures());
+
+			return;
+		}
+
+		questProgressPresenter.displayCompletionFailures(
+				preparation.getQuestCompletionFailures());
+	}
+
     private void displayRequiredQuestDialogue(
-            String questId, int step, QuestDialogueContext context, List<String> headers) {
+			String questId,
+			int step,
+			QuestDialogueContext context,
+			List<String> headers) {
         QuestDialogueDefinition definition =
-                questDialogueCatalog
+				getRequiredQuestDialogue(questId, step, context);
+
+		displayDialogue(definition.getDialogueId(), headers);
+	}
+
+	private QuestDialogueDefinition getRequiredQuestDialogue(
+			String questId,
+			int step,
+			QuestDialogueContext context) {
+		return questDialogueCatalog
                         .find(questId, step, context)
                         .orElseThrow(
                                 () ->
@@ -962,18 +1103,13 @@ public class World {
                                                         + step
                                                         + ", "
                                                         + context));
-
-        dialoguePresenter.display(definition.getDialogueId(), party, headers);
     }
 
     private void displayOptionalQuestDialogue(
             String questId, int step, QuestDialogueContext context, List<String> headers) {
         questDialogueCatalog
                 .find(questId, step, context)
-                .ifPresent(
-                        definition ->
-                                dialoguePresenter.display(
-                                        definition.getDialogueId(), party, headers));
+		.ifPresent(definition -> displayDialogue(definition.getDialogueId(), headers));
     }
 
     private static List<String> createNarrativeHeaders(
@@ -1024,6 +1160,32 @@ public class World {
 
         return false;
     }
+
+	private void displayDialogue(String dialogueId, List<String> headers) {
+		introduceDialogueCandidates(dialogueId);
+
+		dialoguePresenter.display(dialogueId, party, headers);
+	}
+
+	private void introduceDialogueCandidates(String dialogueId) {
+		DialogueDefinition dialogueDefinition =
+				dialogueCatalog.getById(dialogueId);
+
+		Set<String> candidateIds = new LinkedHashSet<>();
+
+		for (DialogueLineDefinition lineDefinition
+				: dialogueDefinition.getLines()) {
+			if (lineDefinition.getSpeakerType()
+					== DialogueSpeakerType.RECRUIT) {
+				candidateIds.add(
+						lineDefinition.getSpeakerId().orElseThrow());
+			}
+		}
+
+		for (String candidateId : candidateIds) {
+			candidateIntroductionService.introduce(candidateId);
+		}
+	}
 
 	private List<CombatScenarioAction> getAvailableCombatScenarioActions() {
 		List<CombatScenarioAction> availableActions = new ArrayList<>();

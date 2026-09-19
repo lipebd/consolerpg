@@ -776,7 +776,7 @@ The standalone protagonist transition plan and application are implemented and v
 * [x] Implement compact recommendation presentation with optional description access.
 * [x] Build, revalidate and apply the complete standalone protagonist transition atomically.
 * [x] Verify capacity failure, equipment return, introductory items, class replacement, natural skills, full restoration and repeated-application prevention.
-* [ ] Compose the confirmed protagonist transition with mandatory recruitment in Part 8.
+* [x] Compose the confirmed protagonist transition with mandatory recruitment in Part 8.
 
 ---
 
@@ -806,6 +806,32 @@ Name rules:
 * Names already used by the protagonist, party or another candidate are ineligible.
 * If no unique name remains, candidate creation fails before mutation.
 * Separate protagonist, ally or class-specific name lists are not introduced.
+
+### Recruitment dispatch data
+
+Use:
+
+```text
+data/quest_recruitments.txt
+```
+
+Format:
+
+```text
+# questId;step;candidateId;allyLevel
+```
+
+Rules:
+
+* Each record associates one real quest step with one canonical recruitment candidate and the level at which that candidate becomes playable.
+* Quest and step references must exist.
+* One quest-and-step combination may appear at most once.
+* One candidate ID may appear at most once.
+* Ally level must remain inside the supported playable-character level range.
+* The catalog accepts at most three records, derived from the maximum party size minus its required leader.
+* The file defines recruitment dispatch and playable-entry level; it does not store generated names, recruited state, class results, equipment or battle resources.
+* The relationship itself is neutral regarding narrative orchestration. Part 8 consumes the first recruitment through the class-path ceremony, while later narrative recruitments can reuse the same candidate, class-selection, ally-construction and party-insertion infrastructure without repeating that ceremony.
+* The file may remain header-only until canonical recruitment quests are authored.
 
 ### Off-screen ceremony
 
@@ -850,6 +876,8 @@ The first ally enters with:
 * The candidate's previously generated name.
 * The second party position.
 
+The generic recruitment definition stores `allyLevel` externally so later recruitment content may select another supported entry level without changing Java code. The first canonical ally remains fixed at level 7.
+
 The ally's equipped introductory items never pass through the shared inventory.
 
 ### Atomic recruitment
@@ -862,16 +890,16 @@ The ally's equipped introductory items never pass through the shared inventory.
 
 ### Implementation checklist
 
-* [ ] Freeze the exact candidate-definition trigger or data reference after auditing the quest-effect flow.
-* [ ] Create the minimal persistent recruitment-candidate state.
-* [ ] Load and validate the shared character-name list.
-* [ ] Generate a unique candidate name at first narrative introduction.
-* [ ] Resolve `RECRUIT` dialogue speakers from candidate state.
-* [ ] Build the eligible ally class pool after protagonist confirmation.
-* [ ] Construct the complete level-7 ally with equipped introductory gear.
-* [ ] Present the single mandatory acceptance action.
-* [ ] Recruit the ally into the second party position atomically.
-* [ ] Prevent duplicate candidate creation and recruitment.
+* [x] Freeze the exact candidate-definition trigger or data reference after auditing the quest-effect flow.
+* [x] Create the minimal persistent recruitment-candidate state.
+* [x] Load and validate the shared character-name list.
+* [x] Generate a unique candidate name at first narrative introduction.
+* [x] Resolve `RECRUIT` dialogue speakers from candidate state.
+* [x] Build the eligible ally class pool after protagonist confirmation.
+* [x] Construct the complete level-7 ally with equipped introductory gear.
+* [x] Present the single mandatory acceptance action.
+* [x] Recruit the ally into the second party position atomically.
+* [x] Prevent duplicate candidate creation and recruitment.
 
 ---
 

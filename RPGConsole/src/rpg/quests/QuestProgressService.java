@@ -100,33 +100,70 @@ public final class QuestProgressService {
         return accumulator.createResult();
     }
 
-    public List<QuestCompletionFailure> validateNpcInteractionCompletion(
-            String questId, String npcId) {
+	public List<QuestCompletionFailure>
+	validateNpcInteractionCompletion(
+			String questId,
+			String npcId
+			) {
+		return validateNpcInteractionCompletion(
+				questId,
+				npcId,
+				Map.of());
+	}
+
+	public List<QuestCompletionFailure>
+	validateNpcInteractionCompletion(
+			String questId,
+			String npcId,
+			Map<Item, Integer> pendingInventoryAdditions
+			) {
         if (npcId == null || npcId.isBlank()) {
-            throw new IllegalArgumentException("NPC ID cannot be empty.");
+			throw new IllegalArgumentException(
+					"NPC ID cannot be empty."
+					);
         }
+
+		Map<Item, Integer> validatedPendingAdditions =
+				validatePendingInventoryAdditions(
+						pendingInventoryAdditions);
 
         QuestStepDefinition currentStep =
                 questProgress
                         .getCurrentStep(questId)
                         .orElseThrow(
-                                () -> new IllegalStateException("Quest is not active: " + questId));
+						() ->
+						new IllegalStateException(
+								"Quest is not active: "
+										+ questId));
 
         String normalizedNpcId = npcId.trim();
 
         Map<Item, Integer> deliveredItems;
 
         if (containsDeliveryObjective(currentStep)) {
-            validateDeliveryInteraction(questId, normalizedNpcId, currentStep);
+			validateDeliveryInteraction(
+					questId,
+					normalizedNpcId,
+					currentStep);
 
-            deliveredItems = collectDeliveredItems(questId, currentStep);
+			deliveredItems =
+					collectDeliveredItems(
+							questId,
+							currentStep);
         } else {
-            validateTalkInteraction(questId, normalizedNpcId, currentStep);
+			validateTalkInteraction(
+					questId,
+					normalizedNpcId,
+					currentStep);
 
             deliveredItems = Map.of();
         }
 
-        return List.copyOf(validateCompletionPlan(questId, deliveredItems));
+		return List.copyOf(
+				validateCompletionPlan(
+						questId,
+						deliveredItems,
+						validatedPendingAdditions));
     }
 
     public QuestProgressResult completeNpcInteraction(String questId, String npcId) {
@@ -176,7 +213,7 @@ public final class QuestProgressService {
 
         ProgressAccumulator accumulator = new ProgressAccumulator();
 
-        List<QuestCompletionFailure> failures = validateCompletionPlan(questId, deliveredItems);
+		List<QuestCompletionFailure> failures = validateCompletionPlan(questId, deliveredItems, Map.of());
 
         if (!failures.isEmpty()) {
             accumulator.completionFailures.addAll(failures);
@@ -244,7 +281,7 @@ public final class QuestProgressService {
 
         ProgressAccumulator accumulator = new ProgressAccumulator();
 
-        List<QuestCompletionFailure> failures = validateCompletionPlan(questId, Map.of());
+		List<QuestCompletionFailure> failures = validateCompletionPlan(questId, Map.of(), Map.of());
 
         if (!failures.isEmpty()) {
             accumulator.completionFailures.addAll(failures);
@@ -336,7 +373,7 @@ public final class QuestProgressService {
                 continue;
             }
 
-            List<QuestCompletionFailure> failures = validateCompletionPlan(questId, Map.of());
+			List<QuestCompletionFailure> failures = validateCompletionPlan(questId, Map.of(), Map.of());
 
             if (!failures.isEmpty()) {
                 accumulator.completionFailures.addAll(failures);
@@ -350,7 +387,10 @@ public final class QuestProgressService {
     }
 
     private List<QuestCompletionFailure> validateCompletionPlan(
-            String questId, Map<Item, Integer> deliveredItems) {
+			String questId,
+			Map<Item, Integer> deliveredItems,
+			Map<Item, Integer> pendingInventoryAdditions
+			) {
         List<QuestCompletionFailure> failures = new ArrayList<>();
 
         Inventory inventory = party.getInventory();
@@ -385,16 +425,29 @@ public final class QuestProgressService {
                 }
 
                 case ITEM -> {
-                    Item item = itemCatalog.getById(reward.getRewardId().orElseThrow());
+				Item item =
+						itemCatalog.getById(
+								reward.getRewardId().orElseThrow());
 
-                    int ownedQuantity = inventory.getQuantity(item);
+				int ownedQuantity =
+						inventory.getQuantity(item);
 
-                    int deliveredQuantity = deliveredItems.getOrDefault(item, 0);
+				int deliveredQuantity =
+						deliveredItems.getOrDefault(item, 0);
 
-                    int quantityAfterDelivery = ownedQuantity - deliveredQuantity;
+				int pendingAddition =
+						pendingInventoryAdditions.getOrDefault(
+								item,
+								0);
+
+				int quantityBeforeReward =
+						Math.addExact(
+								ownedQuantity - deliveredQuantity,
+								pendingAddition);
 
                     int remainingCapacity =
-                            Inventory.MAXIMUM_QUANTITY_PER_ITEM - quantityAfterDelivery;
+						Inventory.MAXIMUM_QUANTITY_PER_ITEM
+						- quantityBeforeReward;
 
                     if (reward.getQuantity() > remainingCapacity) {
                         failures.add(
@@ -414,6 +467,35 @@ public final class QuestProgressService {
 
         return failures;
     }
+
+	private static Map<Item, Integer>
+	validatePendingInventoryAdditions(
+			Map<Item, Integer> pendingInventoryAdditions
+			) {
+		if (pendingInventoryAdditions == null) {
+			throw new IllegalArgumentException(
+					"Pending inventory additions cannot be null."
+					);
+		}
+
+		for (Map.Entry<Item, Integer> addition
+				: pendingInventoryAdditions.entrySet()) {
+			if (addition.getKey() == null) {
+				throw new IllegalArgumentException(
+						"Pending inventory additions cannot contain a null item."
+						);
+			}
+
+			if (addition.getValue() == null
+					|| addition.getValue() <= 0) {
+				throw new IllegalArgumentException(
+						"Pending inventory addition quantity must be positive."
+						);
+			}
+		}
+
+		return Map.copyOf(pendingInventoryAdditions);
+	}
 
     private List<QuestProgressEvent> applyCompletedStep(
             String questId, ProgressAccumulator accumulator) {
