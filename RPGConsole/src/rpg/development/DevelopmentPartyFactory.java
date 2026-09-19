@@ -21,20 +21,12 @@ public final class DevelopmentPartyFactory {
 	        List.of(
 	                new MemberConfiguration(
 	                        "Flagelinho Silva",
-	                        "flagelo_iniciante",
-	                        1),
+	                        "flagelo",
+	                        10),
 	                new MemberConfiguration(
 	                        "La Metamorfica",
 	                        "metamorfo",
-	                        1),
-	                new MemberConfiguration(
-	                        "Suzana Vieira",
-	                        "atirador",
-	                        1),
-	                new MemberConfiguration(
-	                        "Michael Jackson",
-	                        "druida",
-	                        1));
+	                        5));
 
 	private static final int INITIAL_GOLD = 5000;
 	private static final boolean TEST_MODIFIERS = false;
