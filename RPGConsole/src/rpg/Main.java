@@ -133,7 +133,7 @@ import rpg.world.travel.TravelRouteLoader;
 
 // Starts the game and controls its initial execution.
 public class Main {
-    private static final String DEVELOPMENT_PARTY_ARGUMENT = "--dev-party";
+    private static final String DEVELOPMENT_PARTY_ARGUMENT = "-dev-party";
 
 	public static void main(String[] args) {
 		try {
@@ -187,6 +187,9 @@ public class Main {
 			NpcPlacementCatalog npcPlacementCatalog;
 			DialogueCatalog dialogueCatalog;
 			QuestDialogueCatalog questDialogueCatalog;
+			QuestProgress questProgress;
+			CampaignFlags campaignFlags;
+			RecruitmentCandidateStateCatalog candidateStateCatalog;
 
 			WorldProgress worldProgress;
 			DungeonProgress dungeonProgress;
@@ -512,6 +515,9 @@ public class Main {
 				travelProgress = new TravelProgress(travelCatalog);
 				worldClock = new WorldClock();
 				shopStateCatalog = shopStateGenerator.generate();
+				questProgress = new QuestProgress(questCatalog);
+				campaignFlags = new CampaignFlags(flagCatalog);
+				candidateStateCatalog = new RecruitmentCandidateStateCatalog(questRecruitmentCatalog);
 			} else {
 				TitleScreen.show(consoleInput);
 				ConsoleUI.clearScreen();
@@ -527,7 +533,10 @@ public class Main {
 						travelCatalog,
 						shopCatalog,
 						shopStockCatalog,
-                                characterGrowthCalculator);
+                        characterGrowthCalculator,
+                        questCatalog,
+                        flagCatalog,
+                        questRecruitmentCatalog);
 
 				CampaignLoadService loadService = new CampaignLoadService(snapshotRestorer);
 				CampaignLoadResult loadResult = loadService.load();
@@ -552,6 +561,9 @@ public class Main {
 						travelProgress = restoredCampaign.getTravelProgress();
 						worldClock = restoredCampaign.getWorldClock();
 						shopStateCatalog = restoredCampaign.getShopStateCatalog();
+						questProgress = restoredCampaign.getQuestProgress();
+						campaignFlags = restoredCampaign.getCampaignFlags();
+						candidateStateCatalog = restoredCampaign.getCandidateStateCatalog();
 
 						break;
 					}
@@ -576,20 +588,15 @@ public class Main {
 					travelProgress = new TravelProgress(travelCatalog);
 					worldClock = new WorldClock();
 					shopStateCatalog = shopStateGenerator.generate();
+					questProgress = new QuestProgress(questCatalog);
+					campaignFlags = new CampaignFlags(flagCatalog);
+					candidateStateCatalog =
+					        new RecruitmentCandidateStateCatalog(questRecruitmentCatalog);
 
 					ConsoleUI.clearScreen();
 					break;
 				}
 			}
-
-			// Temporary V6 campaign state until save integration is implemented
-			QuestProgress questProgress =
-			        new QuestProgress(questCatalog);
-
-			CampaignFlags campaignFlags = new CampaignFlags(flagCatalog);
-
-			RecruitmentCandidateStateCatalog candidateStateCatalog =
-					new RecruitmentCandidateStateCatalog(questRecruitmentCatalog);
 
 			CharacterNameSelector recruitmentNameSelector =
 					new CharacterNameSelector(characterNameCatalog, new Random());
@@ -711,13 +718,13 @@ public class Main {
                     requirementCatalog,
                     questProgress,
                     campaignFlags,
-							candidateStateCatalog,
-							candidateIntroductionService,
-							questProgressService,
-							classPathChoiceCoordinator,
-							classPathRecruitmentService,
-							allyRecruitmentMenu,
-							classPathTransitionFailurePresenter,
+					candidateStateCatalog,
+					candidateIntroductionService,
+					questProgressService,
+					classPathChoiceCoordinator,
+					classPathRecruitmentService,
+					allyRecruitmentMenu,
+					classPathTransitionFailurePresenter,
                     questCatalog,
                     questRewardCatalog,
                     questDialogueCatalog);

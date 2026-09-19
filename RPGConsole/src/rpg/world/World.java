@@ -15,8 +15,6 @@ import rpg.battle.BattleResult;
 import rpg.battle.rewards.BattleRewardService;
 import rpg.characters.Party;
 import rpg.classes.PlayableClassDefinition;
-import rpg.recruitment.ClassPathRecruitmentPlan;
-import rpg.recruitment.ClassPathRecruitmentPreparation;
 import rpg.enemies.EnemyCatalog;
 import rpg.enemies.EnemyDefinition;
 import rpg.enemies.EnemyDropCatalog;
@@ -57,6 +55,8 @@ import rpg.quests.QuestProgressService;
 import rpg.quests.QuestStatus;
 import rpg.quests.QuestStepDefinition;
 import rpg.quests.rewards.QuestRewardCatalog;
+import rpg.recruitment.ClassPathRecruitmentPlan;
+import rpg.recruitment.ClassPathRecruitmentPreparation;
 import rpg.recruitment.ClassPathRecruitmentService;
 import rpg.recruitment.RecruitmentCandidateIntroductionService;
 import rpg.recruitment.RecruitmentCandidateStateCatalog;
@@ -851,7 +851,10 @@ public class World {
                             travelProgress,
                             dungeonProgress,
                             worldClock,
-                            shopStateCatalog);
+                            shopStateCatalog,
+							questProgress,
+							campaignFlags,
+							candidateStateCatalog);
 		} catch (IllegalArgumentException | IllegalStateException | ArithmeticException exception) {
 			return CampaignSaveResult.ENCODING_FAILED;
 		}

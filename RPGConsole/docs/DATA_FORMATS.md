@@ -35,7 +35,29 @@ ciphertext=<Base64>
 
 The IV and authenticated ciphertext use canonical basic Base64 encoding. No campaign property is exposed outside the ciphertext.
 
-After authenticated AES-GCM decryption, the current internal version-2 campaign payload uses strict `name=value` properties encoded as UTF-8. Property names, indexed collection structures and validation rules are defined centrally in `SAVE_STATE.md`.
+After authenticated AES-GCM decryption, the current internal version-3 campaign payload uses strict `name=value` properties encoded as UTF-8. In addition to the existing party, world, dungeon, clock and shop structures, version 3 contains:
+
+```properties
+quest.active.count=<non-negative integer>
+quest.active.<index>.id=<quest ID>
+quest.active.<index>.currentStep=<positive integer>
+quest.active.<index>.objective.count=<non-negative integer>
+quest.active.<index>.objective.<objectiveIndex>.id=<objective ID>
+quest.active.<index>.objective.<objectiveIndex>.currentQuantity=<non-negative integer>
+
+quest.completed.count=<non-negative integer>
+quest.completed.<index>.id=<quest ID>
+
+flag.count=<non-negative integer>
+flag.<index>.id=<flag ID>
+
+recruitment.candidate.count=<non-negative integer>
+recruitment.candidate.<index>.id=<candidate ID>
+recruitment.candidate.<index>.name=<persistent character name>
+recruitment.candidate.<index>.recruited=<true or false>
+```
+
+`save.formatVersion=3` is the only supported internal version. Version 2 is rejected without migration, while the encrypted outer container remains at `containerVersion=1`. Property names, indexed collection structures, cross-state invariants and complete validation rules are defined centrally in `SAVE_STATE.md`.
 
 The encrypted codec, atomic file services, catalog-backed runtime reconstruction and gameplay integration are implemented.
 

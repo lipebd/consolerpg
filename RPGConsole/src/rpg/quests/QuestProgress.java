@@ -258,6 +258,99 @@ public final class QuestProgress {
 		return false;
 	}
 
+	void restoreActiveQuest(
+			String questId,
+			int currentStep,
+			Map<String, Integer> objectiveProgressById
+	) {
+		QuestDefinition questDefinition =
+				questCatalog.getById(questId);
+
+		if (getStatus(questDefinition.getId())
+				!= QuestStatus.NOT_STARTED) {
+			throw new IllegalArgumentException(
+					"Quest state is duplicated: "
+							+ questDefinition.getId()
+			);
+		}
+
+		if (objectiveProgressById == null) {
+			throw new IllegalArgumentException(
+					"Quest objective progress cannot be null."
+			);
+		}
+
+		QuestStepDefinition stepDefinition =
+				getStepDefinition(
+						questDefinition,
+						currentStep
+				);
+
+		if (objectiveProgressById.size()
+				!= stepDefinition.getObjectives().size()) {
+			throw new IllegalArgumentException(
+					"Saved objective set does not match the current quest step: "
+							+ questDefinition.getId()
+			);
+		}
+
+		Map<String, Integer> restoredProgressById =
+				new LinkedHashMap<>();
+
+		for (QuestObjectiveDefinition objectiveDefinition
+				: stepDefinition.getObjectives()) {
+			Integer currentQuantity =
+					objectiveProgressById.get(
+							objectiveDefinition.getId()
+					);
+
+			if (currentQuantity == null) {
+				throw new IllegalArgumentException(
+						"Saved quest state is missing objective: "
+								+ objectiveDefinition.getId()
+				);
+			}
+
+			if (currentQuantity < 0
+					|| currentQuantity
+							> objectiveDefinition
+									.getRequiredQuantity()) {
+				throw new IllegalArgumentException(
+						"Saved quest objective quantity is outside its valid range: "
+								+ objectiveDefinition.getId()
+				);
+			}
+
+			restoredProgressById.put(
+					objectiveDefinition.getId(),
+					currentQuantity
+			);
+		}
+
+		activeQuestsById.put(
+				questDefinition.getId(),
+				new ActiveQuestState(
+						stepDefinition.getStep(),
+						restoredProgressById
+				)
+		);
+	}
+
+	void restoreCompletedQuest(String questId) {
+		QuestDefinition questDefinition =
+				questCatalog.getById(questId);
+
+		if (getStatus(questDefinition.getId())
+				!= QuestStatus.NOT_STARTED) {
+			throw new IllegalArgumentException(
+					"Quest state is duplicated: "
+							+ questDefinition.getId()
+			);
+		}
+
+		completedQuestIds.add(questDefinition.getId());
+	}
+
 	private ActiveQuestState getActiveState(
 			QuestDefinition questDefinition) {
 		ActiveQuestState activeState =

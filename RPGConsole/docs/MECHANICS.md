@@ -1325,17 +1325,17 @@ Changing the visible name or symbol does not alter stored gold, prices or transa
 
 ## Campaign persistence foundation
 
-The implemented persistence foundation can capture one immutable campaign snapshot containing party, inventory, equipment, learned scroll skills, reward modifiers, world progress, travel progress, permanent dungeon progress, fictional time and active shop states.
+The implemented persistence foundation captures one immutable campaign snapshot containing party, inventory, equipment, learned scroll skills, reward modifiers, world progress, travel progress, permanent dungeon progress, fictional time, active shop states, quest progress, permanent flags and introduced recruitment candidates.
 
 The snapshot is serialized through the versioned property schema defined in `SAVE_STATE.md`, encoded as UTF-8, authenticated and encrypted through AES-256-GCM and written through atomic save-file replacement.
 
 Loading decrypts and structurally validates the snapshot, validates every catalog-backed reference and reconstructs an isolated runtime candidate without modifying active gameplay state. A valid campaign may be continued after the title screen, while saving is available exclusively through INNs.
 
-The authenticated internal save format is currently version 2. It stores narrative dungeon completion and the absolute elapsed-world-hour availability of recurring bosses and epic encounters. Active exploration sessions remain transient and are not restored.
+The authenticated internal save format is version 3. It stores active quest steps and objective counters, completed quests, set permanent flags, candidate IDs, persistent candidate names and recruited state in addition to the earlier campaign state. Active exploration sessions remain transient and are not restored.
 
-Mutable quest progress, permanent campaign flags and recruitment-candidate state are not yet part of the current internal version-2 snapshot. Although the existing party snapshot can structurally encode multiple playable members, a coherently recruited ally also depends on quest, flag and candidate state. Their coordinated versioned persistence belongs to V6 Part 9. Until then, quest, flag and candidate state is created empty when the campaign runtime is constructed.
+Internal version 2 is rejected without migration because its party snapshot cannot prove the quest, flag and candidate transaction that produced a recruited ally. Loading version 3 reconstructs quest, flag and candidate state in isolation and validates their coherence with the restored party before `World` receives the campaign.
 
-A confirmed playable class already belongs to the persisted character state through its canonical class ID. The future version-3 contract will additionally validate its coherence with the permanent ceremony-completion flag and recruitment state.
+A confirmed playable class belongs to persisted character state through its canonical class ID. Version-3 restoration validates the first ceremony across the completed recruitment quest, permanent ceremony flag, leader class, recruited candidate and second-position ally instead of storing another independent class-path decision.
 
 ## World time and daily shop restocking
 

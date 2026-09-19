@@ -1,6 +1,6 @@
 # RPGConsole V6 Roadmap
 
-> **Implementation status:** V5 was released as `v5.0.0`. V6 implementation is active on `feature/v6-quests`. Parts 1 through 5 are complete and approved. Part 6 — gameplay integration, quest interface and interaction markers — is the next implementation block.
+> **Implementation status:** V5 was released as `v5.0.0`. V6 implementation is active on `feature/v6-quests`. Parts 1 through 9 are complete and approved. Part 10 — the first five canonical main quests — is the next implementation block.
 
 > **Scope rule:** The complete V6 release boundary is approved, but each remaining block is reviewed and frozen again when its implementation begins. Roadblocks may reopen a specific decision without expanding unrelated scope.
 
@@ -965,13 +965,15 @@ Do not persist:
 
 ### Implementation checklist
 
-* [ ] Extend immutable snapshots with quest, flag and recruitment-candidate state.
-* [ ] Serialize and deserialize all new collections through stable canonical IDs.
-* [ ] Increase the authenticated internal version to 3.
-* [ ] Reject internal version 2 without migration.
-* [ ] Reconstruct and validate complete candidate state before runtime activation.
-* [ ] Supply restored quest, flag and candidate state to `World`.
-* [ ] Preserve atomic file replacement and all existing cryptographic behavior.
+* [x] Extend immutable snapshots with quest, flag and recruitment-candidate state.
+* [x] Serialize and deserialize all new collections through stable canonical IDs.
+* [x] Increase the authenticated internal version to 3.
+* [x] Reject internal version 2 without migration.
+* [x] Reconstruct and validate complete candidate state before runtime activation.
+* [x] Supply restored quest, flag and candidate state to `World`.
+* [x] Preserve atomic file replacement and all existing cryptographic behavior.
+
+Part 9 closure verified explicit version-2 rejection and an empty-narrative version-3 save, restart, Continue, resave and second restart. The representative non-empty narrative round trip and corrupt narrative-state cases remain in Part 11 because canonical quest and recruitment content is introduced only in Part 10.
 
 ---
 
@@ -1078,7 +1080,7 @@ The companion participates in the story before joining the party and shares the 
 
 * [ ] Test one version-3 round trip containing active quest counters, a completed quest, flags, a pending candidate and a recruited ally.
 * [ ] Test representative invalid quest, objective, flag and candidate save state.
-* [ ] Confirm that internal version 2 is rejected without migration.
+* [x] Confirm that internal version 2 is rejected without migration.
 * [ ] Confirm that failed restoration does not partially replace the active campaign.
 * [ ] Run focused regressions for battle, Analyze, inventory, rewards, routes, dungeons, shops, crafting, INN saving and campaign loading.
 * [ ] Verify the complete five-quest flow in the portable Windows build.

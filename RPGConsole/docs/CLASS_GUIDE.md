@@ -178,6 +178,7 @@ BattleCoordinator
 | `QuestRecruitmentLoader` | Carregamento de dados | Lê `quest_recruitments.txt`, valida os quatro campos, referências de quest e etapa, IDs canônicos, nível jogável suportado e o limite estrutural de três registros. |
 | `RecruitmentCandidateState` | Estado mutável mínimo | Guarda o ID canônico, o nome gerado imutável e o indicador mutável de recrutamento de um candidato já apresentado à narrativa. Não contém estado de batalha. |
 | `RecruitmentCandidateStateCatalog` | Catálogo de estado de campanha | Mantém os candidatos já introduzidos, valida que todos pertencem ao catálogo de recrutamentos e impede IDs ou nomes equivalentes repetidos. |
+| `RecruitmentCandidateStateRestorer` | Gateway de restauração | Reconstrói candidatos validados por meio das mutações package-private do domínio, pode aplicar o estado recrutado e publica o catálogo completo uma única vez. Permanece em `rpg.recruitment` para não transformar APIs de restauração em mutações públicas gerais. |
 | `RecruitmentCandidateIntroductionService` | Serviço de campanha | Introduz um candidato de forma idempotente, reúne nomes da party e de outros candidatos, solicita um nome único ao `CharacterNameSelector` e registra o estado somente após seleção válida. |
 | `AllyClassSelector` | Seletor aleatório | Seleciona uniformemente uma classe elegível, excluindo o Flagelo iniciante, o Flagelo final, todas as classes já presentes na party e IDs adicionais fornecidos pelo fluxo consumidor. |
 | `RecruitmentAllyFactory` | Fábrica de domínio | Constrói um aliado completo no nível declarado, calcula atributos e habilidades naturais, equipa diretamente arma e armadura introdutórias, mantém o amuleto vazio e restaura todos os recursos. |
@@ -259,6 +260,7 @@ Um resultado de requisito é sempre derivado. Consumidores devem reavaliá-lo an
 | `QuestLoader` | Carregamento agregado | Lê `quests.txt`, `quest_steps.txt` e `quest_objectives.txt`. Usa drafts privados enquanto relaciona os três arquivos e publica somente quests completas e validadas. |
 | `QuestStatus` | Enum de estado | Representa os estados `NOT_STARTED`, `ACTIVE` e `COMPLETED`. Disponibilidade continua derivada por requisitos, não se torna um quarto status. |
 | `QuestProgress` | Estado mutável | Guarda quests ativas, passo atual, contadores apenas dos objetivos atuais e IDs concluídos. Impõe ativação única, progresso limitado, avanço linear e conclusão irreversível. |
+| `QuestProgressRestorer` | Gateway de restauração | Reconstrói quests ativas e concluídas usando as mutações package-private validadas de `QuestProgress` e publica o estado completo uma única vez. Permanece em `rpg.quests` para preservar o encapsulamento do domínio. |
 | `QuestProgressEventType` | Enum de integração | Mapeia operações confirmadas do gameplay aos tipos de objetivo correspondentes. |
 | `QuestProgressEvent` | Entrada imutável | Transporta tipo de evento, alvo canônico opcional e quantidade positiva para processamento síncrono. |
 | `QuestProgressUpdateType` | Enum de resultado | Distingue progresso parcial, objetivo concluído, passo concluído e quest concluída. |
@@ -769,7 +771,7 @@ ShopCatalog + ShopStockCatalog
     -> Party, Inventory e ShopOfferState
 ```
 
-As ofertas ativas são geradas apenas uma vez por execução. Uma oferta esgotada não é substituída por outra entrada de `shop_stock.txt`, e o mesmo estado é reutilizado em acessos posteriores à loja ou ao mercador. Reabastecimento e persistência ficam adiados até a implementação de save e load.
+As ofertas ativas são geradas no início de uma nova campanha, persistidas no save e reutilizadas em acessos posteriores à loja ou ao mercador. Uma oferta esgotada não é substituída imediatamente por outra entrada de `shop_stock.txt`. O reabastecimento global ocorre nos limites de meia-noite do relógio ficcional e gera um novo catálogo de estados de loja de forma atômica.
 
 ## Pacote `rpg.world.travel`
 

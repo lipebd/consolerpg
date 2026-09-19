@@ -35,12 +35,12 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.enemies` | Enemy definitions and external enemy/drop loading | `EnemyDefinition`, `EnemyCatalog`, `EnemyLoader`, `EnemyDropCatalog`, `EnemyDropLoader` |
 | `rpg.flags` | Immutable permanent-flag definitions, external loading and mutable set-only campaign flag state | `FlagDefinition`, `FlagCatalog`, `FlagLoader`, `CampaignFlags` |
 | `rpg.requirements` | Immutable reusable requirement sets, external loading, pure runtime evaluation and quest-availability dependency validation | `RequirementDefinition`, `RequirementSetDefinition`, `RequirementCatalog`, `RequirementLoader`, `RequirementEvaluator`, `QuestAvailabilityValidator` |
-| `rpg.quests` | Immutable quest, step and objective definitions, mutable campaign progress, synchronous gameplay-event processing and NPC-interaction resolution | `QuestDefinition`, `QuestStepDefinition`, `QuestObjectiveDefinition`, `QuestCatalog`, `QuestLoader`, `QuestProgress`, `QuestProgressService`, `QuestNpcInteractionResolver` |
+| `rpg.quests` | Immutable quest, step and objective definitions, mutable campaign progress, controlled persistence restoration, synchronous gameplay-event processing and NPC-interaction resolution | `QuestDefinition`, `QuestStepDefinition`, `QuestObjectiveDefinition`, `QuestCatalog`, `QuestLoader`, `QuestProgress`, `QuestProgressRestorer`, `QuestProgressService`, `QuestNpcInteractionResolver` |
 | `rpg.quests.effects` | Immutable permanent quest effects, trigger vocabulary, external loading and ordered lookup | `QuestEffectDefinition`, `QuestEffectCatalog`, `QuestEffectLoader`, `QuestEffectTrigger`, `QuestEffectType` |
 | `rpg.quests.rewards` | Immutable material quest rewards, external loading, ordered lookup and reward-type vocabulary | `QuestRewardDefinition`, `QuestRewardCatalog`, `QuestRewardLoader`, `QuestRewardType` |
 | `rpg.narrative` | Narrative locations, NPC identity and placement, linear dialogues, quest-dialogue associations, text processing and cross-catalog narrative validation | `NarrativeLocationDefinition`, `NarrativeLocationCatalog`, `NpcDefinition`, `NpcCatalog`, `NpcPlacementDefinition`, `NpcPlacementCatalog`, `DialogueDefinition`, `DialogueCatalog`, `QuestDialogueDefinition`, `QuestDialogueCatalog`, `NarrativeTextProcessor`, `NarrativeReferenceValidator` |
-| `rpg.persistence` | Immutable campaign snapshots, strict versioned property encoding, authenticated encrypted containers and atomic save-file access | `CampaignSnapshot`, `CampaignSnapshotFactory`, `CampaignPropertiesSerializer`, `CampaignPropertiesDeserializer`, `CampaignSaveCodec`, `CampaignSaveService`, `CampaignLoadService` |
-| `rpg.recruitment` | Recruitment definitions, persistent candidate identity, ally construction, class selection and atomic recruitment composition | `QuestRecruitmentDefinition`, `QuestRecruitmentCatalog`, `RecruitmentCandidateState`, `RecruitmentCandidateStateCatalog`, `AllyRecruitmentService`, `ClassPathRecruitmentService` |
+| `rpg.persistence` | Immutable campaign snapshots, strict versioned property encoding, complete isolated campaign reconstruction, authenticated encrypted containers and atomic save-file access | `CampaignSnapshot`, `CampaignSnapshotFactory`, `CampaignSnapshotRestorer`, `RestoredCampaign`, `CampaignPropertiesSerializer`, `CampaignPropertiesDeserializer`, `CampaignSaveCodec`, `CampaignSaveService`, `CampaignLoadService` |
+| `rpg.recruitment` | Recruitment definitions, persistent candidate identity, controlled persistence restoration, ally construction, class selection and atomic recruitment composition | `QuestRecruitmentDefinition`, `QuestRecruitmentCatalog`, `RecruitmentCandidateState`, `RecruitmentCandidateStateCatalog`, `RecruitmentCandidateStateRestorer`, `AllyRecruitmentService`, `ClassPathRecruitmentService` |
 | `rpg.world` | Active world state, fictional world time, scenario discovery, rescue coordination, shop-restocking coordination, narrative interaction and high-level gameplay flow | `World`, `WorldClock`, `WorldProgress` |
 | `rpg.world.scenarios` | External scenario and dungeon definitions, runtime scenario hierarchy, permanent dungeon progression and scenario creation | `ScenarioDefinition`, `ScenarioDefinitionCatalog`, `ScenarioLoader`, `CombatScenarioDefinition`, `CombatScenarioLoader`, `DungeonDefinition`, `DungeonLoader`, `ScenarioFactory`, `Scenario`, `CombatScenario`, `Field`, `Dungeon`, `DungeonSettings`, `DungeonProgress`, `City`, `ScenarioCatalog`, `CombatScenarioAction`, `CityAction` |
 | `rpg.world.encounters` | Encounter availability and weighted group generation | `EncounterEntry`, `EncounterCatalog`, `EncounterLoader`, `EncounterGenerator` |
@@ -71,8 +71,8 @@ Initialization follows dependency order:
 9. Load narrative locations, NPC identities, fixed NPC placements and linear dialogues.
 10. Load quest-dialogue associations and perform cross-catalog narrative validation, including speakers, starting NPCs, interaction objectives and dialogue contexts.
 11. Create runtime item, scenario, shop and other catalog-backed objects.
-12. Resolve or reconstruct the active party and existing persisted world state.
-13. Create the current `QuestProgress`, `CampaignFlags` and `RecruitmentCandidateStateCatalog` campaign state. Their coordinated persistence remains deferred until the V6 save-format integration.
+12. Create an empty party, world, quest, flag and candidate state for New Game, or reconstruct their complete coordinated state from a valid version-3 campaign snapshot.
+13. Activate the selected campaign only after `CampaignSnapshotRestorer` has reconstructed and cross-validated its isolated `RestoredCampaign`.
 14. Construct the shared quest-progress, class-path, candidate-introduction and recruitment services.
 15. Construct `World` with the required immutable catalogs, mutable campaign state, generators, services, presenters and shared dependencies.
 
@@ -1349,7 +1349,7 @@ The ally is inserted after quest rewards so the first ally remains at zero EXP a
 
 `AllyRecruitmentMenu` presents the prepared ally's persistent name and selected class with one mandatory action, `Aceitar sua companhia`. It does not offer a false refusal branch and does not mutate campaign state.
 
-Transient questionnaire answers, recommendations, confirmed class choice, random ally class, prepared ally and composite plans are not persisted. The already introduced candidate's ID, generated name and recruited state are mutable campaign data scheduled for version-3 persistence in V6 Part 9.
+Transient questionnaire answers, recommendations, confirmed class choice, random ally class, prepared ally and composite plans are not persisted. An introduced candidate's ID, generated name and recruited state are mutable campaign data included in the version-3 campaign snapshot.
 
 ## UI boundaries
 
@@ -1493,8 +1493,14 @@ CampaignSnapshot
 │   └── RewardModifierSnapshot
 ├── WorldSnapshot
 │   └── DungeonProgressSnapshot
-└── ShopSnapshot
-    └── ShopOfferSnapshot
+├── ShopSnapshot
+│   └── ShopOfferSnapshot
+├── QuestProgressSnapshot
+│   ├── ActiveQuestSnapshot
+│   │   └── QuestObjectiveProgressSnapshot
+│   └── completed quest IDs
+├── CampaignFlagsSnapshot
+└── RecruitmentCandidateSnapshot
 ```
 
 Snapshots contain only the canonical IDs and mutable values required to reconstruct the campaign. They do not contain catalog definitions, presentation values, cryptographic metadata or transient gameplay state.
@@ -1513,7 +1519,9 @@ CampaignSnapshot
     -> textual encrypted container
 ```
 
-The decoding flow performs the reverse transformation and produces a complete `CampaignSnapshot`. `CampaignSnapshotRestorer` then validates its catalog-backed references and reconstructs an isolated `RestoredCampaign`, including complete `DungeonProgress`, without modifying active runtime state. The candidate is activated only after the complete operation succeeds.
+The decoding flow performs the reverse transformation and produces a complete `CampaignSnapshot`. `CampaignSnapshotRestorer` then validates its catalog-backed references and reconstructs an isolated `RestoredCampaign`, including complete `DungeonProgress`, `QuestProgress`, `CampaignFlags` and `RecruitmentCandidateStateCatalog`, without modifying active runtime state. The candidate is activated only after the complete operation succeeds.
+
+`QuestProgressRestorer` belongs to `rpg.quests`, and `RecruitmentCandidateStateRestorer` belongs to `rpg.recruitment`. These domain-local restoration gateways may access package-private mutation APIs without exposing general gameplay bypasses. `CampaignSnapshotRestorer` remains the persistence orchestrator that feeds validated snapshot values into those gateways and then performs cross-domain coherence checks.
 
 `StrictPropertyReader` requires every property of the current internal format, parses decimal numeric values and canonical booleans, tracks consumed fields and rejects unknown properties.
 
@@ -1527,7 +1535,9 @@ The decoding flow performs the reverse transformation and produces a complete `C
 
 `CampaignLoadService` reports success only after decryption, strict decoding, catalog-backed validation and complete runtime reconstruction succeed. The startup flow uses `CampaignSelectionMenu` to continue a valid campaign or begin a new one. Saving is exposed exclusively through INNs, and ordinary game exits require confirmation without performing an implicit save.
 
-Quest definitions, rewards, effects, requirements, narrative content, dialogue associations, recruitment definitions, class-path definitions and questionnaire content are immutable external data and do not belong in campaign snapshots. Mutable `QuestProgress`, `CampaignFlags` and `RecruitmentCandidateStateCatalog` require coordinated versioned persistence in V6 Part 9. Until that integration is implemented, quest, flag and candidate state is created empty when a campaign runtime is constructed and the authenticated internal save format remains version 2. Questionnaire answers, recommendations, confirmed transient choices, random ally classes and prepared recruitment plans are never snapshot state.
+Quest definitions, rewards, effects, requirements, narrative content, dialogue associations, recruitment definitions, class-path definitions and questionnaire content are immutable external data and do not belong in campaign snapshots. Mutable `QuestProgress`, `CampaignFlags` and `RecruitmentCandidateStateCatalog` are persisted together in internal format version 3. Questionnaire answers, recommendations, confirmed transient choices, random ally classes and prepared recruitment plans are never snapshot state.
+
+Version-3 restoration validates active objective structure and counters against current quest definitions, resolves set flags through `FlagCatalog`, restores introduced candidate identities and enforces cross-state coherence before activation. A pending candidate matches no party member; a recruited candidate matches exactly one non-leader ally; party classes remain distinct; and the first ceremony agrees across quest completion, permanent flag, leader class, candidate state and second party position. Extra development-party allies without candidates remain permitted.
 
 ## Current temporary boundaries
 
@@ -1544,7 +1554,7 @@ The following implementations remain intentionally temporary:
 - `quest_recruitments.txt` is intentionally header-only until canonical recruitment steps are authored.
 - `RECRUIT` dialogue references are valid only for candidate IDs declared by `QuestRecruitmentCatalog`. No canonical recruit dialogue exists while the recruitment catalog remains empty.
 - The first recruitment composes with the level-7 class-path ceremony. Later recruitments remain narrative events and will reuse the generic recruitment components without repeating the ceremony.
-- `QuestProgress`, `CampaignFlags` and recruitment-candidate state remain outside campaign snapshots until the complete internal version-3 integration in V6 Part 9.
+- Non-empty quest, flag and candidate restart verification remains pending canonical Part 10 content; the implemented version-3 schema and empty-narrative restart baseline are complete.
 - Narrative text uses automatic wrapping, while older map, enemy, item and other description screens retain their existing presentation until the post-V6 interface review.
 - `Battle` remains large and may later be divided into more focused action services.
 - Permanent skill-scroll items, skills and curated enemy drops remain deferred until their draft effects receive the required combat mechanics and final content review. Scroll-skill preservation across class transition is structurally implemented but cannot yet be exercised with canonical content.
