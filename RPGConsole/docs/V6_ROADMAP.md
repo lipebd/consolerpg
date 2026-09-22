@@ -1072,7 +1072,7 @@ The future ally has an independent motivation and participates in the story befo
 * [x] Confirm that internal version 2 is rejected without migration.
 * [x] Confirm that failed restoration does not partially replace the active campaign.
 * [x] Run focused regressions for battle, Analyze, inventory, rewards, routes, dungeons, shops, crafting, INN saving and campaign loading.
-* [x] Verify the complete five-quest flow in the portable Windows build.
+
 
 ---
 
@@ -1104,16 +1104,17 @@ General documentation is maintained incrementally when each coherent implementat
 * [x] Update `SAVE_STATE.md` with quest, flag and candidate properties and transient-state boundaries.
 * [x] Update `CLASS_GUIDE.md` for beginner Flagelo, final paths and ceremony consequences.
 * [x] Update `PROJECT_STATE.md` only after the implemented V6 state is approved.
-* [ ] Update the Windows package readme if player-facing controls or save compatibility require it.
-* [ ] Decide whether stable V6 data files should be reorganized into subdirectories; do not combine the move with unfinished loader work.
+* [x] Update the Windows package readme with V6 save compatibility and execution guidance.
+* [x] Keep V6 data files in the current flat directory; reconsider subdirectories in a later version.
 
 ### Release checklist
 
-* [ ] Review the complete V6 diff and remove every development shortcut or temporary route.
-* [ ] Confirm that no save, decrypted payload, real encryption key or test artifact is packaged.
-* [ ] Compile and run the final representative regression set.
-* [ ] Build the portable Windows package.
-* [ ] Verify a fresh V6 campaign, INN save, restart and Continue from the extracted package.
+* [x] Verify the complete five-quest flow in the portable Windows build.
+* [x] Review the V6 release changes and remove only unintended temporary routes.
+* [x] Confirm that no save, decrypted payload, real encryption key or test artifact is packaged.
+* [x] Compile and run the final representative regression set.
+* [x] Build the portable Windows package.
+* [x] Verify a fresh V6 campaign, INN save, restart and Continue from the extracted package.
 * [ ] Commit each completed roadmap block coherently instead of committing per checkbox.
 * [ ] Create the consolidated V6 release commit or merge only after all blocks are complete.
 * [ ] Tag and publish V6 only after documentation and portable-build verification are approved.

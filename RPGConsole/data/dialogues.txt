@@ -25,8 +25,8 @@ conversa_pai_protagonista;1;NPC;pai_protagonista;Frio....
 conversa_pai_protagonista;2;NPC;pai_protagonista;tanta luz..
 conversa_pai_protagonista;3;NPC;pai_protagonista;não...
 conversa_pai_protagonista;4;NPC;pai_protagonista;não consigo...
-conversa_jovem_de_bree;1;NPC;jovem_de_bree;Não posso ficar esperando enquanto minha irmã piora.
-conversa_jovem_de_bree;2;NPC;jovem_de_bree;Quando eu descobrir alguma coisa, espero poder contar com sua ajuda.
+conversa_jovem_de_bree;1;RECRUIT;jovem_de_bree;Não posso ficar esperando enquanto minha irmã piora.
+conversa_jovem_de_bree;2;RECRUIT;jovem_de_bree;Quando eu descobrir alguma coisa, espero poder contar com sua ajuda.
 conversa_discipulo_alquimista;1;NPC;discipulo_alquimista;Ainda preciso me recuperar.
 conversa_discipulo_alquimista;2;NPC;discipulo_alquimista;Mas não esquecerei que você entrou naquela gruta para me encontrar.
 # TAVERDA DO ENTREATO
@@ -131,13 +131,13 @@ pistas_entre_sucatas;4;NPC;mestre_alquimista;Obrigado pelas suas anotações. Vo
 pistas_entre_sucatas;5;NPC;mestre_alquimista;Enquanto isso, preciso que você reúna Pelos Lupinos para produzirmos novas compressas.
 pistas_entre_sucatas;6;NPC;mestre_alquimista;Recebemos uma nova família e não temos o suficiente para todos.
 pistas_entre_sucatas;7;NARRATOR;;Uma pessoa que acompanhava a conversa se aproxima.
-pistas_entre_sucatas;8;NPC;jovem_de_bree;Com licença. Não pude evitar ouvir a conversa.
-pistas_entre_sucatas;9;NPC;jovem_de_bree;Minha mãe e minha irmã também estão sob os cuidados dos alquimistas.
-pistas_entre_sucatas;10;NPC;jovem_de_bree;Ouvi dizer que algumas pessoas infectadas começaram a apresentar mudanças no corpo.
-pistas_entre_sucatas;11;NPC;jovem_de_bree;Não vou esperar até transformarem minha irmã em um monstro.
-pistas_entre_sucatas;12;NPC;jovem_de_bree;Eu conheço algumas pessoas que vivem próximas ao Portão Leste, que leva a Entrelugar, e costumam ouvir histórias da cidade distorcida.
-pistas_entre_sucatas;13;NPC;jovem_de_bree;Vou conversar com elas e ver se descubro alguma pista sobre essa doença maldita.
-pistas_entre_sucatas;14;NPC;jovem_de_bree;Quando eu descobrir alguma coisa, espero poder contar com sua ajuda.
+pistas_entre_sucatas;8;RECRUIT;jovem_de_bree;Com licença. Não pude evitar ouvir a conversa.
+pistas_entre_sucatas;9;RECRUIT;jovem_de_bree;Minha mãe e minha irmã também estão sob os cuidados dos alquimistas.
+pistas_entre_sucatas;10;RECRUIT;jovem_de_bree;Ouvi dizer que algumas pessoas infectadas começaram a apresentar mudanças no corpo.
+pistas_entre_sucatas;11;RECRUIT;jovem_de_bree;Não vou esperar até transformarem minha irmã em um monstro.
+pistas_entre_sucatas;12;RECRUIT;jovem_de_bree;Eu conheço algumas pessoas que vivem próximas ao Portão Leste, que leva a Entrelugar, e costumam ouvir histórias da cidade distorcida.
+pistas_entre_sucatas;13;RECRUIT;jovem_de_bree;Vou conversar com elas e ver se descubro alguma pista sobre essa doença maldita.
+pistas_entre_sucatas;14;RECRUIT;jovem_de_bree;Quando eu descobrir alguma coisa, espero poder contar com sua ajuda.
 pelos_lupinos_pendentes;1;NPC;mestre_alquimista;Você ainda não coletou Pelos Lupinos suficientes para preparar as compressas.
 pelos_lupinos_pendentes;2;NPC;mestre_alquimista;Precisarei de três antes que possamos continuar.
 anotacoes_e_cuidados;1;LEADER;;Mestre Alquimista! Consegui os Pelos Lupinos.
@@ -151,14 +151,14 @@ meruma_dourada_pendente;2;NPC;mestre_alquimista;Sem ela, ainda não podemos avan
 confronto_mestre_eletrogoblin;1;NARRATOR;;No fundo da gruta, cabos improvisados conduzem energia das eletrorrochas até uma bancada. Atrás dela, o discípulo desaparecido está preso.
 confronto_mestre_eletrogoblin;2;NPC;discipulo_alquimista;Aqui! Por favor, me ajude!
 confronto_mestre_eletrogoblin;3;ENEMY;mestre_eletrogoblin;Mais um intruso. Vocês nunca aprendem a ficar longe da minha gruta?
-confronto_mestre_eletrogoblin;4;LEADER;;Solte o discípulo e devolva a Merumã Dourada.
+confronto_mestre_eletrogoblin;4;LEADER;;Intruso? Vocês sequestraram alguém. Claro que viríamos atrás! Solte ele e devolva nossa Merumã Dourada.
 confronto_mestre_eletrogoblin;5;ENEMY;mestre_eletrogoblin;Devolver? Meus goblins trouxeram essa fruta até aqui. Alguns mal conseguem ficar de pé, e você quer levá-la embora?
-confronto_mestre_eletrogoblin;6;NPC;discipulo_alquimista;Eu a encontrei para os pacientes de Bree! Você me capturou antes que eu pudesse voltar.
-confronto_mestre_eletrogoblin;7;ENEMY;mestre_eletrogoblin;Então há doentes em Bree também...
+confronto_mestre_eletrogoblin;6;NPC;discipulo_alquimista;Seus goblins trouxeram depois de me roubar! Nós precisamos dessa fruta em Bree, urgentemente!
+confronto_mestre_eletrogoblin;7;ENEMY;mestre_eletrogoblin;Então há doentes entre os humanos de Bree também...
 confronto_mestre_eletrogoblin;8;NARRATOR;;Por um instante, o goblin examina a fruta sobre a bancada. Faíscas percorrem os tubos ligados aos seus braços.
 confronto_mestre_eletrogoblin;9;ENEMY;mestre_eletrogoblin;Não faz diferença. Não vou deixar os meus esperando por uma cura que talvez nunca venha.
-confronto_mestre_eletrogoblin;10;LEADER;;Nem eu.
-confronto_mestre_eletrogoblin;11;ENEMY;mestre_eletrogoblin;Ótimo. Então pare de falar e tente me tirar daqui.
+confronto_mestre_eletrogoblin;10;LEADER;;Nem... EU!
+confronto_mestre_eletrogoblin;11;ENEMY;mestre_eletrogoblin;Ótimo. Então cale a boca e tente tirar essa fruta de nós.
 discipulo_resgatado;1;NPC;mestre_alquimista;Vocês voltaram!
 discipulo_resgatado;2;NPC;discipulo_alquimista;Aqueles paspalhos me capturaram assim que coloquei minhas mãos numa Merumã Dourada.
 discipulo_resgatado;3;NPC;discipulo_alquimista;O Mestre Eletrogoblin pretendia usar a fruta em algum experimento. Pelo que pude ouvir enquanto estive preso, seus subordinados também estão adoecendo.
@@ -175,21 +175,21 @@ oferta_entre_caminhos;3;NPC;mae_protagonista;O remédio de Merumã Dourada ameni
 oferta_entre_caminhos;4;NPC;mae_protagonista;Não sei como agradecer pelo você que fez.
 oferta_entre_caminhos;5;NPC;mae_protagonista;Mas saber que minha criança entrou naquela gruta também me deixou apavorada.
 oferta_entre_caminhos;6;NARRATOR;;Uma presença conhecida se aproxima e interrompe a conversa.
-oferta_entre_caminhos;7;NPC;jovem_de_bree;Eu também queria agradecer.
-oferta_entre_caminhos;8;NPC;jovem_de_bree;Minha irmã apresentou alguma melhora depois que os alquimistas começaram a trabalhar com a fruta.
-oferta_entre_caminhos;9;NPC;jovem_de_bree;Enquanto você procurava o discípulo do Mestre, conversei com os meus conhecidos perto do Portão Leste.
-oferta_entre_caminhos;10;NPC;jovem_de_bree;Do outro lado fica Entrelinhas. E, além dela, Entrelugar.
-oferta_entre_caminhos;11;NPC;jovem_de_bree;Aquela cidade maluca foi construída ao redor de uma enorme anomalia espaço-temporal.
-oferta_entre_caminhos;12;NPC;jovem_de_bree;Aparentemente, isso acaba atraindo cientistas e pesquisadores interessados em fenômenos que ninguém mais consegue explicar.
-oferta_entre_caminhos;13;NPC;jovem_de_bree;Talvez alguém de lá consiga descobrir o que está acontecendo com as nossas famílias.
-oferta_entre_caminhos;14;NPC;jovem_de_bree;Vou seguir na frente. Você vem?
-aceite_entre_caminhos;1;NPC;jovem_de_bree;Então nos encontramos em Entrelugar.
-aceite_entre_caminhos;2;NPC;jovem_de_bree;Ah, {leaderName}, se quisermos mesmo ajudar nossas famílias, precisamos nos preparar para desafios muito maiores.
-aceite_entre_caminhos;3;NPC;jovem_de_bree;Então treine bastante durante a travessia. E não se esqueça de sempre carregar algumas merumãs.
-aceite_entre_caminhos;4;NPC;jovem_de_bree;Não demore.
+oferta_entre_caminhos;7;RECRUIT;jovem_de_bree;Eu também queria agradecer.
+oferta_entre_caminhos;8;RECRUIT;jovem_de_bree;Minha irmã apresentou alguma melhora depois que os alquimistas começaram a trabalhar com a fruta.
+oferta_entre_caminhos;9;RECRUIT;jovem_de_bree;Enquanto você procurava o discípulo do Mestre, conversei com os meus conhecidos perto do Portão Leste.
+oferta_entre_caminhos;10;RECRUIT;jovem_de_bree;Do outro lado fica Entrelinhas. E, além dela, Entrelugar.
+oferta_entre_caminhos;11;RECRUIT;jovem_de_bree;Aquela cidade maluca foi construída ao redor de uma enorme anomalia espaço-temporal.
+oferta_entre_caminhos;12;RECRUIT;jovem_de_bree;Aparentemente, isso acaba atraindo cientistas e pesquisadores interessados em fenômenos que ninguém mais consegue explicar.
+oferta_entre_caminhos;13;RECRUIT;jovem_de_bree;Talvez alguém de lá consiga descobrir o que está acontecendo com as nossas famílias.
+oferta_entre_caminhos;14;RECRUIT;jovem_de_bree;Vou seguir na frente. Você vem?
+aceite_entre_caminhos;1;RECRUIT;jovem_de_bree;Então nos encontramos em Entrelugar.
+aceite_entre_caminhos;2;RECRUIT;jovem_de_bree;Ah, {leaderName}, se quisermos mesmo ajudar nossas famílias, precisamos nos preparar para desafios muito maiores.
+aceite_entre_caminhos;3;RECRUIT;jovem_de_bree;Então treine bastante durante a travessia. E não se esqueça de sempre carregar algumas merumãs.
+aceite_entre_caminhos;4;RECRUIT;jovem_de_bree;Não demore.
 aceite_entre_caminhos;5;NPC;mae_protagonista;Antes de partir, fale comigo mais uma vez.
-recusa_entre_caminhos;1;NPC;jovem_de_bree;Não posso esperar.
-recusa_entre_caminhos;2;NPC;jovem_de_bree;Seguirei para Entrelugar e procurarei ajuda por conta própria.
+recusa_entre_caminhos;1;RECRUIT;jovem_de_bree;Não posso esperar.
+recusa_entre_caminhos;2;RECRUIT;jovem_de_bree;Seguirei para Entrelugar e procurarei ajuda por conta própria.
 recusa_entre_caminhos;3;NPC;mae_protagonista;Pense com calma, minha criança.
 recusa_entre_caminhos;4;NPC;mae_protagonista;Talvez essa seja a esperança que estávamos procurando.
 antes_de_partir;1;LEADER;;Mãe...
@@ -218,23 +218,23 @@ encontro_taverna_entrelugar;4;NPC;dono_taverna_entrelugar;Aceita uma caneca de C
 encontro_taverna_entrelugar;5;LEADER;;Hmm...
 encontro_taverna_entrelugar;6;NPC;dono_taverna_entrelugar;Saquei. Talvez você esteja procurando alguém?
 encontro_taverna_entrelugar;7;NPC;dono_taverna_entrelugar;Você não é a única pessoa acabada e recém-chegada de Entrelinhas. Olha aquela mesa, tem alguém lá que talvez esteja te esperando.
-encontro_taverna_entrelugar;8;NPC;jovem_de_bree;Finalmente!
+encontro_taverna_entrelugar;8;RECRUIT;jovem_de_bree;Finalmente!
 encontro_taverna_entrelugar;9;LEADER;;Eu estava procurando você!
-encontro_taverna_entrelugar;10;NPC;jovem_de_bree;Comecei a achar que você tinha se perdido em Entrelinhas.
-encontro_taverna_entrelugar;11;NPC;jovem_de_bree;Ou chegado antes de mim por algum caminho que ainda não aconteceu. Meia hora aqui e a gente já começa a falar assim, hahaha.
-encontro_taverna_entrelugar;12;NPC;jovem_de_bree;Mas é ótimo que você chegou bem.
+encontro_taverna_entrelugar;10;RECRUIT;jovem_de_bree;Comecei a achar que você tinha se perdido em Entrelinhas.
+encontro_taverna_entrelugar;11;RECRUIT;jovem_de_bree;Ou chegado antes de mim por algum caminho que ainda não aconteceu. Meia hora aqui e a gente já começa a falar assim, hahaha.
+encontro_taverna_entrelugar;12;RECRUIT;jovem_de_bree;Mas é ótimo que você chegou bem.
 encontro_taverna_entrelugar;13;LEADER;;Ou será que eu ainda nem saí de Bree?
-encontro_taverna_entrelugar;14;NPC;jovem_de_bree;Está vendo? Já está falando como um local!
-encontro_taverna_entrelugar;15;NPC;jovem_de_bree;Enquanto eu te esperava, descobri que alguns pesquisadores de anomalias costumam trabalhar no mesmo instituto.
-encontro_taverna_entrelugar;16;NPC;jovem_de_bree;Só não faço ideia de onde ele fica. E nem se ele já existe.
-encontro_taverna_entrelugar;17;NPC;jovem_de_bree;Podemos perguntar por aqui se alguém conhece o local.
+encontro_taverna_entrelugar;14;RECRUIT;jovem_de_bree;Está vendo? Já está falando como um local!
+encontro_taverna_entrelugar;15;RECRUIT;jovem_de_bree;Enquanto eu te esperava, descobri que alguns pesquisadores de anomalias costumam trabalhar no mesmo instituto.
+encontro_taverna_entrelugar;16;RECRUIT;jovem_de_bree;Só não faço ideia de onde ele fica. E nem se ele já existe.
+encontro_taverna_entrelugar;17;RECRUIT;jovem_de_bree;Podemos perguntar por aqui se alguém conhece o local.
 # QUEST 4
 oferta_energia_residual;1;NPC;cliente_taverna_entrelugar;Não pude deixar de ouvir a conversa de vocês.
 oferta_energia_residual;2;NPC;cliente_taverna_entrelugar;Em minha defesa, vocês estavam discutindo doenças misteriosas e pessoas virando monstros no meio de uma taverna.
 oferta_energia_residual;3;LEADER;;Justo.
 oferta_energia_residual;4;NPC;cliente_taverna_entrelugar;Olha... se procuram pesquisadores, vocês deveriam visitar o Instituto Entrequando.
 oferta_energia_residual;5;NPC;cliente_taverna_entrelugar;Só não esperem que todos abandonem suas pesquisas para cuidar de um problema de Bree.
-oferta_energia_residual;6;NPC;jovem_de_bree;Bom, mas se souberem alguma coisa, certamente vão falar.
+oferta_energia_residual;6;RECRUIT;jovem_de_bree;Bom, mas se souberem alguma coisa, certamente vão falar.
 oferta_energia_residual;7;NPC;cliente_taverna_entrelugar;Admiro seu otimismo, haha.
 oferta_energia_residual;8;NPC;cliente_taverna_entrelugar;Vocês podem conversar com pessoas de áreas diferentes. Talvez alguém reconheça os sintomas.
 oferta_energia_residual;9;NPC;cliente_taverna_entrelugar;Posso indicar o caminho até o Instituto. Querem tentar?
@@ -243,7 +243,7 @@ aceite_energia_residual;2;LEADER;;Subir aonde?
 aceite_energia_residual;3;NPC;cliente_taverna_entrelugar;Você está em Entrelugar. Vai entender na hora, mesmo que a hora já tenha passado.
 aceite_energia_residual;4;NPC;cliente_taverna_entrelugar;De qualquer forma, sugiro começarem pela Pesquisadora da Anomalia. Ela conhece transformações impossíveis melhor do que qualquer pessoa daqui.
 aceite_energia_residual;5;NPC;cliente_taverna_entrelugar;Convencê-la a falar de algo além de Entrelugar será problema de vocês.
-aceite_energia_residual;6;NPC;jovem_de_bree;Depois de Entrelinhas, isso parece fácil.
+aceite_energia_residual;6;RECRUIT;jovem_de_bree;Depois de Entrelinhas, isso parece fácil.
 aceite_energia_residual;7;LEADER;;Você acabou de condenar nossa visita.
 recusa_energia_residual;1;NPC;cliente_taverna_entrelugar;Tudo bem.
 recusa_energia_residual;2;NPC;cliente_taverna_entrelugar;Se mudarem de ideia, o Instituto provavelmente continuará no mesmo lugar.
@@ -251,12 +251,12 @@ recusa_energia_residual;3;NPC;cliente_taverna_entrelugar;Provavelmente.
 questao_menor;1;LEADER;;Com licença. Você é a Pesquisadora da Anomalia, correto?
 questao_menor;2;NPC;pesquisadora_anomalia;Ah, olá! Sim, sou eu. Mas estou muito ocupada no momento, então, se não tiverem informações valiosas, peço que voltem ontem.
 questao_menor;3;LEADER;;Uma doença desconhecida começou a se espalhar por Bree.
-questao_menor;4;NPC;jovem_de_bree;Algumas pessoas infectadas estão sofrendo transformações no corpo.
+questao_menor;4;RECRUIT;jovem_de_bree;Algumas pessoas infectadas estão sofrendo transformações no corpo.
 questao_menor;5;NPC;pesquisadora_anomalia;Transformações biológicas? Interessante...
 questao_menor;6;NPC;pesquisadora_anomalia;Mas a descrição não soa como algo relacionado à anomalia de Entrelugar.
 questao_menor;7;NPC;pesquisadora_anomalia;As alterações daqui afetam espaço, distância, causalidade e, ocasionalmente, a ordem dos acontecimentos.
 questao_menor;8;NPC;pesquisadora_anomalia;Febre e mutações pertencem a outro campo.
-questao_menor;9;NPC;jovem_de_bree;Minha irmã pode estar virando um monstro e isso é tudo?
+questao_menor;9;RECRUIT;jovem_de_bree;Minha irmã pode estar virando um monstro e isso é tudo?
 questao_menor;10;NPC;pesquisadora_anomalia;Sinto muito, mas não posso ajudar.
 questao_menor;11;NPC;pesquisadora_anomalia;Também posso dizer que interromper uma medição iniciada amanhã seria extremamente inconveniente.
 questao_menor;12;LEADER;;Estamos avançando bastante.
@@ -267,17 +267,17 @@ mancha_vermelha;2;NPC;pesquisador_sanguemar;Sanguemar.
 mancha_vermelha;3;LEADER;;Foi rápido.
 mancha_vermelha;4;NPC;pesquisador_sanguemar;A mancha vermelha cresce sob a praia há gerações. Muitos acreditam que ela é inofensiva.
 mancha_vermelha;5;NPC;pesquisador_sanguemar;Mas o contato direto e constante com suas emanações pode causar sintomas parecidos com esses.
-mancha_vermelha;6;NPC;jovem_de_bree;Você tem alguma prova de que essas emanações chegaram a Bree?
+mancha_vermelha;6;RECRUIT;jovem_de_bree;Você tem alguma prova de que essas emanações chegaram a Bree?
 mancha_vermelha;7;NPC;pesquisador_sanguemar;Tenho uma hipótese, não uma prova.
 mancha_vermelha;8;NPC;pesquisador_sanguemar;Pelo que vocês descreveram, a aparição da doença é recente por lá. E também não conheço casos por aqui.
 mancha_vermelha;9;NPC;pesquisador_sanguemar;Sem contar que estamos muito mais próximos da Praia de Sanguemar do que Bree.
 mancha_vermelha;10;NPC;pesquisador_sanguemar;Isso não encerra a possibilidade. Na verdade, a ausência de provas apenas demonstra quanto ainda precisamos pesquisar.
-mancha_vermelha;11;NPC;jovem_de_bree;Isso não demonstra absolutamente nada.
+mancha_vermelha;11;RECRUIT;jovem_de_bree;Isso não demonstra absolutamente nada.
 mancha_vermelha;12;LEADER;;Ei! Você quer que nos ajudem ou não?
 mancha_vermelha;13;NPC;pesquisador_sanguemar;Discordâncias são fundamentais para o avanço científico.
 mancha_vermelha;14;NPC;pesquisador_sanguemar;Sugiro que levem os sintomas a nosso Arquivista.
 mancha_vermelha;15;NPC;pesquisador_sanguemar;Talvez ele encontre algum relato antigo que apoie minha hipótese.
-mancha_vermelha;16;NPC;jovem_de_bree;Ou que apoie qualquer hipótese.
+mancha_vermelha;16;RECRUIT;jovem_de_bree;Ou que apoie qualquer hipótese.
 registros_antigos;1;NPC;arquivista_entrequando;Transformações progressivas acompanhadas de febre...
 registros_antigos;2;NPC;arquivista_entrequando;"Existem relatos semelhantes, mas nenhum recente. Mesmo que o conceito de ""recente"" seja algo discutível por aqui."
 registros_antigos;3;NPC;arquivista_entrequando;Os registros mais antigos descrevem pessoas contaminadas por maldições vindas do oeste.
@@ -285,13 +285,13 @@ registros_antigos;4;LEADER;;Do oeste de Bree?
 registros_antigos;5;NPC;arquivista_entrequando;Do oeste de quase tudo.
 registros_antigos;6;NPC;arquivista_entrequando;Por muito tempo, barreiras naturais impediram que essas influências avançassem.
 registros_antigos;7;NPC;arquivista_entrequando;Se algo atravessou essas barreiras, alguém precisa analisar sua assinatura energética.
-registros_antigos;8;NPC;jovem_de_bree;Finalmente alguém que parece saber do que está falando.
+registros_antigos;8;RECRUIT;jovem_de_bree;Finalmente alguém que parece saber do que está falando.
 registros_antigos;9;NPC;arquivista_entrequando;Não confunda reconhecer uma pergunta com conhecer a resposta.
 registros_antigos;10;NPC;arquivista_entrequando;O Mago Pesquisador vem d'O Vão. Que tal conversarem com ele?
 registros_antigos;11;NPC;arquivista_entrequando;Ele conhece as antigas proteções do oeste melhor do que qualquer pessoa neste Instituto.
 mago_do_vao;1;NPC;mago_pesquisador;Não precisam repetir tudo.
 mago_do_vao;2;NPC;mago_pesquisador;Consigo perceber os resíduos energéticos em vocês desde que entraram nesta sala.
-mago_do_vao;3;NPC;jovem_de_bree;Isso deveria nos tranquilizar?
+mago_do_vao;3;RECRUIT;jovem_de_bree;Isso deveria nos tranquilizar?
 mago_do_vao;4;NPC;mago_pesquisador;Nem a mim, nem a vocês.
 mago_do_vao;5;NPC;mago_pesquisador;Há gerações, as regiões vulcânicas do Monte Malferve formam uma barreira que protege Bree contra os perigos vindos do oeste.
 mago_do_vao;6;NPC;mago_pesquisador;Mais ao sul, Setegalhos protege os Verdes Ermos das maldições da Mata do Agouro.
@@ -304,14 +304,14 @@ mago_do_vao;12;NPC;mago_pesquisador;Sim, correto. Máquinas abandonadas se reorg
 mago_do_vao;13;NPC;mago_pesquisador;Contudo, algo que chamam de L1D3R parece ter surgido recentemente. Sua energia é diferente daquela das criaturas assombradas que trabalham por lá.
 mago_do_vao;14;NPC;mago_pesquisador;Precisamos entender melhor esse lugar. O que acham de analisar alguns Mecanossos e enfrentar esse L1D3R?
 mago_do_vao;15;NPC;mago_pesquisador;Depois, podem me trazer uma amostra da energia que os mantém ativos.
-mago_do_vao;16;NPC;jovem_de_bree;Se você conhece as Minas, por que não faz isso?
+mago_do_vao;16;RECRUIT;jovem_de_bree;Se você conhece as Minas, por que não faz isso?
 mago_do_vao;17;NPC;mago_pesquisador;Porque já sei como aquela energia reage a mim.
 mago_do_vao;18;NPC;mago_pesquisador;Vocês carregam vestígios da doença e das eletrorrochas da gruta. E ainda há algo mais sobre vocês, algo que não sei explicar.
 mago_do_vao;19;NPC;mago_pesquisador;Para esta investigação, isso torna vocês muito mais úteis.
 mago_do_vao;20;LEADER;;Então somos parte do experimento.
 mago_do_vao;21;NPC;mago_pesquisador;Toda investigação é um experimento.
 mago_do_vao;22;NPC;mago_pesquisador;Algumas apenas demoram mais para revelar o que está sendo testado.
-mago_do_vao;23;NPC;jovem_de_bree;Você é sempre tão reconfortante?
+mago_do_vao;23;RECRUIT;jovem_de_bree;Você é sempre tão reconfortante?
 mago_do_vao;24;NPC;mago_pesquisador;Quando a situação permite.
 mago_do_vao;25;NPC;mago_pesquisador;Permanecerei em Entrelugar para sustentar um vínculo com vocês.
 mago_do_vao;26;NPC;mago_pesquisador;Ele permitirá acompanhar as oscilações da amostra e retirar o grupo das Minas quando a coleta terminar.
@@ -319,18 +319,18 @@ mago_do_vao;27;NPC;mago_pesquisador;Estarei monitorando a exploração constante
 mago_do_vao;28;NPC;mago_pesquisador;Então... NÃO. AVANCEM. ALÉM. DO NECESSÁRIO.
 mago_do_vao;29;LEADER;;Essa recomendação parece estranhamente específica.
 mago_do_vao;30;NPC;mago_pesquisador;Porque é.
-mago_do_vao;31;NPC;jovem_de_bree;Bom, {leaderName}, como você é mais forte, deixo que lidere a investigação.
-mago_do_vao;32;NPC;jovem_de_bree;Eu cuido das anotações e carrego sua bolsa.
+mago_do_vao;31;RECRUIT;jovem_de_bree;Bom, {leaderName}, como você é mais forte, deixo que lidere a investigação.
+mago_do_vao;32;RECRUIT;jovem_de_bree;Eu cuido das anotações e carrego sua bolsa.
 mago_do_vao;33;LEADER;;...
 fragmento_pendente;1;NPC;mago_pesquisador;Vocês retornaram sem o fragmento.
 fragmento_pendente;2;NPC;mago_pesquisador;Sem uma amostra, qualquer conclusão seria apenas especulação.
 fragmento_pendente;3;LEADER;;Você tem razão. Desculpe.
-fragmento_pendente;4;NPC;jovem_de_bree;Pelo menos agora sabemos como é a sensação de estar do outro lado da conversa científica.
+fragmento_pendente;4;RECRUIT;jovem_de_bree;Pelo menos agora sabemos como é a sensação de estar do outro lado da conversa científica.
 fragmento_pendente;5;NPC;mago_pesquisador;Retornem quando tiverem o que pedi.
 primeira_resposta;1;NPC;mago_pesquisador;Ah, belíssimo retorno. Rápido! Coloquem o fragmento sobre a mesa.
 primeira_resposta;2;NARRATOR;;Filamentos de uma luz violeta percorrem a superfície do fragmento e projetam sombras que não acompanham os movimentos da sala.
 primeira_resposta;3;NPC;mago_pesquisador;Interessante.
-primeira_resposta;4;NPC;jovem_de_bree;Essa palavra nunca anuncia coisa boa.
+primeira_resposta;4;RECRUIT;jovem_de_bree;Essa palavra nunca anuncia coisa boa.
 primeira_resposta;5;NPC;mago_pesquisador;A energia das Minas não é a mesma que está transformando as pessoas de Bree.
 primeira_resposta;6;NPC;mago_pesquisador;Mas ela reage como se tivesse sido tocada pela mesma influência que tocou o sangue de seu pai, {leaderName}.
 primeira_resposta;7;LEADER;;Então os registros estavam certos?
@@ -338,7 +338,7 @@ primeira_resposta;8;NPC;mago_pesquisador;Eles apontam na direção correta. A co
 primeira_resposta;9;NPC;mago_pesquisador;Eu esperava reflexos verdes ou azulados, algo próximo ao tom das eletrorrochas. Mas esse violeta...
 primeira_resposta;10;NPC;mago_pesquisador;Ainda assim, apontar na direção correta não é o mesmo que conhecer a resposta.
 primeira_resposta;11;NPC;mago_pesquisador;Para continuar, precisaremos investigar forças muito mais perigosas do que as máquinas que encontraram.
-primeira_resposta;12;NPC;jovem_de_bree;Bem, nós conseguimos voltar com vida.
+primeira_resposta;12;RECRUIT;jovem_de_bree;Bem, nós conseguimos voltar com vida.
 primeira_resposta;13;NPC;mago_pesquisador;Porque eu retirei vocês antes que alcançassem o que existe no fundo daquela mina.
 primeira_resposta;14;NPC;mago_pesquisador;Coragem permitiu que chegassem até aqui. Inocência permitiu que aceitassem a missão cegamente.
 primeira_resposta;15;NPC;mago_pesquisador;Elas não são as únicas características que definem um guerreiro.
@@ -353,11 +353,11 @@ primeira_resposta;23;NPC;mago_pesquisador;Coragem. Inocência. Percepção. Curi
 primeira_resposta;24;NPC;mago_pesquisador;As sete características que definem um guerreiro. Posso explicar melhor quando me encontrarem em Setegalhos.
 primeira_resposta;25;NPC;mago_pesquisador;Vocês sabem o caminho. Na bifurcação de Verdes Ermos, sigam para o oeste e ignorem a trilha para a Gruta de Relamparrocha.
 primeira_resposta;26;NPC;mago_pesquisador;Garanto a vocês: se desejam continuar esta investigação, precisarão descobrir no que podem se tornar.
-primeira_resposta;27;NPC;jovem_de_bree;E você pretende simplesmente aparecer lá?
+primeira_resposta;27;RECRUIT;jovem_de_bree;E você pretende simplesmente aparecer lá?
 primeira_resposta;28;NPC;mago_pesquisador;Pretendo chegar antes de vocês. Ontem.
 primeira_resposta;29;NPC;mago_pesquisador;Até lá.
 primeira_resposta;30;NARRATOR;;O mago ergue dois dedos. Por um instante, sua silhueta parece ocupar vários pontos da sala ao mesmo tempo. Então desaparece.
-primeira_resposta;31;NPC;jovem_de_bree;Ele sumiu! Isso foi magia ou distorção espacial?
+primeira_resposta;31;RECRUIT;jovem_de_bree;Ele sumiu! Isso foi magia ou distorção espacial?
 primeira_resposta;32;LEADER;;Depois de Entrelugar, eu não sei de mais nada.
 # QUEST 5
 oferta_sete_caminhos;1;NARRATOR;;As ruas de Setegalhos estão repletas de moradores, viajantes, música e conversas. Acima de tudo isso, a copa da árvore colossal se estende por quilômetros.
