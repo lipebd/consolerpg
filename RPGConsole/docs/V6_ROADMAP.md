@@ -1115,6 +1115,6 @@ General documentation is maintained incrementally when each coherent implementat
 * [x] Compile and run the final representative regression set.
 * [x] Build the portable Windows package.
 * [x] Verify a fresh V6 campaign, INN save, restart and Continue from the extracted package.
-* [ ] Commit each completed roadmap block coherently instead of committing per checkbox.
-* [ ] Create the consolidated V6 release commit or merge only after all blocks are complete.
+* [x] Commit each completed roadmap block coherently instead of committing per checkbox.
+* [x] Create the consolidated V6 release commit or merge only after all blocks are complete.
 * [ ] Tag and publish V6 only after documentation and portable-build verification are approved.
