@@ -1,2 +1,3 @@
-# id;sourceScenarioId;position;destinationScenarioId;displayName;description
-verdes_ermos_bifurcacao_setegalhos;verdes_ermos;3;setegalhos;Seguir para Setegalhos;Você encontra uma bifurcação entre os campos.\nUma estrada parcialmente escondida pela vegetação conduz ao Povoado de Setegalhos.
+## id;sourceScenarioId;position;destinationScenarioId;initiallyUnlocked;displayName;description
+verdes_ermos_bifurcacao_setegalhos;verdes_ermos;3;setegalhos;false;Seguir para Setegalhos;Você encontra uma bifurcação entre os campos.\nUma estrada parcialmente escondida pela vegetação conduz ao Povoado de Setegalhos.
+entrelinhas_bifurcacao_alem_tumulo;entrelinhas;4;minas_alem_tumulo;false;Entrar nas Minas do Além-Túmulo;Um dos caminhos sinuosos leva à entrada de uma mina há muito tempo desativada.\nSons mecânicos ecoam pela entrada. Essa mina não parece realmente abandonada.

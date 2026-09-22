@@ -3,6 +3,7 @@ package rpg.ui;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import rpg.world.WorldClock;
 import rpg.world.scenarios.CityAction;
@@ -10,51 +11,63 @@ import rpg.world.scenarios.CityAction;
 // Displays the actions currently available in a city.
 public final class CityMenu {
 
-	private final ConsoleInput consoleInput;
-	private final WorldClock worldClock;
+    private final ConsoleInput consoleInput;
+    private final WorldClock worldClock;
 
-	public CityMenu(ConsoleInput consoleInput, WorldClock worldClock) {
-		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
-		this.worldClock = Objects.requireNonNull(worldClock, "World clock cannot be null.");
-	}
+    public CityMenu(ConsoleInput consoleInput, WorldClock worldClock) {
+        this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 
-	public Optional<CityAction> selectAction(String cityName, List<CityAction> actions) {
-		Objects.requireNonNull(cityName, "City name cannot be null.");
-		Objects.requireNonNull(actions, "City actions cannot be null.");
+        this.worldClock = Objects.requireNonNull(worldClock, "World clock cannot be null.");
+    }
 
-		while (true) {
-			System.out.println("\n" + WorldTimeFormatter.formatCurrentTime(worldClock));
+    public Optional<CityAction> selectAction(
+        String cityName, List<CityAction> actions, Set<CityAction> markedActions) {
+        Objects.requireNonNull(cityName, "City name cannot be null.");
 
-			System.out.println("\nO que deseja fazer?");
-			System.out.println();
+        Objects.requireNonNull(actions, "City actions cannot be null.");
 
-			int secondRowStartIndex = actions.indexOf(CityAction.INVENTORY);
+        Objects.requireNonNull(markedActions, "Marked city actions cannot be null.");
 
-			ConsoleUI.displayActionRows(actions, secondRowStartIndex);
+        while (true) {
+            System.out.println("\n" + WorldTimeFormatter.formatCurrentTime(worldClock));
+            System.out.println("\nO que deseja fazer?");
+            System.out.println();
 
-			System.out.println();
-			System.out.println("[0] Encerrar jogo");
-			System.out.print("> ");
+            List<String> actionLabels =
+                    actions.stream()
+                            .map(
+                                    action ->
+                                            markedActions.contains(action)
+                                                    ? "\u001B[33m[!]\u001B[0m " + action
+                                                    : action.toString())
+                            .toList();
 
-			String choice = consoleInput.readTrimmedLine();
+            int secondRowStartIndex = actions.indexOf(CityAction.INVENTORY);
 
-			if (choice.equals("0")) {
-				return Optional.empty();
-			}
+            ConsoleUI.displayActionRows(actionLabels, secondRowStartIndex);
 
-			try {
-				int selectedIndex = Integer.parseInt(choice) - 1;
+            System.out.println();
+            System.out.println("[0] Encerrar jogo");
+            System.out.print("> ");
 
-				if (selectedIndex < 0 || selectedIndex >= actions.size()) {
-					System.out.println("Ação inválida.");
-					continue;
-				}
+            String choice = consoleInput.readTrimmedLine();
 
-				return Optional.of(actions.get(selectedIndex));
+            if (choice.equals("0")) {
+                return Optional.empty();
+            }
 
-			} catch (NumberFormatException exception) {
-				System.out.println("Comando inválido.");
-			}
-		}
-	}
+            try {
+                int selectedIndex = Integer.parseInt(choice) - 1;
+
+                if (selectedIndex < 0 || selectedIndex >= actions.size()) {
+                    System.out.println("Ação inválida.");
+                    continue;
+                }
+
+                return Optional.of(actions.get(selectedIndex));
+            } catch (NumberFormatException exception) {
+                System.out.println("Comando inválido.");
+            }
+        }
+    }
 }

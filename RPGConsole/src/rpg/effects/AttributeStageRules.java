@@ -26,13 +26,13 @@ public final class AttributeStageRules {
 
 	public static int getMultiplierPercentage(int effectiveStage) {
 		return switch (effectiveStage) {
-		case 3 -> 150;
-		case 2 -> 130;
-		case 1 -> 115;
+		case 3 -> 160;
+		case 2 -> 140;
+		case 1 -> 120;
 		case 0 -> 100;
-		case -1 -> 85;
-		case -2 -> 70;
-		case -3 -> 50;
+		case -1 -> 80;
+		case -2 -> 60;
+		case -3 -> 40;
 
 		default -> throw new IllegalArgumentException("Effective attribute stage must be between -3 and 3.");
 		};

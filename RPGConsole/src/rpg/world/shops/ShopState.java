@@ -14,10 +14,6 @@ public final class ShopState {
 
 		Objects.requireNonNull(activeOffers, "Active shop offers cannot be null.");
 
-		if (activeOffers.isEmpty()) {
-			throw new IllegalArgumentException("Shop state must have at least one active offer.");
-		}
-
 		if (activeOffers.size() > definition.getOfferSlots()) {
 			throw new IllegalArgumentException("Active shop offers cannot exceed the configured offer slots.");
 		}

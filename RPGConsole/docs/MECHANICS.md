@@ -785,7 +785,7 @@ Learning follows these rules:
 When both scroll slots are occupied:
 
 - The player must select one learned `SCROLL` skill to replace.
-- `STARTER` and `LEVEL` skills cannot be selected or forgotten.
+- `LEVEL` skills cannot be selected or forgotten.
 - The replacement requires explicit confirmation.
 - Returning from either selection or confirmation preserves the inventory and all learned skills.
 - A confirmed replacement forgets the selected skill, learns the new skill and consumes exactly one new scroll.
@@ -936,29 +936,30 @@ Every skill defines one acquisition type and a level requirement within the supp
 
 The acquisition types are:
 
-- `STARTER` — learned automatically when its requirement is met and used for temporary pre-class-choice progression.
-- `LEVEL` — learned automatically when its requirement is met and retained as a permanent class skill.
+- `LEVEL` — learned automatically when its requirement is met.
 - `SCROLL` — learned only from its linked skill scroll after the minimum level requirement is met.
 
 `PlayableCharacter` stores the stable IDs of learned skills. The corresponding `SkillDefinition` remains unique in `SkillCatalog`; learning does not create or duplicate skill definitions.
 
-Automatically available `STARTER` and `LEVEL` skills are learned during character creation and after level gains. When one reward crosses several levels, every automatically learned skill whose requirement is above the previous level and at or below the new level is reported as newly learned.
+Automatically available `LEVEL` skills are learned during character creation, after level gains and after a class transition installs the new natural skill roster. When one reward crosses several levels, every automatically learned skill whose requirement is above the previous level and at or below the new level is reported as newly learned.
 
 `SCROLL` skills are never granted by level alone. Reaching their configured level only makes their linked scroll usable.
 
-The Flagelo currently uses two temporary foundational skills before the level-7 class choice:
+The beginner Flagelo owns two natural `LEVEL` skills:
 
-- `Investida` — `STARTER`, level 1.
-- `Quebra-Armadura` — `STARTER`, level 3.
+- `Investida` — level 1.
+- `Quebra-Armadura` — level 3.
 
-Its four permanent level skills are:
+The final Flagelo path owns its separate permanent natural roster:
 
-- `Golpe Experiente` — `LEVEL`, level 7.
-- `Grito de Guerra` — `LEVEL`, level 10.
-- `Perseverança` — `LEVEL`, level 15.
-- `Lenda Viva` — `LEVEL`, level 20.
+- `Golpe Experiente` — level 7.
+- `Grito de Guerra` — level 10.
+- `Perseverança` — level 15.
+- `Lenda Viva` — level 20.
 
-Every other playable class has four permanent `LEVEL` skills. Retirement of the Flagelo's two `STARTER` skills remains deferred to the future level-7 class-choice flow.
+Choosing a final class path removes the beginner natural roster and installs the natural skills belonging to the selected final class. Every final path therefore derives its available natural skills exclusively from its current class definition and level.
+
+Previously learned scroll skills are preserved across the protagonist's class transition and continue counting toward the maximum of two learned scroll skills. Future scroll learning must be compatible with the protagonist's new class.
 
 ### Skill-detail presentation
 
@@ -971,7 +972,7 @@ Available skills are first displayed as a compact selectable list. Selecting one
 - MP and SP cost.
 - External narrative description.
 
-For `STARTER` and `LEVEL` skills, the displayed level is the automatic learning level. For `SCROLL` skills, it is the minimum level required to use the linked scroll.
+For `LEVEL` skills, the displayed level is the automatic learning level. For `SCROLL` skills, it is the minimum level required to use the linked scroll.
 
 The first displayable component in `PRIMARY` defines the summary type, power and action target. If a future valid skill has no displayable `PRIMARY` component, the first displayable component in execution order is used as a fallback. Secondary effects remain part of the narrative description and do not replace the main classification.
 
@@ -1052,10 +1053,11 @@ City locations and city exits remain separate navigation paths. Adjacent exits r
 
 A normal new game creates only the protagonist. The protagonist:
 
-- Is always created as a level-1 Flagelo.
+- Is always created at level 1 with the internal `flagelo_iniciante` class.
+- Is presented to the player simply as a Flagelo.
 - Begins with full HP, MP and SP.
 - Becomes the first member and leader of the `Party`.
-- Receives the Flagelo skills automatically available at level 1.
+- Receives the beginner Flagelo skills automatically available at level 1.
 - Is the only initial party member.
 
 The player may either enter the protagonist's name or ask the game to select one uniformly from `character_names.txt`.
@@ -1077,16 +1079,200 @@ When random naming is selected, names already supplied by the caller are exclude
 Before confirmation, the interface displays:
 
 - The proposed character name.
-- The complete Flagelo class name.
+- The Flagelo symbol and player-facing class name.
+- The compatible armor weight.
 - The primary specialization marked with `↑↑`.
 - The secondary specialization marked with `↑`.
-- The external Flagelo description.
+- The external beginner Flagelo description.
+
+The internal beginner class is not presented as a separate path. Its visible name, symbol, base attributes, growth specializations and armor weight match the final Flagelo path.
 
 The player may confirm the character, change the proposed name or cancel. Changing the name returns to the manual-or-random choice. Cancelling returns to the title screen. No `PlayableCharacter` or `Party` is created until confirmation succeeds.
 
 Story-based ally recruitment, random ally classes and party-title acquisition are not part of the initial creation flow.
 
 The `--dev-party` argument activates a separate development-only shortcut. It bypasses the title and normal creation interface and produces one to four configured characters with distinct classes, positive levels and fully restored resources. This shortcut is not a player-facing game mechanic.
+
+## Level-7 class-path ceremony
+
+The protagonist begins with the internal `flagelo_iniciante` class. The ceremony may be resolved only when:
+
+- The protagonist remains in that beginner class.
+- The protagonist has reached at least level 7.
+- The permanent ceremony-completion flag is not set.
+
+The final `flagelo` class remains one of the seven selectable paths. Although the beginner and final Flagelo definitions share the same player-facing identity and natural-stat rules, they have separate canonical IDs and natural skill rosters.
+
+### Questionnaire and recommendation
+
+The ceremony questionnaire contains seven sequential questions:
+
+- Four questions with three answers each.
+- Three questions with two answers each.
+- Eighteen answer positions in total.
+- Six recommendable final classes appearing exactly three times each.
+- No answer recommending the final Flagelo path.
+
+Each selected answer grants exactly one point to exactly one final class. Answers do not change attributes, probabilities, ally behavior or any other campaign state.
+
+Questions cannot be revisited during one attempt. Invalid input repeats only the current question. Question and answer text may use intentional `\n` line breaks and the supported party placeholders, which are completely resolved before the first question is presented.
+
+The class or classes with the highest score form the questionnaire result:
+
+- One highest-scoring class produces a direct recommendation.
+- A two-way or three-way tie presents every tied class explicitly.
+- The player resolves a tie directly; no random tiebreak is used.
+- Refusing every tied class continues to unrestricted final-path selection.
+
+The canonical questionnaire distribution guarantees that a highest-score tie cannot contain more than three classes.
+
+A resolved recommendation receives one staged narrative revelation. The compact decision screen then displays the class summary and allows the player to open its full description without replaying the revelation.
+
+The player may embrace the recommended path or refuse the call. Refusal does not automatically select Flagelo: it opens all seven final paths, including Flagelo, for free inspection and selection.
+
+Once unrestricted selection begins, the ceremony cannot be cancelled. Final confirmation allows only confirming the displayed path or choosing again.
+
+Questionnaire answers, scores, tied results, the recommendation and an unconfirmed selection are transient. They do not mutate campaign state and are not persisted.
+
+### Protagonist class transition
+
+A confirmed final path prepares one complete transition before any campaign mutation.
+
+The transition preserves:
+
+- The protagonist's name.
+- Current level.
+- Current EXP.
+- Learned scroll skills.
+- First party position.
+- Leader identity.
+
+The transition applies:
+
+- Replacement of the beginner class with the selected final class.
+- Replacement of the beginner natural skill roster with the selected class's natural roster.
+- Recalculation of natural attributes for the preserved level.
+- Automatic learning of the selected class's currently available natural skills.
+- Full restoration of HP, MP and SP.
+- Return of the equipped weapon, armor and trinket to the shared inventory.
+- Removal of all three equipped items from the protagonist.
+- Addition of the selected path's introductory weapon and armor to the shared inventory.
+- No introductory trinket.
+- Setting of the permanent ceremony-completion flag.
+
+The complete inventory consequence is calculated before mutation. Returned equipment and introductory equipment are consolidated by canonical item ID so that their resulting quantities can be checked against the per-item maximum.
+
+An invalid current class, insufficient level, previously completed ceremony or insufficient inventory capacity rejects the complete transition. Equipment, inventory, class, skills, resources and flags remain unchanged.
+
+The standalone transition can prepare and apply this state atomically. Its normal story resolution will compose the same prepared plan with the mandatory first-ally recruitment, quest transition, rewards and permanent effects so that Quest 5 cannot commit only part of the ceremony.
+
+## Recruitment candidates and playable allies
+
+A recruitment candidate represents one narratively known future ally before that character joins the party.
+
+Candidate state contains only:
+
+- A canonical candidate ID.
+- One persistent generated name.
+- Whether recruitment has already occurred.
+
+Before recruitment, a candidate has no class, level, EXP, attributes, resources, skills, equipment or party position.
+
+Candidate identity is created at the first displayed dialogue containing that candidate as a `RECRUIT` speaker. Creation is idempotent: later dialogue appearances resolve the same state and never reroll the name.
+
+The shared `character_names.txt` list supplies random names for both protagonist creation and candidates. Candidate introduction excludes every name already used by the party or another candidate. Name comparison follows the shared case-insensitive character-name rules. If no unique name remains, introduction fails before candidate-state mutation.
+
+Recruitment dispatch is associated with quest progress through `quest_recruitments.txt`. Each record identifies:
+
+- Quest.
+- Step.
+- Candidate.
+- Ally entry level.
+
+The catalog supports at most three records because a four-member party contains one leader and at most three recruited allies. Candidate name, recruited state and selected class are campaign state and do not belong in the external definition.
+
+### Ally class selection
+
+Ally class selection occurs only while a recruitment plan is being prepared.
+
+The generic eligible pool excludes:
+
+- `flagelo_iniciante`.
+- Final Flagelo.
+- Every class already represented in the current party.
+- Any additional class excluded by the current narrative composition.
+
+For the first recruitment, the protagonist's confirmed target class is an additional exclusion because the protagonist still technically owns `flagelo_iniciante` while the complete transaction is being prepared.
+
+Selection is uniform among the remaining classes. Questionnaire answers do not influence the ally, and the player cannot reroll, reject or manually replace the selected result.
+
+Later recruitment flows can reuse the same selection rule against the larger existing party without repeating the protagonist's class ceremony.
+
+### Ally playable state
+
+A recruited ally is constructed only during recruitment preparation.
+
+The generic factory receives the canonical candidate, selected class and externally configured entry level. It creates:
+
+- Current EXP 0.
+- Natural attributes calculated normally at the entry level.
+- Every natural class skill available at that level.
+- No scroll-learned skills.
+- The class-path introductory weapon equipped directly.
+- The class-path introductory armor equipped directly.
+- An empty trinket slot.
+- Fully restored HP, MP and SP.
+- No additional inventory items.
+
+The ally's introductory equipment never enters the shared inventory. Equipped items remain separate from inventory quantities.
+
+The first canonical ally uses level 7 and enters the second party position. The external level field exists so later content can select another supported entry level without changing Java code.
+
+### First-ally ceremony and atomic commit
+
+The first recruitment is composed with the protagonist's level-7 class-path ceremony and final quest interaction.
+
+The player-facing order is:
+
+1. Complete the questionnaire.
+2. Resolve the recommendation or tie.
+3. Confirm the protagonist's final class.
+4. Prepare the complete protagonist, quest and ally transaction.
+5. Display the ceremony ending and ally conversation.
+6. Present the single mandatory action `Aceitar sua companhia`.
+7. Apply the complete transaction.
+8. Present quest completion, rewards and effects.
+
+Preparation validates before campaign mutation:
+
+- Protagonist eligibility.
+- Equipment return.
+- Protagonist introductory-item capacity.
+- Quest interaction eligibility.
+- Delivery requirements.
+- Reward capacity.
+- Permanent effects.
+- Candidate identity and unrecruited state.
+- Party capacity and name uniqueness.
+- Eligible ally-class pool.
+- Ally level, class definitions and introductory equipment.
+
+The completion validator includes the protagonist's pending inventory additions when checking quest rewards. For example, one introductory item and a reward of 999 units of the same item are rejected because their combined result would exceed the per-item inventory maximum.
+
+After mandatory acceptance, application occurs in this order:
+
+1. Apply the protagonist transition.
+2. Complete the quest and apply rewards and effects.
+3. Insert the ally into the party.
+4. Mark the candidate as recruited.
+
+The ally is inserted after quest rewards and therefore does not receive the completing quest's `PARTY_EXP`. The ally retains EXP 0.
+
+An expected validation failure preserves protagonist class, equipment, resources, inventory, party membership, candidate recruited state, quest progress, flags and routes. The already introduced candidate identity remains unchanged and available for a later complete retry.
+
+Questionnaire answers, scores, recommendations, confirmed transient choice, selected ally class, constructed uncommitted ally and prepared plans are transient. They are neither independent campaign state nor save data.
+
+The first ceremony-specific composition does not make later recruitments class ceremonies. Candidate identity, class selection, ally construction and party insertion remain generic components for future narrative recruitment flows.
 
 ## Party status
 
@@ -1116,7 +1302,7 @@ The individual character screen displays:
 - HP, MP and SP.
 - ATK, DEF and VEL.
 - MAG, RES and LCK.
-- Learned `STARTER`, `LEVEL` and `SCROLL` skills.
+- Learned `LEVEL` and `SCROLL` skills.
 - Equipped weapon, armor and trinket through the equipment submenu.
 - Total effective individual M.EXP, including temporary and equipped sources.
 
@@ -1139,13 +1325,19 @@ Changing the visible name or symbol does not alter stored gold, prices or transa
 
 ## Campaign persistence foundation
 
-The implemented persistence foundation can capture one immutable campaign snapshot containing party, inventory, equipment, learned scroll skills, reward modifiers, world progress, travel progress, permanent dungeon progress, fictional time and active shop states.
+The implemented persistence foundation captures one immutable campaign snapshot containing party, inventory, equipment, learned scroll skills, reward modifiers, world progress, travel progress, permanent dungeon progress, fictional time, active shop states, quest progress, permanent flags and introduced recruitment candidates.
 
 The snapshot is serialized through the versioned property schema defined in `SAVE_STATE.md`, encoded as UTF-8, authenticated and encrypted through AES-256-GCM and written through atomic save-file replacement.
 
 Loading decrypts and structurally validates the snapshot, validates every catalog-backed reference and reconstructs an isolated runtime candidate without modifying active gameplay state. A valid campaign may be continued after the title screen, while saving is available exclusively through INNs.
 
-The authenticated internal save format is currently version 2. It stores narrative dungeon completion and the absolute elapsed-world-hour availability of recurring bosses and epic encounters. Active exploration sessions remain transient and are not restored.
+The authenticated internal save format is version 3. It persists quest progress, permanent campaign flags and recruitment-candidate state alongside party, world, travel, dungeon, clock and shop state. Version-2 saves are rejected without migration.
+
+Loading validates the relationships between the completed ceremony, the protagonist's class, recruitment quest progress, candidate state and the recruited party member before activating the restored campaign. Active exploration sessions, questionnaire answers, recommendations, uncommitted class choices and prepared recruitment plans remain transient.
+
+Internal version 2 is rejected without migration because its party snapshot cannot prove the quest, flag and candidate transaction that produced a recruited ally. Loading version 3 reconstructs quest, flag and candidate state in isolation and validates their coherence with the restored party before `World` receives the campaign.
+
+A confirmed playable class belongs to persisted character state through its canonical class ID. Version-3 restoration validates the first ceremony across the completed recruitment quest, permanent ceremony flag, leader class, recruited candidate and second-position ally instead of storing another independent class-path decision.
 
 ## World time and daily shop restocking
 
@@ -1159,6 +1351,8 @@ World time advances by one hour only when a battle reaches one of these complete
 A successful escape does not advance time. Avoiding an optional encounter before battle also does not advance time.
 
 Opening or navigating menus, visiting shops, using inventory, viewing party status and performing events that do not complete a battle leave world time unchanged.
+
+Visiting narrative locations, speaking with NPCs, reading dialogue, accepting or declining quests and completing NPC interactions also leave world time unchanged.
 
 The current hour cost of a finished battle is a configurable gameplay value. The general clock operation receives the applicable number of hours so future actions may advance a different amount without changing the clock's progression rules.
 
@@ -1318,6 +1512,8 @@ The shop remains open after successful, cancelled or rejected transactions until
 ## Crafting
 
 Crafter NPCs appear as functional locations in their configured cities.
+
+Crafter is a system-specific presentation role and remains separate from canonical narrative NPC identity and placement. A character participates in narrative dialogue or quests only when separately represented through the narrative NPC data.
 
 A city may contain multiple crafters. Each NPC has its own identity, description and ordered recipe set. Entering one crafter never exposes recipes assigned exclusively to another.
 
@@ -1604,11 +1800,13 @@ Every dungeon defines:
 
 The narrative boss blocks the final position until the dungeon is completed for the first time.
 
+An optional dungeon-boss gate may require current campaign conditions before the encounter begins. If access is blocked, its configured reaction dialogue can be shown and the party transported to a configured scenario. A quest-specific reaction may take precedence over the general reaction for the same boss. Boss narrative and recurring dialogues are associated separately and presented before their encounters.
+
 Narrative-boss victory:
 
 - Permanently records the dungeon's narrative completion.
 - Completes the current exploration.
-- Permanently preserves otherwise-unlocked adjacent routes.
+- Does not unlock adjacent routes or scenario branches; passages remain controlled by their initial definitions and quest effects.
 - Starts the first recurring-boss cooldown after the victory advances world time by one hour.
 
 Completed dungeons remain available for reexploration.
@@ -1652,3 +1850,297 @@ The generated group size respects:
 - Each encounter entry's maximum copy count.
 
 Repeated enemies receive numbered battle names, while unique enemies retain their regular display name.
+
+## Linear quest progression
+
+Quests use sequential linear steps. Choices may occur inside one narrative interaction, but V6 does not use branching step graphs.
+
+A quest has one of three statuses:
+
+- `NOT_STARTED`
+- `ACTIVE`
+- `COMPLETED`
+
+A newly accepted quest becomes active at step 1 with every objective in that step initialized to zero. Only the current step may receive progress.
+
+When every current objective reaches its required quantity:
+
+1. The current step is completed.
+2. Its permanent step effects are applied.
+3. The next sequential step becomes current.
+4. The new step begins with fresh objective progress.
+
+If no later step exists, the final completion transaction applies and the quest becomes permanently completed. Completed quests do not become active again.
+
+Quests not yet started are omitted from progress presentation. Their availability is derived from the starting NPC, the current reusable requirement set and current campaign state.
+
+Declining a quest offer causes no mutation. The offer remains available whenever its requirements continue to succeed.
+
+## Quest objective progress
+
+The initial objective types are:
+
+- Talking to one canonical NPC.
+- Defeating a quantity of one enemy.
+- Analyzing one enemy.
+- Obtaining a quantity of one item.
+- Delivering a quantity of one item.
+- Reaching one scenario.
+- Completing one dungeon.
+- Winning a quantity of battles.
+
+Gameplay integration is synchronous and explicit. A confirmed operation produces a typed quest-progress event and immediately passes it to `QuestProgressService`. V6 does not use a global event bus.
+
+Progress rules:
+
+- Events are emitted only after the corresponding gameplay operation succeeds.
+- Cancelled, refused or rolled-back operations produce no progress.
+- Only active quests and their current steps inspect an event.
+- One event may update multiple active quests.
+- One event is not replayed after it advances a quest to its next step.
+- A later event may update the newly activated step.
+- Progress is capped at the objective's required quantity.
+- Completed objective quantities do not regress.
+- Notifications returned from one gameplay resolution remain ordered and are presented together.
+
+Enemy-defeat progress is produced only by confirmed victory over the applicable enemy. Escape, party defeat and refusal of an optional encounter do not count defeated enemies.
+
+`WIN_BATTLE` counts confirmed victories. With a blank target, victories in any combat scenario count; with a scenario ID as target, only victories in that scenario count. Enemy identity does not affect this objective.
+
+`ANALYZE_ENEMY` records the confirmed analysis action against the configured enemy. It does not require defeating that enemy.
+
+Enemy identity for quest progress comes from the canonical ID retained by each runtime enemy, never from its display name.
+
+At battle end, confirmed progress is submitted in this order:
+
+1. Enemy analyses, once per canonical enemy ID analyzed during that battle.
+2. Defeated-enemy quantities grouped by canonical ID, on victory only.
+3. One `WIN_BATTLE` event, on victory only.
+4. Item quantities actually collected from battle rewards, on victory only.
+
+Escape and party defeat preserve confirmed analysis progress but produce no enemy-defeat, battle-victory or collected-drop progress.
+
+`OBTAIN_ITEM` records confirmed acquisition after the item has been received. It is not retroactive and later consumption does not reduce its accumulated progress.
+
+Valid acquisition sources are successful purchases, completed crafting, exploration rewards actually added to inventory, collected battle drops and item rewards from another completed quest. Failed or cancelled operations, discarded rewards, rollback restoration, save restoration and transfers of already owned items do not emit acquisition progress.
+
+`DELIVER_ITEM` does not advance through a generic acquisition event. It belongs to a transactional interaction with the step's configured NPC.
+
+`REACH_SCENARIO` is emitted only after the party has entered the destination successfully.
+
+`COMPLETE_DUNGEON` is emitted after either a narrative or recurring boss victory updates dungeon progress and completes the current exploration. Allowing both boss forms prevents an objective from becoming permanently blocked when its quest is activated only after the narrative boss was defeated.
+
+## NPC quest interactions
+
+An NPC may currently expose:
+
+- An available quest offer.
+- An interaction belonging to an active quest's current step.
+- Its permanent default `Conversar` option.
+
+Available quest titles appear in stable quest-catalog order before `Conversar`.
+
+An offer interaction follows this sequence:
+
+1. Reevaluate the quest availability requirements.
+2. Present the required `OFFER` dialogue.
+3. Ask the player to accept or decline.
+4. On refusal, present the optional `DECLINE` dialogue and preserve all state.
+5. On acceptance, validate quest-start effects.
+6. Present the optional `ACCEPT` dialogue.
+7. Activate the quest and apply its start effects.
+8. Present the quest-start notification.
+
+A current-step NPC interaction is available only when its ordinary prerequisite objectives allow that interaction.
+
+A delivery interaction checks the required current item quantities without consuming them during menu discovery. If the party lacks the required state, the optional `PENDING` dialogue may be displayed and the quest remains unchanged.
+
+A completable NPC interaction follows this sequence:
+
+1. Validate the selected NPC, active quest, current step, delivery quantities, receiving capacities, effects and rewards.
+2. Present the required `COMPLETE` dialogue.
+3. Revalidate the transaction after the dialogue.
+4. Consume delivery items when applicable.
+5. Apply rewards, effects and quest-state transitions atomically.
+6. Present the resulting grouped progress and completion information.
+
+The completion dialogue therefore occurs before mutation, while complete prevalidation prevents an already-known failure from presenting a false narrative conclusion.
+
+## Quest rewards
+
+The initial material reward types are:
+
+- Shared party GOLD.
+- EXP for every current party member.
+- Items added to the shared inventory.
+
+A quest may have no material reward.
+
+Reward descriptions are generated from the actual definitions. Quest content does not maintain a separate free-text reward list.
+
+Quest rewards are all-or-nothing:
+
+- Resulting GOLD must remain within the party maximum.
+- Resulting item quantities must remain within the per-item maximum.
+- Every capacity-sensitive reward is validated before EXP is granted.
+- EXP uses the existing level, overflow and maximum-level rules.
+- A failure preserves GOLD, inventory, character progression, permanent state and quest progress.
+
+Items received through one successfully completed quest may then produce acquisition events for other active quests. The quest that just completed cannot consume its own reward event retroactively.
+
+## Quest effects
+
+Supported effects are:
+
+- `SET_FLAG`: permanently sets a campaign flag.
+- `UNLOCK_ROUTE`: unlocks one directed adjacent route or scenario branch by ID.
+- `GRANT_ITEM`: grants a configured quantity of an item during quest progression.
+- `TRANSPORT_PARTY`: moves the party to a configured scenario without charging for city transport.
+
+Effects may occur at `QUEST_START`, `STEP_COMPLETE` or `QUEST_COMPLETE`. `GRANT_ITEM` and `TRANSPORT_PARTY` cannot use `QUEST_START`.
+
+Effects at one trigger location preserve their configured order. Optional display text reports a visible consequence without determining whether the effect occurs. An effect without display text need not appear under a special “unlock” heading.
+
+Setting an already active flag and unlocking an already unlocked passage are successful no-ops. Completing a field or dungeon does not unlock passages automatically.
+
+Step effects belong to the same transaction as the step transition. Quest-completion effects belong to the same transaction as delivery consumption, material rewards and final status mutation. Item capacity and effect applicability are validated before campaign mutation.
+
+Class changes and ally recruitment remain dedicated typed behavior rather than generic quest effects. The conclusion of Quest 5, `Os Sete Caminhos`, composes the protagonist's class transition with the first ally's recruitment.
+
+## Permanent flags and reusable requirements
+
+Campaign flags represent stable permanent world consequences. Every declared flag begins absent, may be set once and is never removed in V6.
+
+Quest status is not duplicated through flags. Requirements query `QuestProgress` directly when they need `NOT_STARTED`, `ACTIVE` or `COMPLETED` state.
+
+One reusable requirement set combines all its entries through logical AND. V6 does not provide OR groups, nested expressions, scripts or references between sets.
+
+The initial requirement checks are:
+
+- Minimum leader level.
+- Current quantity of one owned item.
+- Quest not started.
+- Quest active.
+- Quest completed.
+- Flag set.
+- Flag unset.
+
+Requirement evaluation is pure and uncached. It never reserves items, consumes resources, changes quest state or sets flags.
+
+Visibility and availability are recalculated from current state. They are also evaluated again immediately before a protected action so a previously displayed option cannot bypass newer campaign state.
+
+Unmet quest offers, narrative locations and NPC placements are hidden rather than displayed as blocked options.
+
+## Narrative locations and NPCs
+
+Narrative locations are city spaces dedicated to NPC interactions. They coexist with INNs, shops and crafters without replacing their definitions or interfaces.
+
+A narrative location becomes visible only when its requirement set succeeds. Its visible NPCs are then independently filtered through their placement requirements.
+
+A visible location may contain no visible NPCs. In that case, the interface displays:
+
+```text
+Não há ninguém aqui.
+```
+
+NPC identity is separate from placement:
+
+- Every ordinary NPC has one canonical ID, name, description and default dialogue.
+- One NPC may be unplaced.
+- A placed NPC has at most one fixed narrative location in V6.
+- NPCs do not move dynamically between locations.
+- An unplaced NPC may still speak in dialogue initiated by another gameplay context.
+
+The narrative-location and NPC screens display city and location headers so that short interaction menus retain their context.
+
+## Linear dialogue
+
+Dialogue consists of ordered external utterances. Each utterance has one speaker type, an optional canonical speaker ID and text.
+
+The supported speaker types are:
+
+- `NPC`
+- `ENEMY`
+- `LEADER`
+- `NARRATOR`
+- `RECRUIT`
+
+NPC and enemy names are resolved from their canonical catalogs. Leader dialogue uses the current party leader. Narrator lines have no speaker label.
+
+Recruit dialogue references canonical candidate IDs declared in `quest_recruitments.txt`. When such a dialogue is first displayed, the candidate receives one persistent generated name. Later appearances resolve that same name from candidate state. The speaker reference identifies who is talking; it does not independently dispatch or complete recruitment.
+
+Each utterance advances only after Enter. Dialogue does not advance fictional world time.
+
+Before presenting the first line, the complete dialogue resolves:
+
+- Every speaker.
+- Every supported placeholder.
+- Every required party position.
+
+A resolution failure therefore occurs before partial dialogue output or related state mutation.
+
+Literal `\n` produces an intentional line break. Other long narrative text wraps automatically at 90 console columns. V6 dialogues do not support generic choices, conditional lines, branches, timing, color or audio.
+
+The supported placeholders are:
+
+- `{leaderName}`
+- `{groupMember2}`
+- `{groupMember3}`
+- `{groupMember4}`
+
+A placeholder for a missing party position fails explicitly. It does not produce an empty name or silent fallback.
+
+## Quest journal
+
+The quest journal is available from the stable city and combat-scenario menus. Opening it, browsing its entries and returning from it do not advance world time or mutate campaign state.
+
+The first selection separates:
+
+- Active quests.
+- Completed quests.
+
+Quests that have not started are hidden.
+
+An active quest displays:
+
+- Its title and resolved description.
+- The number, title and resolved description of its current step.
+- Only the objectives belonging to that current step.
+- Current and required quantities for those objectives.
+- Its material rewards derived from the canonical reward definitions.
+
+A completed quest displays only its resolved title and description.
+
+`Concluir missão` is available only when the current step is the final step, every objective is already complete and the step does not depend on `TALK_TO_NPC`. It retries the same atomic completion plan used by automatic progression. A failed retry preserves every affected state and leaves the quest available for another attempt after the blocking capacity or condition is corrected.
+
+## Quest interaction markers and feedback
+
+`[!]` is the only quest-interaction marker. It may represent an offer, active progress, completion or an immediately reachable pending scenario objective.
+
+For NPC-driven interactions, the marker may appear on:
+
+- A relevant NPC.
+- Its visible narrative location.
+- The current city's `Visitar locais` action.
+
+For an incomplete `REACH_SCENARIO` objective, the marker may appear on:
+
+- An immediately usable unlocked route.
+- An immediately available paid-transport destination.
+- The current city's `Sair da cidade` or `Viajar` action when applicable.
+- A completed combat scenario's `Seguir caminho` or `Viajar` action when applicable.
+
+Travel markers inspect only direct destinations currently exposed by the applicable menu. They do not reveal locked routes, undiscovered transport destinations, hidden content or paths requiring multiple journeys.
+
+Every marker is recalculated from current definitions and campaign state. Marker state is never persisted.
+
+Quest progress feedback is derived from domain results:
+
+- Partial progress uses a compact notification.
+- Objective completion does not repeat the full objective description.
+- Step completion is reported separately.
+- Multiple updates caused by one gameplay resolution remain ordered and grouped.
+- Simple progress produced by battle is appended inline after the battle outcome.
+- Quest completion, permanent effects and completion failures retain dedicated presentation.
+- Quest completion displays its actual material rewards.
+- Notifications are transient and are never persisted.

@@ -1,0 +1,941 @@
+# dialogueId;line;speakerType;speakerId;text
+# PUXÕES DE ORELHA
+aviso_mago_minas;1;NARRATOR;;O vínculo mágico ao redor do grupo se contrai repentinamente.
+aviso_mago_minas;2;NPC;mago_pesquisador;Eu fui bastante claro quando disse para não avançarem além do necessário.
+aviso_mago_minas;3;LEADER;;Tecnicamente, ainda estamos descobrindo o que é necessário.
+aviso_mago_minas;4;NPC;mago_pesquisador;E eu acabei de descobrir que precisam de supervisão mais próxima.
+aviso_mago_minas;5;RECRUIT;jovem_de_bree;Então esse é o famoso puxão de orelha?
+aviso_mago_minas;6;NPC;mago_pesquisador;Isso mesmo!
+aviso_mago_minas;7;NARRATOR;;O espaço ao redor do grupo se dobra antes que qualquer protesto seja possível.
+aviso_generico_minas;1;NARRATOR;;O vínculo mágico ao redor do grupo volta a se contrair.
+aviso_generico_minas;2;NPC;mago_pesquisador;Não importa quantas vezes retornem. O limite continua no mesmo lugar.
+aviso_generico_minas;3;LEADER;;Eu só queria verificar uma coisa.
+aviso_generico_minas;4;NPC;mago_pesquisador;Aquilo que existe adiante não é uma coisa que vocês estejam preparados para verificar.
+aviso_generico_minas;5;LEADER;;Outro puxão de orelha?
+aviso_generico_minas;6;NPC;mago_pesquisador;Prefiro chamar de reforço experimental.
+aviso_generico_minas;7;NARRATOR;;O espaço se dobra outra vez, arrastando o grupo para fora das Minas.
+# A ORDEM DOS ALQUIMISTAS
+conversa_mestre_alquimista;1;NPC;mestre_alquimista;Ainda há muito que não compreendemos sobre essa doença.
+conversa_mestre_alquimista;2;NPC;mestre_alquimista;Cada novo paciente traz perguntas diferentes.
+conversa_mestre_alquimista;3;NPC;mestre_alquimista;Mas nenhuma resposta segura.
+conversa_mae_protagonista;1;NPC;mae_protagonista;{leaderName}...
+conversa_mae_protagonista;2;NPC;mae_protagonista;Essa doença... não sei quanto tempo seu pai ainda consegue resistir.
+conversa_mae_protagonista;3;NPC;mae_protagonista;Por favor, tenha cuidado.
+conversa_pai_protagonista;1;NPC;pai_protagonista;Frio....
+conversa_pai_protagonista;2;NPC;pai_protagonista;tanta luz..
+conversa_pai_protagonista;3;NPC;pai_protagonista;não...
+conversa_pai_protagonista;4;NPC;pai_protagonista;não consigo...
+conversa_jovem_de_bree;1;RECRUIT;jovem_de_bree;Não posso ficar esperando enquanto minha irmã piora.
+conversa_jovem_de_bree;2;RECRUIT;jovem_de_bree;Quando eu descobrir alguma coisa, espero poder contar com sua ajuda.
+conversa_discipulo_alquimista;1;NPC;discipulo_alquimista;Ainda preciso me recuperar.
+conversa_discipulo_alquimista;2;NPC;discipulo_alquimista;Mas não esquecerei que você entrou naquela gruta para me encontrar.
+# TAVERDA DO ENTREATO
+conversa_dono_taverna_entrelugar;1;NPC;dono_taverna_entrelugar;Nesta cidade, até os caminhos precisam de um momento para descansar.
+conversa_dono_taverna_entrelugar;2;NPC;dono_taverna_entrelugar;Se estiver procurando alguém, talvez essa pessoa já tenha chegado. Ou ainda esteja a caminho ontem.
+conversa_cliente_taverna_entrelugar;1;NPC;cliente_taverna_entrelugar;Nesta taverna, quem presta atenção descobre mais do que quem faz perguntas.
+conversa_cliente_taverna_entrelugar;2;NPC;cliente_taverna_entrelugar;O problema é aprender quais respostas ainda não aconteceram.
+# INSTITUTO ENTREQUANDO
+conversa_pesquisadora_anomalia;1;NPC;pesquisadora_anomalia;Ontem, esta sala possuía quatro metros a menos.
+conversa_pesquisadora_anomalia;2;NPC;pesquisadora_anomalia;Ou terá quatro metros a menos amanhã. Ainda estamos discutindo a nomenclatura.
+conversa_pesquisador_sanguemar;1;NPC;pesquisador_sanguemar;A mancha de Sanguemar está crescendo. Tenho certeza.
+conversa_pesquisador_sanguemar;2;NPC;pesquisador_sanguemar;As medições discordam, mas isso apenas demonstra como o fenômeno é sofisticado.
+conversa_arquivista_entrequando;1;NPC;arquivista_entrequando;Se retirar algum registro da estante, anote de qual ano ele acredita ter vindo.
+conversa_arquivista_entrequando;2;NPC;arquivista_entrequando;Da última vez que ignoraram essa regra, recebemos o mesmo documento três séculos antes de ele ser escrito.
+conversa_mago_pesquisador;1;NPC;mago_pesquisador;Toda energia deixa vestígios.
+conversa_mago_pesquisador;2;NPC;mago_pesquisador;O difícil não é encontrá-los. É descobrir se desejavam ser encontrados.
+# STEGALHOS
+padrao_mago_setegalhos;1;NPC;mago_pesquisador_setegalhos;Chegar antes de vocês não foi particularmente difícil. Apenas escolhi um caminho que já havia terminado.
+padrao_ancia_setegalhos;1;NPC;ancia_setegalhos;Setegalhos não revela seus caminhos a quem se preocupa apenas com o destino.
+padrao_mestre_cerimonia;1;NPC;mestre_cerimonia;Cada galho permanece aberto, mas somente suas ações poderão conduzir vocês adiante.
+padrao_mestre_cerimonia_praca;1;NPC;mestre_cerimonia_praca;A praça permanece em silêncio enquanto aguarda o início do julgamento.
+padrao_mentor_harmonia;1;NPC;mentor_harmonia;Uma voz solitária produz som. Mas é preciso mais de um som para produzir harmonia.
+padrao_musicista_desafinado;1;NPC;musicista_desafinado;Algumas pessoas chamam isso de desafinação. Eu prefiro dizer que estou inventando notas e ritmos.
+padrao_mentor_ciclo;1;NPC;mentor_ciclo;Nada permanece como nasceu, mas toda transformação deixa raízes.
+padrao_jardineira_das_raizes;1;NPC;jardineira_das_raizes;Estas plantas não pertencem a mim. Eu apenas as ajudo a escolher onde crescer.
+padrao_mentor_reflexo;1;NPC;mentor_reflexo;Uma forma diferente não revela necessariamente uma criatura diferente.
+padrao_aprendiz_mutavel;1;NPC;aprendiz_mutavel;Não se preocupe. Meu rosto costuma voltar ao normal quando me acalmo.
+padrao_mentor_instante;1;NPC;mentor_instante;Rapidez desperdiçada ainda é atraso.
+padrao_arqueira_paciente;1;NPC;arqueira_paciente;Ainda não disparei porque o alvo ainda não terminou de cometer seu erro.
+padrao_mentor_sussurro;1;NPC;mentor_sussurro;Aquilo que não deseja ser encontrado raramente anuncia sua presença.
+padrao_viajante_sem_passos;1;NPC;viajante_sem_passos;Se você ouviu minha chegada, significa que ainda preciso praticar.
+padrao_mentor_silencio;1;NPC;mentor_silencio;Dominar o silêncio é escolher quais forças merecem uma resposta.
+padrao_estudiosa_encantamentos;1;NPC;estudiosa_encantamentos;Todo encantamento contém uma falha. Alguns apenas gritam alto demais para escondê-la.
+padrao_mentor_ruina;1;NPC;mentor_ruina;O antigo nome deste galho ainda existe sob a tinta vermelha.
+padrao_zeladora_ruina;1;NPC;zeladora_ruina;Eu não preservo este lugar porque acredito que o mestre retornará. Preservo porque ninguém provou que não retornará.
+# QUEST 1
+oferta_ordem_dos_alquimistas;1;NPC;mestre_alquimista;{leaderName}, receio que ainda não tenho boas notícias.
+oferta_ordem_dos_alquimistas;2;NPC;mestre_alquimista;A doença que atingiu seu pai é diferente de tudo o que já encontramos.
+oferta_ordem_dos_alquimistas;3;NPC;mestre_alquimista;Ele não é o único. Outros moradores de Bree começaram a apresentar os mesmos sintomas.
+oferta_ordem_dos_alquimistas;4;NPC;mestre_alquimista;Ainda são poucos casos, mas novos pacientes chegam a cada dia.
+oferta_ordem_dos_alquimistas;5;NPC;mestre_alquimista;Um de meus discípulos partiu em busca de um ingrediente raro que talvez nos ajude a preparar um tratamento.
+oferta_ordem_dos_alquimistas;6;NPC;mestre_alquimista;Ele deveria ter retornado há algum tempo, mas ainda não tivemos notícias.
+oferta_ordem_dos_alquimistas;7;NPC;mestre_alquimista;Seu pai piorou, mas agora está estável. Pegue essa compressa gelada, entregue pra sua mãe.
+aceite_ordem_dos_alquimistas;1;NPC;mestre_alquimista;Fique com eles por alguns instantes.
+aceite_ordem_dos_alquimistas;2;NPC;mestre_alquimista;Quando estiver pronto, retornaremos a esta conversa.
+recusa_ordem_dos_alquimistas;1;NPC;mestre_alquimista;Eu compreendo.
+recusa_ordem_dos_alquimistas;2;NPC;mestre_alquimista;Sua família precisa de você. Se mudar de ideia, estarei aqui.
+preocupacao_mae_ordem_alquimistas;1;NPC;mae_protagonista;{leaderName}...
+preocupacao_mae_ordem_alquimistas;2;NPC;mae_protagonista;Seu pai piorou muito desde que chegamos aqui.
+preocupacao_mae_ordem_alquimistas;3;LEADER;;Aqui, o Mestre pediu pra entregar essa compressa.
+preocupacao_mae_ordem_alquimistas;4;NPC;mae_protagonista;Os alquimistas fazem tudo o que podem, mas ninguém consegue dizer o que está acontecendo.
+preocupacao_mae_ordem_alquimistas;5;NPC;mae_protagonista;Agora há outras famílias chegando com os mesmos sintomas.
+preocupacao_mae_ordem_alquimistas;6;LEADER;;Eu não vou abandonar vocês.
+preocupacao_mae_ordem_alquimistas;7;NPC;mae_protagonista;Eu sei. Só tenho medo de que essa doença também alcance você.
+preocupacao_mae_ordem_alquimistas;8;NPC;mae_protagonista;Por agora... vamos colocar essa compressa gelada na testa do seu pai.
+palavras_febris_pai;1;NPC;pai_protagonista;Ah...
+palavras_febris_pai;2;NPC;pai_protagonista;{leaderName}...?
+palavras_febris_pai;3;NPC;pai_protagonista;Frio...
+palavras_febris_pai;4;NPC;pai_protagonista;Tanta luz...
+palavras_febris_pai;5;LEADER;;Não fale, pai. Logo os Alquimistas descobrem um tratamento.
+palavras_febris_pai;6;NPC;pai_protagonista;Não...
+palavras_febris_pai;7;NPC;pai_protagonista;Não consigo...
+palavras_febris_pai;8;LEADER;;Shh... shh...
+palavras_febris_pai;9;LEADER;;Vai ficar tudo bem.
+decisao_mestre_alquimista;1;NPC;mestre_alquimista;Falou com seus pais?
+decisao_mestre_alquimista;2;LEADER;;Sim.
+decisao_mestre_alquimista;3;NPC;mestre_alquimista;Sinto muito por não podermos oferecer respostas melhores.
+decisao_mestre_alquimista;4;NPC;mestre_alquimista;Meu discípulo foi em direção aos Verdes Ermos, em busca de uma Merumã Dourada.
+decisao_mestre_alquimista;5;NPC;mestre_alquimista;Ela é muito rara, a usamos para tratar as doenças mais agressivas.
+decisao_mestre_alquimista;6;NPC;mestre_alquimista;Para essa nova doença, a Merumã Dourada não significa cura garantida, mas aliviaria a dor dos doentes enquanto buscamos um tratamento.
+decisao_mestre_alquimista;7;NPC;mestre_alquimista;Os alquimistas que restaram precisam permanecer em Bree, cuidando dos enfermos e continuando a pesquisa.
+decisao_mestre_alquimista;8;NPC;mestre_alquimista;Se eu os enviar atrás do meu discípulo, deixarei estes pacientes sem atendimento.
+decisao_mestre_alquimista;9;LEADER;;Então eu vou atrás dele. E da Merumã Dourada.
+decisao_mestre_alquimista;10;NPC;mestre_alquimista;Eu aprecio sua oferta, mas é muito arriscado.
+decisao_mestre_alquimista;11;NPC;mestre_alquimista;Você não tem treinamento, e sua família precisa de você.
+decisao_mestre_alquimista;12;LEADER;;Meu pai está aqui. E outras famílias podem acabar como a minha.
+decisao_mestre_alquimista;13;LEADER;;Se esse ingrediente pode ajudar, eu vou trazê-lo de volta.
+decisao_mestre_alquimista;14;LEADER;;Nesse momento eu sou mais útil lá fora que aqui dentro.
+decisao_mestre_alquimista;15;NPC;mestre_alquimista;Sua determinação é admirável, mas os Verdes Ermos não perdoam os despreparados.
+decisao_mestre_alquimista;16;NPC;mestre_alquimista;Vou pedir que avisem os guardas do Portão Sul para que permitam sua passagem.
+decisao_mestre_alquimista;17;NPC;mestre_alquimista;Conheça a região e aprenda enfrentar os perigos que existem além das muralhas.
+decisao_mestre_alquimista;18;NPC;mestre_alquimista;Leve esta adaga e estas Merumãs. Talvez não sejam muito, mas vão te ajudar na jornada.
+decisao_mestre_alquimista;19;NPC;mestre_alquimista;Depois de explorar Verdes Ermos e ganhar um pouco de experiência, {leaderName}, volte a falar comigo.
+decisao_mestre_alquimista;20;NPC;mestre_alquimista;E então discutiremos como encontrar meu discípulo.
+decisao_mestre_alquimista;21;LEADER;;Voltarei mais forte e vou provar que mereço sua confiança para essa missão.
+# QUEST 2
+oferta_o_discipulo;1;NPC;mestre_alquimista;Parece que você realmente levou a sério o meu pedido, {leaderName}.
+oferta_o_discipulo;2;NPC;mestre_alquimista;Agora que você tem mais experiência e conhece os arredores, preciso falar sobre o discípulo que enviei em busca da Merumã Dourada.
+oferta_o_discipulo;3;NPC;mestre_alquimista;Ele deveria ter retornado há dias.
+oferta_o_discipulo;4;NPC;mestre_alquimista;Alguns viajantes relataram term visto goblins carregando objetos de alquimia pelos campos.
+oferta_o_discipulo;5;NPC;mestre_alquimista;Temo que algo horrível possa ter acontecido com ele.
+oferta_o_discipulo;6;NPC;mestre_alquimista;Como parece que posso confiar em você agora, peço que investigue essas criaturas e descubra se elas sabem algo sobre seu desaparecimento.
+aceite_o_discipulo;1;NPC;mestre_alquimista;Comece pelos Goblins Catadores e Saqueadores de Verdes Ermos.
+aceite_o_discipulo;2;NPC;mestre_alquimista;Analise o comportamento deles com atenção. Você pode fazer isso através das suas Táticas.
+aceite_o_discipulo;3;NPC;mestre_alquimista;Qualquer detalhe pode revelar para onde levaram meu discípulo.
+recusa_o_discipulo;1;NPC;mestre_alquimista;Entendo.
+recusa_o_discipulo;2;NPC;mestre_alquimista;Mas cada hora de espera reduz a esperança de encontrá-lo em segurança.
+pistas_entre_sucatas;1;LEADER;;Os catadores realmente carregam restos de equipamentos alquímicos.
+pistas_entre_sucatas;2;LEADER;;Aqueles que derrotei fugiram em direção ao sul de Verdes Ermos!
+pistas_entre_sucatas;3;NPC;mestre_alquimista;Então parece que os goblins realmente encontraram meu discípulo.
+pistas_entre_sucatas;4;NPC;mestre_alquimista;Obrigado pelas suas anotações. Vou analisá-las com calma antes de indicar um caminho seguro.
+pistas_entre_sucatas;5;NPC;mestre_alquimista;Enquanto isso, preciso que você reúna Pelos Lupinos para produzirmos novas compressas.
+pistas_entre_sucatas;6;NPC;mestre_alquimista;Recebemos uma nova família e não temos o suficiente para todos.
+pistas_entre_sucatas;7;NARRATOR;;Uma pessoa que acompanhava a conversa se aproxima.
+pistas_entre_sucatas;8;RECRUIT;jovem_de_bree;Com licença. Não pude evitar ouvir a conversa.
+pistas_entre_sucatas;9;RECRUIT;jovem_de_bree;Minha mãe e minha irmã também estão sob os cuidados dos alquimistas.
+pistas_entre_sucatas;10;RECRUIT;jovem_de_bree;Ouvi dizer que algumas pessoas infectadas começaram a apresentar mudanças no corpo.
+pistas_entre_sucatas;11;RECRUIT;jovem_de_bree;Não vou esperar até transformarem minha irmã em um monstro.
+pistas_entre_sucatas;12;RECRUIT;jovem_de_bree;Eu conheço algumas pessoas que vivem próximas ao Portão Leste, que leva a Entrelugar, e costumam ouvir histórias da cidade distorcida.
+pistas_entre_sucatas;13;RECRUIT;jovem_de_bree;Vou conversar com elas e ver se descubro alguma pista sobre essa doença maldita.
+pistas_entre_sucatas;14;RECRUIT;jovem_de_bree;Quando eu descobrir alguma coisa, espero poder contar com sua ajuda.
+pelos_lupinos_pendentes;1;NPC;mestre_alquimista;Você ainda não coletou Pelos Lupinos suficientes para preparar as compressas.
+pelos_lupinos_pendentes;2;NPC;mestre_alquimista;Precisarei de três antes que possamos continuar.
+anotacoes_e_cuidados;1;LEADER;;Mestre Alquimista! Consegui os Pelos Lupinos.
+anotacoes_e_cuidados;2;NPC;mestre_alquimista;Ah, {leaderName}. Muito bem. Eles vão ajudar a aliviar a febre enquanto continuamos procurando uma cura.
+anotacoes_e_cuidados;3;NPC;mestre_alquimista;A propósito, também terminei de analisar suas anotações. Agradeço novamente por ter conseguido informações tão completas.
+anotacoes_e_cuidados;4;NPC;mestre_alquimista;Os goblins fugiram em direção à Gruta de Relamparrocha. Tudo indica que aquele é o habitat dessas criaturas.
+anotacoes_e_cuidados;5;NPC;mestre_alquimista;Não me resta dúvidas de que levaram meu discípulo para lá.
+anotacoes_e_cuidados;6;NPC;mestre_alquimista;{leaderName}, peço sua ajuda mais uma vez. Encontre meu discípulo e recupere a Merumã Dourada.
+meruma_dourada_pendente;1;NPC;mestre_alquimista;Você retornou sem a Merumã Dourada.
+meruma_dourada_pendente;2;NPC;mestre_alquimista;Sem ela, ainda não podemos avançar na preparação do tratamento.
+confronto_mestre_eletrogoblin;1;NARRATOR;;No fundo da gruta, cabos improvisados conduzem energia das eletrorrochas até uma bancada. Atrás dela, o discípulo desaparecido está preso.
+confronto_mestre_eletrogoblin;2;NPC;discipulo_alquimista;Aqui! Por favor, me ajude!
+confronto_mestre_eletrogoblin;3;ENEMY;mestre_eletrogoblin;Mais um intruso. Vocês nunca aprendem a ficar longe da minha gruta?
+confronto_mestre_eletrogoblin;4;LEADER;;Intruso? Vocês sequestraram alguém. Claro que viríamos atrás! Solte ele e devolva nossa Merumã Dourada.
+confronto_mestre_eletrogoblin;5;ENEMY;mestre_eletrogoblin;Devolver? Meus goblins trouxeram essa fruta até aqui. Alguns mal conseguem ficar de pé, e você quer levá-la embora?
+confronto_mestre_eletrogoblin;6;NPC;discipulo_alquimista;Seus goblins trouxeram depois de me roubar! Nós precisamos dessa fruta em Bree, urgentemente!
+confronto_mestre_eletrogoblin;7;ENEMY;mestre_eletrogoblin;Então há doentes entre os humanos de Bree também...
+confronto_mestre_eletrogoblin;8;NARRATOR;;Por um instante, o goblin examina a fruta sobre a bancada. Faíscas percorrem os tubos ligados aos seus braços.
+confronto_mestre_eletrogoblin;9;ENEMY;mestre_eletrogoblin;Não faz diferença. Não vou deixar os meus esperando por uma cura que talvez nunca venha.
+confronto_mestre_eletrogoblin;10;LEADER;;Nem... EU!
+confronto_mestre_eletrogoblin;11;ENEMY;mestre_eletrogoblin;Ótimo. Então cale a boca e tente tirar essa fruta de nós.
+discipulo_resgatado;1;NPC;mestre_alquimista;Vocês voltaram!
+discipulo_resgatado;2;NPC;discipulo_alquimista;Aqueles paspalhos me capturaram assim que coloquei minhas mãos numa Merumã Dourada.
+discipulo_resgatado;3;NPC;discipulo_alquimista;O Mestre Eletrogoblin pretendia usar a fruta em algum experimento. Pelo que pude ouvir enquanto estive preso, seus subordinados também estão adoecendo.
+discipulo_resgatado;4;LEADER;;Conseguimos recuperar a Merumã Dourada depois de derrotá-lo.
+discipulo_resgatado;5;NPC;mestre_alquimista;Uma doença que afeta humanos e monstros? Nunca vi algo assim.
+discipulo_resgatado;6;NPC;mestre_alquimista;De qualquer modo, essa fruta nos traz um pouco de esperança. Com ela, poderemos iniciar uma nova etapa da pesquisa.
+discipulo_resgatado;7;NPC;mestre_alquimista;{leaderName}, você enfrentou perigos que meus próprios subordinados não estavam preparados para enfrentar.
+discipulo_resgatado;8;NPC;mestre_alquimista;A Ordem não esquecerá a sua ajuda.
+discipulo_resgatado;9;LEADER;;Por favor, não desistam da cura.
+# QUEST 3
+oferta_entre_caminhos;1;NPC;mae_protagonista;{leaderName}...
+oferta_entre_caminhos;2;NPC;mae_protagonista;Seu pai finalmente conseguiu dormir um pouco.
+oferta_entre_caminhos;3;NPC;mae_protagonista;O remédio de Merumã Dourada amenizou a febre e deixou a respiração dele mais tranquila.
+oferta_entre_caminhos;4;NPC;mae_protagonista;Não sei como agradecer pelo você que fez.
+oferta_entre_caminhos;5;NPC;mae_protagonista;Mas saber que minha criança entrou naquela gruta também me deixou apavorada.
+oferta_entre_caminhos;6;NARRATOR;;Uma presença conhecida se aproxima e interrompe a conversa.
+oferta_entre_caminhos;7;RECRUIT;jovem_de_bree;Eu também queria agradecer.
+oferta_entre_caminhos;8;RECRUIT;jovem_de_bree;Minha irmã apresentou alguma melhora depois que os alquimistas começaram a trabalhar com a fruta.
+oferta_entre_caminhos;9;RECRUIT;jovem_de_bree;Enquanto você procurava o discípulo do Mestre, conversei com os meus conhecidos perto do Portão Leste.
+oferta_entre_caminhos;10;RECRUIT;jovem_de_bree;Do outro lado fica Entrelinhas. E, além dela, Entrelugar.
+oferta_entre_caminhos;11;RECRUIT;jovem_de_bree;Aquela cidade maluca foi construída ao redor de uma enorme anomalia espaço-temporal.
+oferta_entre_caminhos;12;RECRUIT;jovem_de_bree;Aparentemente, isso acaba atraindo cientistas e pesquisadores interessados em fenômenos que ninguém mais consegue explicar.
+oferta_entre_caminhos;13;RECRUIT;jovem_de_bree;Talvez alguém de lá consiga descobrir o que está acontecendo com as nossas famílias.
+oferta_entre_caminhos;14;RECRUIT;jovem_de_bree;Vou seguir na frente. Você vem?
+aceite_entre_caminhos;1;RECRUIT;jovem_de_bree;Então nos encontramos em Entrelugar.
+aceite_entre_caminhos;2;RECRUIT;jovem_de_bree;Ah, {leaderName}, se quisermos mesmo ajudar nossas famílias, precisamos nos preparar para desafios muito maiores.
+aceite_entre_caminhos;3;RECRUIT;jovem_de_bree;Então treine bastante durante a travessia. E não se esqueça de sempre carregar algumas merumãs.
+aceite_entre_caminhos;4;RECRUIT;jovem_de_bree;Não demore.
+aceite_entre_caminhos;5;NPC;mae_protagonista;Antes de partir, fale comigo mais uma vez.
+recusa_entre_caminhos;1;RECRUIT;jovem_de_bree;Não posso esperar.
+recusa_entre_caminhos;2;RECRUIT;jovem_de_bree;Seguirei para Entrelugar e procurarei ajuda por conta própria.
+recusa_entre_caminhos;3;NPC;mae_protagonista;Pense com calma, minha criança.
+recusa_entre_caminhos;4;NPC;mae_protagonista;Talvez essa seja a esperança que estávamos procurando.
+antes_de_partir;1;LEADER;;Mãe...
+antes_de_partir;2;NPC;mae_protagonista;Eu sei que não posso impedir você de partir.
+antes_de_partir;3;NPC;mae_protagonista;Também sei que ficaria aqui se acreditasse que isso ajudaria seu pai.
+antes_de_partir;4;NPC;mae_protagonista;Então vá.
+antes_de_partir;5;NPC;mae_protagonista;Encontre quem possa nos ajudar, mas não se esqueça de ter cuidado.
+antes_de_partir;6;NPC;mae_protagonista;Seu pai precisa de você. E eu também.
+antes_de_partir;7;LEADER;;Eu vou me cuidar. Mas também prometo que vou encontrar mais pistas sobre essa doença, nem que eu precise atravessar o continente.
+antes_de_partir;8;NPC;mae_protagonista;Antes de ir ao Portão Leste, procure o Mestre Alquimista.
+antes_de_partir;9;NPC;mae_protagonista;Ele conhece histórias sobre Entrelinhas e poderá orientar sua viagem.
+orientacoes_entrelinhas;1;NPC;mestre_alquimista;Então você pretende atravessar Entrelinhas.
+orientacoes_entrelinhas;2;NPC;mestre_alquimista;Acho que você já se demonstrou capaz, então não vou tentar te convencer a não ir.
+orientacoes_entrelinhas;3;NPC;mestre_alquimista;Até porque seus motivos são nobres. Nós preciamos de toda ajuda que pudermos encontrar.
+orientacoes_entrelinhas;4;NPC;mestre_alquimista;Sobre Entrelinhas, a região é conhecida por confundir até viajantes experientes.
+orientacoes_entrelinhas;5;NPC;mestre_alquimista;Caminhos familiares mudam de posição, e pontos de referência parecem desaparecer quando não estão sendo observados.
+orientacoes_entrelinhas;6;NPC;mestre_alquimista;Durante a exploração, você poderá encontrar acessos a áreas especiais afastadas da rota principal.
+orientacoes_entrelinhas;7;NPC;mestre_alquimista;Bens perdidos na região costumam ser encontrados em pequenas grutas escondidas sob a vegetação rasteira.
+orientacoes_entrelinhas;8;NPC;mestre_alquimista;Você deve ter atenção, não permita que a curiosidade faça você perder o caminho.
+orientacoes_entrelinhas;9;NPC;mestre_alquimista;Vou pedir que informem aos guardas que você tem autorização para atravessar o Portão Leste.
+orientacoes_entrelinhas;10;NPC;mestre_alquimista;Quando chegar a Entrelugar, procure os pesquisadores que estudam a anomalia e entregue esse frasco com o sangue de seu pai.
+encontro_taverna_entrelugar;1;NPC;dono_taverna_entrelugar;Aha! Olá, jovem. O cansaço está estampado na sua cara, haha. Deixa eu apostar, acabou de enfrentar a loucura de Entrelinhas?
+encontro_taverna_entrelugar;2;LEADER;;Exatamente. Que lugar confuso! Pelo menos consegui chegar com vida em Entrelugar.
+encontro_taverna_entrelugar;3;NPC;dono_taverna_entrelugar;Aquela rota é para poucos mesmo. Mas depois de um tempo você se acostuma com os caminhos e aceita que a confusão faz a jornada.
+encontro_taverna_entrelugar;4;NPC;dono_taverna_entrelugar;Aceita uma caneca de Cerveja Temporal? Está fresquinha, ficou pronta amanhã.
+encontro_taverna_entrelugar;5;LEADER;;Hmm...
+encontro_taverna_entrelugar;6;NPC;dono_taverna_entrelugar;Saquei. Talvez você esteja procurando alguém?
+encontro_taverna_entrelugar;7;NPC;dono_taverna_entrelugar;Você não é a única pessoa acabada e recém-chegada de Entrelinhas. Olha aquela mesa, tem alguém lá que talvez esteja te esperando.
+encontro_taverna_entrelugar;8;RECRUIT;jovem_de_bree;Finalmente!
+encontro_taverna_entrelugar;9;LEADER;;Eu estava procurando você!
+encontro_taverna_entrelugar;10;RECRUIT;jovem_de_bree;Comecei a achar que você tinha se perdido em Entrelinhas.
+encontro_taverna_entrelugar;11;RECRUIT;jovem_de_bree;Ou chegado antes de mim por algum caminho que ainda não aconteceu. Meia hora aqui e a gente já começa a falar assim, hahaha.
+encontro_taverna_entrelugar;12;RECRUIT;jovem_de_bree;Mas é ótimo que você chegou bem.
+encontro_taverna_entrelugar;13;LEADER;;Ou será que eu ainda nem saí de Bree?
+encontro_taverna_entrelugar;14;RECRUIT;jovem_de_bree;Está vendo? Já está falando como um local!
+encontro_taverna_entrelugar;15;RECRUIT;jovem_de_bree;Enquanto eu te esperava, descobri que alguns pesquisadores de anomalias costumam trabalhar no mesmo instituto.
+encontro_taverna_entrelugar;16;RECRUIT;jovem_de_bree;Só não faço ideia de onde ele fica. E nem se ele já existe.
+encontro_taverna_entrelugar;17;RECRUIT;jovem_de_bree;Podemos perguntar por aqui se alguém conhece o local.
+# QUEST 4
+oferta_energia_residual;1;NPC;cliente_taverna_entrelugar;Não pude deixar de ouvir a conversa de vocês.
+oferta_energia_residual;2;NPC;cliente_taverna_entrelugar;Em minha defesa, vocês estavam discutindo doenças misteriosas e pessoas virando monstros no meio de uma taverna.
+oferta_energia_residual;3;LEADER;;Justo.
+oferta_energia_residual;4;NPC;cliente_taverna_entrelugar;Olha... se procuram pesquisadores, vocês deveriam visitar o Instituto Entrequando.
+oferta_energia_residual;5;NPC;cliente_taverna_entrelugar;Só não esperem que todos abandonem suas pesquisas para cuidar de um problema de Bree.
+oferta_energia_residual;6;RECRUIT;jovem_de_bree;Bom, mas se souberem alguma coisa, certamente vão falar.
+oferta_energia_residual;7;NPC;cliente_taverna_entrelugar;Admiro seu otimismo, haha.
+oferta_energia_residual;8;NPC;cliente_taverna_entrelugar;Vocês podem conversar com pessoas de áreas diferentes. Talvez alguém reconheça os sintomas.
+oferta_energia_residual;9;NPC;cliente_taverna_entrelugar;Posso indicar o caminho até o Instituto. Querem tentar?
+aceite_energia_residual;1;NPC;cliente_taverna_entrelugar;Ótimo. Pra chegarem até lá, virem à esquerda, depois voltem pra trás e subam. Lá de cima, desçam.
+aceite_energia_residual;2;LEADER;;Subir aonde?
+aceite_energia_residual;3;NPC;cliente_taverna_entrelugar;Você está em Entrelugar. Vai entender na hora, mesmo que a hora já tenha passado.
+aceite_energia_residual;4;NPC;cliente_taverna_entrelugar;De qualquer forma, sugiro começarem pela Pesquisadora da Anomalia. Ela conhece transformações impossíveis melhor do que qualquer pessoa daqui.
+aceite_energia_residual;5;NPC;cliente_taverna_entrelugar;Convencê-la a falar de algo além de Entrelugar será problema de vocês.
+aceite_energia_residual;6;RECRUIT;jovem_de_bree;Depois de Entrelinhas, isso parece fácil.
+aceite_energia_residual;7;LEADER;;Você acabou de condenar nossa visita.
+recusa_energia_residual;1;NPC;cliente_taverna_entrelugar;Tudo bem.
+recusa_energia_residual;2;NPC;cliente_taverna_entrelugar;Se mudarem de ideia, o Instituto provavelmente continuará no mesmo lugar.
+recusa_energia_residual;3;NPC;cliente_taverna_entrelugar;Provavelmente.
+questao_menor;1;LEADER;;Com licença. Você é a Pesquisadora da Anomalia, correto?
+questao_menor;2;NPC;pesquisadora_anomalia;Ah, olá! Sim, sou eu. Mas estou muito ocupada no momento, então, se não tiverem informações valiosas, peço que voltem ontem.
+questao_menor;3;LEADER;;Uma doença desconhecida começou a se espalhar por Bree.
+questao_menor;4;RECRUIT;jovem_de_bree;Algumas pessoas infectadas estão sofrendo transformações no corpo.
+questao_menor;5;NPC;pesquisadora_anomalia;Transformações biológicas? Interessante...
+questao_menor;6;NPC;pesquisadora_anomalia;Mas a descrição não soa como algo relacionado à anomalia de Entrelugar.
+questao_menor;7;NPC;pesquisadora_anomalia;As alterações daqui afetam espaço, distância, causalidade e, ocasionalmente, a ordem dos acontecimentos.
+questao_menor;8;NPC;pesquisadora_anomalia;Febre e mutações pertencem a outro campo.
+questao_menor;9;RECRUIT;jovem_de_bree;Minha irmã pode estar virando um monstro e isso é tudo?
+questao_menor;10;NPC;pesquisadora_anomalia;Sinto muito, mas não posso ajudar.
+questao_menor;11;NPC;pesquisadora_anomalia;Também posso dizer que interromper uma medição iniciada amanhã seria extremamente inconveniente.
+questao_menor;12;LEADER;;Estamos avançando bastante.
+questao_menor;13;NPC;pesquisadora_anomalia;Aff. Está bem, procurem o pesquisador responsável pelos estudos de Sanguemar.
+questao_menor;14;NPC;pesquisadora_anomalia;Ele relaciona praticamente tudo àquela mancha.
+mancha_vermelha;1;NPC;pesquisador_sanguemar;Febre, delírios e alterações físicas?
+mancha_vermelha;2;NPC;pesquisador_sanguemar;Sanguemar.
+mancha_vermelha;3;LEADER;;Foi rápido.
+mancha_vermelha;4;NPC;pesquisador_sanguemar;A mancha vermelha cresce sob a praia há gerações. Muitos acreditam que ela é inofensiva.
+mancha_vermelha;5;NPC;pesquisador_sanguemar;Mas o contato direto e constante com suas emanações pode causar sintomas parecidos com esses.
+mancha_vermelha;6;RECRUIT;jovem_de_bree;Você tem alguma prova de que essas emanações chegaram a Bree?
+mancha_vermelha;7;NPC;pesquisador_sanguemar;Tenho uma hipótese, não uma prova.
+mancha_vermelha;8;NPC;pesquisador_sanguemar;Pelo que vocês descreveram, a aparição da doença é recente por lá. E também não conheço casos por aqui.
+mancha_vermelha;9;NPC;pesquisador_sanguemar;Sem contar que estamos muito mais próximos da Praia de Sanguemar do que Bree.
+mancha_vermelha;10;NPC;pesquisador_sanguemar;Isso não encerra a possibilidade. Na verdade, a ausência de provas apenas demonstra quanto ainda precisamos pesquisar.
+mancha_vermelha;11;RECRUIT;jovem_de_bree;Isso não demonstra absolutamente nada.
+mancha_vermelha;12;LEADER;;Ei! Você quer que nos ajudem ou não?
+mancha_vermelha;13;NPC;pesquisador_sanguemar;Discordâncias são fundamentais para o avanço científico.
+mancha_vermelha;14;NPC;pesquisador_sanguemar;Sugiro que levem os sintomas a nosso Arquivista.
+mancha_vermelha;15;NPC;pesquisador_sanguemar;Talvez ele encontre algum relato antigo que apoie minha hipótese.
+mancha_vermelha;16;RECRUIT;jovem_de_bree;Ou que apoie qualquer hipótese.
+registros_antigos;1;NPC;arquivista_entrequando;Transformações progressivas acompanhadas de febre...
+registros_antigos;2;NPC;arquivista_entrequando;"Existem relatos semelhantes, mas nenhum recente. Mesmo que o conceito de ""recente"" seja algo discutível por aqui."
+registros_antigos;3;NPC;arquivista_entrequando;Os registros mais antigos descrevem pessoas contaminadas por maldições vindas do oeste.
+registros_antigos;4;LEADER;;Do oeste de Bree?
+registros_antigos;5;NPC;arquivista_entrequando;Do oeste de quase tudo.
+registros_antigos;6;NPC;arquivista_entrequando;Por muito tempo, barreiras naturais impediram que essas influências avançassem.
+registros_antigos;7;NPC;arquivista_entrequando;Se algo atravessou essas barreiras, alguém precisa analisar sua assinatura energética.
+registros_antigos;8;RECRUIT;jovem_de_bree;Finalmente alguém que parece saber do que está falando.
+registros_antigos;9;NPC;arquivista_entrequando;Não confunda reconhecer uma pergunta com conhecer a resposta.
+registros_antigos;10;NPC;arquivista_entrequando;O Mago Pesquisador vem d'O Vão. Que tal conversarem com ele?
+registros_antigos;11;NPC;arquivista_entrequando;Ele conhece as antigas proteções do oeste melhor do que qualquer pessoa neste Instituto.
+mago_do_vao;1;NPC;mago_pesquisador;Não precisam repetir tudo.
+mago_do_vao;2;NPC;mago_pesquisador;Consigo perceber os resíduos energéticos em vocês desde que entraram nesta sala.
+mago_do_vao;3;RECRUIT;jovem_de_bree;Isso deveria nos tranquilizar?
+mago_do_vao;4;NPC;mago_pesquisador;Nem a mim, nem a vocês.
+mago_do_vao;5;NPC;mago_pesquisador;Há gerações, as regiões vulcânicas do Monte Malferve formam uma barreira que protege Bree contra os perigos vindos do oeste.
+mago_do_vao;6;NPC;mago_pesquisador;Mais ao sul, Setegalhos protege os Verdes Ermos das maldições da Mata do Agouro.
+mago_do_vao;7;NPC;mago_pesquisador;Se uma dessas influências alcançou Bree, as barreiras podem estar enfraquecendo.
+mago_do_vao;8;LEADER;;Você consegue descobrir se foi isso que aconteceu?
+mago_do_vao;9;NPC;mago_pesquisador;Talvez.
+mago_do_vao;10;NPC;mago_pesquisador;As Minas do Além-Túmulo voltaram a emitir uma energia incomum.
+mago_do_vao;11;LEADER;;Mas todos sabem que as Minas são assombradas, daí seu nome.
+mago_do_vao;12;NPC;mago_pesquisador;Sim, correto. Máquinas abandonadas se reorganizaram e mantêm as Minas funcionando sem razão aparente.
+mago_do_vao;13;NPC;mago_pesquisador;Contudo, algo que chamam de L1D3R parece ter surgido recentemente. Sua energia é diferente daquela das criaturas assombradas que trabalham por lá.
+mago_do_vao;14;NPC;mago_pesquisador;Precisamos entender melhor esse lugar. O que acham de analisar alguns Mecanossos e enfrentar esse L1D3R?
+mago_do_vao;15;NPC;mago_pesquisador;Depois, podem me trazer uma amostra da energia que os mantém ativos.
+mago_do_vao;16;RECRUIT;jovem_de_bree;Se você conhece as Minas, por que não faz isso?
+mago_do_vao;17;NPC;mago_pesquisador;Porque já sei como aquela energia reage a mim.
+mago_do_vao;18;NPC;mago_pesquisador;Vocês carregam vestígios da doença e das eletrorrochas da gruta. E ainda há algo mais sobre vocês, algo que não sei explicar.
+mago_do_vao;19;NPC;mago_pesquisador;Para esta investigação, isso torna vocês muito mais úteis.
+mago_do_vao;20;LEADER;;Então somos parte do experimento.
+mago_do_vao;21;NPC;mago_pesquisador;Toda investigação é um experimento.
+mago_do_vao;22;NPC;mago_pesquisador;Algumas apenas demoram mais para revelar o que está sendo testado.
+mago_do_vao;23;RECRUIT;jovem_de_bree;Você é sempre tão reconfortante?
+mago_do_vao;24;NPC;mago_pesquisador;Quando a situação permite.
+mago_do_vao;25;NPC;mago_pesquisador;Permanecerei em Entrelugar para sustentar um vínculo com vocês.
+mago_do_vao;26;NPC;mago_pesquisador;Ele permitirá acompanhar as oscilações da amostra e retirar o grupo das Minas quando a coleta terminar.
+mago_do_vao;27;NPC;mago_pesquisador;Estarei monitorando a exploração constantemente. E meu puxão de orelha dói, já aviso.
+mago_do_vao;28;NPC;mago_pesquisador;Então... NÃO. AVANCEM. ALÉM. DO NECESSÁRIO.
+mago_do_vao;29;LEADER;;Essa recomendação parece estranhamente específica.
+mago_do_vao;30;NPC;mago_pesquisador;Porque é.
+mago_do_vao;31;RECRUIT;jovem_de_bree;Bom, {leaderName}, como você é mais forte, deixo que lidere a investigação.
+mago_do_vao;32;RECRUIT;jovem_de_bree;Eu cuido das anotações e carrego sua bolsa.
+mago_do_vao;33;LEADER;;...
+fragmento_pendente;1;NPC;mago_pesquisador;Vocês retornaram sem o fragmento.
+fragmento_pendente;2;NPC;mago_pesquisador;Sem uma amostra, qualquer conclusão seria apenas especulação.
+fragmento_pendente;3;LEADER;;Você tem razão. Desculpe.
+fragmento_pendente;4;RECRUIT;jovem_de_bree;Pelo menos agora sabemos como é a sensação de estar do outro lado da conversa científica.
+fragmento_pendente;5;NPC;mago_pesquisador;Retornem quando tiverem o que pedi.
+primeira_resposta;1;NPC;mago_pesquisador;Ah, belíssimo retorno. Rápido! Coloquem o fragmento sobre a mesa.
+primeira_resposta;2;NARRATOR;;Filamentos de uma luz violeta percorrem a superfície do fragmento e projetam sombras que não acompanham os movimentos da sala.
+primeira_resposta;3;NPC;mago_pesquisador;Interessante.
+primeira_resposta;4;RECRUIT;jovem_de_bree;Essa palavra nunca anuncia coisa boa.
+primeira_resposta;5;NPC;mago_pesquisador;A energia das Minas não é a mesma que está transformando as pessoas de Bree.
+primeira_resposta;6;NPC;mago_pesquisador;Mas ela reage como se tivesse sido tocada pela mesma influência que tocou o sangue de seu pai, {leaderName}.
+primeira_resposta;7;LEADER;;Então os registros estavam certos?
+primeira_resposta;8;NPC;mago_pesquisador;Eles apontam na direção correta. A cor dessa luz é absolutamente incomum para a energia das Minas do Além-Túmulo.
+primeira_resposta;9;NPC;mago_pesquisador;Eu esperava reflexos verdes ou azulados, algo próximo ao tom das eletrorrochas. Mas esse violeta...
+primeira_resposta;10;NPC;mago_pesquisador;Ainda assim, apontar na direção correta não é o mesmo que conhecer a resposta.
+primeira_resposta;11;NPC;mago_pesquisador;Para continuar, precisaremos investigar forças muito mais perigosas do que as máquinas que encontraram.
+primeira_resposta;12;RECRUIT;jovem_de_bree;Bem, nós conseguimos voltar com vida.
+primeira_resposta;13;NPC;mago_pesquisador;Porque eu retirei vocês antes que alcançassem o que existe no fundo daquela mina.
+primeira_resposta;14;NPC;mago_pesquisador;Coragem permitiu que chegassem até aqui. Inocência permitiu que aceitassem a missão cegamente.
+primeira_resposta;15;NPC;mago_pesquisador;Elas não são as únicas características que definem um guerreiro.
+primeira_resposta;16;LEADER;;Características que definem um guerreiro?
+primeira_resposta;17;NPC;mago_pesquisador;Se vocês querem realmente levar essa investigação adiante...
+primeira_resposta;18;NPC;mago_pesquisador;Se realmente desejam encontrar a causa e conseguir a cura, apenas Coragem e Inocência não serão suficientes para o restante da jornada.
+primeira_resposta;19;LEADER;;Você tem alguma sugestão menos humilhante?
+primeira_resposta;20;NPC;mago_pesquisador;Tenho uma sugestão mais útil.
+primeira_resposta;21;NPC;mago_pesquisador;Procurem-me em Setegalhos.
+primeira_resposta;22;NPC;mago_pesquisador;Sob os sete galhos, viajantes aprendem a transformar aptidão em propósito.
+primeira_resposta;23;NPC;mago_pesquisador;Coragem. Inocência. Percepção. Curiosidade. Determinação. Sabedoria. Astúcia.
+primeira_resposta;24;NPC;mago_pesquisador;As sete características que definem um guerreiro. Posso explicar melhor quando me encontrarem em Setegalhos.
+primeira_resposta;25;NPC;mago_pesquisador;Vocês sabem o caminho. Na bifurcação de Verdes Ermos, sigam para o oeste e ignorem a trilha para a Gruta de Relamparrocha.
+primeira_resposta;26;NPC;mago_pesquisador;Garanto a vocês: se desejam continuar esta investigação, precisarão descobrir no que podem se tornar.
+primeira_resposta;27;RECRUIT;jovem_de_bree;E você pretende simplesmente aparecer lá?
+primeira_resposta;28;NPC;mago_pesquisador;Pretendo chegar antes de vocês. Ontem.
+primeira_resposta;29;NPC;mago_pesquisador;Até lá.
+primeira_resposta;30;NARRATOR;;O mago ergue dois dedos. Por um instante, sua silhueta parece ocupar vários pontos da sala ao mesmo tempo. Então desaparece.
+primeira_resposta;31;RECRUIT;jovem_de_bree;Ele sumiu! Isso foi magia ou distorção espacial?
+primeira_resposta;32;LEADER;;Depois de Entrelugar, eu não sei de mais nada.
+# QUEST 5
+oferta_sete_caminhos;1;NARRATOR;;As ruas de Setegalhos estão repletas de moradores, viajantes, música e conversas. Acima de tudo isso, a copa da árvore colossal se estende por quilômetros.
+oferta_sete_caminhos;2;LEADER;;Colossal não é suficiente para descrever isso.
+oferta_sete_caminhos;3;RECRUIT;jovem_de_bree;Estou tentando enxergar o topo desde que chegamos. Sério, meu pescoço desistiu antes de mim.
+oferta_sete_caminhos;4;LEADER;;O mais incrível é que mesmo debaixo dessa copa toda, a vila não parece escura.
+oferta_sete_caminhos;5;NPC;mago_pesquisador_setegalhos;A sombra de Setegalhos não impede a luz. Ela apenas decide o que pode atravessá-la.
+oferta_sete_caminhos;6;LEADER;;Você realmente chegou antes da gente.
+oferta_sete_caminhos;7;NPC;mago_pesquisador_setegalhos;Cheguei ontem, como prometido.
+oferta_sete_caminhos;8;RECRUIT;jovem_de_bree;Ainda não decidi se ele está brincando quando fala assim.
+oferta_sete_caminhos;9;NPC;mago_pesquisador_setegalhos;Acho que isso torna nossas conversas mais interessantes. Não concordam?
+oferta_sete_caminhos;10;NPC;mago_pesquisador_setegalhos;Setegalhos não possui muralhas. Não precisa delas.
+oferta_sete_caminhos;11;NPC;mago_pesquisador_setegalhos;A aura projetada pela árvore protege a vila e alcança as quatro estradas que a conectam ao continente.
+oferta_sete_caminhos;12;NPC;mago_pesquisador_setegalhos;Não é qualquer pessoa, criatura ou influência que consegue atravessá-las.
+oferta_sete_caminhos;13;LEADER;;Então é por isso que todos parecem tão tranquilos.
+oferta_sete_caminhos;14;RECRUIT;jovem_de_bree;Uma vila sem muros é mais segura que Bree. Isso não é nada humilhante.
+oferta_sete_caminhos;15;NPC;mago_pesquisador_setegalhos;Segurança e isolamento frequentemente crescem da mesma raiz.
+oferta_sete_caminhos;16;NPC;mago_pesquisador_setegalhos;Mas não foi apenas para conhecer a árvore que pedi que viessem.
+oferta_sete_caminhos;17;NPC;mago_pesquisador_setegalhos;Observem as construções erguidas sobre seus sete grandes galhos.
+oferta_sete_caminhos;18;LEADER;;Amarelo, azul, verde, roxo, cinza, branco e vermelho.
+oferta_sete_caminhos;19;NPC;mago_pesquisador_setegalhos;Cada cor representa um caminho de especialização. Uma aptidão que expressa a característica central de uma classe.
+oferta_sete_caminhos;20;RECRUIT;jovem_de_bree;Classe? Como em tipos de guerreiros?
+oferta_sete_caminhos;21;NPC;mago_pesquisador_setegalhos;Exatamente. Ser um guerreiro não é simplesmente sair matando lobermos enquanto empunha uma adaga improvisada.
+oferta_sete_caminhos;22;NPC;mago_pesquisador_setegalhos;Ser um guerreiro é aprimorar seu ponto forte, ter a humildade de reconhecer as próprias fraquezas e aceitar ao seu lado aqueles que podem compensá-las.
+oferta_sete_caminhos;23;NPC;mago_pesquisador_setegalhos;No Galho da Harmonia, Bardos transformam sensibilidade, linguagem e presença em força.
+oferta_sete_caminhos;24;NPC;mago_pesquisador_setegalhos;No Galho do Instante, Atiradores aprendem que percepção importa tanto quanto velocidade.
+oferta_sete_caminhos;25;NPC;mago_pesquisador_setegalhos;No Galho do Ciclo, Druidas encontram sabedoria nas transformações da natureza.
+oferta_sete_caminhos;26;NPC;mago_pesquisador_setegalhos;No Galho do Reflexo, Metamorfos estudam adaptação, identidade e mudança.
+oferta_sete_caminhos;27;NPC;mago_pesquisador_setegalhos;No Galho do Sussurro, Espectros dominam os caminhos que passam despercebidos.
+oferta_sete_caminhos;28;NPC;mago_pesquisador_setegalhos;E no Galho do Silêncio, Quebramagos aprendem a preservar a própria vontade diante de forças capazes de alterá-la.
+oferta_sete_caminhos;29;RECRUIT;jovem_de_bree;Você explicou seis. O que existe no galho vermelho?
+oferta_sete_caminhos;30;NPC;mago_pesquisador_setegalhos;A Ruína.
+oferta_sete_caminhos;31;NPC;mago_pesquisador_setegalhos;Antigamente, ele era chamado de Galho do Valor.
+oferta_sete_caminhos;32;NPC;mago_pesquisador_setegalhos;É a academia dos Flagelos: viajantes ainda inexperientes, mas com Inocência suficiente para se arriscarem antes de compreender plenamente o perigo.
+oferta_sete_caminhos;33;NPC;mago_pesquisador_setegalhos;Como vocês.
+oferta_sete_caminhos;34;LEADER;;Não sei se isso foi uma explicação ou uma ofensa.
+oferta_sete_caminhos;35;NPC;mago_pesquisador_setegalhos;Pode ser empatia. Pode ser ganância. Normalmente é uma combinação menos elegante das duas.
+oferta_sete_caminhos;36;RECRUIT;jovem_de_bree;Definitivamente uma ofensa.
+oferta_sete_caminhos;37;NPC;mago_pesquisador_setegalhos;Durante a Cerimônia dos Caminhos, alguns candidatos recebiam o símbolo do escudo e permaneciam Flagelos.
+oferta_sete_caminhos;38;NPC;mago_pesquisador_setegalhos;Eles se tornavam guerreiros capazes de transformar a própria vulnerabilidade em proteção para outras pessoas.
+oferta_sete_caminhos;39;NPC;mago_pesquisador_setegalhos;Mas o último Mestre Flagelo partiu em uma jornada pessoal muitos anos atrás e jamais retornou.
+oferta_sete_caminhos;40;NPC;mago_pesquisador_setegalhos;Os outros mestres recusaram-se a substituí-lo. Ainda acreditam que seu caminho o trará de volta.
+oferta_sete_caminhos;41;RECRUIT;jovem_de_bree;E por que não o substituem? Parece uma solução simples para substituir alguém que foi egoísta o suficiente para abandonar seu posto.
+oferta_sete_caminhos;42;NPC;mago_pesquisador_setegalhos;Entendo seu ponto de vista. Mas não é bem assim. Veja bem...
+oferta_sete_caminhos;43;NPC;mago_pesquisador_setegalhos;Todo guerreiro, independentemente da classe, veio de um mesmo lugar. Ninguém nasce experiente. Mesmo o mestre mais forte um dia foi um...
+oferta_sete_caminhos;44;LEADER;;...Flagelo.
+oferta_sete_caminhos;45;NPC;mago_pesquisador_setegalhos;Um Flagelo. Exatamente, {leaderName}. Enquanto não houver confirmação de seu paradeiro ou das razões que o levaram a partir...
+oferta_sete_caminhos;46;NPC;mago_pesquisador_setegalhos;Manter o posto aberto é uma questão de respeito.
+oferta_sete_caminhos;47;RECRUIT;jovem_de_bree;Entendi... Faz sentido agora.
+oferta_sete_caminhos;48;NPC;mago_pesquisador_setegalhos;O impacto da ausência do Mestre Flagelo é tão grande que, desde sua partida, o símbolo do escudo nunca mais respondeu a um candidato.
+oferta_sete_caminhos;49;RECRUIT;jovem_de_bree;Você continua falando sobre uma cerimônia. O que exatamente acontece nela?
+oferta_sete_caminhos;50;NPC;ancia_setegalhos;Se fosse possível explicar exatamente, não seria necessária uma cerimônia.
+oferta_sete_caminhos;51;RECRUIT;jovem_de_bree;Ai, caramba! Que susto!
+oferta_sete_caminhos;52;RECRUIT;jovem_de_bree;As pessoas daqui costumam aparecer do nada no meio das conversas?!
+oferta_sete_caminhos;53;NPC;ancia_setegalhos;Somente quando demoram demais para fazer a pergunta correta.
+oferta_sete_caminhos;54;NPC;mago_pesquisador_setegalhos;Esta é uma das anciãs de Setegalhos. Ela presenciou mais cerimônias do que qualquer registro preservado no Instituto Entrequando.
+oferta_sete_caminhos;55;NPC;ancia_setegalhos;Inclusive aquela em que o último Mestre Flagelo recebeu o emblema do escudo.
+oferta_sete_caminhos;56;LEADER;;Então... Você pode nos dizer como funciona essa tal cerimônia?
+oferta_sete_caminhos;57;NPC;ancia_setegalhos;Essa tal cerimônia?
+oferta_sete_caminhos;58;LEADER;;Certo, desculpe... Você pode nos dizer como funciona a Cerimônia dos Caminhos?
+oferta_sete_caminhos;59;NPC;ancia_setegalhos;Não é necessário se desculpar. O modo como você perguntou apenas confirma a Inocência própria dos Flagelos.
+oferta_sete_caminhos;60;NPC;ancia_setegalhos;Primeiro, enfrentarão as provas dos sete galhos, onde serão testados em cada uma das sete aptidões do guerreiro.
+oferta_sete_caminhos;61;NPC;ancia_setegalhos;Coragem. Inocência. Percepção. Curiosidade. Determinação. Sabedoria. Astúcia.
+oferta_sete_caminhos;62;NPC;ancia_setegalhos;Quando as provas terminarem, participarão do Julgamento dos Sete Presságios.
+oferta_sete_caminhos;63;RECRUIT;jovem_de_bree;Que nome assustador. O que vai acontecer com a gente nesse julgamento?
+oferta_sete_caminhos;64;NPC;ancia_setegalhos;Palavras não serviriam para preparar vocês.
+oferta_sete_caminhos;65;NPC;ancia_setegalhos;Quando chegar o momento, suas ações falarão.
+oferta_sete_caminhos;66;NPC;mago_pesquisador_setegalhos;Se desejam continuar investigando a doença, precisam deixar de agir como viajantes inexperientes.
+oferta_sete_caminhos;67;NPC;mago_pesquisador_setegalhos;A cerimônia transformará aptidão em propósito. Mas esse é um caminho sem volta.
+oferta_sete_caminhos;68;NPC;mago_pesquisador_setegalhos;Quando saírem daqui, não serão mais as mesmas pessoas que chegaram a Setegalhos.
+oferta_sete_caminhos;69;NPC;mago_pesquisador_setegalhos;Ainda desejam prosseguir?
+aceite_sete_caminhos;1;LEADER;;Hmm...
+aceite_sete_caminhos;2;LEADER;;Pela minha família.
+aceite_sete_caminhos;3;LEADER;;Por Bree.
+aceite_sete_caminhos;4;LEADER;;Eu aceito.
+aceite_sete_caminhos;5;RECRUIT;jovem_de_bree;Pela minha mãe e pela minha irmã.
+aceite_sete_caminhos;6;RECRUIT;jovem_de_bree;Eu também aceito.
+aceite_sete_caminhos;7;NPC;ancia_setegalhos;Então não permitam que essas palavras se tornem apenas uma promessa confortável.
+aceite_sete_caminhos;8;NPC;mago_pesquisador_setegalhos;Procurem o Mestre da Cerimônia no Centro da Cerimônia dos Caminhos.
+aceite_sete_caminhos;9;NPC;mago_pesquisador_setegalhos;Ele explicará os termos que acabaram de aceitar sem conhecer.
+aceite_sete_caminhos;10;RECRUIT;jovem_de_bree;Vocês não poderiam ter mencionado que existiam termos antes de nos perguntarem?
+aceite_sete_caminhos;11;NPC;mago_pesquisador_setegalhos;Vocês demonstraram novamente a Inocência necessária.
+aceite_sete_caminhos;12;LEADER;;Estou começando a entender por que ainda somos Flagelos.
+recusa_sete_caminhos;1;LEADER;;Ainda não posso assumir esse compromisso.
+recusa_sete_caminhos;2;RECRUIT;jovem_de_bree;Depois do que enfrentamos, talvez seja melhor pensar antes de aceitar outra coisa sem entender.
+recusa_sete_caminhos;3;NPC;mago_pesquisador_setegalhos;Uma decisão irreversível merece mais que entusiasmo.
+recusa_sete_caminhos;4;NPC;ancia_setegalhos;Os sete caminhos não desaparecerão enquanto vocês refletem.
+recusa_sete_caminhos;5;NPC;mago_pesquisador_setegalhos;Retornem quando souberem por que desejam prosseguir, e reviveremos este momento como se nunca tivesse acontecido.
+termos_cerimonia_caminhos;1;NPC;mestre_cerimonia;Dois novos candidatos. Se chegaram até este salão, imagino que já tenham ouvido uma versão inspiradora daquilo que os aguarda.
+termos_cerimonia_caminhos;2;RECRUIT;jovem_de_bree;Também ouvimos que aceitamos termos que ainda não conhecemos.
+termos_cerimonia_caminhos;3;NPC;mestre_cerimonia;Então o Mago Pesquisador ofereceu uma descrição bastante precisa.
+termos_cerimonia_caminhos;4;LEADER;;Isso acontece com frequência?
+termos_cerimonia_caminhos;5;NPC;mestre_cerimonia;Com Flagelos? Constantemente.
+termos_cerimonia_caminhos;6;NPC;mestre_cerimonia;Por isso esta conversa existe.
+termos_cerimonia_caminhos;7;NPC;mestre_cerimonia;A Cerimônia dos Caminhos não é uma festa, um desfile ou uma apresentação para divertir Setegalhos.
+termos_cerimonia_caminhos;8;NPC;mestre_cerimonia;As pessoas que assistirão ao julgamento não estarão ali para celebrar aquilo que vocês já são.
+termos_cerimonia_caminhos;9;NPC;mestre_cerimonia;Estarão ali para testemunhar aquilo que escolherão se tornar.
+termos_cerimonia_caminhos;10;NPC;mestre_cerimonia;A celebração ocorre apenas depois de acordarem o que hoje dorme em seu interior.
+termos_cerimonia_caminhos;11;NPC;mestre_cerimonia;Antes disso, cada candidato deverá percorrer os sete galhos e enfrentar as provas propostas por seus mentores.
+termos_cerimonia_caminhos;12;LEADER;;Precisamos concluir todas? Mesmo que já saibamos qual classe queremos seguir?
+termos_cerimonia_caminhos;13;NPC;mestre_cerimonia;Principalmente se acreditam que já sabem.
+termos_cerimonia_caminhos;14;NPC;mestre_cerimonia;Uma escolha feita sem compreender as alternativas é apenas preferência.
+termos_cerimonia_caminhos;15;NPC;mestre_cerimonia;O caminho precisa reconhecer aquilo que suas ações revelam, não aquilo que vocês desejam aparentar.
+termos_cerimonia_caminhos;16;RECRUIT;jovem_de_bree;E se nossas ações revelarem alguma coisa que não queremos descobrir?
+termos_cerimonia_caminhos;17;NPC;mestre_cerimonia;Então terão aprendido algo antes que essa ignorância pudesse lhes custar muito mais.
+termos_cerimonia_caminhos;18;LEADER;;Ele consegue ser ainda mais reconfortante que o Mago.
+termos_cerimonia_caminhos;19;RECRUIT;jovem_de_bree;Talvez isso também faça parte da prova.
+termos_cerimonia_caminhos;20;NPC;mestre_cerimonia;Há outra condição.
+termos_cerimonia_caminhos;21;NPC;mestre_cerimonia;Embora tenham chegado juntos, não percorrerão necessariamente os mesmos caminhos.
+termos_cerimonia_caminhos;22;NPC;mestre_cerimonia;Cada candidato deve enfrentar as próprias provas, tomar as próprias decisões e encontrar as próprias respostas.
+termos_cerimonia_caminhos;23;NPC;mestre_cerimonia;Não poderão concluir uma prova no lugar da outra pessoa.
+termos_cerimonia_caminhos;24;RECRUIT;jovem_de_bree;Então é aqui que nos separamos.
+termos_cerimonia_caminhos;25;LEADER;;Só até a cerimônia.
+termos_cerimonia_caminhos;26;RECRUIT;jovem_de_bree;Tente não terminar muito depois de mim.
+termos_cerimonia_caminhos;27;LEADER;;Eu estava prestes a dizer a mesma coisa.
+termos_cerimonia_caminhos;28;NPC;mestre_cerimonia;Competição pode impulsionar alguém durante parte da subida.
+termos_cerimonia_caminhos;29;NPC;mestre_cerimonia;Mas, quando alcançarem a copa, cada pessoa terá de sustentar o próprio peso.
+termos_cerimonia_caminhos;30;NPC;mestre_cerimonia;Os sete galhos vão chamá-los, um a um. Vocês saberão onde ir, quando ir.
+termos_cerimonia_caminhos;31;NPC;mestre_cerimonia;Visitem seus mentores. Ouçam antes de agir. E não confundam concluir uma tarefa com compreender sua prova.
+termos_cerimonia_caminhos;32;NPC;mestre_cerimonia;Quando os sete caminhos tiverem respondido, retornem para o Julgamento dos Sete Presságios.
+termos_cerimonia_caminhos;33;NPC;mestre_cerimonia;A partir deste momento, suas jornadas pertencem apenas a vocês.
+# HARMONIA
+prova_harmonia;1;NPC;mentor_harmonia;Ah, olá! Então o Galho da Harmonia chamou você primeiro?!
+prova_harmonia;2;NPC;mentor_harmonia;Legal! Hahaha.
+prova_harmonia;3;NPC;mentor_harmonia;Lembro que, quando participei da cerimônia, a Harmonia também foi o primeiro galho a me chamar.
+prova_harmonia;4;NPC;mentor_harmonia;Quem sabe isso não quer dizer alguma coisa?
+prova_harmonia;5;LEADER;;Não sei... Eu não sou muito bom com instrumentos musicais.
+prova_harmonia;6;NPC;mentor_harmonia;Ser Bardo tem muito menos a ver com música do que você imagina. Antes de começarmos, diga: o que é harmonia?
+prova_harmonia;7;LEADER;;Várias notas diferentes soando bem juntas?
+prova_harmonia;8;NPC;mentor_harmonia;Uma resposta correta. Também é uma resposta incompleta.
+prova_harmonia;9;LEADER;;Pelo que percebi desde que cheguei a Setegalhos, respostas incompletas fazem parte da cerimônia.
+prova_harmonia;10;NPC;mentor_harmonia;Ah, {leaderName}, não vou roubar do Mago Pesquisador o título de enigmático. Mas posso dizer que todas as respostas são incompletas até serem vividas.
+prova_harmonia;11;NPC;mentor_harmonia;Um Bardo não encontra força apenas na música. Encontra força naquilo que faz uma voz desejar ser ouvida.
+prova_harmonia;12;NPC;mentor_harmonia;Algumas pessoas cantam por esperança. Outras, para preservar uma memória. Algumas cantam porque o silêncio seria insuportável.
+prova_harmonia;13;NPC;mentor_harmonia;Agora, falando sério. Para compreender a Harmonia, você precisa descobrir a fonte da sua alegria.
+prova_harmonia;14;LEADER;;Descobrir a fonte da minha alegria? Como eu faço isso?
+prova_harmonia;15;NPC;mentor_harmonia;Pense no motivo que trouxe você até Setegalhos.
+prova_harmonia;16;NPC;mentor_harmonia;Ou você só veio assistir ao show dos Bardos amanhã à noite e acabou participando da Cerimônia dos Caminhos por acidente?
+prova_harmonia;17;LEADER;;Não! Calma, show dos Bardos?
+prova_harmonia;18;LEADER;;Mas não... Eu vim pela minha família. E pelas pessoas de Bree.
+prova_harmonia;19;NPC;mentor_harmonia;Bingo! Hahaha! Sua primeira resposta não está neste galho.
+prova_harmonia;20;NPC;mentor_harmonia;Retorne a Bree e visite sua família. Você já sabe onde procurar.
+prova_harmonia;21;NPC;mentor_harmonia;E, quando voltar, talvez entenda por que foi tão simbólico começar pela Harmonia.
+prova_harmonia;22;LEADER;;Mas eu acabei de atravessar Verdes Ermos para chegar aqui.
+prova_harmonia;23;NPC;mentor_harmonia;E agora atravessará novamente sabendo por que está voltando.
+prova_harmonia;24;LEADER;;Certo. Eu realmente sinto falta deles...
+prova_harmonia;25;NPC;mentor_harmonia;Quando encontrar aquilo que procura, traga consigo. Não para entregar para mim.
+prova_harmonia;26;NPC;mentor_harmonia;Apenas para que possa dizer, com sinceridade, por que decidiu continuar.
+poema_do_pai;1;NPC;mae_protagonista;{leaderName}?! O que está fazendo em Bree?
+poema_do_pai;2;LEADER;;Também senti sua falta, mãe.
+poema_do_pai;3;NPC;mae_protagonista;Não foi isso que eu quis dizer.
+poema_do_pai;4;NPC;mae_protagonista;Você atravessou aqueles caminhos perigosos, chegou a outra cidade e agora aparece aqui sem avisar.
+poema_do_pai;5;LEADER;;Eu precisava encontrar uma resposta.
+poema_do_pai;6;NPC;mae_protagonista;E veio procurar aqui?
+poema_do_pai;7;LEADER;;Disseram que eu precisava descobrir a fonte da minha alegria.
+poema_do_pai;8;NPC;mae_protagonista;Parece uma forma muito complicada de mandar alguém visitar a própria mãe.
+poema_do_pai;9;LEADER;;Foi exatamente o que pensei.
+poema_do_pai;10;LEADER;;Como o papai está?
+poema_do_pai;11;NPC;mae_protagonista;Ainda doente. A doença ainda não dá sinais de que vai embora. Mas a fruta que você trouxe continua amenizando os sintomas.
+poema_do_pai;12;NPC;mae_protagonista;Ele consegue dormir por algumas horas. Às vezes acorda reconhecendo o lugar e as pessoas.
+poema_do_pai;13;LEADER;;Isso já é alguma coisa.
+poema_do_pai;14;NPC;mae_protagonista;É muito mais do que tínhamos antes.
+poema_do_pai;15;NPC;mae_protagonista;Em um desses momentos, ele pediu papel e alguma coisa para escrever.
+poema_do_pai;16;LEADER;;O papai escreveu?
+poema_do_pai;17;NPC;mae_protagonista;Tentou. Mas suas mãos tremem muito.
+poema_do_pai;18;NPC;mae_protagonista;Quando terminou, pediu que eu guardasse isto para você.
+poema_do_pai;19;NARRATOR;;Sua mãe coloca em suas mãos uma folha cuidadosamente dobrada. A escrita é irregular, mas ainda reconhecível.
+poema_do_pai;20;LEADER;;"Se a estrada te levar para longe..."
+poema_do_pai;21;LEADER;;"Leve consigo o caminho de volta."
+poema_do_pai;22;LEADER;;"Onde estiver, lembre..."
+poema_do_pai;23;LEADER;;"Há uma casa esperando por você."
+poema_do_pai;24;NPC;mae_protagonista;Ele tentou escrever mais, mas não conseguiu.
+poema_do_pai;25;LEADER;;Não precisa de mais nada.
+poema_do_pai;26;NPC;mae_protagonista;Você encontrou a resposta que procurava?
+poema_do_pai;27;LEADER;;Encontrei. Encontrei, sim.
+poema_do_pai;28;NPC;mae_protagonista;Então leve com você.
+poema_do_pai;29;NPC;mae_protagonista;Só não use isso como desculpa para se arriscar sem pensar.
+poema_do_pai;30;LEADER;;Isso não está no poema.
+poema_do_pai;31;NPC;mae_protagonista;É porque essa parte é minha.
+poema_do_pai;32;LEADER;;Imaginei.
+poema_do_pai;33;NPC;mae_protagonista;Vá. Antes que eu encontre motivos para pedir que você fique.
+poema_do_pai;34;LEADER;;Eu volto.
+poema_do_pai;35;NPC;mae_protagonista;Eu sei. É por isso que consigo deixar você partir.
+retorno_harmonia;1;NPC;mentor_harmonia;{leaderName}! Então você retornou.
+retorno_harmonia;2;NPC;mentor_harmonia;Encontrou a fonte da sua alegria? Ou só veio assistir ao nosso show?
+retorno_harmonia;3;LEADER;;Quê? Hã... Não. Meu pai escreveu isto para mim.
+retorno_harmonia;4;NARRATOR;;Você abre cuidadosamente a folha e permite que o Mentor da Harmonia leia suas poucas linhas.
+retorno_harmonia;5;NPC;mentor_harmonia;Palavras simples.
+retorno_harmonia;6;LEADER;;Sim.
+retorno_harmonia;7;NPC;mentor_harmonia;Mas não parecem pequenas em suas mãos.
+retorno_harmonia;8;LEADER;;O poema não cura ninguém.
+retorno_harmonia;9;LEADER;;Não resolve nossa investigação e não me torna mais forte.
+retorno_harmonia;10;LEADER;;Mas me lembra por que eu preciso continuar.
+retorno_harmonia;11;NPC;mentor_harmonia;Então você encontrou sua resposta.
+retorno_harmonia;12;NPC;mentor_harmonia;Harmonia não elimina a dor. Ela impede que a dor seja a única voz que conseguimos ouvir.
+retorno_harmonia;13;NPC;mentor_harmonia;Guarde essas palavras. Haverá momentos em que o caminho tentará convencer você de que não existe motivo para prosseguir.
+retorno_harmonia;14;NPC;mentor_harmonia;Quando isso acontecer, permita que a voz de seu pai responda.
+retorno_harmonia;15;LEADER;;Vou permitir.
+retorno_harmonia;16;NPC;mentor_harmonia;Sua compreensão da Harmonia está completa.
+retorno_harmonia;17;NPC;mentor_harmonia;Estou curioso para saber qual será o próximo Galho a te chamar. E mais curioso ainda para saber qual emblema chamará por você.
+retorno_harmonia;18;LEADER;;Valeu. Por tudo.
+# CICLO
+prova_ciclo;1;NPC;mentor_ciclo;Vejo que a Harmonia foi o primeiro galho a chamar você.
+prova_ciclo;2;LEADER;;Como você sabe?
+prova_ciclo;3;NPC;mentor_ciclo;Você ainda está segurando alguma coisa com mais cuidado do que seria necessário.
+prova_ciclo;4;LEADER;;É um poema escrito pelo meu pai.
+prova_ciclo;5;NPC;mentor_ciclo;Então encontrou aquilo que permanece dentro de uma pessoa.
+prova_ciclo;6;NPC;mentor_ciclo;Aqui, observará aquilo que permanece enquanto todas as coisas mudam.
+prova_ciclo;7;LEADER;;O Ciclo.
+prova_ciclo;8;NPC;mentor_ciclo;Nascimento, crescimento, adaptação, decadência e recomeço.
+prova_ciclo;9;NPC;mentor_ciclo;As pessoas costumam aceitar o nascimento e o crescimento. Depois passam o restante da vida tentando negociar com as outras partes.
+prova_ciclo;10;LEADER;;Não parece uma negociação muito justa.
+prova_ciclo;11;NPC;mentor_ciclo;O Ciclo nunca prometeu justiça. Apenas continuidade.
+prova_ciclo;12;NPC;mentor_ciclo;Em Verdes Ermos, procure um Herbalístico Roxo e um Herbatedor.
+prova_ciclo;13;NPC;mentor_ciclo;Herbatedores são menos comuns. Encontrar um exigirá paciência e resiliência.
+prova_ciclo;14;NPC;mentor_ciclo;Para acompanhar um ciclo até o fim, você precisa respeitar o tempo dele, não impor o seu.
+prova_ciclo;15;NPC;mentor_ciclo;Observe as duas criaturas com atenção.
+prova_ciclo;16;NPC;mentor_ciclo;Não quero saber qual delas é mais forte, mais útil ou mais perigosa.
+prova_ciclo;17;NPC;mentor_ciclo;Quero que descubra o que permite que formas tão diferentes continuem pertencendo à vida daquele lugar.
+prova_ciclo;18;LEADER;;Isso quer dizer que não preciso derrotá-las?
+prova_ciclo;19;NPC;mentor_ciclo;A cerimônia exige compreensão. O modo como conseguirá se aproximar o suficiente para analisar criaturas hostis é uma questão entre você e elas.
+prova_ciclo;20;LEADER;;Elas provavelmente vão escolher a parte da hostilidade.
+prova_ciclo;21;NPC;mentor_ciclo;A natureza raramente consulta nossas preferências.
+prova_ciclo;22;NPC;mentor_ciclo;Retorne quando tiver observado ambas.
+retorno_ciclo;1;NPC;mentor_ciclo;O Galho do Ciclo reconhece seu retorno, {leaderName}.
+retorno_ciclo;2;NPC;mentor_ciclo;Conte-me. O que você encontrou em Verdes Ermos?
+retorno_ciclo;3;LEADER;;No começo, tentei decidir qual daquelas criaturas representava melhor a natureza.
+retorno_ciclo;4;LEADER;;Mas a pergunta começou a parecer errada.
+retorno_ciclo;5;NPC;mentor_ciclo;Por quê?
+retorno_ciclo;6;LEADER;;Porque nenhuma delas precisa ser a forma correta.
+retorno_ciclo;7;LEADER;;O Herbatedor parece uma evolução do Herbalístico Roxo.
+retorno_ciclo;8;LEADER;;No começo, achei que isso tornava o Herbatedor uma forma mais completa.
+retorno_ciclo;9;NPC;mentor_ciclo;E ainda acredita nisso?
+retorno_ciclo;10;LEADER;;Não exatamente.
+retorno_ciclo;11;LEADER;;O Herbalístico não é uma versão errada ou incompleta. Ele apenas está em outra parte do próprio desenvolvimento.
+retorno_ciclo;12;LEADER;;E o Herbatedor também não deve ser o fim. Em algum momento, ele vai morrer, alimentar outras formas de vida e retornar ao ciclo.
+retorno_ciclo;13;NPC;mentor_ciclo;Evoluir não significa escapar do Ciclo.
+retorno_ciclo;14;NPC;mentor_ciclo;Significa atravessá-lo assumindo aquilo que cada momento exige.
+retorno_ciclo;15;LEADER;;Então toda transformação é natural?
+retorno_ciclo;16;NPC;mentor_ciclo;Ah, não.
+retorno_ciclo;17;NPC;mentor_ciclo;Compreender o Ciclo também significa reconhecer aquilo que o viola.
+retorno_ciclo;18;NPC;mentor_ciclo;Uma transformação pode sustentar a vida. Também pode consumi-la, aprisioná-la ou obrigá-la a servir outra vontade.
+retorno_ciclo;19;LEADER;;Como a doença de Bree.
+retorno_ciclo;20;NPC;mentor_ciclo;Hmm, talvez.
+retorno_ciclo;21;NPC;mentor_ciclo;Ainda não conhece a resposta. Mas agora sabe formular uma pergunta melhor.
+retorno_ciclo;22;NPC;mentor_ciclo;Sua compreensão do Ciclo está completa.
+retorno_ciclo;23;NPC;mentor_ciclo;Leve essa pergunta com você. Outro galho saberá reconhecê-la.
+# REFLEXO
+prova_reflexo;1;NPC;mentor_reflexo;Espere. Não diga nada ainda.
+prova_reflexo;2;NPC;mentor_reflexo;Harmonia nas mãos. Ciclo nos olhos.
+prova_reflexo;3;LEADER;;Você consegue enxergar isso?
+prova_reflexo;4;NPC;mentor_reflexo;Não literalmente. Embora isso fosse fascinante.
+prova_reflexo;5;NPC;mentor_reflexo;Você segura alguma coisa com cuidado e observa este galho como quem espera mudança.
+prova_reflexo;6;NPC;mentor_reflexo;Imagino que tenha começado pela Harmonia e acabado de retornar do Ciclo.
+prova_reflexo;7;LEADER;;Acertou.
+prova_reflexo;8;NPC;mentor_reflexo;Excelente! O Ciclo ensinou que evoluir não significa escapar da transformação.
+prova_reflexo;9;NPC;mentor_reflexo;Agora podemos fazer uma pergunta muito mais interessante.
+prova_reflexo;10;NPC;mentor_reflexo;Quanto alguém pode mudar antes de deixar de reconhecer a própria imagem?
+prova_reflexo;11;LEADER;;Nossa, isso tem uma resposta certa?
+prova_reflexo;12;NPC;mentor_reflexo;Olha, eu espero sinceramente que não.
+prova_reflexo;13;NPC;mentor_reflexo;Quando as respostas são definitivas, as pesquisas ficam terrivelmente curtas.
+prova_reflexo;14;NPC;mentor_reflexo;Pesquisas curtas não têm graça, não é mesmo?
+prova_reflexo;15;LEADER;;Acho que sim. Mas também depende da motivação por trás da pesquisa.
+prova_reflexo;16;LEADER;;Às vezes só queremos chegar à resposta o quanto antes.
+prova_reflexo;17;NPC;mentor_reflexo;Excelente ponto de vista. Vou levar isso em consideração.
+prova_reflexo;18;NPC;mentor_reflexo;Agora, diga: se pudesse transformar uma parte de si neste exato momento, qual escolheria?
+prova_reflexo;19;LEADER;;Meus pés, não preciso nem refletir muito. Atravessei Verdes Ermos vezes demais nos últimos dias.
+prova_reflexo;20;NPC;mentor_reflexo;Uma transformação motivada pela necessidade. Prática, temporária e, imagino, acompanhada por calçados maiores.
+prova_reflexo;21;NPC;mentor_reflexo;Mas nem toda transformação é escolhida por quem a sofre.
+prova_reflexo;22;NPC;mentor_reflexo;Na Gruta Relamparrocha existem Goblins Amálgamas, criaturas cujas formas foram alteradas além do desenvolvimento natural.
+prova_reflexo;23;LEADER;;Já encontrei e derrotei alguns deles.
+prova_reflexo;24;NPC;mentor_reflexo;Encontrar não significa compreender. Desta vez, observe o que a transformação preservou e aquilo que ela retirou.
+prova_reflexo;25;NPC;mentor_reflexo;Analise um Goblin Amálgama e obtenha uma amostra da essência responsável por sua instabilidade.
+prova_reflexo;26;LEADER;;Você quer que eu traga a essência para você?
+prova_reflexo;27;NPC;mentor_reflexo;Quero que carregue a evidência. Não pretendo ficar com ela. Na verdade, já tenho uma coleção considerável.
+prova_reflexo;28;NPC;mentor_reflexo;Objetos transformam pesquisas, e aquilo que carregamos transforma quem pesquisa.
+prova_reflexo;29;LEADER;;Essa última parte foi estranhamente enigmática.
+prova_reflexo;30;NPC;mentor_reflexo;Foi? Interessante. Anotarei para não repetir.
+prova_reflexo;31;NPC;mentor_reflexo;Retorne quando tiver analisado a criatura e recolhido sua essência.
+retorno_reflexo;1;NPC;mentor_reflexo;Você voltou! E sua postura está diferente.
+retorno_reflexo;2;LEADER;;Minha postura?
+retorno_reflexo;3;NPC;mentor_reflexo;Exatamente. Percebo tensão nos ombros e cuidado nas mãos. Imagino que esteja carregando a essência.
+retorno_reflexo;4;NARRATOR;;Você mostra ao Mentor do Reflexo a substância instável obtida do Goblin Amálgama.
+retorno_reflexo;5;NPC;mentor_reflexo;Não é extraordinária? Ela tenta assumir uma forma mesmo depois de separada da criatura.
+retorno_reflexo;6;LEADER;;Durante a análise, parecia que partes diferentes do Amálgama disputavam o mesmo corpo.
+retorno_reflexo;7;NPC;mentor_reflexo;E você conseguiu identificar qual delas era a verdadeira?
+retorno_reflexo;8;LEADER;;É muito difícil dizer.
+retorno_reflexo;9;LEADER;;Talvez todas. Talvez nenhuma.
+retorno_reflexo;10;NPC;mentor_reflexo;Uma incerteza muito mais valiosa que uma resposta apressada.
+retorno_reflexo;11;LEADER;;No Ciclo, eu vi uma criatura mudar para continuar vivendo.
+retorno_reflexo;12;LEADER;;O Amálgama parecia continuar vivendo porque não conseguia terminar de mudar.
+retorno_reflexo;13;NPC;mentor_reflexo;Adaptação e aprisionamento podem produzir formas semelhantes quando observados apenas por fora.
+retorno_reflexo;14;LEADER;;Mudar pode nos salvar.
+retorno_reflexo;15;LEADER;;Mas uma transformação imposta também pode se tornar uma prisão. Estamos vendo isso em Bree.
+retorno_reflexo;16;NPC;mentor_reflexo;Esse é o primeiro Reflexo que precisa aprender a reconhecer.
+retorno_reflexo;17;NPC;mentor_reflexo;Não apenas a imagem que uma forma apresenta, mas a vontade que ainda existe dentro dela.
+retorno_reflexo;18;NPC;mentor_reflexo;Se ainda existe uma vontade aprisionada dentro da transformação, encontrar a cura significa libertá-la, não apenas restaurar sua aparência.
+retorno_reflexo;19;NPC;mentor_reflexo;Sua compreensão do Reflexo está completa.
+retorno_reflexo;20;NPC;mentor_reflexo;A essência permanece com você. Talvez ainda revele outras formas quando encontrar a pergunta correta.
+retorno_reflexo;21;NPC;mentor_reflexo;Agora estou curioso para descobrir qual galho chamará você em seguida.
+retorno_reflexo;22;LEADER;;Pelo menos desta vez eu não precisei atravessar Verdes Ermos duas vezes.
+retorno_reflexo;23;NPC;mentor_reflexo;Tecnicamente, precisou atravessar na ida e na volta. Pode ir.
+# INSTANTE
+prova_instante;1;NPC;mentor_instante;Aleluia. Demorou.
+prova_instante;2;LEADER;;Ninguém me disse que tinha horário marcado.
+prova_instante;3;NPC;mentor_instante;O momento certo não marca horário.
+prova_instante;4;LEADER;;Você fala assim com todo mundo?
+prova_instante;5;NPC;mentor_instante;Quando necessário.
+prova_instante;6;NPC;mentor_instante;Você veio do Reflexo.
+prova_instante;7;LEADER;;E você percebeu, claro.
+prova_instante;8;NPC;mentor_instante;Está observando tudo por tempo demais.
+prova_instante;9;LEADER;;Isso é ruim?
+prova_instante;10;NPC;mentor_instante;Se algo estiver tentando te atacar, sim.
+prova_instante;11;NPC;mentor_instante;Sua prova envolve Passaventos.
+prova_instante;12;NPC;mentor_instante;São rápidos, mas não são imprevisíveis.
+prova_instante;13;NPC;mentor_instante;Analise os movimentos de um deles e derrote três.
+prova_instante;14;LEADER;;Alguma orientação?
+prova_instante;15;NPC;mentor_instante;Observe antes de agir.
+prova_instante;16;LEADER;;Só isso?
+prova_instante;17;NPC;mentor_instante;Orientações longas costumam chegar tarde.
+prova_instante;18;NPC;mentor_instante;Vá.
+retorno_instante;1;NPC;mentor_instante;E então?
+retorno_instante;2;LEADER;;E então o quê?
+retorno_instante;3;NPC;mentor_instante;O que aprendeu, oras?
+retorno_instante;4;LEADER;;No começo, tentei acompanhar a velocidade deles.
+retorno_instante;5;NPC;mentor_instante;E falhou.
+retorno_instante;6;LEADER;;Você poderia fingir surpresa.
+retorno_instante;7;NPC;mentor_instante;Seria desperdício de tempo.
+retorno_instante;8;LEADER;;Depois percebi que eles repetiam alguns movimentos.
+retorno_instante;9;LEADER;;Quando parei de tentar ser mais veloz, consegui antecipar para onde iriam.
+retorno_instante;10;NPC;mentor_instante;Então?
+retorno_instante;11;LEADER;;Ser rápido não bastou. Eu precisava perceber quando agir.
+retorno_instante;12;NPC;mentor_instante;Correto.
+retorno_instante;13;NPC;mentor_instante;Sua compreensão do Instante está completa.
+retorno_instante;14;LEADER;;Só isso?
+retorno_instante;15;NPC;mentor_instante;Você queria um discurso?
+retorno_instante;16;LEADER;;Depois dos outros galhos, talvez.
+retorno_instante;17;NPC;mentor_instante;Procure o próximo.
+retorno_instante;18;LEADER;;Qual?
+retorno_instante;19;NPC;mentor_instante;O que chamar primeiro.
+retorno_instante;20;NPC;mentor_instante;Já perdeu tempo suficiente.
+# SUSSURRO
+prova_sussurro;1;LEADER;;Olá?
+prova_sussurro;2;NPC;mentor_sussurro;Olá.
+prova_sussurro;3;LEADER;;Ai! Há quanto tempo você está aí?
+prova_sussurro;4;NPC;mentor_sussurro;Desde antes de você entrar.
+prova_sussurro;5;LEADER;;Você poderia ter avisado.
+prova_sussurro;6;NPC;mentor_sussurro;E você poderia ter observado.
+prova_sussurro;7;LEADER;;Acabei de sair do Galho do Instante. Achei que estivesse observando melhor.
+prova_sussurro;8;NPC;mentor_sussurro;Você estava procurando movimento.
+prova_sussurro;9;NPC;mentor_sussurro;Eu permaneci imóvel.
+prova_sussurro;10;LEADER;;Hmm, isso parece trapaça.
+prova_sussurro;11;NPC;mentor_sussurro;Funciona.
+prova_sussurro;12;NPC;mentor_sussurro;Sua prova será nas Minas do Além-Túmulo.
+prova_sussurro;13;LEADER;;Eu estive lá recentemente.
+prova_sussurro;14;NPC;mentor_sussurro;Então sabe que seus corredores não ficam vazios quando parecem vazios.
+prova_sussurro;15;NPC;mentor_sussurro;Encontre e derrote três Ossombrações.
+prova_sussurro;16;NPC;mentor_sussurro;Enquanto luta, preste atenção ao que revela a presença delas antes que possam ser vistas.
+prova_sussurro;17;LEADER;;Não seria mais fácil pedir que eu analisasse uma?
+prova_sussurro;18;NPC;mentor_sussurro;Assim você procuraria diretamente pela criatura.
+prova_sussurro;19;NPC;mentor_sussurro;Quero que observe o corredor.
+prova_sussurro;20;LEADER;;E eu devo reparar em alguma coisa específica?
+prova_sussurro;21;NPC;mentor_sussurro;Se eu disser, você observará apenas isso.
+prova_sussurro;22;LEADER;;Agora você está sendo enigmático.
+prova_sussurro;23;NPC;mentor_sussurro;Não. Estou evitando estragar a resposta.
+prova_sussurro;24;NPC;mentor_sussurro;Pode ir. Tente perceber a porta antes de bater nela na saída.
+retorno_sussurro;1;LEADER;;Eu sei que você está aqui.
+retorno_sussurro;2;NPC;mentor_sussurro;Melhorou.
+retorno_sussurro;3;LEADER;;Ainda não sei onde.
+retorno_sussurro;4;NPC;mentor_sussurro;Ainda pode melhorar.
+retorno_sussurro;5;LEADER;;As Ossombrações quase não produziam sinais próprios.
+retorno_sussurro;6;LEADER;;No começo, eu procurava uma silhueta, um som ou algum movimento.
+retorno_sussurro;7;LEADER;;Mas eram as outras coisas que denunciavam onde elas estavam.
+retorno_sussurro;8;NPC;mentor_sussurro;Que coisas?
+retorno_sussurro;9;LEADER;;A poeira mudava de direção. Os ruídos das máquinas ficavam abafados. Outras criaturas evitavam alguns corredores.
+retorno_sussurro;10;LEADER;;Quando parei de procurar diretamente por elas, comecei a perceber o espaço que ocupavam.
+retorno_sussurro;11;NPC;mentor_sussurro;Bom.
+retorno_sussurro;12;LEADER;;O perigo mais difícil de encontrar não era o mais forte.
+retorno_sussurro;13;LEADER;;Era aquele que quase não deixava sinais.
+retorno_sussurro;14;NPC;mentor_sussurro;A maioria das pessoas observa apenas aquilo que deseja ser visto.
+retorno_sussurro;15;NPC;mentor_sussurro;Um Espectro aprende tanto com uma presença quanto com a ausência que ela produz.
+retorno_sussurro;16;NPC;mentor_sussurro;Espectros não são meros combatentes furtivos. Eles dominam as sombras e dobram o vazio.
+retorno_sussurro;17;NPC;mentor_sussurro;Sua compreensão do Sussurro está completa.
+retorno_sussurro;18;LEADER;;E qual galho vai me chamar agora?
+retorno_sussurro;19;NPC;mentor_sussurro;O Silêncio.
+retorno_sussurro;20;LEADER;;Então você sabe?
+retorno_sussurro;21;NPC;mentor_sussurro;Talvez. Mas, se eu soubesse, você perceberia?
+retorno_sussurro;22;LEADER;;Claro.
+retorno_sussurro;23;NPC;mentor_sussurro;E feche a porta sem bater.
+# SILÊNCIO
+prova_silencio;1;LEADER;;Eu vim do Sussurro.
+prova_silencio;2;LEADER;;Ele disse que o Silêncio me chamaria.
+prova_silencio;3;NPC;mentor_silencio;Ele costuma fazer isso. E vejo que já se acostumou com o protocolo. Muito bom.
+prova_silencio;4;LEADER;;Então ele realmente sabia?
+prova_silencio;5;NPC;mentor_silencio;Não importa, não é mesmo?
+prova_silencio;6;LEADER;;Essa resposta é muito conveniente.
+prova_silencio;7;NPC;mentor_silencio;E essa pergunta não ajudará em sua prova.
+prova_silencio;8;LEADER;;Certo. Direto ao ponto.
+prova_silencio;9;NPC;mentor_silencio;Exatamente. Você aprende rápido.
+prova_silencio;10;NPC;mentor_silencio;Retorne a Entrelinhas. Derrote quatro criaturas mágicas, uma de cada espécie.
+prova_silencio;11;NPC;mentor_silencio;Uma Lumivaga, um Briselho, uma Espantação e um Entrechifres.
+prova_silencio;12;LEADER;;Já enfrentei criaturas de Entrelinhas antes.
+prova_silencio;13;NPC;mentor_silencio;Então conhece a variedade de forças que existe naquele lugar.
+prova_silencio;14;NPC;mentor_silencio;Clarões, rajadas de vento, encantamentos persistentes e energia acumulada no ambiente.
+prova_silencio;15;NPC;mentor_silencio;Cada criatura tentará convencer você de que aquilo que ela faz exige sua atenção imediata.
+prova_silencio;16;NPC;mentor_silencio;Enquanto age sem pensar, você permite que o inimigo decida como você deve agir.
+prova_silencio;17;LEADER;;E o que isso tem a ver com silêncio?
+prova_silencio;18;NPC;mentor_silencio;Silêncio é o espaço necessário para que uma decisão exista antes da reação.
+prova_silencio;19;NPC;mentor_silencio;E é, ao mesmo tempo, a melhor proteção contra a magia.
+prova_silencio;20;NPC;mentor_silencio;Você não precisa lutar devagar. Precisa lutar por escolha.
+prova_silencio;21;LEADER;;Então devo ignorar o que eles fizerem?
+prova_silencio;22;NPC;mentor_silencio;Definitivamente não. Você deve decidir o que merece uma resposta.
+prova_silencio;23;NPC;mentor_silencio;Volte quando souber a diferença.
+retorno_silencio;1;NPC;mentor_silencio;Relate.
+retorno_silencio;2;LEADER;;Cada criatura parecia exigir uma resposta diferente.
+retorno_silencio;3;LEADER;;No começo, deixei o brilho, o vento e as alterações ao redor determinarem onde eu prestava atenção.
+retorno_silencio;4;NPC;mentor_silencio;Elas controlavam suas decisões.
+retorno_silencio;5;LEADER;;Sim. E demorei para entender o que isso significava.
+retorno_silencio;6;LEADER;;Depois parei de tratar todo problema como se fosse igualmente urgente.
+retorno_silencio;7;LEADER;;Escolhi o que realmente precisava impedir e aceitei que não conseguiria responder a todo o resto.
+retorno_silencio;8;NPC;mentor_silencio;E perdeu o controle?
+retorno_silencio;9;LEADER;;Pelo contrário. Foi quando recuperei o controle.
+retorno_silencio;10;NPC;mentor_silencio;Essa é a função do Silêncio.
+retorno_silencio;11;NPC;mentor_silencio;Um Quebramagos não vence porque consegue calar todas as forças ao redor.
+retorno_silencio;12;NPC;mentor_silencio;Vence porque decide quais delas terão poder sobre suas ações.
+retorno_silencio;13;NPC;mentor_silencio;Vence porque mantém o autocontrole enquanto assume o domínio da situação.
+retorno_silencio;14;LEADER;;Eu não precisava responder ao caos no ritmo que ele tentava impor.
+retorno_silencio;15;NPC;mentor_silencio;Correto.
+retorno_silencio;16;NPC;mentor_silencio;Sua compreensão do Silêncio está completa.
+retorno_silencio;17;LEADER;;Isso significa que finalmente posso fazer uma pergunta sem você interromper?
+retorno_silencio;18;NPC;mentor_silencio;Não.
+retorno_silencio;19;LEADER;;...
+retorno_silencio;20;NPC;mentor_silencio;Disciplina. Você se sairia muito bem como Quebramagos.
+retorno_silencio;21;NPC;mentor_silencio;Há somente um galho restante. Espere que ele chame.
+# RUINA
+prova_ruina;1;NPC;mentor_ruina;Pode entrar. Só evite aquela tábua.
+prova_ruina;2;LEADER;;Ui! Ela está quebrada?
+prova_ruina;3;NPC;mentor_ruina;Haha, digamos que está preservando a identidade do galho.
+prova_ruina;4;LEADER;;Então este é realmente o Galho da Ruína, hein...
+prova_ruina;5;NPC;mentor_ruina;O último da sua cerimônia, pelo visto!
+prova_ruina;6;LEADER;;Como sabe?
+prova_ruina;7;NPC;mentor_ruina;Os outros seis deixaram marcas.
+prova_ruina;8;NPC;mentor_ruina;Não preciso ser um mentor da filosofia ou da introspecção pra perceber.
+prova_ruina;9;NPC;mentor_ruina;E, claro, ninguém costuma vir aqui primeiro.
+prova_ruina;10;LEADER;;Por causa do seu Mestre desaparecido?
+prova_ruina;11;NPC;mentor_ruina;Por causa de tudo.
+prova_ruina;12;NPC;mentor_ruina;Não temos mestre. O emblema do escudo não responde a ninguém há anos. E nosso antigo nome está escondido debaixo de uma camada de tinta vermelha.
+prova_ruina;13;NPC;mentor_ruina;Não é a apresentação mais convidativa de Setegalhos.
+prova_ruina;14;LEADER;;Mesmo assim, vocês mantêm a academia aberta.
+prova_ruina;15;NPC;mentor_ruina;Bom, todo guerreiro começa como Flagelo.
+prova_ruina;16;NPC;mentor_ruina;Seria muita arrogância fechar as portas justamente para aquilo que todos já foram, concorda?
+prova_ruina;17;LEADER;;Pensando por esse lado, não tem como discordar. Vocês ainda acreditam que o Mestre voltará?
+prova_ruina;18;NPC;mentor_ruina;Algumas pessoas acreditam. Outras deixaram de acreditar há muito tempo.
+prova_ruina;19;NPC;mentor_ruina;Eu mantenho o lugar funcionando. Esperança não é bem uma exigência do cargo.
+prova_ruina;20;LEADER;;Parece justo.
+prova_ruina;21;NPC;mentor_ruina;Não prometemos justiça aqui.
+prova_ruina;22;NPC;mentor_ruina;Mas também não fingimos que sofrer torna alguém melhor.
+prova_ruina;23;NPC;mentor_ruina;Dor pode ensinar. Também pode apenas machucar.
+prova_ruina;24;NPC;mentor_ruina;Quem sobrevive não deve ao mundo uma grande lição por aquilo que suportou. Às vezes, o sofrimento só existe porque sim.
+prova_ruina;25;LEADER;;Então qual é a minha prova?
+prova_ruina;26;NPC;mentor_ruina;Retorne à Gruta Relamparrocha. Vença três batalhas e derrote um Goblin Amálgama.
+prova_ruina;27;LEADER;;Tem alguém para resgatar?
+prova_ruina;28;NPC;mentor_ruina;Não.
+prova_ruina;29;LEADER;;Algum material importante para recuperar?
+prova_ruina;30;NPC;mentor_ruina;Haha, também não.
+prova_ruina;31;LEADER;;Então vou voltar àquela gruta sem nenhum motivo?
+prova_ruina;32;NPC;mentor_ruina;Ah, você tem um motivo. Aceitou concluir as sete provas. Faz parte do contrato.
+prova_ruina;33;NPC;mentor_ruina;Mas não existe prêmio escondido, pessoa esperando socorro ou descoberta capaz de justificar cada ferimento.
+prova_ruina;34;NPC;mentor_ruina;Se precisar descansar, descanse. Se precisar sair da gruta, saia.
+prova_ruina;35;NPC;mentor_ruina;Persistência não é se destruir para provar que consegue continuar.
+prova_ruina;36;NPC;mentor_ruina;Faça aquilo que decidiu fazer. Depois volte em segurança.
+prova_ruina;37;LEADER;;Essa foi a primeira orientação realmente preocupada com a minha segurança.
+prova_ruina;38;NPC;mentor_ruina;Somos Flagelos. Alguém precisa se preocupar com as consequências das nossas decisões.
+retorno_ruina;1;NPC;mentor_ruina;Voltou em uma peça só.
+retorno_ruina;2;LEADER;;Mais ou menos, hahaha.
+retorno_ruina;3;NPC;mentor_ruina;Está falando e andando. Uma peça suficientemente funcional, então.
+retorno_ruina;4;LEADER;;As outras provas tinham alguma coisa concreta no final.
+retorno_ruina;5;LEADER;;Uma resposta, uma amostra...
+retorno_ruina;6;LEADER;;Desta vez, venci as batalhas e saí da gruta. Nada mudou por causa disso.
+retorno_ruina;7;NPC;mentor_ruina;Isso tornou seu esforço inútil?
+retorno_ruina;8;LEADER;;Não.
+retorno_ruina;9;LEADER;;Eu aceitei a prova e decidi terminá-la. Não precisava inventar uma recompensa para continuar.
+retorno_ruina;10;NPC;mentor_ruina;E se tivesse percebido que não conseguiria?
+retorno_ruina;11;LEADER;;Eu teria saído, me preparado e tentado novamente.
+retorno_ruina;12;NPC;mentor_ruina;Isso é ótimo!
+retorno_ruina;13;NPC;mentor_ruina;Algumas pessoas confundem coragem com a obrigação de continuar avançando.
+retorno_ruina;14;NPC;mentor_ruina;Às vezes, recuar é a única forma de garantir que ainda existirá alguém para tentar outra vez.
+retorno_ruina;15;LEADER;;Então quer dizer que coragem não é acreditar que tudo terminará bem?
+retorno_ruina;16;LEADER;;É continuar mesmo quando já não existe essa certeza.
+retorno_ruina;17;NPC;mentor_ruina;E é saber quando continuar deixa de ser coragem e começa a ser autodestruição.
+retorno_ruina;18;LEADER;;Foi por isso que o Galho mudou de nome?
+retorno_ruina;19;NPC;mentor_ruina;Boa sacada! A verdade é que essa é apenas parte da razão.
+retorno_ruina;20;NPC;mentor_ruina;O Valor era aquilo que acreditávamos possuir antes da partida do Mestre.
+retorno_ruina;21;NPC;mentor_ruina;Quando ele não retornou, tivemos de descobrir o que ainda existia sem essa certeza.
+retorno_ruina;22;NPC;mentor_ruina;O valor nos leva até a queda. A Ruína revela aquilo que permanece depois dela.
+retorno_ruina;23;LEADER;;E o que permaneceu aqui?
+retorno_ruina;24;NPC;mentor_ruina;A academia. As pessoas que cuidam dela. Além de todos os guerreiros das outras classes, que honram e respeitam o lugar de onde vieram.
+retorno_ruina;25;NPC;mentor_ruina;Ah, e uma quantidade surpreendente de tábuas quebradas.
+retorno_ruina;26;LEADER;;Vocês deveriam conversar com alguém do Galho do Ciclo sobre manutenção.
+retorno_ruina;27;NPC;mentor_ruina;Conversamos. Disseram que a madeira estava cumprindo sua função no Ciclo.
+retorno_ruina;28;LEADER;;Claro que disseram.
+retorno_ruina;29;NPC;mentor_ruina;Sua compreensão da Ruína está completa.
+retorno_ruina;30;NPC;mentor_ruina;Não vou dizer que o escudo espera por você. Ele não respondeu a ninguém desde que nosso Mestre partiu.
+retorno_ruina;31;NPC;mentor_ruina;Mas você concluiu as sete provas. Isso ninguém pode retirar. E, no final das contas, a escolha é sempre sua.
+retorno_ruina;32;NPC;mentor_ruina;A Praça dos Emblemas será aberta. Quando estiver em condições, apresente-se ao Mestre da Cerimônia.
+retorno_ruina;33;LEADER;;Valeu. Vou tentar não pisar naquela tábua ali na saída.
+retorno_ruina;34;NPC;mentor_ruina;Aquilo ali não foi um conselho. Foi a oitava prova.
+# PRÉ-JULGAMENTO
+inicio_julgamento_sete_pressagios;1;RECRUIT;jovem_de_bree;{leaderName}! Finalmente! Comecei a achar que você tinha se perdido em algum dos galhos.
+inicio_julgamento_sete_pressagios;2;LEADER;;Eu poderia dizer o mesmo, haha. Como foram suas provas?
+inicio_julgamento_sete_pressagios;3;RECRUIT;jovem_de_bree;Longas. Estranhas. Algumas envolveram muito mais caminhada do que considero razoável.
+inicio_julgamento_sete_pressagios;4;LEADER;;Então foram parecidas com as minhas. Com muuuuuita...
+inicio_julgamento_sete_pressagios;5;RECRUIT;jovem_de_bree;...Filosofia.
+inicio_julgamento_sete_pressagios;6;LEADER;;É. Hahaha.
+inicio_julgamento_sete_pressagios;7;RECRUIT;jovem_de_bree;Parece algo muito comum em Setegalhos. Algum palpite sobre qual classe você vai receber?
+inicio_julgamento_sete_pressagios;8;LEADER;;Talvez Bardo. Harmonia foi o primeiro galho que me chamou e... acho que aquela prova mudou alguma coisa em mim.
+inicio_julgamento_sete_pressagios;9;RECRUIT;jovem_de_bree;Eu apostaria na Ruína.
+inicio_julgamento_sete_pressagios;10;LEADER;;Isso foi um elogio?
+inicio_julgamento_sete_pressagios;11;RECRUIT;jovem_de_bree;Na minha cabeça, foi.
+inicio_julgamento_sete_pressagios;12;LEADER;;E você? Qual acha que vai receber?
+inicio_julgamento_sete_pressagios;13;RECRUIT;jovem_de_bree;Depois de todas aquelas provas? Aceito qualquer uma que não exija atravessar Verdes Ermos outra vez.
+inicio_julgamento_sete_pressagios;14;LEADER;;Justo.
+inicio_julgamento_sete_pressagios;15;LEADER;;O Mentor da Ruína disse algo interessante.
+inicio_julgamento_sete_pressagios;16;LEADER;;Disse que, no final das contas, a escolha é sempre nossa.
+inicio_julgamento_sete_pressagios;17;RECRUIT;jovem_de_bree;Mas não são os emblemas que escolhem?
+inicio_julgamento_sete_pressagios;18;LEADER;;Também achei que fossem. Por isso me pergunto o que aquilo queria dizer.
+inicio_julgamento_sete_pressagios;19;NPC;mestre_cerimonia_praca;É justamente isso que vieram descobrir.
+inicio_julgamento_sete_pressagios;20;NPC;mestre_cerimonia_praca;As provas dos sete galhos estão concluídas.
+inicio_julgamento_sete_pressagios;21;NPC;mestre_cerimonia_praca;Durante sua jornada, cada caminho apresentou uma pergunta diferente.
+inicio_julgamento_sete_pressagios;22;NPC;mestre_cerimonia_praca;Agora, diante da árvore, não haverá mentores indicando onde procurar as respostas.
+inicio_julgamento_sete_pressagios;23;NPC;mestre_cerimonia_praca;O Julgamento dos Sete Presságios não avaliará aquilo que dizem desejar.
+inicio_julgamento_sete_pressagios;24;NPC;mestre_cerimonia_praca;Ele revelará as escolhas que fazem quando nenhuma resposta parece segura.
+inicio_julgamento_sete_pressagios;25;NPC;mestre_cerimonia_praca;Apresentem-se sob a sombra de Setegalhos.
+inicio_julgamento_sete_pressagios;26;NPC;mestre_cerimonia_praca;Que suas ações falem por vocês.
+inicio_julgamento_sete_pressagios;27;NARRATOR;;A luz ao redor da praça começa a desaparecer.
+inicio_julgamento_sete_pressagios;28;NARRATOR;;As construções, os espectadores e até mesmo a pessoa ao seu lado desaparecem na escuridão.
+inicio_julgamento_sete_pressagios;29;NARRATOR;;Quando seus olhos voltam a enxergar, restam apenas a árvore colossal, a sombra projetada por seus sete galhos e você.
+inicio_julgamento_sete_pressagios;30;NARRATOR;;O Julgamento dos Sete Presságios começa.
+# ENCERRAMENTO DA CERIMONIA
+encerramento_sete_caminhos;1;NARRATOR;;A sombra ao seu redor começa a recuar.
+encerramento_sete_caminhos;2;NARRATOR;;Primeiro retornam as construções sobre os sete galhos. Depois, a praça, os mentores e uma multidão de espectadores.
+encerramento_sete_caminhos;3;NARRATOR;;Durante um breve instante, ninguém diz nada.
+encerramento_sete_caminhos;4;NARRATOR;;Então a Praça dos Emblemas explode em aplausos, gritos e comemorações.
+encerramento_sete_caminhos;5;RECRUIT;jovem_de_bree;{leaderName}!
+encerramento_sete_caminhos;6;LEADER;;Você voltou!
+encerramento_sete_caminhos;7;RECRUIT;jovem_de_bree;Você também! E parece que o julgamento realmente encontrou um caminho para nós.
+encerramento_sete_caminhos;8;LEADER;;Ou nós encontramos.
+encerramento_sete_caminhos;9;RECRUIT;jovem_de_bree;Então era isso que o Mentor da Ruína queria dizer.
+encerramento_sete_caminhos;10;NPC;mestre_cerimonia_praca;O julgamento revelou aquilo que suas escolhas já carregavam.
+encerramento_sete_caminhos;11;NPC;mestre_cerimonia_praca;Mas nenhum emblema possui autoridade para decidir quem vocês serão.
+encerramento_sete_caminhos;12;NPC;mestre_cerimonia_praca;A cerimônia está concluída. A partir deste momento, seus caminhos pertencem a vocês.
+encerramento_sete_caminhos;13;RECRUIT;jovem_de_bree;Falando em caminhos... Eu ainda tenho uma pergunta.
+encerramento_sete_caminhos;14;RECRUIT;jovem_de_bree;Qual é a sua classe?
+encerramento_sete_caminhos;15;NPC;mago_pesquisador_setegalhos;Não possuo uma.
+encerramento_sete_caminhos;16;LEADER;;Como assim?
+encerramento_sete_caminhos;17;RECRUIT;jovem_de_bree;Você é literalmente UM MAGO!
+encerramento_sete_caminhos;18;NPC;mago_pesquisador_setegalhos;Isso descreve minha área de estudo, não minha especialização em combate.
+encerramento_sete_caminhos;19;LEADER;;Mas você desaparece, surge em outros lugares e mantém vínculos entre dimensões.
+encerramento_sete_caminhos;20;NPC;mago_pesquisador_setegalhos;Teletransporte e pesquisa. Acho que não dá pra lutar muito com esses poderes.
+encerramento_sete_caminhos;21;RECRUIT;jovem_de_bree;Então você mandou a gente enfrentar monstros porque não sabe lutar?
+encerramento_sete_caminhos;22;NPC;mago_pesquisador_setegalhos;Finalmente uma conclusão científica correta, hein?!
+encerramento_sete_caminhos;23;LEADER;;Você nunca participou da Cerimônia dos Caminhos?
+encerramento_sete_caminhos;24;NPC;mago_pesquisador_setegalhos;Nunca como candidato. Algumas pessoas encontram propósito sem precisar transformá-lo em uma profissão perigosa.
+encerramento_sete_caminhos;25;RECRUIT;jovem_de_bree;Puxa vida. Essa informação teria sido útil antes das Minas.
+encerramento_sete_caminhos;26;NPC;mago_pesquisador_setegalhos;E teria prejudicado enormemente sua motivação.
+encerramento_sete_caminhos;27;LEADER;;Claro.
+encerramento_sete_caminhos;28;NPC;mago_pesquisador_setegalhos;Enquanto realizavam as provas, continuei examinando os resíduos energéticos que trouxeram.
+encerramento_sete_caminhos;29;NPC;mago_pesquisador_setegalhos;Encontrei indícios que apontam para a Praia de Sanguemar e para as ruínas existentes naquela região.
+encerramento_sete_caminhos;30;RECRUIT;jovem_de_bree;Então temos um novo destino.
+encerramento_sete_caminhos;31;LEADER;;Temos?
+encerramento_sete_caminhos;32;RECRUIT;jovem_de_bree;Minha família também está doente em Bree. Esta investigação nunca foi apenas sua.
+encerramento_sete_caminhos;33;RECRUIT;jovem_de_bree;Até agora, seguimos na mesma direção por motivos parecidos.
+encerramento_sete_caminhos;34;RECRUIT;jovem_de_bree;A partir daqui, quero que sigamos como uma equipe.
+encerramento_sete_caminhos;35;LEADER;;Você tem certeza? Aparentemente nossas possibilidades ainda são estatisticamente constrangedoras.
+encerramento_sete_caminhos;36;RECRUIT;jovem_de_bree;Então é melhor que alguém carregue sua bolsa.
+encerramento_sete_caminhos;37;LEADER;;Só se desta vez você também ajudar a enfrentar os monstros.
+encerramento_sete_caminhos;38;RECRUIT;jovem_de_bree;Combinado.
+encerramento_sete_caminhos;39;NARRATOR;;O barulho dos gritos e aplausos acende a chama da esperança no peito de {leaderName}...
+encerramento_sete_caminhos;40;NARRATOR;;Talvez a busca pela cura daquela doença misteriosa finalmente comece a levar a algum lugar.
+encerramento_sete_caminhos;41;NARRATOR;;Talvez as respostas não estejam tão distantes assim.
+encerramento_sete_caminhos;42;LEADER;;Combinado.

@@ -1,0 +1,2 @@
+# questId;step;candidateId;allyLevel
+os_sete_caminhos;23;jovem_de_bree;7

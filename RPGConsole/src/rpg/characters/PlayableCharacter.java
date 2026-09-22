@@ -22,9 +22,9 @@ public class PlayableCharacter extends GameCharacter {
 	private static final int MAXIMUM_LEARNED_SCROLL_SKILLS = 2;
 
 	private final CharacterEquipment equipment;
-	private final PlayableClassDefinition classDefinition;
+	private PlayableClassDefinition classDefinition;
+	private List<SkillDefinition> classSkillDefinitions;
 	private final CharacterGrowthCalculator growthCalculator;
-	private final List<SkillDefinition> classSkillDefinitions;
 	private final Set<String> learnedSkillIds;
 
 	private int experience;
@@ -170,6 +170,104 @@ public class PlayableCharacter extends GameCharacter {
 	public int getLearnedScrollSkillCount() {
 		return getLearnedScrollSkillDefinitions().size();
 	}
+
+    public void changeClass(
+            PlayableClassDefinition newClassDefinition,
+            List<SkillDefinition> newClassSkillDefinitions) {
+        Objects.requireNonNull(newClassDefinition, "New playable class definition cannot be null.");
+
+        Objects.requireNonNull(
+                newClassSkillDefinitions, "New class skill definitions cannot be null.");
+
+        if (newClassDefinition.getId().equals(classDefinition.getId())) {
+            throw new IllegalArgumentException(
+                    "Character already belongs to playable class: " + newClassDefinition.getId());
+        }
+
+        if (!equipment.getAll().isEmpty()) {
+            throw new IllegalStateException(
+                    "Character equipment must be empty before changing class: " + getName());
+        }
+
+        List<SkillDefinition> validatedNewClassSkills =
+                validateClassChangeSkills(newClassDefinition, newClassSkillDefinitions);
+
+        List<SkillDefinition> preservedScrollSkills = getLearnedScrollSkillDefinitions();
+
+        List<SkillDefinition> resultingSkillDefinitions =
+                createResultingClassSkillDefinitions(
+                        validatedNewClassSkills, preservedScrollSkills);
+
+        this.classDefinition = newClassDefinition;
+        this.classSkillDefinitions = resultingSkillDefinitions;
+
+        learnedSkillIds.clear();
+
+        for (SkillDefinition preservedScrollSkill : preservedScrollSkills) {
+            learnedSkillIds.add(preservedScrollSkill.getId());
+        }
+
+        CharacterStats naturalStats =
+                growthCalculator.calculateNaturalStats(this.classDefinition, level);
+
+        replaceNaturalStats(naturalStats);
+
+        learnAutomaticallyAvailableSkills();
+
+        restoreAllResources();
+    }
+
+    private static List<SkillDefinition> validateClassChangeSkills(
+            PlayableClassDefinition newClassDefinition,
+            List<SkillDefinition> newClassSkillDefinitions) {
+        List<SkillDefinition> validatedSkills = List.copyOf(newClassSkillDefinitions);
+
+        Set<String> skillIds = new LinkedHashSet<>();
+
+        for (SkillDefinition skillDefinition : validatedSkills) {
+            if (skillDefinition == null) {
+                throw new IllegalArgumentException(
+                        "New class skill definitions cannot contain null entries.");
+            }
+
+            if (!skillDefinition.getClassId().equals(newClassDefinition.getId())) {
+                throw new IllegalArgumentException(
+                        "Skill does not belong to the new playable class: "
+                                + skillDefinition.getId());
+            }
+
+            if (!skillIds.add(skillDefinition.getId())) {
+                throw new IllegalArgumentException(
+                        "New class skill definition is duplicated: " + skillDefinition.getId());
+            }
+        }
+
+        return validatedSkills;
+    }
+
+    private static List<SkillDefinition> createResultingClassSkillDefinitions(
+            List<SkillDefinition> newClassSkillDefinitions,
+            List<SkillDefinition> preservedScrollSkills) {
+        List<SkillDefinition> resultingSkillDefinitions = new ArrayList<>(newClassSkillDefinitions);
+
+        Set<String> resultingSkillIds = new LinkedHashSet<>();
+
+        for (SkillDefinition skillDefinition : newClassSkillDefinitions) {
+            resultingSkillIds.add(skillDefinition.getId());
+        }
+
+        for (SkillDefinition preservedScrollSkill : preservedScrollSkills) {
+            if (!resultingSkillIds.add(preservedScrollSkill.getId())) {
+                throw new IllegalArgumentException(
+                        "Preserved scroll skill conflicts with the new class definitions: "
+                                + preservedScrollSkill.getId());
+            }
+
+            resultingSkillDefinitions.add(preservedScrollSkill);
+        }
+
+        return List.copyOf(resultingSkillDefinitions);
+    }
 
 // Grants as much experience as supported and returns the amount accepted.
 	public int gainExperience(int amount) {

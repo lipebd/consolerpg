@@ -7,6 +7,7 @@ import java.util.Objects;
 public final class ConsoleUI {
 
 	private static final int ACTION_MENU_COLUMN_WIDTH = 25;
+	private static final int TEXT_COLUMN_WIDTH = 75;
 
 	private ConsoleUI() {
 	}
@@ -35,7 +36,10 @@ public final class ConsoleUI {
 			if (index == lastIndex - 1) {
 				System.out.println(option);
 			} else {
-				System.out.printf("%-" + ACTION_MENU_COLUMN_WIDTH + "s", option);
+				String visibleOption = option.replaceAll("\u001B\\[[0-9;]*m", "");
+				int padding = Math.max(0, ACTION_MENU_COLUMN_WIDTH - visibleOption.length());
+
+				System.out.print(option + " ".repeat(padding));
 			}
 		}
 	}
@@ -69,4 +73,56 @@ public final class ConsoleUI {
 		System.out.println("Ctrl+Z ignorado.");
 		System.out.print("> ");
 	}
+
+	public static void displayWrappedText(String text) {
+	    Objects.requireNonNull(
+	            text,
+	            "Displayed text cannot be null.");
+
+	    String[] paragraphs = text.split("\n", -1);
+
+	    for (String paragraph : paragraphs) {
+	        if (paragraph.isBlank()) {
+	            System.out.println();
+	            continue;
+	        }
+
+	        displayWrappedParagraph(paragraph);
+	    }
+	}
+
+	private static void displayWrappedParagraph(String paragraph) {
+	    String[] words = paragraph.trim().split("\\s+");
+	    StringBuilder currentLine = new StringBuilder();
+
+	    for (String word : words) {
+	        if (currentLine.isEmpty()) {
+	            currentLine.append(word);
+	            continue;
+	        }
+
+	        int resultingLength =
+	                currentLine.codePointCount(
+	                        0,
+	                        currentLine.length())
+	                        + 1
+	                        + word.codePointCount(
+	                                0,
+	                                word.length());
+
+	        if (resultingLength <= TEXT_COLUMN_WIDTH) {
+	            currentLine.append(' ').append(word);
+	            continue;
+	        }
+
+	        System.out.println(currentLine);
+	        currentLine.setLength(0);
+	        currentLine.append(word);
+	    }
+
+	    if (!currentLine.isEmpty()) {
+	        System.out.println(currentLine);
+	    }
+	}
+
 }

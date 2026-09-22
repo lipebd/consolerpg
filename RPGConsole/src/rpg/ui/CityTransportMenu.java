@@ -3,6 +3,7 @@ package rpg.ui;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import rpg.GameCurrency;
 import rpg.characters.Party;
@@ -25,24 +26,35 @@ public final class CityTransportMenu {
 		this.scenarioCatalog = Objects.requireNonNull(scenarioCatalog, "Scenario catalog cannot be null.");
 	}
 
-	public Optional<CityTransportDefinition>
-			open(List<CityTransportDefinition> destinations, int destinationSlotCount) {
-		Objects.requireNonNull(destinations, "City transport destinations cannot be null.");
+	public Optional<CityTransportDefinition> open(
+	        List<CityTransportDefinition> destinations,
+	        int destinationSlotCount,
+	        Set<String> markedDestinationScenarioIds) {
+        Objects.requireNonNull(destinations, "City transport destinations cannot be null.");
 
-		if (destinationSlotCount < destinations.size()) {
-			throw new IllegalArgumentException(
-					"Destination slot count cannot be lower than the available destination count."
-			);
-		}
+        Objects.requireNonNull(
+                markedDestinationScenarioIds, "Marked destination scenario IDs cannot be null.");
 
-		if (destinations.isEmpty()) {
-			return Optional.empty();
-		}
+        if (destinationSlotCount < destinations.size()) {
+            throw new IllegalArgumentException(
+                    "Destination slot count cannot be lower than the available destination count.");
+        }
+
+        if (destinations.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Objects.requireNonNull(
+                markedDestinationScenarioIds, "Marked destination scenario IDs cannot be null.");
 
 		String feedbackMessage = null;
 
 		while (true) {
-			displayMenu(destinations, destinationSlotCount, feedbackMessage);
+            displayMenu(
+                    destinations,
+                    destinationSlotCount,
+                    markedDestinationScenarioIds,
+                    feedbackMessage);
 
 			String choice = consoleInput.readTrimmedLine();
 
@@ -82,43 +94,58 @@ public final class CityTransportMenu {
 		}
 	}
 
-	private void
-			displayMenu(List<CityTransportDefinition> destinations, int destinationSlotCount, String feedbackMessage) {
-		System.out.println("\nEscolha seu destino:");
+	private void displayMenu(
+	        List<CityTransportDefinition> destinations,
+	        int destinationSlotCount,
+	        Set<String> markedDestinationScenarioIds,
+	        String feedbackMessage) {
+	    ConsoleUI.clearScreen();
+	    System.out.println("Aonde deseja ir?");
 
-		for (int index = 0; index < destinations.size(); index++) {
-			CityTransportDefinition definition = destinations.get(index);
-			Scenario destination = scenarioCatalog.getById(definition.getDestinationScenarioId());
+	    for (int index = 0; index < destinations.size(); index++) {
+	        CityTransportDefinition definition = destinations.get(index);
+	        Scenario destination = scenarioCatalog.getById(definition.getDestinationScenarioId());
 
-			System.out.printf(
-					"[%d] %-" + DESTINATION_NAME_WIDTH + "s %s%n",
-					index + 1,
-					destination.getName(),
-					GameCurrency.format(definition.getPrice())
-			);
-		}
+	        String marker = markedDestinationScenarioIds.contains(
+	                definition.getDestinationScenarioId())
+	                        ? "\u001B[33m[!]\u001B[0m "
+	                        : "";
 
-		int emptySlotCount = destinationSlotCount - destinations.size();
+	        String destinationLabel = marker + destination.getName();
+	        String visibleLabel = destinationLabel.replaceAll("\u001B\\[[0-9;]*m", "");
+	        int padding = Math.max(0, DESTINATION_NAME_WIDTH - visibleLabel.length());
 
-		for (int index = 0; index < emptySlotCount; index++) {
-			System.out.printf("    %-" + DESTINATION_NAME_WIDTH + "s --%n", "--");
-		}
+	        System.out.printf(
+	                "[%d] %s%s %s%n",
+	                index + 1,
+	                destinationLabel,
+	                " ".repeat(padding),
+	                GameCurrency.format(definition.getPrice()));
+	    }
 
-		System.out.println("\n" + GameCurrency.getName() + " disponível: " + GameCurrency.format(party.getGold()));
+	    int emptySlotCount = destinationSlotCount - destinations.size();
 
-		if (feedbackMessage != null) {
-			System.out.println();
-			System.out.println(feedbackMessage);
-		}
+	    for (int index = 0; index < emptySlotCount; index++) {
+	        System.out.printf("    %-" + DESTINATION_NAME_WIDTH + "s --%n", "--");
+	    }
 
-		System.out.println();
-		System.out.println("[0] Voltar");
-		System.out.print("> ");
+	    System.out.println(
+	            "\n" + GameCurrency.getName() + " disponível: "
+	                    + GameCurrency.format(party.getGold()));
+
+	    if (feedbackMessage != null) {
+	        System.out.println();
+	        System.out.println(feedbackMessage);
+	    }
+
+	    System.out.println();
+	    System.out.println("[0] Voltar");
+	    System.out.print("> ");
 	}
 
 	private boolean confirmTravel(CityTransportDefinition destinationDefinition) {
 		Scenario destination = scenarioCatalog.getById(destinationDefinition.getDestinationScenarioId());
-
+		ConsoleUI.clearScreen();
 		while (true) {
 			System.out.println(
 					"\nViajar para " + destination.getName() + " por "

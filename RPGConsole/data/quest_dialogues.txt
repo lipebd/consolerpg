@@ -1,0 +1,61 @@
+# questId;step;context;dialogueId
+
+# QUEST 1
+ordem_dos_alquimistas;0;OFFER;oferta_ordem_dos_alquimistas
+ordem_dos_alquimistas;0;ACCEPT;aceite_ordem_dos_alquimistas
+ordem_dos_alquimistas;0;DECLINE;recusa_ordem_dos_alquimistas
+ordem_dos_alquimistas;1;COMPLETE;preocupacao_mae_ordem_alquimistas
+ordem_dos_alquimistas;2;COMPLETE;palavras_febris_pai
+ordem_dos_alquimistas;3;COMPLETE;decisao_mestre_alquimista
+
+# QUEST 2
+o_discipulo;0;OFFER;oferta_o_discipulo
+o_discipulo;0;ACCEPT;aceite_o_discipulo
+o_discipulo;0;DECLINE;recusa_o_discipulo
+o_discipulo;2;COMPLETE;pistas_entre_sucatas
+o_discipulo;4;PENDING;pelos_lupinos_pendentes
+o_discipulo;4;COMPLETE;anotacoes_e_cuidados
+o_discipulo;7;PENDING;meruma_dourada_pendente
+o_discipulo;7;COMPLETE;discipulo_resgatado
+
+# QUEST 3
+entre_caminhos;0;OFFER;oferta_entre_caminhos
+entre_caminhos;0;ACCEPT;aceite_entre_caminhos
+entre_caminhos;0;DECLINE;recusa_entre_caminhos
+entre_caminhos;1;COMPLETE;antes_de_partir
+entre_caminhos;2;COMPLETE;orientacoes_entrelinhas
+entre_caminhos;6;COMPLETE;encontro_taverna_entrelugar
+
+# QUEST 4
+energia_residual;0;OFFER;oferta_energia_residual
+energia_residual;0;ACCEPT;aceite_energia_residual
+energia_residual;0;DECLINE;recusa_energia_residual
+energia_residual;1;COMPLETE;questao_menor
+energia_residual;2;COMPLETE;mancha_vermelha
+energia_residual;3;COMPLETE;registros_antigos
+energia_residual;4;COMPLETE;mago_do_vao
+energia_residual;7;PENDING;fragmento_pendente
+energia_residual;7;COMPLETE;primeira_resposta
+
+# QUEST 5
+os_sete_caminhos;0;OFFER;oferta_sete_caminhos
+os_sete_caminhos;0;ACCEPT;aceite_sete_caminhos
+os_sete_caminhos;0;DECLINE;recusa_sete_caminhos
+os_sete_caminhos;1;COMPLETE;termos_cerimonia_caminhos
+os_sete_caminhos;2;COMPLETE;prova_harmonia
+os_sete_caminhos;3;COMPLETE;poema_do_pai
+os_sete_caminhos;4;COMPLETE;retorno_harmonia
+os_sete_caminhos;5;COMPLETE;prova_ciclo
+os_sete_caminhos;7;COMPLETE;retorno_ciclo
+os_sete_caminhos;8;COMPLETE;prova_reflexo
+os_sete_caminhos;10;COMPLETE;retorno_reflexo
+os_sete_caminhos;11;COMPLETE;prova_instante
+os_sete_caminhos;13;COMPLETE;retorno_instante
+os_sete_caminhos;14;COMPLETE;prova_sussurro
+os_sete_caminhos;16;COMPLETE;retorno_sussurro
+os_sete_caminhos;17;COMPLETE;prova_silencio
+os_sete_caminhos;19;COMPLETE;retorno_silencio
+os_sete_caminhos;20;COMPLETE;prova_ruina
+os_sete_caminhos;22;COMPLETE;retorno_ruina
+os_sete_caminhos;23;PRE_COMPLETE;inicio_julgamento_sete_pressagios
+os_sete_caminhos;23;COMPLETE;encerramento_sete_caminhos

@@ -6,11 +6,11 @@ V5 is complete and preserved as the current released version.
 
 Current stage:
 
-`V6 quest-system planning`
+`V6 quest-system implementation — Parts 1 through 9 completed; Part 10's first five quests implemented and tested in the project; documentation and portable release remain pending`
 
 Current Git branch:
 
-`master`
+`feature/v6-quests`
 
 Preserved release tags:
 
@@ -66,6 +66,8 @@ enemies.txt
     -> EnemyDefinition
     -> Enemy
 ```
+
+Runtime `Enemy` instances retain their canonical definition ID, allowing battle actions and outcomes to emit identity-based quest progress without relying on display names.
 
 ### Data-driven encounters
 
@@ -513,12 +515,12 @@ The first V4 gameplay-system block is complete.
 ### External playable-class and skill definitions
 
 - All seven playable classes have stable external definitions, one validated Unicode presentation symbol and startup validation.
-- `skills.txt` stores immutable skill headers with `STARTER`, `LEVEL` or `SCROLL` acquisition types and level requirements validated against the supported playable-character range.
+- `skills.txt` stores immutable skill headers with `LEVEL` or `SCROLL` acquisition types and level requirements validated against the supported playable-character range.
 - `skill_effects.txt` stores ordered effect components.
 - `SkillLoader` combines and validates both files and registers complete `SkillDefinition` objects in `SkillCatalog`.
 - `PlayableCharacter` references its class and skill definitions, stores learned skills through stable IDs and automatically learns eligible non-scroll skills.
 - The old hardcoded `Skill` and `RecoveryType` types were removed.
-- All 30 approved class-progression skills are registered externally: two temporary Flagelo `STARTER` skills and 28 permanent `LEVEL` skills.
+- All 30 approved natural class-progression skills are registered externally: two beginner Flagelo `LEVEL` skills and 28 final-path `LEVEL` skills.
 - Skill powers and resource costs remain provisional until the general balance pass.
 
 ### Skill execution
@@ -558,7 +560,7 @@ The natural-growth and level-based skill-availability block is complete.
 - Growth is calculated directly from class base stats and final level, avoiding incremental drift when several levels are gained at once.
 - Natural stats remain separate from temporary effects and implemented equipment bonuses.
 - `PlayableCharacter` keeps its immutable class and skill definitions while storing the stable IDs of skills it has actually learned.
-- Eligible `STARTER` and `LEVEL` skills are learned during construction and after level gains; `SCROLL` skills are never granted automatically.
+- Eligible `LEVEL` skills are learned during construction, after level gains and when a controlled class transition installs a new natural skill roster; `SCROLL` skills are never granted automatically.
 - `BattleRewardService` records natural stats before and after leveling, detects every newly learned non-scroll skill and restores surviving characters only after the new maximums are installed.
 - `BattleRewardScreen` displays compact stat deltas and newly learned skill names; `CharacterStatusMenu` displays the character's complete class name and symbol.
 - Experience and level arithmetic reject overflow instead of wrapping silently.
@@ -585,7 +587,7 @@ The playable-character progression boundary required for save validation is impl
 - The main display component is the first effective component in `PRIMARY`; secondary components remain described by the external narrative text.
 - Character status and battle confirmation reuse the same formatted skill sheet.
 - Narrative descriptions avoid promising final damage or recovery amounts that depend on effective attributes and combat formulas.
-- The displayed level represents automatic acquisition for `STARTER` and `LEVEL` skills and the minimum scroll-use requirement for `SCROLL` skills.
+- The displayed level represents automatic acquisition for `LEVEL` skills and the minimum scroll-use requirement for `SCROLL` skills.
 - Skill-scroll details reuse the same formatter instead of maintaining a separate technical presentation.
 
 ## V4 skill-scroll integration
@@ -600,7 +602,7 @@ The local skill-scroll architecture and behavior are complete.
 - `SkillLearningResult` reports successful and rejected learning outcomes.
 - `SkillScrollService` consumes one owned scroll only after successful learning or replacement.
 - `SkillScrollUseMenu` supports class and level rejection, duplicate rejection, a maximum of two learned scroll skills, cancellation and confirmed replacement.
-- Only learned `SCROLL` skills may be replaced; `STARTER` and `LEVEL` skills remain protected.
+- Only learned `SCROLL` skills may be replaced; `LEVEL` skills remain protected.
 - Forgotten scroll skills do not return their original item.
 - Scroll-learned skills reuse normal status display, battle selection and skill execution.
 - Skill scrolls remain outside battle inventory and can use the existing enemy-drop system.
@@ -828,16 +830,15 @@ The fictional world clock and runtime shop-restocking cycle are functionally int
 
 ## Save and load
 
-The version-2 persistence foundation is implemented through `rpg.persistence`.
+The version-3 persistence foundation is implemented through `rpg.persistence`.
 
 Current completed behavior:
 
-- Immutable snapshots represent party, character, equipment, inventory, reward-modifier, world-time, discovery, travel, permanent dungeon progression and shop state.
-`CampaignSnapshotRestorer` validates every catalog-backed reference and reconstructs a complete isolated `RestoredCampaign`, including party order, progression, learned scroll skills, equipment, resources, inventory, reward modifiers, world progress, travel progress, dungeon progress, fictional time and finite shop stock. The reconstructed candidate becomes active only after every loading stage succeeds.
+- Immutable snapshots represent party, character, equipment, inventory, reward-modifier, world-time, discovery, travel, permanent dungeon progression, shop, quest, permanent-flag and recruitment-candidate state.
 - The versioned campaign schema uses strict indexed Java properties encoded as UTF-8.
 - Canonical booleans accept only lowercase `true` and `false`.
 - Every registered dungeon requires exactly one valid progress entry.
-- Internal version-1 development saves are rejected without migration; the encrypted outer-container version remains unchanged.
+- Internal versions 1 and 2 are rejected without migration; the encrypted outer-container version remains unchanged.
 - AES-256-GCM encrypts and authenticates the complete campaign payload.
 - Every encryption uses a new secure random 12-byte IV and a 128-bit authentication tag.
 - The textual container exposes no campaign information outside authenticated ciphertext.
@@ -847,23 +848,126 @@ Current completed behavior:
 - Invalid save files are preserved instead of being deleted or corrected.
 - Snapshot, property, UTF-8, encryption, container, atomic-file and save/load service round trips were manually validated.
 
-`CampaignSnapshotRestorer` validates every catalog-backed reference and reconstructs a complete isolated `RestoredCampaign`, including party order, progression, learned scroll skills, equipment, resources, inventory, reward modifiers, world progress, travel progress, fictional time and finite shop stock. The reconstructed candidate becomes active only after every loading stage succeeds.
+`CampaignSnapshotRestorer` validates every catalog-backed reference and reconstructs a complete isolated `RestoredCampaign`, including party order, progression, learned scroll skills, equipment, resources, inventory, reward modifiers, world progress, travel progress, fictional time, finite shop stock, quest progress, permanent flags and candidate state. The reconstructed candidate becomes active only after every loading stage and every cross-state validation succeeds.
+
+`QuestProgressRestorer` and `RecruitmentCandidateStateRestorer` provide single-use domain-local restoration gateways over package-private mutation APIs. The persistence orchestrator reconstructs all three narrative state holders before validating quest, flag, candidate, leader-class and party coherence.
 
 After the unchanged title screen, `CampaignSelectionMenu` distinguishes absent, unreadable, invalid and valid saves. Valid campaigns may be continued or replaced through the confirmed New Game flow. Every INN provides atomic Save and Continue and Save and Exit operations, while ordinary exits require confirmation and never save implicitly.
 
-Complete encrypted round trips, campaign reconstruction, valid and invalid startup flows, preservation of previous saves, INN saving, failed writes, exit-without-saving behavior and version-2 dungeon-progress restoration were manually validated.
+Complete encrypted round trips, campaign reconstruction, valid and invalid startup flows, preservation of previous saves, INN saving, failed writes, exit-without-saving behavior and version-2 dungeon-progress restoration were manually validated before Part 9. Part 9 additionally validated explicit version-2 rejection and a complete version-3 save, restart, Continue, resave and second-restart cycle with empty narrative collections. Non-empty narrative persistence remains scheduled with canonical quest content.
+
+## V6 quest and narrative foundation
+
+V6 Parts 1 through 9 are implemented. Part 10 added the first five canonical quests, and their normal project playthrough has been validated, including the Quest 5 ceremony, class selection and first-ally recruitment. Portable Windows build verification remains pending.
+
+The current foundation includes:
+
+- Complete immutable quest definitions assembled from external quest, step and objective files.
+- Sequential linear quest steps and eight closed objective types.
+- Mutable campaign-level `QuestProgress` separated from immutable definitions.
+- `NOT_STARTED`, `ACTIVE` and `COMPLETED` quest lifecycle.
+- Explicit synchronous quest-progress events and ordered result objects.
+- Permanent external flag definitions and mutable set-only `CampaignFlags`.
+- Reusable external AND requirement sets.
+- Pure uncached requirement evaluation against leader level, inventory, quest status and flags.
+- Quest-availability validation rejecting missing sets, self-dependencies and dependency cycles.
+- External material quest rewards for GOLD, party EXP and items.
+- External quest effects for setting flags, unlocking directed routes or branches, granting items and transporting the party.
+- Complete completion-plan validation before campaign mutation.
+- Atomic delivery consumption, reward application, permanent effects and quest-state transition.
+- Explicit completion failures that preserve every affected state.
+- External narrative city locations with requirement-controlled visibility.
+- Canonical NPC identities separated from fixed city placements.
+- External linear dialogues with canonical speakers, party-name placeholders and a placeholder for a recruitment candidate's persistent generated name.
+- External quest-dialogue associations for offer, acceptance, refusal, pending and completion contexts.
+- Stable NPC interaction menus preserving the permanent `Conversar` option.
+- Automatic narrative-text wrapping at 90 console columns.
+- Read-only quest journal available from stable city and combat-scenario menus.
+- Separate active and completed quest listings with contextual quest details.
+- Current-step objective counters and material reward summaries derived from canonical data.
+- Manual retry of an already completed final non-NPC step when atomic quest completion was previously blocked.
+- `QuestProgressCoordinator` as the UI boundary between confirmed gameplay events, domain progression and contextual presentation.
+- Battle progress from confirmed analysis, enemy defeat, victory and collected-drop events.
+- Item-acquisition progress after successful purchases, crafting, exploration rewards, battle drops and quest rewards.
+- Scenario-arrival progress emitted only after a successful scenario change.
+- Dungeon-completion progress emitted after either narrative or recurring boss victory.
+- Derived `[!]` markers on actionable NPCs, narrative locations and applicable city actions.
+- Derived `[!]` markers on immediately reachable quest destinations and their parent travel actions without revealing locked or multi-step paths.
+- Compact battle progress displayed inline, with dedicated presentation retained for quest completion, effects and failures.
+- Required canonical `flagelo_iniciante` and final `flagelo` definitions, validated before dependent class data is loaded.
+- Shared beginner and final Flagelo presentation, base statistics, specializations and armor weight with separate natural-skill rosters.
+- External final class-path definitions associating every selectable path with level-7 introductory weapon and armor.
+- Immutable external class-path questions and answers with supported narrative line breaks and party placeholders.
+- Seven-question canonical questionnaire content balanced across the six recommendable final classes.
+- One-point questionnaire scoring with ordered direct and tied highest-score results.
+- Player-controlled resolution of two-way and three-way ties without random recommendation.
+- Unrestricted access to all seven final paths after rejecting the questionnaire result.
+- Shared complete class presentation across character creation, recommendation details and free selection.
+- Timed one-time class revelation followed by compact acceptance, rejection and optional-description presentation.
+- Transient questionnaire, recommendation and confirmation state with no partial campaign mutation.
+- Validated protagonist class transition preserving identity, level, EXP and scroll skills while replacing natural class state.
+- Atomic equipment return, introductory-item grant, resource restoration and permanent ceremony-flag assignment.
+- Explicit inventory-capacity failure and repeated-application prevention before transition mutation.
+- External quest-step recruitment definitions with canonical candidate IDs and configurable ally entry levels.
+- Structural limit of three recruitment records derived from party capacity.
+- Minimal mutable candidate state containing canonical ID, persistent generated name and recruited status.
+- Idempotent candidate introduction at the first displayed `RECRUIT` dialogue.
+- Shared unique-name selection across party members and pending candidates.
+- Runtime resolution of `RECRUIT` speakers from established candidate state.
+- Generic ally-class selection excluding beginner Flagelo, final Flagelo, party classes and caller-provided classes.
+- Generic complete ally construction at the externally configured level.
+- Natural attributes and skills calculated through the existing progression classes.
+- Introductory weapon and armor equipped directly without passing through shared inventory.
+- Empty ally trinket slot, zero EXP and fully restored resources.
+- Generic recruitment plans and services reusable by later narrative allies.
+- Ceremony-specific composition isolated in `ClassPathRecruitmentService`.
+- Joint validation of protagonist inventory additions and quest rewards before mutation.
+- Mandatory `Aceitar sua companhia` action without a false refusal branch.
+- Ordered atomic commit of protagonist transition, quest completion, rewards, effects, ally insertion and recruited state.
+- Party EXP applied before ally insertion so the newly recruited ally remains at zero EXP.
+- Expected ceremony and quest failures presented without partial campaign mutation.
+
+The new external files are:
+
+- `quests.txt`
+- `quest_steps.txt`
+- `quest_objectives.txt`
+- `flags.txt`
+- `requirements.txt`
+- `quest_rewards.txt`
+- `quest_effects.txt`
+- `narrative_locations.txt`
+- `npcs.txt`
+- `npc_placements.txt`
+- `dialogues.txt`
+- `quest_dialogues.txt`
+- `class_paths.txt`
+- `class_path_questions.txt`
+- `class_path_answers.txt`
+- `quest_recruitments.txt`
+- `dungeon_boss_gates.txt`
+- `combat_scenario_dialogues.txt`
+
+The complete narrative interaction was validated through one temporary quest and NPC. Representative testing covered city, location and NPC markers; default conversation; offer refusal and later acceptance; quest activation; required completion dialogue; atomic completion; a real GOLD reward; grouped notifications; marker removal after completion; and preservation of default dialogue access.
+
+Part 6 representative testing covered journal navigation without world-time advancement; active and completed quest details; current objective counters and reward summaries; manual retry after an atomic reward-capacity failure; confirmed analysis followed by escape; grouped enemy-defeat, battle-victory and collected-item progress; immediate route and city-transport markers; scenario-arrival progress; narrative dungeon completion; marker removal after objective completion; and inline presentation of simple battle progress.
+
+Part 7 representative testing covered required beginner and final Flagelo validation; complete final-path equipment coverage; questionnaire loading, line-break decoding and placeholder preservation; direct scoring; ordered three-way ties; player-controlled tie resolution; unrestricted rejection and free selection; shared class presentation; optional description access; invalid-input handling without replaying timed sequences; inventory-capacity rejection without mutation; equipped-item return; introductory-item grants; class and natural-skill replacement; complete resource restoration; permanent-flag assignment; and repeated-transition prevention.
+
+Part 8 representative testing covered header-only startup; candidate creation at the first recruit dialogue; stable candidate name across repeated offer refusal and acceptance; the then-current version-2 restart boundary; multiple valid ally-class draws; exclusion of beginner Flagelo, final Flagelo and the protagonist's confirmed class; complete level-7 ally state; direct introductory equipment; empty trinket slot; second-position party insertion; mandatory acceptance; quest reward and effect application; zero ally EXP after `PARTY_EXP`; prevention of repeated recruitment; combined protagonist-item and quest-reward capacity rejection without mutation; minimum-level ceremony rejection without mutation; maximum three-record enforcement; duplicate candidate rejection; duplicate quest-step rejection; and invalid ally-level rejection.
+
+Part 9 added immutable quest, flag and candidate snapshots; strict version-3 property serialization and deserialization; explicit version-2 incompatibility; domain-local quest and candidate restorers; complete narrative-state injection through `RestoredCampaign`; and cross-state validation for quest steps, objective counters, flags, candidates, party membership, distinct classes and the first ceremony transaction. The encrypted outer container, AES-GCM behavior and atomic file replacement remain unchanged.
 
 ## Current limitations and temporary implementations
 
 - Permanent skill-scroll content and curated scroll drops remain absent while the draft skills await required combat mechanics and final content review.
-- The Flagelo's two temporary `STARTER` skills are not yet retired because the level-7 class-choice flow is not implemented.
 - Playable-class definitions, natural growth and the complete approved 30-skill roster are external; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy turns currently use basic attacks; enemy skill selection is deferred.
-- Tavern functionality remains unavailable.
+- `RECRUIT` references are now validated through `QuestRecruitmentCatalog` and resolved through candidate state.
 - After a normal victory, defeated allies remain unavailable until revived by a skill, item or city INN; full-party defeat instead activates rescue and complete restoration.
 - Items sold by the player cannot be bought back.
-- Normal new games currently begin with only the protagonist; story-based recruitment of three distinct-class allies remains future work.
-- Random ally naming will reuse the implemented external-name selection after recruitment is added.
+- Normal new games currently begin with only the protagonist. The first-ally runtime behavior is implemented; later allies remain future narrative content.
+- Candidate naming reuses the implemented shared external-name selection and preserves one generated name across the active campaign and version-3 save/load cycles.
 - The four current random character names remain temporary pending creative-team curation.
 - Party-title acquisition and character-history presentation remain future narrative work.
 - Initial crafting content is limited to two Bree crafters and two recipes pending broader creative and balance curation.
@@ -873,25 +977,11 @@ Complete encrypted round trips, campaign reconstruction, valid and invalid start
 
 ## Current next step
 
-V5 is complete, packaged and manually validated as the current release.
+V5 remains the latest packaged release as `v5.0.0`. V6 development continues on `feature/v6-quests`.
 
-Its delivered scope includes:
+Parts 1 through 9 are implemented, including the version-3 campaign save format for quest progress, permanent flags and recruitment candidates. Part 10 contains the first five canonical quests and the reusable technical integration required by their progression. All five quests have been played through in the project, including the class-path ceremony and first-ally recruitment.
 
-- Data-driven crafting.
-- Encrypted, authenticated and atomic campaign persistence.
-- Campaign selection, continuation and INN-exclusive saving.
-- Centralized recoverable console input.
-- Fictional world time and global shop restocking.
-- Special-area event guarantees.
-- Permanent dungeon completion.
-- Recurring dungeon bosses.
-- Optional epic encounters with persistent cooldowns.
-- Internal save-format version 2.
-- A self-contained Windows x64 portable package.
-
-The next development stage is V6 planning, beginning with the quest system.
-
-Quest-dependent class paths, narrative flags, generalized access requirements, loader-maintenance work and the optional automated-testing study remain deferred to V6 so their design can use real quest and narrative progression state.
+Current closure work is to finish the V6 documentation and content-author guide, review the complete five-quest progression and regressions, then build and verify the portable Windows package. The V6 release has not yet been packaged or tagged.
 
 ## Important conventions
 
@@ -904,6 +994,5 @@ Quest-dependent class paths, narrative flags, generalized access requirements, l
 - External references are validated during game initialization.
 - Inventory and gold belong to `Party`.
 - Character resources and progression belong to `PlayableCharacter`.
-- Git operations are performed through Git Bash.
 - Git operations and manual compilation are performed through Git Bash.
 - Eclipse is used to edit, compile and run the Java project.

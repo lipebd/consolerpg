@@ -42,7 +42,9 @@ public final class InventoryMenu {
 		List<ItemCategory> categories = List.of(ItemCategory.values());
 
 		while (true) {
-			System.out.println("\n[INVENTÁRIO]\n");
+			ConsoleUI.clearScreen();
+			System.out.println("[INVENTÁRIO]");
+			System.out.println();
 			System.out.println(GameCurrency.getName() + ": " + GameCurrency.format(party.getGold()));
 
 			displayCategoryMenu(categories);
@@ -77,7 +79,7 @@ public final class InventoryMenu {
 
 	private void displayCategoryMenu(List<ItemCategory> categories) {
 		System.out.println();
-		System.out.println("Escolha uma categoria:");
+		System.out.println("Escolha uma categoria:\n");
 
 		for (int index = 0; index < categories.size(); index++) {
 			System.out.println("[" + (index + 1) + "] " + getCategoryDisplayName(categories.get(index)));
@@ -175,7 +177,7 @@ public final class InventoryMenu {
 
 	private void openEmptyCategory(ItemCategory category) {
 		while (true) {
-			System.out.println();
+			ConsoleUI.clearScreen();
 			System.out.println("[" + getCategoryDisplayName(category).toUpperCase(Locale.ROOT) + "]");
 
 			System.out.println();
@@ -203,7 +205,7 @@ public final class InventoryMenu {
 			int currentPage,
 			int totalPages
 	) {
-		System.out.println();
+		ConsoleUI.clearScreen();
 		System.out.println(
 				"[" + getCategoryDisplayName(category).toUpperCase(Locale.ROOT) + " — PÁGINA " + (currentPage + 1) + "/"
 						+ totalPages + "]"
@@ -255,7 +257,7 @@ public final class InventoryMenu {
 			return openSkillScrollDetails(skillScroll);
 		}
 		while (true) {
-			System.out.println();
+			ConsoleUI.clearScreen();
 			System.out.println("[" + item.getName().toUpperCase(Locale.ROOT) + "]");
 
 			System.out.println();
@@ -299,7 +301,7 @@ public final class InventoryMenu {
 		Optional<PlayableCharacter> compatibleCharacter = skillScrollUseMenu.findCompatibleCharacter(skillScroll);
 
 		while (true) {
-			System.out.println();
+			ConsoleUI.clearScreen();
 			System.out.println("[PERGAMINHO DE HABILIDADE]");
 
 			System.out.println();

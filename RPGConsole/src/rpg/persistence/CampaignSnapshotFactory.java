@@ -9,12 +9,19 @@ import rpg.battle.rewards.PartyRewardModifierState;
 import rpg.characters.CharacterEquipment;
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
+import rpg.flags.CampaignFlags;
 import rpg.items.Item;
+import rpg.quests.QuestDefinition;
+import rpg.quests.QuestObjectiveDefinition;
+import rpg.quests.QuestProgress;
+import rpg.quests.QuestStepDefinition;
+import rpg.recruitment.RecruitmentCandidateState;
+import rpg.recruitment.RecruitmentCandidateStateCatalog;
 import rpg.skills.SkillDefinition;
 import rpg.world.WorldClock;
 import rpg.world.WorldProgress;
-import rpg.world.scenarios.Scenario;
 import rpg.world.scenarios.DungeonProgress;
+import rpg.world.scenarios.Scenario;
 import rpg.world.shops.ShopOfferState;
 import rpg.world.shops.ShopState;
 import rpg.world.shops.ShopStateCatalog;
@@ -23,37 +30,62 @@ import rpg.world.travel.TravelProgress;
 // Creates an immutable campaign snapshot from the current runtime state.
 public final class CampaignSnapshotFactory {
 
-    private CampaignSnapshotFactory() {}
+	private CampaignSnapshotFactory() {}
 
 	public static CampaignSnapshot create(
 			Party party,
 			Scenario currentScenario,
 			WorldProgress worldProgress,
 			TravelProgress travelProgress,
-            DungeonProgress dungeonProgress,
+			DungeonProgress dungeonProgress,
 			WorldClock worldClock,
-            ShopStateCatalog shopStateCatalog) {
+			ShopStateCatalog shopStateCatalog,
+			QuestProgress questProgress,
+			CampaignFlags campaignFlags,
+			RecruitmentCandidateStateCatalog candidateStateCatalog
+			) {
 		Objects.requireNonNull(party, "Party cannot be null.");
 		Objects.requireNonNull(currentScenario, "Current scenario cannot be null.");
 		Objects.requireNonNull(worldProgress, "World progress cannot be null.");
 		Objects.requireNonNull(travelProgress, "Travel progress cannot be null.");
-        Objects.requireNonNull(dungeonProgress, "Dungeon progress cannot be null.");
+		Objects.requireNonNull(dungeonProgress, "Dungeon progress cannot be null.");
 		Objects.requireNonNull(worldClock, "World clock cannot be null.");
 		Objects.requireNonNull(shopStateCatalog, "Shop state catalog cannot be null.");
+		Objects.requireNonNull(questProgress, "Quest progress cannot be null.");
+		Objects.requireNonNull(campaignFlags, "Campaign flags cannot be null.");
+		Objects.requireNonNull(candidateStateCatalog, "Candidate state catalog cannot be null.");
 
 		PartySnapshot partySnapshot = createPartySnapshot(party);
 
-        WorldSnapshot worldSnapshot =
-                createWorldSnapshot(
-                        currentScenario,
-                        worldProgress,
-                        travelProgress,
-                        dungeonProgress,
-                        worldClock);
+		WorldSnapshot worldSnapshot =
+				createWorldSnapshot(
+						currentScenario,
+						worldProgress,
+						travelProgress,
+						dungeonProgress,
+						worldClock);
 
 		List<ShopSnapshot> shopSnapshots = createShopSnapshots(shopStateCatalog);
 
-		return new CampaignSnapshot(partySnapshot, worldSnapshot, shopSnapshots);
+		QuestProgressSnapshot questProgressSnapshot =
+				createQuestProgressSnapshot(questProgress);
+
+		CampaignFlagsSnapshot campaignFlagsSnapshot =
+				createCampaignFlagsSnapshot(campaignFlags);
+
+		List<RecruitmentCandidateSnapshot> candidateSnapshots =
+				createRecruitmentCandidateSnapshots(
+						candidateStateCatalog
+						);
+
+		return new CampaignSnapshot(
+				partySnapshot,
+				worldSnapshot,
+				shopSnapshots,
+				questProgressSnapshot,
+				campaignFlagsSnapshot,
+				candidateSnapshots
+				);
 	}
 
 	private static PartySnapshot createPartySnapshot(Party party) {
@@ -66,49 +98,49 @@ public final class CampaignSnapshotFactory {
 		List<InventoryEntrySnapshot> inventoryEntries = new ArrayList<>();
 
 		for (Map.Entry<Item, Integer> entry : party.getInventory().getContents().entrySet()) {
-            inventoryEntries.add(
-                    new InventoryEntrySnapshot(entry.getKey().getId(), entry.getValue()));
+			inventoryEntries.add(
+					new InventoryEntrySnapshot(entry.getKey().getId(), entry.getValue()));
 		}
 
 		PartyRewardModifierState modifierState = party.getRewardModifierState();
 
-        RewardModifierSnapshot experienceModifier =
-                new RewardModifierSnapshot(
-				modifierState.getExperienceModifierPercent(),
-                        modifierState.getExperienceVictoriesRemaining());
+		RewardModifierSnapshot experienceModifier =
+				new RewardModifierSnapshot(
+						modifierState.getExperienceModifierPercent(),
+						modifierState.getExperienceVictoriesRemaining());
 
-        RewardModifierSnapshot goldModifier =
-                new RewardModifierSnapshot(
-				modifierState.getGoldModifierPercent(),
-                        modifierState.getGoldVictoriesRemaining());
+		RewardModifierSnapshot goldModifier =
+				new RewardModifierSnapshot(
+						modifierState.getGoldModifierPercent(),
+						modifierState.getGoldVictoriesRemaining());
 
-        return new PartySnapshot(
-                party.getGold(),
-                memberSnapshots,
-                inventoryEntries,
-                experienceModifier,
-                goldModifier);
+		return new PartySnapshot(
+				party.getGold(),
+				memberSnapshots,
+				inventoryEntries,
+				experienceModifier,
+				goldModifier);
 	}
 
-    private static PlayableCharacterSnapshot createPlayableCharacterSnapshot(
-            PlayableCharacter character) {
+	private static PlayableCharacterSnapshot createPlayableCharacterSnapshot(
+			PlayableCharacter character) {
 		CharacterEquipment equipment = character.getEquipment();
 
-        EquipmentSnapshot equipmentSnapshot =
-                new EquipmentSnapshot(
-                        equipment
-                                .getWeapon()
-                                .map(definition -> definition.getItemId())
-                                .orElse(null),
-				equipment.getArmor().map(definition -> definition.getItemId()).orElse(null),
-                        equipment
-                                .getTrinket()
-                                .map(definition -> definition.getItemId())
-                                .orElse(null));
+		EquipmentSnapshot equipmentSnapshot =
+				new EquipmentSnapshot(
+						equipment
+						.getWeapon()
+						.map(definition -> definition.getItemId())
+						.orElse(null),
+						equipment.getArmor().map(definition -> definition.getItemId()).orElse(null),
+						equipment
+						.getTrinket()
+						.map(definition -> definition.getItemId())
+						.orElse(null));
 
-        List<String> learnedSkillIds =
-                character.getLearnedScrollSkillDefinitions().stream()
-                        .map(SkillDefinition::getId)
+		List<String> learnedSkillIds =
+				character.getLearnedScrollSkillDefinitions().stream()
+				.map(SkillDefinition::getId)
 				.toList();
 
 		return new PlayableCharacterSnapshot(
@@ -120,39 +152,39 @@ public final class CampaignSnapshotFactory {
 				character.getCurrentMp(),
 				character.getCurrentSp(),
 				equipmentSnapshot,
-                learnedSkillIds);
+				learnedSkillIds);
 	}
 
 	private static WorldSnapshot createWorldSnapshot(
 			Scenario currentScenario,
 			WorldProgress worldProgress,
 			TravelProgress travelProgress,
-            DungeonProgress dungeonProgress,
-            WorldClock worldClock) {
-        List<String> discoveredScenarioIds =
-                worldProgress.getDiscoveredScenarioIds().stream().sorted().toList();
+			DungeonProgress dungeonProgress,
+			WorldClock worldClock) {
+		List<String> discoveredScenarioIds =
+				worldProgress.getDiscoveredScenarioIds().stream().sorted().toList();
 
-        List<String> unlockedRouteIds =
-                travelProgress.getUnlockedRouteIds().stream().sorted().toList();
+		List<String> unlockedRouteIds =
+				travelProgress.getUnlockedRouteIds().stream().sorted().toList();
 
-        List<String> dungeonIds = dungeonProgress.getDungeonIds().stream().sorted().toList();
+		List<String> dungeonIds = dungeonProgress.getDungeonIds().stream().sorted().toList();
 
-        List<DungeonProgressSnapshot> dungeonProgressSnapshots = new ArrayList<>();
+		List<DungeonProgressSnapshot> dungeonProgressSnapshots = new ArrayList<>();
 
-        for (String dungeonId : dungeonIds) {
-            dungeonProgressSnapshots.add(
-                    new DungeonProgressSnapshot(
-                            dungeonId,
-                            dungeonProgress.isNarrativeBossDefeated(dungeonId),
-                            dungeonProgress.getRecurringBossAvailableAtHour(dungeonId),
-                            dungeonProgress.getEpicAvailableAtHour(dungeonId)));
-        }
+		for (String dungeonId : dungeonIds) {
+			dungeonProgressSnapshots.add(
+					new DungeonProgressSnapshot(
+							dungeonId,
+							dungeonProgress.isNarrativeBossDefeated(dungeonId),
+							dungeonProgress.getRecurringBossAvailableAtHour(dungeonId),
+							dungeonProgress.getEpicAvailableAtHour(dungeonId)));
+		}
 		return new WorldSnapshot(
 				currentScenario.getId(),
 				worldClock.getElapsedHours(),
 				discoveredScenarioIds,
-                unlockedRouteIds,
-                dungeonProgressSnapshots);
+				unlockedRouteIds,
+				dungeonProgressSnapshots);
 	}
 
 	private static List<ShopSnapshot> createShopSnapshots(ShopStateCatalog shopStateCatalog) {
@@ -162,15 +194,115 @@ public final class CampaignSnapshotFactory {
 			List<ShopOfferSnapshot> offerSnapshots = new ArrayList<>();
 
 			for (ShopOfferState offerState : shopState.getActiveOffers()) {
-                offerSnapshots.add(
-                        new ShopOfferSnapshot(
-                                offerState.getStockEntry().getId(),
-                                offerState.getRemainingStock()));
+				offerSnapshots.add(
+						new ShopOfferSnapshot(
+								offerState.getStockEntry().getId(),
+								offerState.getRemainingStock()));
 			}
 
 			shopSnapshots.add(new ShopSnapshot(shopState.getDefinition().getId(), offerSnapshots));
 		}
 
 		return List.copyOf(shopSnapshots);
+	}
+
+	private static QuestProgressSnapshot
+	createQuestProgressSnapshot(
+			QuestProgress questProgress
+			) {
+		List<ActiveQuestSnapshot> activeQuestSnapshots =
+				new ArrayList<>();
+
+		for (QuestDefinition questDefinition
+				: questProgress.getActiveQuests()) {
+			QuestStepDefinition currentStep =
+					questProgress
+					.getCurrentStep(
+							questDefinition.getId()
+							)
+					.orElseThrow(
+							() ->
+							new IllegalStateException(
+									"Active quest has no current step: "
+											+ questDefinition
+											.getId()
+									)
+							);
+
+			List<QuestObjectiveProgressSnapshot>
+			objectiveSnapshots =
+			new ArrayList<>();
+
+			for (QuestObjectiveDefinition objective
+					: currentStep.getObjectives()) {
+				objectiveSnapshots.add(
+						new QuestObjectiveProgressSnapshot(
+								objective.getId(),
+								questProgress
+								.getObjectiveProgress(
+										questDefinition
+										.getId(),
+										objective.getId()
+										)
+								)
+						);
+			}
+
+			activeQuestSnapshots.add(
+					new ActiveQuestSnapshot(
+							questDefinition.getId(),
+							currentStep.getStep(),
+							objectiveSnapshots
+							)
+					);
+		}
+
+		List<String> completedQuestIds =
+				questProgress
+				.getCompletedQuests()
+				.stream()
+				.map(QuestDefinition::getId)
+				.toList();
+
+		return new QuestProgressSnapshot(
+				activeQuestSnapshots,
+				completedQuestIds
+				);
+	}
+
+	private static CampaignFlagsSnapshot
+	createCampaignFlagsSnapshot(
+			CampaignFlags campaignFlags
+			) {
+		List<String> setFlagIds =
+				campaignFlags
+				.getSetFlags()
+				.stream()
+				.map(flag -> flag.getId())
+				.toList();
+
+		return new CampaignFlagsSnapshot(setFlagIds);
+	}
+
+	private static List<RecruitmentCandidateSnapshot>
+	createRecruitmentCandidateSnapshots(
+			RecruitmentCandidateStateCatalog
+			candidateStateCatalog
+			) {
+		List<RecruitmentCandidateSnapshot> snapshots =
+				new ArrayList<>();
+
+		for (RecruitmentCandidateState candidateState
+				: candidateStateCatalog.getAll()) {
+			snapshots.add(
+					new RecruitmentCandidateSnapshot(
+							candidateState.getCandidateId(),
+							candidateState.getName(),
+							candidateState.isRecruited()
+							)
+					);
+		}
+
+		return List.copyOf(snapshots);
 	}
 }

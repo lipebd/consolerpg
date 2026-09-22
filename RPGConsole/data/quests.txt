@@ -1,0 +1,6 @@
+# id;title;description;startingNpcId;availabilityRequirementSetId
+ordem_dos_alquimistas;A Ordem dos Alquimistas;Uma doença desconhecida começou a se espalhar por Bree. Seu pai está entre os infectados, e os alquimistas ainda não encontraram uma cura.;mestre_alquimista;
+o_discipulo;O Discípulo;Um dos discípulos da Ordem desapareceu enquanto procurava um ingrediente raro. Investigue os goblins de Verdes Ermos e descubra o que aconteceu.;mestre_alquimista;o_discipulo_disponivel
+entre_caminhos;Entre Caminhos;As pesquisas da Ordem precisam avançar além de Bree. Atravesse Entrelinhas e procure ajuda entre os estudiosos de Entrelugar.;mae_protagonista;entre_caminhos_disponivel
+energia_residual;Energia Residual;A busca por respostas leva o grupo aos pesquisadores de Entrelugar e às máquinas reativadas das Minas do Além-Túmulo.;cliente_taverna_entrelugar;energia_residual_disponivel
+os_sete_caminhos;Os Sete Caminhos;Viaje até Setegalhos, conheça as sete academias e participe da Cerimônia dos Caminhos.;mago_pesquisador_setegalhos;os_sete_caminhos_disponivel

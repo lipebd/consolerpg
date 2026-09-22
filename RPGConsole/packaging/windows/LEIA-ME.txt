@@ -1,4 +1,4 @@
-RPGCONSOLE — VERSÃO 5.0.0
+RPGCONSOLE — VERSÃO 6.0.0
 
 COMO EXECUTAR
 
@@ -34,6 +34,15 @@ REQUISITOS
 
 * Windows 10 ou Windows 11 de 64 bits.
 * Não é necessário instalar o Java. O runtime necessário acompanha o jogo.
+
+SALVAMENTO
+
+O jogo possui um único espaço de salvamento. Salve sua campanha nas estalagens.
+O arquivo save.txt será criado ao lado de RPGConsole.cmd após o primeiro salvamento.
+
+Salvamentos de versões anteriores não são compatíveis com a V6. Para continuar
+uma campanha antiga, mantenha a versão anterior do jogo e uma cópia do respectivo
+save.txt em sua pasta. Comece uma nova campanha na V6.
 
 SOLUÇÃO DE PROBLEMAS
 

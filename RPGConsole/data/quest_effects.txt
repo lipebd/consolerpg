@@ -1,0 +1,29 @@
+# questId;step;trigger;order;effectType;targetId;quantity;displayText
+# QUEST 1
+ordem_dos_alquimistas;0;QUEST_COMPLETE;1;UNLOCK_ROUTE;bree_portao_sul;;O Mestre Alquimista autorizou sua passagem pelo Portão Sul.
+ordem_dos_alquimistas;0;QUEST_COMPLETE;2;UNLOCK_ROUTE;verdes_ermos_bree;;
+# QUEST 2
+o_discipulo;4;STEP_COMPLETE;1;UNLOCK_ROUTE;verdes_ermos_gruta_relamparrocha;;Você descobriu a entrada da Gruta Relamparrocha.
+o_discipulo;6;STEP_COMPLETE;1;UNLOCK_ROUTE;gruta_relamparrocha_verdes_ermos;;
+o_discipulo;6;STEP_COMPLETE;2;UNLOCK_ROUTE;gruta_relamparrocha_bree;;
+# QUEST 3
+entre_caminhos;1;STEP_COMPLETE;1;GRANT_ITEM;colar_da_mae;1;Você recebeu o Colar da Mãe.
+entre_caminhos;2;STEP_COMPLETE;1;UNLOCK_ROUTE;bree_portao_leste;;O Portão Leste de Bree foi liberado.
+entre_caminhos;2;STEP_COMPLETE;2;UNLOCK_ROUTE;entrelinhas_bree;;
+entre_caminhos;4;STEP_COMPLETE;1;UNLOCK_ROUTE;entrelinhas_entrelugar;;Você encontrou o caminho de Entrelinhas para Entrelugar.
+entre_caminhos;4;STEP_COMPLETE;2;UNLOCK_ROUTE;entrelugar_distorcao_norte;;
+# QUEST 4
+energia_residual;0;QUEST_START;1;SET_FLAG;instituto_entrequando_descoberto;;O Instituto Entrequando agora está disponível.
+energia_residual;0;QUEST_COMPLETE;1;UNLOCK_ROUTE;verdes_ermos_bifurcacao_setegalhos;;A estrada para Setegalhos agora está acessível na bifurcação de Verdes Ermos.
+energia_residual;0;QUEST_COMPLETE;2;UNLOCK_ROUTE;setegalhos_estrada_leste;;
+energia_residual;0;QUEST_COMPLETE;3;SET_FLAG;mago_partiu_setegalhos;;O Mago Pesquisador partiu para Setegalhos.
+energia_residual;4;STEP_COMPLETE;1;UNLOCK_ROUTE;entrelinhas_bifurcacao_alem_tumulo;;Você recebeu instruções para encontrar a entreda das Minas de Além-Túmulo em Entrelinhas.
+energia_residual;4;STEP_COMPLETE;2;UNLOCK_ROUTE;minas_alem_tumulo_entrelinhas;;
+energia_residual;4;STEP_COMPLETE;3;UNLOCK_ROUTE;minas_alem_tumulo_entrelugar;;
+energia_residual;4;STEP_COMPLETE;4;UNLOCK_ROUTE;minas_alem_tumulo_bree;;
+energia_residual;6;STEP_COMPLETE;1;TRANSPORT_PARTY;entrelugar;;O vínculo sustentado pelo Mago Pesquisador retira o grupo das Minas do Além-Túmulo.
+# QUEST 5
+os_sete_caminhos;0;QUEST_START;1;SET_FLAG;centro_cerimonia_desbloqueado;;O Centro da Cerimônia dos Caminhos está acessível.
+os_sete_caminhos;1;STEP_COMPLETE;1;SET_FLAG;galhos_cerimonia_desbloqueados;;Os sete galhos de Setegalhos estão acessíveis.
+os_sete_caminhos;3;STEP_COMPLETE;1;GRANT_ITEM;poema_do_papai;1;Você recebeu o Poema do Papai.
+os_sete_caminhos;22;STEP_COMPLETE;1;SET_FLAG;praca_emblemas_desbloqueada;;A Praça dos Emblemas está preparada para a cerimônia final.

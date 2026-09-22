@@ -1,0 +1,8 @@
+# id;order;text
+coragem;1;Durante o julgamento, sua sombra começa a agir sozinha. Como você reage?
+inocencia;2;Uma estrela cai diante da árvore e continua pulsando como um coração. O que você faz?
+determinacao;3;Runas surgem sobre sua pele e começam a conduzir seus movimentos. Como você reage?
+curiosidade;4;Uma máscara flutua diante de você e promete revelar seu verdadeiro rosto. O que você faz?
+astucia;5;Três sinos invisíveis ressoam sob a copa, mas apenas um deles parece verdadeiro. Como você o encontraria?
+percepcao;6;Um espelho revela uma versão sua que se move um instante antes de você. Como reage?
+sabedoria;7;A sombra da árvore repete cada palavra que você pronuncia, mas as devolve com significados diferentes. O que você diz?

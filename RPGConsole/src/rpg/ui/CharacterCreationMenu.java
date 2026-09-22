@@ -65,7 +65,8 @@ public final class CharacterCreationMenu {
 
 	private Optional<String> selectName(String currentName) {
 		while (true) {
-			System.out.println();
+			ConsoleUI.clearScreen();
+			System.out.println("[RPGCONSOLE]");
 			System.out.println("[NOVO JOGO]");
 
 			System.out.println();
@@ -107,7 +108,8 @@ public final class CharacterCreationMenu {
 
 	private Optional<String> readManualName() {
 		while (true) {
-			System.out.println();
+			ConsoleUI.clearScreen();
+			System.out.println("[RPGCONSOLE]");
 			System.out.println("[NOME]");
 
 			System.out.println();
@@ -135,17 +137,15 @@ public final class CharacterCreationMenu {
 	}
 
 	private void displayConfirmation(String proposedName, PlayableClassDefinition classDefinition) {
-		System.out.println();
+		ConsoleUI.clearScreen();
+		System.out.println("[RPGCONSOLE]");
 		System.out.println("[CRIAÇÃO DE PERSONAGEM]");
 
 		System.out.println();
 		System.out.println("Nome: " + proposedName);
-		System.out.println("Classe: " + classDefinition.getName());
-		System.out.println(PlayableClassDetailFormatter.formatSpecializations(classDefinition));
-
 		System.out.println();
-		System.out.println("Descrição:");
-		System.out.println(classDefinition.getDescription());
+		ConsoleUI.displayWrappedText(
+		        PlayableClassDetailFormatter.formatPresentation(classDefinition));
 
 		System.out.println();
 		System.out.println("[1] Confirmar");

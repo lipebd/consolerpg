@@ -109,6 +109,12 @@ rpg.battle
 rpg.battle.rewards
 rpg.items.equipment
 rpg.world.encounters
+rpg.flags
+rpg.requirements
+rpg.quests
+rpg.quests.rewards
+rpg.quests.effects
+rpg.narrative
 ```
 
 Packages represent cohesive areas of responsibility, not arbitrary folder organization.
@@ -167,6 +173,14 @@ The following suffixes have specific meanings in RPGConsole.
 | `Formatter` | Produces shared presentation text without deciding domain behavior | `CombatEffectFormatter`, `ItemMenuFormatter`, `SkillDetailFormatter`, `EquipmentDetailFormatter` |
 | `Group` | Owns and queries a collection that acts as one domain unit | `EnemyBattleGroup` |
 | `Slot` | Represents one uniquely identifiable position inside a runtime group | `EnemyBattleSlot` |
+| `Progress` | Mutable campaign progression separated from immutable definitions | `QuestProgress`, `DungeonProgress`, `TravelProgress` |
+| `Event` | Immutable confirmed gameplay occurrence supplied to a synchronous consumer | `QuestProgressEvent` |
+| `Update` | Immutable description of one state change produced by processing | `QuestProgressUpdate` |
+| `Evaluator` | Purely derives a result from definitions and current state without mutation | `RequirementEvaluator` |
+| `Validator` | Performs one validation that may require several completed catalogs | `QuestAvailabilityValidator`, `NarrativeReferenceValidator` |
+| `Resolver` | Derives currently applicable domain choices from existing definitions and state | `QuestNpcInteractionResolver` |
+| `Processor` | Performs one narrowly named text or data transformation without owning the surrounding flow | `NarrativeTextProcessor` |
+| `Presenter` | Converts prepared domain results into an output sequence without deciding domain rules | `DialoguePresenter`, `QuestProgressPresenter` |
 
 - `Session` represents the temporary progress of a bounded execution of a mechanic, such as an exploration.
 - `State` represents mutable data linked to an entity over a broader lifecycle, such as a shop's current inventory.
@@ -428,6 +442,29 @@ Examples:
 | Shop | `mercado_bree` | `Mercado de Bree` |
 | Shop stock entry | `bree_meruma_discount` | Not displayed directly |
 | Playable class | `flagelo` | `Flagelo` |
+| Quest | `ordem_dos_alquimistas` | `A Ordem dos Alquimistas` |
+| Quest objective | `falar_com_mestre_alquimista` | `Converse com o mestre alquimista.` |
+| Permanent flag | `investigacao_alquimista_iniciada` | Not displayed as an ID |
+| Requirement set | `acesso_investigacao_alquimista` | Not displayed directly |
+| Narrative location | `taverna_bree` | `Taverna de Bree` |
+| Narrative NPC | `mestre_alquimista` | Display name defined externally |
+| Dialogue | `oferta_ordem_dos_alquimistas` | Not displayed as an ID |
+
+Quest-related IDs should describe stable narrative meaning rather than current numeric position:
+
+```text
+# Prefer
+ordem_dos_alquimistas
+falar_com_mestre_alquimista
+
+# Avoid
+quest_1
+objective_3
+```
+
+Step numbers and objective order are structural values and are not substitutes for stable quest and objective IDs.
+
+Flag IDs should describe the permanent consequence that became true. Requirement-set IDs should describe the access or availability condition they represent. Dialogue IDs should identify their narrative purpose or context rather than repeat only the speaker ID.
 
 A playable-class symbol is presentation data, not a stable ID. Code must never use the symbol for catalog lookup, equality, class compatibility or progression rules. Different internal definitions may intentionally share a symbol when they represent the same player-facing class.
 
@@ -501,6 +538,18 @@ armors.txt
 trinkets.txt
 character_names.txt
 playable_classes.txt
+quests.txt
+quest_steps.txt
+quest_objectives.txt
+flags.txt
+requirements.txt
+quest_rewards.txt
+quest_effects.txt
+narrative_locations.txt
+npcs.txt
+npc_placements.txt
+dialogues.txt
+quest_dialogues.txt
 ```
 
 Header field names use `camelCase` and should match the corresponding Java vocabulary:
@@ -517,6 +566,18 @@ Header field names use `camelCase` and should match the corresponding Java vocab
 # itemId;trinketType;levelRequirement;hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus;experienceModifierPercent;goldModifierPercent
 # name
 # id;name;symbol;baseHp;baseMp;baseSp;baseAttack;baseDefense;baseMagic;baseResistance;baseSpeed;baseLuck;primaryAttribute;secondaryAttribute;armorWeight;description
+# id;title;description;startingNpcId;availabilityRequirementSetId
+# questId;step;title;description
+# id;questId;step;order;objectiveType;targetId;requiredQuantity;text
+# id;description
+# setId;order;requirementType;targetId;requiredValue
+# questId;order;rewardType;rewardId;quantity
+# questId;step;trigger;order;effectType;targetId;displayText
+# id;cityId;name;description;requirementSetId
+# id;name;description;defaultDialogueId
+# npcId;narrativeLocationId;requirementSetId
+# dialogueId;line;speakerType;speakerId;text
+# questId;step;context;dialogueId
 ```
 
 `character_names.txt` is intentionally different from semicolon-based definition files: each active line is one complete name.
@@ -552,6 +613,67 @@ Do not rename or reorder fields without updating:
 - `DATA_FORMATS.md`;
 - every existing data row;
 - relevant validation and tests.
+
+### Quest and narrative vocabulary
+
+Use these terms consistently:
+
+| Name | Meaning |
+|---|---|
+| `quest` | Complete immutable narrative-progression definition |
+| `step` | One sequential phase belonging to a quest |
+| `objective` | One measurable condition belonging to the current step |
+| `progress` | Mutable campaign state for active counters and completed quests |
+| `event` | Confirmed gameplay occurrence submitted synchronously |
+| `update` | Description of progress produced by processing |
+| `reward` | Material value granted to the party or its current members |
+| `effect` | Permanent campaign consequence such as a flag or route unlock |
+| `flag` | Set-only permanent world consequence |
+| `requirement` | Pure condition evaluated from current campaign state |
+| `requirementSet` | Ordered AND group of reusable requirements |
+| `narrativeLocation` | City space dedicated to narrative NPC interaction |
+| `npc` | Canonical ordinary non-hostile character identity |
+| `npcPlacement` | Fixed association between one NPC and one narrative location |
+| `dialogue` | Ordered immutable sequence of utterances |
+| `dialogueLine` | One external utterance inside a dialogue |
+| `questDialogue` | Association between quest context and a canonical dialogue |
+
+Do not call quest lifecycle fields flags:
+
+```java
+// Prefer
+questStatus
+completedQuestIds
+
+// Avoid
+questStartedFlag
+questCompletedFlag
+```
+
+Do not call requirement results unlock flags. Availability remains derived unless a real permanent consequence is represented through `CampaignFlags`.
+
+Use `startingNpcId` for the NPC that offers a quest. Use `npcId` for an ordinary canonical NPC reference. Use `speakerId` only inside one dialogue line whose `speakerType` determines the referenced catalog.
+
+Use `displayText` for optional text attached to a permanent effect. Use `text` for one objective description or dialogue utterance. Use `description` for longer content describing a definition.
+
+### External narrative text
+
+Literal `\n` is the only supported external narrative-text escape sequence in V6.
+
+A backslash not immediately followed by `n` is invalid. Semicolons remain reserved field separators and cannot appear inside text fields.
+
+Supported placeholders use lower camel case inside braces:
+
+```text
+{leaderName}
+{groupMember2}
+{groupMember3}
+{groupMember4}
+```
+
+Placeholder names are case-sensitive. They may appear only in the documented description and dialogue fields. They must not appear in technical IDs, names or titles.
+
+`{groupName}` is reserved for future use and remains invalid in V6.
 
 ### Commercial vocabulary
 
@@ -705,5 +827,14 @@ Before introducing a new name, verify:
 - [ ] Does playable-character naming reuse `CharacterNameRules`?
 - [ ] Is a playable-class symbol treated only as presentation data?
 - [ ] Have related documentation and data headers been updated?
+- [ ] Is quest lifecycle represented through `QuestProgress` instead of ad hoc flags?
+- [ ] Does a permanent flag describe a real stable consequence?
+- [ ] Is derived availability kept out of mutable and persisted state?
+- [ ] Does an event name describe something already confirmed?
+- [ ] Does an update name describe the resulting state change?
+- [ ] Are reward and effect used for material value and permanent consequence respectively?
+- [ ] Do narrative IDs remain separate from display names and runtime character names?
+- [ ] Are placeholders restricted to the supported vocabulary and fields?
+- [ ] Does external narrative text use only literal `\n` as an escape?
 
 When a convention does not clearly cover a new case, the team should agree on the vocabulary before several competing names enter the codebase.

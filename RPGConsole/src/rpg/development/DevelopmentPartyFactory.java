@@ -17,12 +17,16 @@ import rpg.characters.PlayableCharacterLevelRules;
 // Creates configurable temporary parties for development runs.
 public final class DevelopmentPartyFactory {
 
-	private static final List<MemberConfiguration> PARTY_CONFIGURATION = List.of(
-			new MemberConfiguration("Flagelinho Silva", "flagelo",1),
-			new MemberConfiguration("La Metamorfica", "metamorfo", 1),
-			new MemberConfiguration("Suzana Vieira", "atirador", 1),
-			new MemberConfiguration("Michael Jackson", "druida", 1)
-	);
+	private static final List<MemberConfiguration> PARTY_CONFIGURATION =
+	        List.of(
+	                new MemberConfiguration(
+	                        "Flagelinho Silva",
+	                        "flagelo",
+	                        10),
+	                new MemberConfiguration(
+	                        "La Metamorfica",
+	                        "metamorfo",
+	                        5));
 
 	private static final int INITIAL_GOLD = 5000;
 	private static final boolean TEST_MODIFIERS = false;

@@ -31,17 +31,29 @@ public final class Party {
 	}
 
 	public boolean addMember(PlayableCharacter newMember) {
-		Objects.requireNonNull(newMember, "Party member cannot be null.");
-
-		boolean nameAlreadyUsed = members.stream()
-				.anyMatch(member -> CharacterNameRules.areEquivalent(member.getName(), newMember.getName()));
-
-		if (members.size() >= MAXIMUM_SIZE || members.contains(newMember) || nameAlreadyUsed) {
+		if (!canAddMember(newMember)) {
 			return false;
 		}
 
 		members.add(newMember);
 		return true;
+	}
+
+	public boolean canAddMember(PlayableCharacter newMember) {
+		Objects.requireNonNull(
+				newMember,
+				"Party member cannot be null.");
+
+		boolean nameAlreadyUsed =
+				members.stream()
+						.anyMatch(member ->
+								CharacterNameRules.areEquivalent(
+										member.getName(),
+										newMember.getName()));
+
+		return members.size() < MAXIMUM_SIZE
+				&& !members.contains(newMember)
+				&& !nameAlreadyUsed;
 	}
 
 	public List<PlayableCharacter> getMembers() {

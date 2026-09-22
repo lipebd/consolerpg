@@ -1,51 +1,102 @@
 package rpg.world;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Random;
+import java.util.Set;
 
 import rpg.GameCurrency;
 import rpg.battle.BattleCoordinator;
 import rpg.battle.BattleResult;
 import rpg.battle.rewards.BattleRewardService;
 import rpg.characters.Party;
+import rpg.classes.PlayableClassDefinition;
 import rpg.enemies.EnemyCatalog;
 import rpg.enemies.EnemyDefinition;
 import rpg.enemies.EnemyDropCatalog;
+import rpg.flags.CampaignFlags;
 import rpg.items.Item;
 import rpg.items.ItemCatalog;
 import rpg.items.equipment.EquipmentCatalog;
 import rpg.items.equipment.EquipmentService;
+import rpg.narrative.DialogueCatalog;
+import rpg.narrative.DialogueDefinition;
+import rpg.narrative.DialogueLineDefinition;
+import rpg.narrative.DialogueSpeakerType;
+import rpg.narrative.NarrativeLocationCatalog;
+import rpg.narrative.NarrativeLocationDefinition;
+import rpg.narrative.NarrativeTextProcessor;
+import rpg.narrative.NpcCatalog;
+import rpg.narrative.NpcDefinition;
+import rpg.narrative.NpcPlacementCatalog;
+import rpg.narrative.NpcPlacementDefinition;
+import rpg.narrative.QuestDialogueCatalog;
+import rpg.narrative.QuestDialogueContext;
+import rpg.narrative.QuestDialogueDefinition;
 import rpg.persistence.CampaignSaveResult;
 import rpg.persistence.CampaignSaveService;
 import rpg.persistence.CampaignSnapshot;
 import rpg.persistence.CampaignSnapshotFactory;
-import rpg.ui.EquipmentMenu;
+import rpg.quests.QuestCatalog;
+import rpg.quests.QuestCompletionFailure;
+import rpg.quests.QuestCompletionFailureType;
+import rpg.quests.QuestDefinition;
+import rpg.quests.QuestNpcInteractionResolver;
+import rpg.quests.QuestObjectiveDefinition;
+import rpg.quests.QuestObjectiveType;
+import rpg.quests.QuestProgress;
+import rpg.quests.QuestProgressEvent;
+import rpg.quests.QuestProgressEventType;
+import rpg.quests.QuestProgressResult;
+import rpg.quests.QuestProgressService;
+import rpg.quests.QuestStatus;
+import rpg.quests.QuestStepDefinition;
+import rpg.quests.effects.QuestTransportState;
+import rpg.quests.rewards.QuestRewardCatalog;
+import rpg.recruitment.ClassPathRecruitmentPlan;
+import rpg.recruitment.ClassPathRecruitmentPreparation;
+import rpg.recruitment.ClassPathRecruitmentService;
+import rpg.recruitment.RecruitmentCandidateIntroductionService;
+import rpg.recruitment.RecruitmentCandidateStateCatalog;
+import rpg.requirements.RequirementCatalog;
+import rpg.requirements.RequirementEvaluator;
+import rpg.requirements.RequirementSetDefinition;
+import rpg.ui.AllyRecruitmentMenu;
 import rpg.ui.BattleRewardScreen;
 import rpg.ui.CityLocationMenu;
 import rpg.ui.CityMenu;
 import rpg.ui.CityTransportMenu;
+import rpg.ui.ClassPathChoiceCoordinator;
+import rpg.ui.ClassPathTransitionFailurePresenter;
 import rpg.ui.CombatScenarioMenu;
 import rpg.ui.ConsoleInput;
-import rpg.ui.ConsoleUI;
+import rpg.ui.CraftingMenu;
+import rpg.ui.DialoguePresenter;
 import rpg.ui.EpicEncounterMenu;
+import rpg.ui.EquipmentMenu;
 import rpg.ui.ExitConfirmationMenu;
 import rpg.ui.InnMenu;
 import rpg.ui.InventoryMenu;
+import rpg.ui.NarrativeLocationMenu;
+import rpg.ui.NpcInteractionMenu;
 import rpg.ui.PartyRescueScreen;
 import rpg.ui.PartyStatusMenu;
+import rpg.ui.QuestMenu;
+import rpg.ui.QuestOfferMenu;
+import rpg.ui.QuestProgressCoordinator;
+import rpg.ui.QuestProgressPresenter;
 import rpg.ui.RouteMenu;
 import rpg.ui.ScenarioBranchMenu;
 import rpg.ui.ShopMenu;
-import rpg.ui.CraftingMenu;
+import rpg.world.branches.ScenarioBranchCatalog;
+import rpg.world.branches.ScenarioBranchDefinition;
 import rpg.world.crafting.CrafterCatalog;
 import rpg.world.crafting.CrafterDefinition;
 import rpg.world.crafting.CraftingRecipeCatalog;
-import rpg.world.branches.ScenarioBranchCatalog;
-import rpg.world.branches.ScenarioBranchDefinition;
 import rpg.world.encounters.EncounterCatalog;
 import rpg.world.encounters.EncounterGenerator;
 import rpg.world.exploration.ExplorationEventGenerator;
@@ -62,6 +113,10 @@ import rpg.world.scenarios.CityAction;
 import rpg.world.scenarios.CombatScenario;
 import rpg.world.scenarios.CombatScenarioAction;
 import rpg.world.scenarios.Dungeon;
+import rpg.world.scenarios.DungeonBossAccess;
+import rpg.world.scenarios.DungeonBossAccessResolver;
+import rpg.world.scenarios.DungeonBossGateDefinition;
+import rpg.world.scenarios.DungeonProgress;
 import rpg.world.scenarios.Scenario;
 import rpg.world.scenarios.ScenarioCatalog;
 import rpg.world.shops.ShopAccessType;
@@ -69,12 +124,11 @@ import rpg.world.shops.ShopCatalog;
 import rpg.world.shops.ShopDefinition;
 import rpg.world.shops.ShopState;
 import rpg.world.shops.ShopStateCatalog;
+import rpg.world.shops.ShopStateGenerator;
 import rpg.world.transport.CityTransportCatalog;
 import rpg.world.transport.CityTransportDefinition;
 import rpg.world.travel.TravelProgress;
 import rpg.world.travel.TravelRouteDefinition;
-import rpg.world.shops.ShopStateGenerator;
-import rpg.world.scenarios.DungeonProgress;
 
 // Controls navigation and interaction with the game world.
 public class World {
@@ -82,6 +136,10 @@ public class World {
 	private static final int HOURS_PER_FINISHED_BATTLE = 1;
 
 	private final CampaignSaveService campaignSaveService;
+	private final QuestProgressService questProgressService;
+	private final QuestNpcInteractionResolver questNpcInteractionResolver;
+	private final RecruitmentCandidateStateCatalog candidateStateCatalog;
+	private final RecruitmentCandidateIntroductionService candidateIntroductionService;
 
 	private final CityLocationMenu cityLocationMenu;
 	private final CityMenu cityMenu;
@@ -98,6 +156,18 @@ public class World {
 	private final ShopMenu shopMenu;
 	private final ExitConfirmationMenu exitConfirmationMenu;
 	private final PartyRescueScreen partyRescueScreen;
+	private final NarrativeLocationMenu narrativeLocationMenu;
+	private final NpcInteractionMenu npcInteractionMenu;
+	private final DialoguePresenter dialoguePresenter;
+	private final DialogueCatalog dialogueCatalog;
+	private final QuestOfferMenu questOfferMenu;
+	private final QuestProgressCoordinator questProgressCoordinator;
+	private final QuestProgressPresenter questProgressPresenter;
+	private final QuestMenu questMenu;
+	private final ClassPathChoiceCoordinator classPathChoiceCoordinator;
+	private final ClassPathRecruitmentService classPathRecruitmentService;
+	private final AllyRecruitmentMenu allyRecruitmentMenu;
+	private final ClassPathTransitionFailurePresenter classPathTransitionFailurePresenter;
 
 	private final ItemCatalog itemCatalog;
 	private final CrafterCatalog crafterCatalog;
@@ -108,6 +178,13 @@ public class World {
 	private final ShopCatalog shopCatalog;
 	private final ShopStateGenerator shopStateGenerator;
 	private ShopStateCatalog shopStateCatalog;
+	private final NarrativeLocationCatalog narrativeLocationCatalog;
+	private final NpcCatalog npcCatalog;
+	private final NpcPlacementCatalog npcPlacementCatalog;
+	private final RequirementCatalog requirementCatalog;
+	private final QuestCatalog questCatalog;
+	private final QuestDialogueCatalog questDialogueCatalog;
+	private final RequirementEvaluator requirementEvaluator;
 
 	private final ExplorationRewardGenerator explorationRewardGenerator;
 	private final ExplorationEventGenerator explorationEventGenerator;
@@ -115,12 +192,16 @@ public class World {
 
 	private final WorldProgress worldProgress;
     private final DungeonProgress dungeonProgress;
+    private final DungeonBossAccessResolver dungeonBossAccessResolver;
 	private final WorldClock worldClock;
 	private final TravelProgress travelProgress;
+	private final QuestProgress questProgress;
+	private final CampaignFlags campaignFlags;
 	private final BattleCoordinator battleCoordinator;
 
 	private Party party;
 	private ExplorationSession explorationSession;
+	private final QuestTransportState questTransportState;
 	private Random random;
 	private Scenario currentScenario;
 
@@ -147,28 +228,49 @@ public class World {
 			ExplorationRewardCatalog explorationRewardCatalog,
 			ScenarioCatalog scenarioCatalog,
 			WorldProgress worldProgress,
-            DungeonProgress dungeonProgress,
+			DungeonProgress dungeonProgress,
+			DungeonBossAccessResolver dungeonBossAccessResolver,
 			WorldClock worldClock,
 			CityTransportCatalog cityTransportCatalog,
 			InnCatalog innCatalog,
 			ScenarioBranchCatalog scenarioBranchCatalog,
-            TravelProgress travelProgress) {
+			TravelProgress travelProgress,
+			NarrativeLocationCatalog narrativeLocationCatalog,
+			NpcCatalog npcCatalog,
+			NpcPlacementCatalog npcPlacementCatalog,
+			DialogueCatalog dialogueCatalog,
+			RequirementCatalog requirementCatalog,
+			QuestProgress questProgress,
+			QuestTransportState questTransportState,
+			CampaignFlags campaignFlags,
+			RecruitmentCandidateStateCatalog candidateStateCatalog,
+			RecruitmentCandidateIntroductionService candidateIntroductionService,
+			QuestProgressService questProgressService,
+			ClassPathChoiceCoordinator classPathChoiceCoordinator,
+			ClassPathRecruitmentService classPathRecruitmentService,
+			AllyRecruitmentMenu allyRecruitmentMenu,
+			ClassPathTransitionFailurePresenter classPathTransitionFailurePresenter,
+			QuestCatalog questCatalog,
+			QuestRewardCatalog questRewardCatalog,
+			QuestDialogueCatalog questDialogueCatalog) {
 
 		Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 		Objects.requireNonNull(enemyDropCatalog, "Enemy drop catalog cannot be null.");
 		Objects.requireNonNull(encounterCatalog, "Encounter catalog cannot be null.");
 
-		// Core world state and shared data
-		this.party = Objects.requireNonNull(party, "Party cannot be null.");
+        // Core world state and shared data
+        this.party = Objects.requireNonNull(party, "Party cannot be null.");
         this.currentScenario =
                 Objects.requireNonNull(initialScenario, "Initial scenario cannot be null.");
-		this.enemyCatalog = Objects.requireNonNull(enemyCatalog, "Enemy catalog cannot be null.");
+        this.enemyCatalog = Objects.requireNonNull(enemyCatalog, "Enemy catalog cannot be null.");
         this.scenarioCatalog =
                 Objects.requireNonNull(scenarioCatalog, "Scenario catalog cannot be null.");
         this.worldProgress =
                 Objects.requireNonNull(worldProgress, "World progress cannot be null.");
         this.dungeonProgress =
-                Objects.requireNonNull(dungeonProgress, "Dungeon progress cannot be null.");
+				Objects.requireNonNull(dungeonProgress, "Dungeon progress cannot be null.");
+		this.dungeonBossAccessResolver = Objects
+				.requireNonNull(dungeonBossAccessResolver, "Dungeon boss access resolver cannot be null.");
         this.scenarioBranchCatalog =
                 Objects.requireNonNull(
                         scenarioBranchCatalog, "Scenario branch catalog cannot be null.");
@@ -176,91 +278,192 @@ public class World {
                 Objects.requireNonNull(travelProgress, "Travel progress cannot be null.");
         this.crafterCatalog =
                 Objects.requireNonNull(crafterCatalog, "Crafter catalog cannot be null.");
-		this.itemCatalog = Objects.requireNonNull(itemCatalog, "Item catalog cannot be null.");
-		this.shopCatalog = Objects.requireNonNull(shopCatalog, "Shop catalog cannot be null.");
+        this.itemCatalog = Objects.requireNonNull(itemCatalog, "Item catalog cannot be null.");
+        this.narrativeLocationCatalog =
+                Objects.requireNonNull(
+                        narrativeLocationCatalog, "Narrative location catalog cannot be null.");
+        this.npcCatalog = Objects.requireNonNull(npcCatalog, "NPC catalog cannot be null.");
+        this.npcPlacementCatalog =
+                Objects.requireNonNull(
+                        npcPlacementCatalog, "NPC placement catalog cannot be null.");
+        this.requirementCatalog =
+                Objects.requireNonNull(requirementCatalog, "Requirement catalog cannot be null.");
+        this.questProgress =
+                Objects.requireNonNull(questProgress, "Quest progress cannot be null.");
+        this.campaignFlags =
+                Objects.requireNonNull(campaignFlags, "Campaign flags cannot be null.");
+		this.candidateStateCatalog =
+				Objects.requireNonNull(
+						candidateStateCatalog,
+						"Recruitment candidate state catalog cannot be null.");
+		this.candidateIntroductionService =
+				Objects.requireNonNull(
+						candidateIntroductionService,
+						"Recruitment candidate introduction service cannot be null.");
+        this.questCatalog = Objects.requireNonNull(questCatalog, "Quest catalog cannot be null.");
+        this.questDialogueCatalog =
+                Objects.requireNonNull(
+                        questDialogueCatalog, "Quest dialogue catalog cannot be null.");
+        this.requirementEvaluator = new RequirementEvaluator(this.itemCatalog);
+        this.questProgressService =
+				Objects.requireNonNull(
+						questProgressService,
+						"Quest progress service cannot be null.");
+        this.questNpcInteractionResolver =
+                new QuestNpcInteractionResolver(
+                        this.questCatalog,
+                        this.questProgress,
+                        this.requirementCatalog,
+                        this.requirementEvaluator,
+                        this.party,
+                        this.campaignFlags);
+        this.shopCatalog = Objects.requireNonNull(shopCatalog, "Shop catalog cannot be null.");
         this.shopStateGenerator =
                 Objects.requireNonNull(shopStateGenerator, "Shop state generator cannot be null.");
         this.shopStateCatalog =
                 Objects.requireNonNull(shopStateCatalog, "Shop state catalog cannot be null.");
-		this.innCatalog = Objects.requireNonNull(innCatalog, "Inn catalog cannot be null.");
+        this.innCatalog = Objects.requireNonNull(innCatalog, "Inn catalog cannot be null.");
         this.cityTransportCatalog =
                 Objects.requireNonNull(
                         cityTransportCatalog, "City transport catalog cannot be null.");
-		this.worldProgress.discover(this.currentScenario.getId());
-		this.worldClock = Objects.requireNonNull(worldClock, "World clock cannot be null.");
+        this.worldProgress.discover(this.currentScenario.getId());
+        this.worldClock = Objects.requireNonNull(worldClock, "World clock cannot be null.");
+		this.dialogueCatalog =
+				Objects.requireNonNull(dialogueCatalog, "Dialogue catalog cannot be null.");
 
-		// Shared random generator and gameplay services
-		this.random = new Random();
-		BattleRewardService rewardService = new BattleRewardService(random);
-		BattleRewardScreen rewardScreen = new BattleRewardScreen(consoleInput);
-        this.battleCoordinator =
-                new BattleCoordinator(
-				this.party,
-				consoleInput,
-				enemyDropCatalog,
-				rewardService,
-				rewardScreen,
-                        random);
+        // Shared random generator and gameplay services
+        this.random = new Random();
+        BattleRewardService rewardService = new BattleRewardService(random);
         this.encounterGenerator =
                 new EncounterGenerator(this.enemyCatalog, encounterCatalog, random);
         this.explorationRewardGenerator =
                 new ExplorationRewardGenerator(explorationRewardCatalog, random);
-		this.explorationEventGenerator = new ExplorationEventGenerator(random);
+        this.explorationEventGenerator = new ExplorationEventGenerator(random);
         this.campaignSaveService =
-                Objects.requireNonNull(
-                        campaignSaveService, "Campaign save service cannot be null.");
+        Objects.requireNonNull(campaignSaveService, "Campaign save service cannot be null.");
+        Objects.requireNonNull(questRewardCatalog, "Quest reward catalog cannot be null.");
+		this.classPathChoiceCoordinator =
+				Objects.requireNonNull(
+						classPathChoiceCoordinator,
+						"Class path choice coordinator cannot be null.");
+		this.classPathRecruitmentService =
+				Objects.requireNonNull(
+						classPathRecruitmentService,
+						"Class path recruitment service cannot be null.");
+		this.classPathTransitionFailurePresenter =
+				Objects.requireNonNull(
+						classPathTransitionFailurePresenter,
+						"Class path transition failure presenter cannot be null.");
+		this.questTransportState = Objects.requireNonNull(questTransportState, "Quest transport state cannot be null.");
 
-		// User interface
-		this.epicEncounterMenu = new EpicEncounterMenu(consoleInput);
-		this.combatScenarioMenu = new CombatScenarioMenu(consoleInput, this.worldClock);
-		this.routeMenu = new RouteMenu(consoleInput, this.travelProgress);
-		this.scenarioBranchMenu = new ScenarioBranchMenu(consoleInput);
+        // User interface
+        this.epicEncounterMenu = new EpicEncounterMenu(consoleInput);
+        this.combatScenarioMenu = new CombatScenarioMenu(consoleInput, this.worldClock);
+        this.routeMenu = new RouteMenu(consoleInput, this.travelProgress);
+        this.scenarioBranchMenu = new ScenarioBranchMenu(consoleInput);
         EquipmentMenu equipmentMenu =
                 new EquipmentMenu(
-				this.party,
-				consoleInput,
+                        this.party,
+                        consoleInput,
                         Objects.requireNonNull(
                                 equipmentCatalog, "Equipment catalog cannot be null."),
-				this.itemCatalog,
+                        this.itemCatalog,
                         Objects.requireNonNull(
                                 equipmentService, "Equipment service cannot be null."));
-		this.inventoryMenu = new InventoryMenu(this.party, consoleInput, equipmentMenu);
-		this.partyStatusMenu = new PartyStatusMenu(this.party, consoleInput, equipmentMenu);
-		this.cityMenu = new CityMenu(consoleInput, this.worldClock);
+        this.inventoryMenu = new InventoryMenu(this.party, consoleInput, equipmentMenu);
+        this.partyStatusMenu = new PartyStatusMenu(this.party, consoleInput, equipmentMenu);
+        this.cityMenu = new CityMenu(consoleInput, this.worldClock);
         this.cityTransportMenu =
                 new CityTransportMenu(this.party, consoleInput, this.scenarioCatalog);
-		this.cityLocationMenu = new CityLocationMenu(consoleInput);
+        this.cityLocationMenu = new CityLocationMenu(consoleInput);
+        this.narrativeLocationMenu = new NarrativeLocationMenu(consoleInput);
+        this.npcInteractionMenu = new NpcInteractionMenu(consoleInput);
+        this.questOfferMenu = new QuestOfferMenu(consoleInput);
+        this.questProgressPresenter =
+                new QuestProgressPresenter(
+                        consoleInput, this.questCatalog, questRewardCatalog, this.itemCatalog);
+        this.questProgressCoordinator =
+                new QuestProgressCoordinator(
+                        this.questProgressService, this.questProgressPresenter);
+        BattleRewardScreen rewardScreen = new BattleRewardScreen(consoleInput);
+        this.battleCoordinator =
+                new BattleCoordinator(
+                        this.party,
+                        consoleInput,
+                        enemyDropCatalog,
+                        rewardService,
+                        rewardScreen,
+                        this.questProgressCoordinator,
+                        random);
+        this.questMenu =
+                new QuestMenu(
+                        consoleInput,
+                        this.party,
+                        this.questProgress,
+                        questRewardCatalog,
+                        this.itemCatalog,
+                        this.questProgressCoordinator);
+        this.dialoguePresenter =
+                new DialoguePresenter(
+                        consoleInput,
+						this.dialogueCatalog,
+                        this.npcCatalog,
+						this.enemyCatalog,
+						this.candidateStateCatalog);
         this.craftingMenu =
                 new CraftingMenu(
-				this.party,
-				consoleInput,
-				this.itemCatalog,
+                        this.party,
+                        consoleInput,
+                        this.itemCatalog,
                         Objects.requireNonNull(
-                                craftingRecipeCatalog, "Crafting recipe catalog cannot be null."));
-		this.innMenu = new InnMenu(this.party, consoleInput);
-		this.shopMenu = new ShopMenu(this.party, consoleInput, this.worldClock);
-		this.partyRescueScreen = new PartyRescueScreen(consoleInput);
-		this.exitConfirmationMenu = new ExitConfirmationMenu(consoleInput);
+                                craftingRecipeCatalog, "Crafting recipe catalog cannot be null."),
+                        this.questProgressCoordinator);
+        this.innMenu = new InnMenu(this.party, consoleInput);
+        this.shopMenu =
+                new ShopMenu(
+                        this.party, consoleInput, this.worldClock, this.questProgressCoordinator);
+        this.partyRescueScreen = new PartyRescueScreen(consoleInput);
+        this.exitConfirmationMenu = new ExitConfirmationMenu(consoleInput);
+		this.allyRecruitmentMenu =
+				Objects.requireNonNull(
+						allyRecruitmentMenu,
+						"Ally recruitment menu cannot be null.");
 
-		// Initial exploration state
-		if (this.currentScenario instanceof CombatScenario combatScenario) {
+        // Initial exploration state
+        if (this.currentScenario instanceof CombatScenario combatScenario) {
             this.explorationSession =
                     new ExplorationSession(combatScenario.getExplorationSettings());
-		} else {
-			this.explorationSession = null;
-		}
+        } else {
+            this.explorationSession = null;
+        }
 
-		// Runtime flags
-		this.running = true;
-		this.shouldDisplayScenarioDescription = true;
-		this.scenarioNameAlreadyDisplayed = false;
-	}
+        // Runtime flags
+        this.running = true;
+        this.shouldDisplayScenarioDescription = true;
+        this.scenarioNameAlreadyDisplayed = false;
+    }
 
 	public void start() {
-		while (running) {
-			displayCurrentScenario();
-			executeCurrentScenarioMenu();
-		}
+	    while (running) {
+	        displayCurrentScenario();
+	        executeCurrentScenarioMenu();
+	        executePendingQuestTransport();
+	    }
+	}
+
+	private void executePendingQuestTransport() {
+	    Optional<String> pendingDestination =
+	            questTransportState.consume();
+
+	    if (pendingDestination.isEmpty()) {
+	        return;
+	    }
+
+	    Scenario destination =
+	            scenarioCatalog.getById(
+	                    pendingDestination.orElseThrow());
+
+	    changeScenario(destination);
 	}
 
 	private void displayCurrentScenario() {
@@ -271,7 +474,7 @@ public class World {
 		scenarioNameAlreadyDisplayed = false;
 
 		if (shouldDisplayScenarioDescription) {
-			System.out.println(currentScenario.getDescription());
+			System.out.println("\n"+currentScenario.getDescription());
 			shouldDisplayScenarioDescription = false;
 		}
 
@@ -358,8 +561,11 @@ public class World {
 	private void executeCityMenu(City city) {
 		List<CityAction> availableActions = getAvailableCityActions(city);
 
-        Optional<CityAction> selectedAction =
-                cityMenu.selectAction(city.getName(), availableActions);
+		Optional<CityAction> selectedAction =
+		        cityMenu.selectAction(
+		                city.getName(),
+		                availableActions,
+		                getMarkedCityActions(city, availableActions));
 
 		if (selectedAction.isEmpty()) {
 			requestExitWithoutSaving();
@@ -369,122 +575,291 @@ public class World {
 		executeCityAction(city, selectedAction.get());
 	}
 
-	private List<CityAction> getAvailableCityActions(City city) {
-		List<CityAction> availableActions = new ArrayList<>();
+    private List<CityAction> getAvailableCityActions(City city) {
+        List<CityAction> availableActions = new ArrayList<>();
 
-		boolean hasInn = innCatalog.findByScenarioId(city.getId()).isPresent();
+        boolean hasInn = innCatalog.findByScenarioId(city.getId()).isPresent();
 
-		boolean hasCityShop = !getCityShops(city).isEmpty();
+        boolean hasCityShop = !getCityShops(city).isEmpty();
 
-		boolean hasCrafter = !getCityCrafters(city).isEmpty();
+        boolean hasCrafter = !getCityCrafters(city).isEmpty();
 
-		if (hasInn || hasCityShop || hasCrafter) {
-			availableActions.add(CityAction.VISIT_LOCATION);
-		}
+        boolean hasNarrativeLocation = !getVisibleNarrativeLocations(city.getId()).isEmpty();
 
-		if (travelProgress.hasUnlockedRoutesFrom(city.getId())) {
-			availableActions.add(CityAction.LEAVE_CITY);
-		}
+        if (hasInn || hasCityShop || hasCrafter || hasNarrativeLocation) {
+            availableActions.add(CityAction.VISIT_LOCATION);
+        }
 
-		if (!getAvailableCityTransportDestinations().isEmpty()) {
-			availableActions.add(CityAction.CITY_TRANSPORT);
-		}
+        if (travelProgress.hasUnlockedRoutesFrom(city.getId())) {
+            availableActions.add(CityAction.LEAVE_CITY);
+        }
 
-		availableActions.add(CityAction.INVENTORY);
-		availableActions.add(CityAction.VIEW_STATUS);
+        if (!getAvailableCityTransportDestinations().isEmpty()) {
+            availableActions.add(CityAction.CITY_TRANSPORT);
+        }
 
-		return List.copyOf(availableActions);
-	}
+        availableActions.add(CityAction.INVENTORY);
+        availableActions.add(CityAction.QUESTS);
+        availableActions.add(CityAction.VIEW_STATUS);
 
-	private void executeCityAction(City city, CityAction action) {
-		switch (action) {
-		case VISIT_LOCATION -> executeCityLocationMenu(city);
+        return List.copyOf(availableActions);
+    }
 
-		case LEAVE_CITY -> executeRouteMenu();
+    private void executeCityAction(City city, CityAction action) {
+        switch (action) {
+            case VISIT_LOCATION -> executeCityLocationMenu(city);
 
-		case INVENTORY -> inventoryMenu.open();
+            case LEAVE_CITY -> executeRouteMenu();
 
-		case VIEW_STATUS -> partyStatusMenu.open();
+            case INVENTORY -> inventoryMenu.open();
 
-		case CITY_TRANSPORT -> executeCityTransportMenu();
-		}
-	}
+            case QUESTS -> questMenu.open();
 
-	private void executeCityLocationMenu(City city) {
-		Optional<InnDefinition> innDefinition = innCatalog.findByScenarioId(city.getId());
+            case VIEW_STATUS -> partyStatusMenu.open();
 
-		List<ShopDefinition> cityShops = getCityShops(city);
-		List<CrafterDefinition> cityCrafters = getCityCrafters(city);
+            case CITY_TRANSPORT -> executeCityTransportMenu();
+        }
+    }
 
-		List<String> locationNames = new ArrayList<>();
+    private void executeCityLocationMenu(City city) {
+        Optional<InnDefinition> innDefinition = innCatalog.findByScenarioId(city.getId());
 
-		innDefinition.ifPresent(definition -> locationNames.add(definition.getName()));
+        List<ShopDefinition> cityShops = getCityShops(city);
 
-		for (ShopDefinition shopDefinition : cityShops) {
-			locationNames.add(shopDefinition.getName());
-		}
+        List<CrafterDefinition> cityCrafters = getCityCrafters(city);
 
-		for (CrafterDefinition crafterDefinition : cityCrafters) {
-			locationNames.add(crafterDefinition.getName());
-		}
+        List<NarrativeLocationDefinition> narrativeLocations =
+                getVisibleNarrativeLocations(city.getId());
 
-		OptionalInt selectedLocation = cityLocationMenu.selectLocation(locationNames);
+        List<String> locationNames = new ArrayList<>();
 
-		if (selectedLocation.isEmpty()) {
-			return;
-		}
+        innDefinition.ifPresent(definition -> locationNames.add(definition.getName()));
 
-		int selectedIndex = selectedLocation.getAsInt();
+        for (ShopDefinition shopDefinition : cityShops) {
+            locationNames.add(shopDefinition.getName());
+        }
 
-		if (innDefinition.isPresent()) {
-			if (selectedIndex == 0) {
-				executeInnMenu(innDefinition.get());
-				return;
-			}
+        for (CrafterDefinition crafterDefinition : cityCrafters) {
+            locationNames.add(crafterDefinition.getName());
+        }
 
-			selectedIndex--;
-		}
+        for (NarrativeLocationDefinition locationDefinition
+                : narrativeLocations) {
+            String locationLabel =
+                    locationDefinition.getName();
 
-		if (selectedIndex < cityShops.size()) {
-			ShopDefinition selectedShop = cityShops.get(selectedIndex);
+            if (hasQuestInteractionInLocation(
+                    locationDefinition)) {
+                locationLabel = "\u001B[33m[!]\u001B[0m " + locationLabel;
+            }
 
-			ShopState selectedShopState = shopStateCatalog.getByShopId(selectedShop.getId());
+            locationNames.add(locationLabel);
+        }
 
-			shopMenu.open(selectedShopState);
-			return;
-		}
+        OptionalInt selectedLocation = cityLocationMenu.selectLocation(locationNames, city.getName());
 
-		selectedIndex -= cityShops.size();
+        if (selectedLocation.isEmpty()) {
+            return;
+        }
 
-		CrafterDefinition selectedCrafter = cityCrafters.get(selectedIndex);
+        int selectedIndex = selectedLocation.getAsInt();
 
-		craftingMenu.open(selectedCrafter);
-	}
+        if (innDefinition.isPresent()) {
+            if (selectedIndex == 0) {
+                executeInnMenu(innDefinition.get());
+                return;
+            }
 
-	private void executeInnMenu(InnDefinition innDefinition) {
-		while (running) {
-			InnMenu.Selection selection = innMenu.open(innDefinition);
+            selectedIndex--;
+        }
 
-			if (selection == InnMenu.Selection.BACK) {
-				return;
-			}
+        if (selectedIndex < cityShops.size()) {
+            ShopDefinition selectedShop = cityShops.get(selectedIndex);
 
-			CampaignSaveResult saveResult = saveCampaign(innDefinition);
+            ShopState selectedShopState = shopStateCatalog.getByShopId(selectedShop.getId());
 
-			if (!saveResult.isSuccess()) {
-				displaySaveFailure(saveResult);
-				continue;
-			}
+            shopMenu.open(selectedShopState);
+            return;
+        }
 
-			System.out.println();
-			System.out.println("Campanha salva com sucesso.");
+        selectedIndex -= cityShops.size();
 
-			if (selection == InnMenu.Selection.SAVE_AND_EXIT) {
-				terminateGame();
-				return;
-			}
-		}
-	}
+        if (selectedIndex < cityCrafters.size()) {
+            CrafterDefinition selectedCrafter = cityCrafters.get(selectedIndex);
+
+            craftingMenu.open(selectedCrafter);
+            return;
+        }
+
+        selectedIndex -= cityCrafters.size();
+
+        NarrativeLocationDefinition selectedNarrativeLocation =
+                narrativeLocations.get(selectedIndex);
+
+        executeNarrativeLocationMenu(city, selectedNarrativeLocation);
+    }
+
+    private void executeNarrativeLocationMenu(
+            City city,
+            NarrativeLocationDefinition locationDefinition
+    ) {
+        while (true) {
+            List<NpcDefinition> visibleNpcs =
+                    getVisibleNpcs(locationDefinition.getId());
+
+            List<String> npcLabels =
+                    visibleNpcs.stream()
+                            .map(
+                                    npcDefinition -> {
+                                        String npcLabel =
+                                                npcDefinition.getName();
+
+                                        if (!questNpcInteractionResolver
+                                                .getAvailableQuests(
+                                                        npcDefinition.getId())
+                                                .isEmpty()) {
+                                            return "\u001B[33m[!]\u001B[0m " + npcLabel;
+                                        }
+
+                                        return npcLabel;
+                                    })
+                            .toList();
+
+            OptionalInt selectedNpc =
+                    narrativeLocationMenu.selectNpc(
+                            city.getName(),
+                            locationDefinition,
+                            npcLabels);
+
+            if (selectedNpc.isEmpty()) {
+                return;
+            }
+
+            NpcDefinition npcDefinition =
+                    visibleNpcs.get(selectedNpc.getAsInt());
+
+            executeNpcInteractionMenu(
+                    city,
+                    locationDefinition,
+                    npcDefinition);
+        }
+    }
+
+    private void executeNpcInteractionMenu(
+            City city,
+            NarrativeLocationDefinition locationDefinition,
+            NpcDefinition npcDefinition) {
+        while (true) {
+            List<QuestDefinition> availableQuests =
+                    questNpcInteractionResolver.getAvailableQuests(npcDefinition.getId());
+
+            List<String> questTitles =
+                    availableQuests.stream().map(QuestDefinition::getTitle).toList();
+
+            NpcInteractionMenu.Selection selection =
+                    npcInteractionMenu.selectAction(
+                            city.getName(), locationDefinition, npcDefinition, questTitles);
+
+            switch (selection.action()) {
+                case TALK ->
+			displayDialogue(
+                                npcDefinition.getDefaultDialogueId(),
+                                createNarrativeHeaders(city, locationDefinition));
+
+                case QUEST -> {
+                    QuestDefinition selectedQuest = availableQuests.get(selection.questIndex());
+
+                    executeQuestNpcInteraction(
+                            city, locationDefinition, npcDefinition, selectedQuest);
+                }
+
+                case BACK -> {
+                    return;
+                }
+            }
+        }
+    }
+
+    private List<NarrativeLocationDefinition>
+    getVisibleNarrativeLocations(String cityId) {
+        List<NarrativeLocationDefinition> visibleLocations =
+                new ArrayList<>();
+
+        for (NarrativeLocationDefinition locationDefinition
+                : narrativeLocationCatalog.getByCityId(cityId)) {
+            if (isRequirementSatisfied(
+                    locationDefinition.getRequirementSetId())) {
+                visibleLocations.add(locationDefinition);
+            }
+        }
+
+        return List.copyOf(visibleLocations);
+    }
+
+    private List<NpcDefinition> getVisibleNpcs(
+            String narrativeLocationId
+            ) {
+        List<NpcDefinition> visibleNpcs =
+                new ArrayList<>();
+
+        for (NpcPlacementDefinition placementDefinition
+                : npcPlacementCatalog.getByLocationId(
+                        narrativeLocationId)) {
+            if (!isRequirementSatisfied(
+                    placementDefinition.getRequirementSetId())) {
+                continue;
+            }
+
+            visibleNpcs.add(
+                    npcCatalog.getById(
+                            placementDefinition.getNpcId()));
+        }
+
+        return List.copyOf(visibleNpcs);
+    }
+
+    private boolean isRequirementSatisfied(
+            Optional<String> requirementSetId
+            ) {
+        if (requirementSetId.isEmpty()) {
+            return true;
+        }
+
+        RequirementSetDefinition requirementSet =
+                requirementCatalog.getById(
+                        requirementSetId.orElseThrow());
+
+        return requirementEvaluator.isSatisfied(
+                requirementSet,
+                party,
+                questProgress,
+                campaignFlags);
+    }
+
+    private void executeInnMenu(InnDefinition innDefinition) {
+        while (running) {
+            InnMenu.Selection selection = innMenu.open(innDefinition);
+
+            if (selection == InnMenu.Selection.BACK) {
+                return;
+            }
+
+            CampaignSaveResult saveResult = saveCampaign(innDefinition);
+
+            if (!saveResult.isSuccess()) {
+                displaySaveFailure(saveResult);
+                continue;
+            }
+
+            System.out.println();
+            System.out.println("Campanha salva com sucesso.");
+
+            if (selection == InnMenu.Selection.SAVE_AND_EXIT) {
+                terminateGame();
+                return;
+            }
+        }
+    }
 
 	private CampaignSaveResult saveCampaign(InnDefinition innDefinition) {
 		if (!currentScenario.getId().equals(innDefinition.getScenarioId())) {
@@ -503,7 +878,10 @@ public class World {
                             travelProgress,
                             dungeonProgress,
                             worldClock,
-                            shopStateCatalog);
+                            shopStateCatalog,
+							questProgress,
+							campaignFlags,
+							candidateStateCatalog);
 		} catch (IllegalArgumentException | IllegalStateException | ArithmeticException exception) {
 			return CampaignSaveResult.ENCODING_FAILED;
 		}
@@ -528,18 +906,327 @@ public class World {
 		}
 	}
 
-	private void executeCombatScenarioMenu() {
-		List<CombatScenarioAction> availableActions = getAvailableCombatScenarioActions();
+    private void executeCombatScenarioMenu() {
+        List<CombatScenarioAction> availableActions = getAvailableCombatScenarioActions();
 
         Optional<CombatScenarioAction> selectedAction =
-                combatScenarioMenu.selectAction(availableActions);
+                combatScenarioMenu.selectAction(
+                        availableActions, getMarkedCombatScenarioActions(availableActions));
 
-		if (selectedAction.isEmpty()) {
-			requestExitWithoutSaving();
+        if (selectedAction.isEmpty()) {
+            requestExitWithoutSaving();
+            return;
+        }
+
+        executeCombatScenarioAction(selectedAction.get());
+    }
+
+    private void executeQuestNpcInteraction(
+            City city,
+            NarrativeLocationDefinition locationDefinition,
+            NpcDefinition npcDefinition,
+            QuestDefinition questDefinition) {
+        requireAvailableQuestInteraction(npcDefinition.getId(), questDefinition.getId());
+
+        QuestStatus status = questProgress.getStatus(questDefinition.getId());
+
+        switch (status) {
+            case NOT_STARTED ->
+                    executeQuestOffer(city, locationDefinition, npcDefinition, questDefinition);
+
+            case ACTIVE ->
+                    executeActiveQuestInteraction(
+                            city, locationDefinition, npcDefinition, questDefinition);
+
+            case COMPLETED ->
+                    throw new IllegalStateException(
+                            "Completed quest cannot provide an NPC interaction: "
+                                    + questDefinition.getId());
+        }
+    }
+
+    private void executeQuestOffer(
+            City city,
+            NarrativeLocationDefinition locationDefinition,
+            NpcDefinition npcDefinition,
+            QuestDefinition questDefinition) {
+        List<String> headers = createNarrativeHeaders(city, locationDefinition);
+
+        displayRequiredQuestDialogue(
+                questDefinition.getId(), 0, QuestDialogueContext.OFFER, headers);
+
+        QuestOfferMenu.Selection selection = questOfferMenu.select(headers, questDefinition);
+
+        if (selection == QuestOfferMenu.Selection.DECLINE) {
+            displayOptionalQuestDialogue(
+                    questDefinition.getId(), 0, QuestDialogueContext.DECLINE, headers);
+
+            return;
+        }
+
+        displayOptionalQuestDialogue(
+                questDefinition.getId(), 0, QuestDialogueContext.ACCEPT, headers);
+
+        requireAvailableQuestInteraction(npcDefinition.getId(), questDefinition.getId());
+
+        QuestProgressResult result = questProgressService.startQuest(questDefinition.getId());
+
+        questProgressPresenter.displayQuestStarted(questDefinition, result);
+    }
+
+    private void executeActiveQuestInteraction(
+            City city,
+            NarrativeLocationDefinition locationDefinition,
+            NpcDefinition npcDefinition,
+            QuestDefinition questDefinition) {
+		if (classPathRecruitmentService.hasRecruitmentForCurrentStep(
+				questDefinition.getId())) {
+			executeClassPathRecruitmentInteraction(
+					city,
+					locationDefinition,
+					npcDefinition,
+					questDefinition);
+
 			return;
 		}
 
-		executeCombatScenarioAction(selectedAction.get());
+		executeStandardQuestInteraction(
+				city,
+				locationDefinition,
+				npcDefinition,
+				questDefinition);
+	}
+
+	private void executeStandardQuestInteraction(
+			City city,
+			NarrativeLocationDefinition locationDefinition,
+			NpcDefinition npcDefinition,
+			QuestDefinition questDefinition) {
+        int currentStep =
+                questProgress.getCurrentStep(questDefinition.getId()).orElseThrow().getStep();
+
+        List<String> headers = createNarrativeHeaders(city, locationDefinition);
+
+        List<QuestCompletionFailure> failures =
+                questProgressService.validateNpcInteractionCompletion(
+                        questDefinition.getId(), npcDefinition.getId());
+
+        if (!failures.isEmpty()) {
+            if (containsFailureType(failures, QuestCompletionFailureType.MISSING_DELIVERY_ITEM)) {
+                displayOptionalQuestDialogue(
+                        questDefinition.getId(),
+                        currentStep,
+                        QuestDialogueContext.PENDING,
+                        headers);
+            }
+
+            questProgressPresenter.displayCompletionFailures(failures);
+
+            return;
+        }
+
+        displayRequiredQuestDialogue(
+                questDefinition.getId(), currentStep, QuestDialogueContext.COMPLETE, headers);
+
+        failures =
+                questProgressService.validateNpcInteractionCompletion(
+                        questDefinition.getId(), npcDefinition.getId());
+
+        if (!failures.isEmpty()) {
+            questProgressPresenter.displayCompletionFailures(failures);
+
+            return;
+        }
+
+        QuestProgressResult result =
+                questProgressService.completeNpcInteraction(
+                        questDefinition.getId(), npcDefinition.getId());
+
+        questProgressPresenter.display(result);
+    }
+
+	private void executeClassPathRecruitmentInteraction(
+			City city,
+			NarrativeLocationDefinition locationDefinition,
+			NpcDefinition npcDefinition,
+			QuestDefinition questDefinition) {
+		int currentStep =
+				questProgress
+				.getCurrentStep(questDefinition.getId())
+				.orElseThrow()
+				.getStep();
+
+		List<String> headers =
+				createNarrativeHeaders(city, locationDefinition);
+		QuestDialogueDefinition preCompletionDialogue =
+		        getRequiredQuestDialogue(
+		                questDefinition.getId(),
+		                currentStep,
+		                QuestDialogueContext.PRE_COMPLETE);
+
+		QuestDialogueDefinition completionDialogue =
+		        getRequiredQuestDialogue(
+		                questDefinition.getId(),
+		                currentStep,
+		                QuestDialogueContext.COMPLETE);
+
+		displayDialogue(
+		        preCompletionDialogue.getDialogueId(),
+		        headers);
+
+		PlayableClassDefinition selectedClass =
+		        classPathChoiceCoordinator.chooseClassPath();
+
+		ClassPathRecruitmentPreparation preparation =
+				classPathRecruitmentService.prepare(
+						questDefinition.getId(),
+						npcDefinition.getId(),
+						selectedClass.getId());
+
+		if (!preparation.isReady()) {
+			displayClassPathRecruitmentFailures(preparation);
+			return;
+		}
+
+		ClassPathRecruitmentPlan plan = preparation.getPlan();
+
+		displayDialogue(
+				completionDialogue.getDialogueId(),
+				headers);
+
+		allyRecruitmentMenu.confirm(
+				plan.getAllyRecruitmentPlan().getAlly());
+
+		QuestProgressResult result =
+				classPathRecruitmentService.apply(plan);
+
+		questProgressPresenter.display(result);
+	}
+
+	private void displayClassPathRecruitmentFailures(
+			ClassPathRecruitmentPreparation preparation) {
+		if (!preparation.getClassPathFailures().isEmpty()) {
+			classPathTransitionFailurePresenter.display(
+					preparation.getClassPathFailures());
+
+			return;
+		}
+
+		questProgressPresenter.displayCompletionFailures(
+				preparation.getQuestCompletionFailures());
+	}
+
+    private void displayRequiredQuestDialogue(
+			String questId,
+			int step,
+			QuestDialogueContext context,
+			List<String> headers) {
+        QuestDialogueDefinition definition =
+				getRequiredQuestDialogue(questId, step, context);
+
+		displayDialogue(definition.getDialogueId(), headers);
+	}
+
+	private QuestDialogueDefinition getRequiredQuestDialogue(
+			String questId,
+			int step,
+			QuestDialogueContext context) {
+		return questDialogueCatalog
+                        .find(questId, step, context)
+                        .orElseThrow(
+                                () ->
+                                        new IllegalStateException(
+                                                "Required quest dialogue is missing: "
+                                                        + questId
+                                                        + ", step "
+                                                        + step
+                                                        + ", "
+                                                        + context));
+    }
+
+    private void displayOptionalQuestDialogue(
+            String questId, int step, QuestDialogueContext context, List<String> headers) {
+        questDialogueCatalog
+                .find(questId, step, context)
+		.ifPresent(definition -> displayDialogue(definition.getDialogueId(), headers));
+    }
+
+    private static List<String> createNarrativeHeaders(
+            City city, NarrativeLocationDefinition locationDefinition) {
+        return List.of(city.getName(), locationDefinition.getName());
+    }
+
+    private boolean hasQuestInteractionInCity(City city) {
+        for (NarrativeLocationDefinition locationDefinition :
+                getVisibleNarrativeLocations(city.getId())) {
+            if (hasQuestInteractionInLocation(locationDefinition)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean hasQuestInteractionInLocation(NarrativeLocationDefinition locationDefinition) {
+        for (NpcDefinition npcDefinition : getVisibleNpcs(locationDefinition.getId())) {
+            if (!questNpcInteractionResolver.getAvailableQuests(npcDefinition.getId()).isEmpty()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void requireAvailableQuestInteraction(String npcId, String questId) {
+        for (QuestDefinition availableQuest :
+                questNpcInteractionResolver.getAvailableQuests(npcId)) {
+            if (availableQuest.getId().equals(questId)) {
+                return;
+            }
+        }
+
+        throw new IllegalStateException(
+                "Quest interaction is no longer available: " + questId + " through NPC " + npcId);
+    }
+
+    private static boolean containsFailureType(
+            List<QuestCompletionFailure> failures, QuestCompletionFailureType failureType) {
+        for (QuestCompletionFailure failure : failures) {
+            if (failure.getFailureType() == failureType) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+	private void displayDialogue(String dialogueId, List<String> headers) {
+		introduceDialogueCandidates(dialogueId);
+
+		dialoguePresenter.display(dialogueId, party, headers);
+	}
+
+	private void introduceDialogueCandidates(String dialogueId) {
+		DialogueDefinition dialogueDefinition =
+				dialogueCatalog.getById(dialogueId);
+
+		Set<String> candidateIds = new LinkedHashSet<>();
+
+		for (DialogueLineDefinition lineDefinition
+				: dialogueDefinition.getLines()) {
+			if (lineDefinition.getSpeakerType()
+					== DialogueSpeakerType.RECRUIT) {
+				candidateIds.add(
+						lineDefinition.getSpeakerId().orElseThrow());
+			}
+			candidateIds.addAll(
+			        NarrativeTextProcessor.getRecruitmentCandidateIds(
+			                lineDefinition.getText()));
+		}
+
+		for (String candidateId : candidateIds) {
+			candidateIntroductionService.introduce(candidateId);
+		}
 	}
 
 	private List<CombatScenarioAction> getAvailableCombatScenarioActions() {
@@ -562,50 +1249,56 @@ public class World {
 			} else {
 				availableActions.add(CombatScenarioAction.EXPLORE);
 
-				if (hasAvailableScenarioBranch()) {
-					availableActions.add(CombatScenarioAction.FOLLOW_BRANCH);
-				}
-			}
+                if (hasAvailableScenarioBranch()) {
+                    availableActions.add(CombatScenarioAction.FOLLOW_BRANCH);
+                }
+            }
 
-		} else if (travelProgress.hasUnlockedRoutesFrom(currentScenario.getId())) {
-			availableActions.add(CombatScenarioAction.FOLLOW_ROUTE);
-		}
+        } else if (travelProgress.hasUnlockedRoutesFrom(currentScenario.getId())) {
+            availableActions.add(CombatScenarioAction.FOLLOW_ROUTE);
+        }
 
-		if (!getAvailableCityTransportDestinations().isEmpty()) {
-			availableActions.add(CombatScenarioAction.CITY_TRANSPORT);
-		}
-		availableActions.add(CombatScenarioAction.INVENTORY);
-		availableActions.add(CombatScenarioAction.VIEW_STATUS);
+        if (!getAvailableCityTransportDestinations().isEmpty()) {
+            availableActions.add(CombatScenarioAction.CITY_TRANSPORT);
+        }
+        availableActions.add(CombatScenarioAction.INVENTORY);
+        availableActions.add(CombatScenarioAction.QUESTS);
+        availableActions.add(CombatScenarioAction.VIEW_STATUS);
 
-		return List.copyOf(availableActions);
-	}
+        return List.copyOf(availableActions);
+    }
 
-	private boolean hasAvailableScenarioBranch() {
-		if (explorationSession == null || explorationSession.isComplete()) {
-			return false;
-		}
+    private boolean hasAvailableScenarioBranch() {
+        if (explorationSession == null || explorationSession.isComplete()) {
+            return false;
+        }
 
-        return scenarioBranchCatalog.hasBranchesAt(
-                currentScenario.getId(), explorationSession.getCurrentPosition());
-	}
+        return !travelProgress
+                .getUnlockedBranchesAt(
+                        currentScenario.getId(),
+                        explorationSession.getCurrentPosition())
+                .isEmpty();
+    }
 
-	private void executeCombatScenarioAction(CombatScenarioAction action) {
-		switch (action) {
-		case EXPLORE -> explore();
+    private void executeCombatScenarioAction(CombatScenarioAction action) {
+        switch (action) {
+            case EXPLORE -> explore();
 
-		case FACE_BOSS -> faceBoss();
+            case FACE_BOSS -> faceBoss();
 
-		case VIEW_STATUS -> partyStatusMenu.open();
+            case INVENTORY -> inventoryMenu.open();
 
-		case INVENTORY -> inventoryMenu.open();
+            case QUESTS -> questMenu.open();
 
-		case FOLLOW_ROUTE -> executeRouteMenu();
+            case VIEW_STATUS -> partyStatusMenu.open();
 
-		case FOLLOW_BRANCH -> executeScenarioBranchMenu();
+            case FOLLOW_ROUTE -> executeRouteMenu();
 
-		case CITY_TRANSPORT -> executeCityTransportMenu();
-		}
-	}
+            case FOLLOW_BRANCH -> executeScenarioBranchMenu();
+
+            case CITY_TRANSPORT -> executeCityTransportMenu();
+        }
+    }
 
 	private void executeScenarioBranchMenu() {
 		if (!hasAvailableScenarioBranch()) {
@@ -614,12 +1307,15 @@ public class World {
 			return;
 		}
 
-        List<ScenarioBranchDefinition> availableBranches =
-                scenarioBranchCatalog.getBranchesAt(
-                        currentScenario.getId(), explorationSession.getCurrentPosition());
+		List<ScenarioBranchDefinition> availableBranches =
+		        travelProgress.getUnlockedBranchesAt(
+		                currentScenario.getId(),
+		                explorationSession.getCurrentPosition());
 
-        Optional<ScenarioBranchDefinition> selectedBranch =
-                scenarioBranchMenu.open(availableBranches);
+		Optional<ScenarioBranchDefinition> selectedBranch =
+		        scenarioBranchMenu.open(
+		                availableBranches,
+		                getMarkedDestinationScenarioIds());
 
 		if (selectedBranch.isEmpty()) {
 			return;
@@ -665,18 +1361,23 @@ public class World {
 			return;
 		}
 
-        if (currentScenario instanceof Dungeon dungeon && explorationSession.isAtFinalPosition()) {
-            if (isDungeonBossAvailable(dungeon)) {
-                throw new IllegalStateException(
-                        "The final dungeon position must be resolved through the boss action.");
-            }
+		if (currentScenario instanceof Dungeon dungeon && explorationSession.isAtFinalPosition()) {
+			DungeonBossAccess bossAccess = getDungeonBossAccess(dungeon);
 
-            completeCurrentExploration();
+			if (bossAccess == DungeonBossAccess.AVAILABLE) {
+				throw new IllegalStateException("The final dungeon position must be resolved through the boss action.");
+			}
 
-            System.out.println(
-                    "\nVocê chegou ao fim da exploração de " + currentScenario.getName() + "!");
+			if (bossAccess == DungeonBossAccess.GATED) {
+				executeDungeonBossGate(dungeon);
+				return;
+			}
 
-            return;
+			completeCurrentExploration();
+
+			System.out.println("\nVocê chegou ao fim da exploração de " + currentScenario.getName() + "!");
+
+			return;
 		}
 
 		int position = explorationSession.getCurrentPosition();
@@ -763,14 +1464,24 @@ public class World {
 			if (grantedQuantity > 0 && !party.getInventory().addItem(item, grantedQuantity)) {
                     throw new IllegalStateException(
                             "Validated exploration item reward could not be added.");
-			}
+                }
 
-			int discardedQuantity = Math.subtractExact(foundQuantity, grantedQuantity);
+                if (grantedQuantity > 0) {
+                    QuestProgressEvent itemEvent =
+                            new QuestProgressEvent(
+                                    QuestProgressEventType.ITEM_OBTAINED,
+                                    Optional.of(item.getId()),
+                                    grantedQuantity);
 
-			System.out.println("Você encontrou " + item.getName() + " x" + foundQuantity + "!");
+                    questProgressCoordinator.processAndDisplay(List.of(itemEvent));
+                }
 
-			if (discardedQuantity > 0) {
-				System.out.println(
+                int discardedQuantity = Math.subtractExact(foundQuantity, grantedQuantity);
+
+                System.out.println("Você encontrou " + item.getName() + " x" + foundQuantity + "!");
+
+                if (discardedQuantity > 0) {
+                    System.out.println(
                             "Recebido: x"
                                     + grantedQuantity
                                     + " | Descartado: x"
@@ -899,7 +1610,6 @@ public class World {
 
 	private void completeCurrentExploration() {
 		explorationSession.markComplete();
-		travelProgress.unlockRoutesFrom(currentScenario.getId());
 	}
 
 	private BattleResult startEncounter(List<EnemyDefinition> enemyDefinitions) {
@@ -944,9 +1654,11 @@ public class World {
 			throw new IllegalStateException("There are no available city transport destinations.");
 		}
 
-        Optional<CityTransportDefinition> selectedDestination =
-                cityTransportMenu.open(
-                        availableDestinations, getCityTransportDestinationSlotCount());
+		Optional<CityTransportDefinition> selectedDestination =
+		        cityTransportMenu.open(
+		                availableDestinations,
+		                getCityTransportDestinationSlotCount(),
+		                getMarkedDestinationScenarioIds());
 
 		if (selectedDestination.isEmpty()) {
 			return;
@@ -970,7 +1682,10 @@ public class World {
 			return;
 		}
 
-		Optional<TravelRouteDefinition> selectedRoute = routeMenu.open(currentScenario.getId());
+		Optional<TravelRouteDefinition> selectedRoute =
+		        routeMenu.open(
+		                currentScenario.getId(),
+		                getMarkedDestinationScenarioIds());
 
 		if (selectedRoute.isEmpty()) {
 			return;
@@ -1075,22 +1790,35 @@ public class World {
 
 		shouldDisplayScenarioDescription = true;
 
-		ConsoleUI.clearScreen();
+		questProgressCoordinator.processAndDisplay(
+		        List.of(
+		                new QuestProgressEvent(
+		                        QuestProgressEventType.SCENARIO_REACHED,
+		                        Optional.of(destination.getId()),
+		                        1)));
 	}
 
 	private void changeScenario(Scenario destination) {
 		changeScenario(destination, 1);
 	}
 
-    private boolean isDungeonBossAvailable(Dungeon dungeon) {
-        String dungeonId = dungeon.getId();
+	private DungeonBossAccess getDungeonBossAccess(Dungeon dungeon) {
+		return dungeonBossAccessResolver.resolve(dungeon, worldClock.getElapsedHours());
+	}
 
-        if (!dungeonProgress.isNarrativeBossDefeated(dungeonId)) {
-            return true;
-        }
+	private void executeDungeonBossGate(Dungeon dungeon) {
+		DungeonBossGateDefinition gateDefinition = dungeonBossAccessResolver.getGateDefinition(dungeon);
 
-        return dungeonProgress.isRecurringBossAvailable(dungeonId, worldClock.getElapsedHours());
-    }
+		displayDialogue(dungeonBossAccessResolver.resolveBlockedDialogueId(dungeon), List.of("INTERVENÇÃO"));
+
+		Scenario destination = scenarioCatalog.getById(gateDefinition.getBlockedDestinationScenarioId());
+
+		changeScenario(destination);
+	}
+
+	private boolean isDungeonBossAvailable(Dungeon dungeon) {
+		return getDungeonBossAccess(dungeon) == DungeonBossAccess.AVAILABLE;
+	}
 
 	private void executeBossEncounter(Dungeon dungeon) {
         String dungeonId = dungeon.getId();
@@ -1124,13 +1852,20 @@ public class World {
 
 			completeCurrentExploration();
 
+			questProgressCoordinator.processAndDisplay(
+			        List.of(
+			                new QuestProgressEvent(
+			                        QuestProgressEventType.DUNGEON_COMPLETED,
+			                        Optional.of(dungeonId),
+			                        1)));
+
 		} else if (result == BattleResult.FLED) {
 			System.out.println("\nVocê permanece diante do caminho bloqueado.");
 		}
 	}
 
 	private void displayScenarioName() {
-		System.out.println("\n[" + currentScenario.getName().toUpperCase() + "]");
+		System.out.println("[" + currentScenario.getName().toUpperCase() + "]");
 	}
 
 	private void displayDungeonBossObstacle() {
@@ -1174,7 +1909,7 @@ public class World {
 	}
 
 	private void terminateGame() {
-		System.out.println("\nObrigado por testar a V4!");
+		System.out.println("\nObrigado por testar a versão atual!");
 		running = false;
 	}
 
@@ -1187,4 +1922,121 @@ public class World {
                 .filter(shopDefinition -> shopDefinition.getAccessType() == ShopAccessType.CITY)
                 .toList();
 	}
+
+	private Set<String> getPendingReachScenarioIds() {
+	    Set<String> pendingScenarioIds = new LinkedHashSet<>();
+
+	    for (QuestDefinition questDefinition : questProgress.getActiveQuests()) {
+	        QuestStepDefinition currentStep =
+	                questProgress
+	                        .getCurrentStep(questDefinition.getId())
+	                        .orElseThrow(
+	                                () ->
+	                                        new IllegalStateException(
+	                                                "Active quest is missing its current step: "
+	                                                        + questDefinition.getId()));
+
+	        for (QuestObjectiveDefinition objective : currentStep.getObjectives()) {
+	            if (objective.getObjectiveType() != QuestObjectiveType.REACH_SCENARIO) {
+	                continue;
+	            }
+
+	            int currentProgress =
+	                    questProgress.getObjectiveProgress(
+	                            questDefinition.getId(),
+	                            objective.getId());
+
+	            if (currentProgress >= objective.getRequiredQuantity()) {
+	                continue;
+	            }
+
+	            pendingScenarioIds.add(objective.getTargetId().orElseThrow());
+	        }
+	    }
+
+	    return Set.copyOf(pendingScenarioIds);
+	}
+
+	private boolean hasPendingReachRouteFrom(
+	        String sourceScenarioId,
+	        Set<String> pendingScenarioIds) {
+	    for (TravelRouteDefinition route :
+	            travelProgress.getUnlockedRoutesFrom(sourceScenarioId)) {
+	        if (pendingScenarioIds.contains(route.getDestinationScenarioId())) {
+	            return true;
+	        }
+	    }
+
+	    return false;
+	}
+
+	private boolean hasPendingCityTransportDestination(
+	        Set<String> pendingScenarioIds) {
+	    for (CityTransportDefinition destination :
+	            getAvailableCityTransportDestinations()) {
+	        if (pendingScenarioIds.contains(destination.getDestinationScenarioId())) {
+	            return true;
+	        }
+	    }
+
+	    return false;
+	}
+
+	private Set<CityAction> getMarkedCityActions(City city, List<CityAction> availableActions) {
+		Set<String> markedDestinationIds = getMarkedDestinationScenarioIds();
+		Set<CityAction> markedActions = new LinkedHashSet<>();
+
+		if (availableActions.contains(CityAction.VISIT_LOCATION) && hasQuestInteractionInCity(city)) {
+			markedActions.add(CityAction.VISIT_LOCATION);
+		}
+
+		if (availableActions.contains(CityAction.LEAVE_CITY)
+		        && hasPendingReachRouteFrom(city.getId(), markedDestinationIds)) {
+		    markedActions.add(CityAction.LEAVE_CITY);
+		}
+
+		if (availableActions.contains(CityAction.CITY_TRANSPORT)
+				&& hasPendingCityTransportDestination(markedDestinationIds)) {
+			markedActions.add(CityAction.CITY_TRANSPORT);
+		}
+
+		return Set.copyOf(markedActions);
+	}
+
+	private Set<CombatScenarioAction> getMarkedCombatScenarioActions(List<CombatScenarioAction> availableActions) {
+		Set<String> markedDestinationIds = getMarkedDestinationScenarioIds();
+		Set<CombatScenarioAction> markedActions = new LinkedHashSet<>();
+
+		if (availableActions.contains(CombatScenarioAction.FOLLOW_ROUTE)
+		        && hasPendingReachRouteFrom(
+		                currentScenario.getId(), markedDestinationIds)) {
+		    markedActions.add(CombatScenarioAction.FOLLOW_ROUTE);
+		}
+
+		if (availableActions.contains(CombatScenarioAction.CITY_TRANSPORT)
+				&& hasPendingCityTransportDestination(markedDestinationIds)) {
+			markedActions.add(CombatScenarioAction.CITY_TRANSPORT);
+		}
+
+		if (availableActions.contains(CombatScenarioAction.FOLLOW_BRANCH) && travelProgress
+				.getUnlockedBranchesAt(currentScenario.getId(), explorationSession.getCurrentPosition()).stream()
+				.anyMatch(branch -> markedDestinationIds.contains(branch.getDestinationScenarioId()))) {
+			markedActions.add(CombatScenarioAction.FOLLOW_BRANCH);
+		}
+
+		return Set.copyOf(markedActions);
+	}
+
+	private Set<String> getMarkedDestinationScenarioIds() {
+	    Set<String> markedIds = new LinkedHashSet<>(getPendingReachScenarioIds());
+
+	    for (Scenario scenario : scenarioCatalog.getAll()) {
+	        if (scenario instanceof City city && hasQuestInteractionInCity(city)) {
+	            markedIds.add(city.getId());
+	        }
+	    }
+
+	    return Set.copyOf(markedIds);
+	}
+
 }

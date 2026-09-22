@@ -3,6 +3,7 @@ package rpg.world.branches;
 // Stores the immutable data of a fixed exploration branch.
 public final class ScenarioBranchDefinition {
 
+	private final boolean initiallyUnlocked;
 	private final String id;
 	private final String sourceScenarioId;
 	private final int explorationPosition;
@@ -11,12 +12,13 @@ public final class ScenarioBranchDefinition {
 	private final String description;
 
 	public ScenarioBranchDefinition(
-			String id,
-			String sourceScenarioId,
-			int explorationPosition,
-			String destinationScenarioId,
-			String displayName,
-			String description) {
+	        String id,
+	        String sourceScenarioId,
+	        int explorationPosition,
+	        String destinationScenarioId,
+	        boolean initiallyUnlocked,
+	        String displayName,
+	        String description) {
 		if (id == null || id.isBlank()) {
 			throw new IllegalArgumentException(
 					"Scenario branch ID cannot be empty.");
@@ -59,6 +61,7 @@ public final class ScenarioBranchDefinition {
 		this.destinationScenarioId = destinationScenarioId;
 		this.displayName = displayName;
 		this.description = description;
+		this.initiallyUnlocked = initiallyUnlocked;
 	}
 
 	public String getId() {
@@ -84,4 +87,9 @@ public final class ScenarioBranchDefinition {
 	public String getDescription() {
 		return description;
 	}
+
+	public boolean isInitiallyUnlocked() {
+	    return initiallyUnlocked;
+	}
+
 }

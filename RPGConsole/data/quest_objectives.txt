@@ -1,0 +1,121 @@
+# id;questId;step;order;objectiveType;targetId;requiredQuantity;text
+
+# QUEST 1
+conversar_mae_protagonista;ordem_dos_alquimistas;1;1;TALK_TO_NPC;mae_protagonista;1;Converse com sua mãe.
+conversar_pai_protagonista;ordem_dos_alquimistas;2;1;TALK_TO_NPC;pai_protagonista;1;Converse com seu pai.
+retornar_mestre_alquimista;ordem_dos_alquimistas;3;1;TALK_TO_NPC;mestre_alquimista;1;Retorne ao Mestre Alquimista.
+
+# QUEST 2
+derrotar_goblins_catadores;o_discipulo;1;1;DEFEAT_ENEMY;goblin_catador;3;Derrote 3 Goblins Catadores.
+analisar_goblin_catador;o_discipulo;1;2;ANALYZE_ENEMY;goblin_catador;1;Analise um Goblin Catador.
+analisar_goblin_saqueador;o_discipulo;1;3;ANALYZE_ENEMY;goblin_saqueador;1;Analise um Goblin Saqueador.
+retornar_mestre_pistas;o_discipulo;2;1;TALK_TO_NPC;mestre_alquimista;1;Relate suas descobertas ao Mestre Alquimista.
+vencer_batalhas_preparacao;o_discipulo;3;1;WIN_BATTLE;verdes_ermos;3;Vença 3 batalhas em Verdes Ermos.
+obter_pelos_lupinos;o_discipulo;3;2;OBTAIN_ITEM;pelo_lupino;3;Obtenha 3 Pelos Lupinos.
+entregar_pelos_lupinos;o_discipulo;4;1;DELIVER_ITEM;pelo_lupino;3;Entregue 3 Pelos Lupinos ao Mestre Alquimista.
+retornar_mestre_preparacao;o_discipulo;4;2;TALK_TO_NPC;mestre_alquimista;1;Entregue os materiais e fale com o Mestre Alquimista.
+entrar_gruta_relamparrocha;o_discipulo;5;1;REACH_SCENARIO;gruta_relamparrocha;1;Entre na Gruta Relamparrocha.
+vencer_batalhas_gruta;o_discipulo;6;1;WIN_BATTLE;gruta_relamparrocha;3;Vença 3 batalhas na Gruta Relamparrocha.
+completar_gruta_relamparrocha;o_discipulo;6;2;COMPLETE_DUNGEON;gruta_relamparrocha;1;Encontre e resgate o discípulo do Mestre Alquimista.
+retornar_mestre_discipulo;o_discipulo;7;1;TALK_TO_NPC;mestre_alquimista;1;Retorne ao Mestre Alquimista.
+entregar_meruma_dourada;o_discipulo;7;2;DELIVER_ITEM;meruma_dourada;1;Entregue a Merumã Dourada ao Mestre Alquimista.
+
+# QUEST 3
+conversar_mae_antes_partida;entre_caminhos;1;1;TALK_TO_NPC;mae_protagonista;1;Converse com sua mãe antes de partir.
+pedir_orientacoes_mestre;entre_caminhos;2;1;TALK_TO_NPC;mestre_alquimista;1;Peça orientações ao Mestre Alquimista.
+chegar_entrelinhas;entre_caminhos;3;1;REACH_SCENARIO;entrelinhas;1;Chegue a Entrelinhas.
+vencer_batalhas_entrelinhas;entre_caminhos;4;1;WIN_BATTLE;entrelinhas;10;Vença 10 batalhas em Entrelinhas.
+chegar_entrelugar;entre_caminhos;5;1;REACH_SCENARIO;entrelugar;1;Chegue a Entrelugar.
+encontrar_dono_taverna;entre_caminhos;6;1;TALK_TO_NPC;dono_taverna_entrelugar;1;Fale com o dono da taverna de Entrelugar.
+
+# QUEST 4
+consultar_pesquisadora_anomalia;energia_residual;1;1;TALK_TO_NPC;pesquisadora_anomalia;1;Converse com a Pesquisadora da Anomalia.
+consultar_pesquisador_sanguemar;energia_residual;2;1;TALK_TO_NPC;pesquisador_sanguemar;1;Converse com o Pesquisador de Sanguemar.
+consultar_arquivista_entrequando;energia_residual;3;1;TALK_TO_NPC;arquivista_entrequando;1;Converse com o Arquivista de Entrequando.
+consultar_mago_pesquisador;energia_residual;4;1;TALK_TO_NPC;mago_pesquisador;1;Conveser com o Mago Pesquisador.
+chegar_minas_alem_tumulo;energia_residual;5;1;REACH_SCENARIO;minas_alem_tumulo;1;Entre nas Minas do Além-Túmulo.
+analisar_mecanossos;energia_residual;6;1;ANALYZE_ENEMY;mecanossos;1;Analise um Mecanossos.
+analisar_l1d3r;energia_residual;6;2;ANALYZE_ENEMY;l1d3r;1;Analise o L1D3R.
+obter_fragmento_energia_residual;energia_residual;6;3;OBTAIN_ITEM;fragmento_energia_residual;1;Obtenha um Fragmento de Energia Residual.
+entregar_fragmento_energia_residual;energia_residual;7;1;DELIVER_ITEM;fragmento_energia_residual;1;Entregue o Fragmento de Energia Residual ao Mago Pesquisador.
+retornar_mago_pesquisador;energia_residual;7;2;TALK_TO_NPC;mago_pesquisador;1;Discuta os resultados com o Mago Pesquisador.
+
+# QUEST 5 — OS SETE CAMINHOS
+
+# Etapa 1 — Ingresso na cerimônia
+falar_mestre_cerimonia;os_sete_caminhos;1;1;TALK_TO_NPC;mestre_cerimonia;1;Converse com o Mestre da Cerimônia e aceite os termos dos Sete Caminhos.
+
+# Etapa 2 — Apresentação da Harmonia
+conhecer_mentor_harmonia;os_sete_caminhos;2;1;TALK_TO_NPC;mentor_harmonia;1;Converse com o Mentor da Harmonia e conheça sua prova.
+
+# Etapa 3 — Prova da Harmonia
+retornar_bree_harmonia;os_sete_caminhos;3;1;REACH_SCENARIO;bree;1;Retorne a Bree em busca da fonte de sua alegria.
+falar_mae_harmonia;os_sete_caminhos;3;2;TALK_TO_NPC;mae_protagonista;1;Converse com sua mãe.
+
+# Etapa 4 — Retorno da Harmonia
+retornar_mentor_harmonia;os_sete_caminhos;4;1;TALK_TO_NPC;mentor_harmonia;1;Retorne ao Mentor da Harmonia levando as palavras de seu pai.
+
+# Etapa 5 — Apresentação do Ciclo
+conhecer_mentor_ciclo;os_sete_caminhos;5;1;TALK_TO_NPC;mentor_ciclo;1;Converse com o Mentor do Ciclo e conheça sua prova.
+
+# Etapa 6 — Prova do Ciclo
+analisar_herbalistico_ciclo;os_sete_caminhos;6;1;ANALYZE_ENEMY;herbalistico_roxo;1;Analise um Herbalístico Roxo.
+analisar_herbatedor_ciclo;os_sete_caminhos;6;2;ANALYZE_ENEMY;herbatedor;1;Analise um Herbatedor.
+
+# Etapa 7 — Retorno do Ciclo
+retornar_mentor_ciclo;os_sete_caminhos;7;1;TALK_TO_NPC;mentor_ciclo;1;Compartilhe suas observações com o Mentor do Ciclo.
+
+# Etapa 8 — Apresentação do Reflexo
+conhecer_mentor_reflexo;os_sete_caminhos;8;1;TALK_TO_NPC;mentor_reflexo;1;Converse com o Mentor do Reflexo e conheça sua prova.
+
+# Etapa 9 — Prova do Reflexo
+analisar_amalgama_reflexo;os_sete_caminhos;9;1;ANALYZE_ENEMY;goblin_amalgama;1;Analise um Goblin Amálgama.
+obter_essencia_transformacao;os_sete_caminhos;9;2;OBTAIN_ITEM;essencia_transformacao;1;Obtenha uma Essência da Transformação de um Goblin Amálgama.
+
+# Etapa 10 — Retorno do Reflexo
+retornar_mentor_reflexo;os_sete_caminhos;10;1;TALK_TO_NPC;mentor_reflexo;1;Apresente suas descobertas ao Mentor do Reflexo.
+
+# Etapa 11 — Apresentação do Instante
+conhecer_mentor_instante;os_sete_caminhos;11;1;TALK_TO_NPC;mentor_instante;1;Converse com o Mentor do Instante e conheça sua prova.
+
+# Etapa 12 — Prova do Instante
+analisar_passavento_instante;os_sete_caminhos;12;1;ANALYZE_ENEMY;passavento;1;Analise os movimentos de um Passavento.
+derrotar_passaventos_instante;os_sete_caminhos;12;2;DEFEAT_ENEMY;passavento;3;Derrote 3 Passaventos.
+
+# Etapa 13 — Retorno do Instante
+retornar_mentor_instante;os_sete_caminhos;13;1;TALK_TO_NPC;mentor_instante;1;Retorne ao Mentor do Instante depois de concluir a prova.
+
+# Etapa 14 — Apresentação do Sussurro
+conhecer_mentor_sussurro;os_sete_caminhos;14;1;TALK_TO_NPC;mentor_sussurro;1;Converse com o Mentor do Sussurro e conheça sua prova.
+
+# Etapa 15 — Prova do Sussurro
+retornar_minas_sussurro;os_sete_caminhos;15;1;REACH_SCENARIO;minas_alem_tumulo;1;Entre novamente nas Minas do Além-Túmulo.
+derrotar_ossombracoes_sussurro;os_sete_caminhos;15;2;DEFEAT_ENEMY;ossombracao;3;Derrote 3 Ossombrações nas Minas do Além-Túmulo.
+
+# Etapa 16 — Retorno do Sussurro
+retornar_mentor_sussurro;os_sete_caminhos;16;1;TALK_TO_NPC;mentor_sussurro;1;Relate sua passagem pelas Minas ao Mentor do Sussurro.
+
+# Etapa 17 — Apresentação do Silêncio
+conhecer_mentor_silencio;os_sete_caminhos;17;1;TALK_TO_NPC;mentor_silencio;1;Converse com o Mentor do Silêncio e conheça sua prova.
+
+# Etapa 18 — Prova do Silêncio
+derrotar_lumivaga_silencio;os_sete_caminhos;18;1;DEFEAT_ENEMY;lumivaga;1;Derrote uma Lumivaga.
+derrotar_briselho_silencio;os_sete_caminhos;18;2;DEFEAT_ENEMY;briselho;1;Derrote um Briselho.
+derrotar_espantacao_silencio;os_sete_caminhos;18;3;DEFEAT_ENEMY;espantacao;1;Derrote uma Espantação.
+derrotar_entrechifres_silencio;os_sete_caminhos;18;4;DEFEAT_ENEMY;entrechifres;1;Derrote um Entrechifres.
+
+# Etapa 19 — Retorno do Silêncio
+retornar_mentor_silencio;os_sete_caminhos;19;1;TALK_TO_NPC;mentor_silencio;1;Retorne ao Mentor do Silêncio depois de interromper as criaturas.
+
+# Etapa 20 — Apresentação da Ruína
+conhecer_mentor_ruina;os_sete_caminhos;20;1;TALK_TO_NPC;mentor_ruina;1;Converse com o Mentor da Ruína e conheça a última prova.
+
+# Etapa 21 — Prova da Ruína
+vencer_batalhas_ruina;os_sete_caminhos;21;1;WIN_BATTLE;gruta_relamparrocha;3;Vença 3 batalhas na Gruta Relamparrocha.
+derrotar_amalgama_ruina;os_sete_caminhos;21;2;DEFEAT_ENEMY;goblin_amalgama;1;Derrote um Goblin Amálgama na Gruta Relamparrocha.
+
+# Etapa 22 — Retorno da Ruína
+retornar_mentor_ruina;os_sete_caminhos;22;1;TALK_TO_NPC;mentor_ruina;1;Retorne ao Mentor da Ruína e conclua as provas dos sete galhos.
+
+# Etapa 23 — Julgamento final
+falar_mestre_cerimonia_praca;os_sete_caminhos;23;1;TALK_TO_NPC;mestre_cerimonia_praca;1;Apresente-se ao Mestre da Cerimônia na Praça dos Emblemas.

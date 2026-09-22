@@ -1,6 +1,6 @@
 # RPGConsole — Save State
 
-> **Implementation status:** Version-2 campaign persistence is fully integrated. The game creates complete immutable snapshots, including permanent dungeon progression, serializes and encrypts them into `save.txt`, atomically replaces the previous save, validates and reconstructs runtime state during loading, offers campaign selection after the title screen and provides save access exclusively through INNs. The implemented persistence scope has completed manual verification. Future work is limited to schema evolution for new campaign systems and the project's optional automated-testing study.
+> **Implementation status:** Internal save format version 3 is fully integrated. The game creates one coordinated immutable snapshot containing party, world, shop, quest, permanent-flag and recruitment-candidate state; serializes and encrypts it into `save.txt`; atomically replaces the previous save; and validates and reconstructs an isolated complete campaign before runtime activation. Internal version-2 saves are rejected without migration. The empty-narrative V3 restart round trip and version-2 rejection have completed manual verification. The empty-narrative version-3 restart round trip, explicit version-2 rejection and loading of a campaign with an active canonical quest have been verified. A representative restart round trip after the Quest 5 recruitment and invalid narrative-payload cases remain pending.
 
 ## Purpose
 
@@ -29,7 +29,7 @@ The game must:
 * Encrypt the saved information.
 
 The project implements this requirement as one encrypted campaign slot.
-
+f
 ## Core persistence principles
 
 * External `.txt` files remain the source of immutable game definitions.
@@ -289,6 +289,35 @@ Persist for every registered shop:
 
 `world.elapsedHours` and every active shop state must belong to the same campaign snapshot. The current restocking cycle is derived from elapsed hours, so no separate cycle identifier is persisted.
 
+### Quest progress
+
+Persist for every active quest:
+
+* Canonical quest ID.
+* Current sequential step number.
+* Every stable objective ID belonging to that current step.
+* Current quantity for every current objective.
+
+Persist every completed quest through its canonical quest ID.
+
+A quest absent from both collections is `NOT_STARTED`. Completed previous steps, future steps and derived availability are not serialized.
+
+### Permanent campaign flags
+
+Persist the canonical ID of every currently set flag.
+
+Absent flags remain unset. Flag values are set-only, so no independent `false` entry is serialized.
+
+### Recruitment candidates
+
+Persist every candidate already introduced to the campaign:
+
+* Canonical candidate ID.
+* Persistent generated name.
+* Recruited state.
+
+Quest ID, recruitment step, configured ally entry level and every other recruitment definition remain immutable external data resolved through `QuestRecruitmentCatalog`.
+
 ## Derived state
 
 The following values are reconstructed and must not be duplicated as authoritative save values:
@@ -307,6 +336,11 @@ The following values are reconstructed and must not be duplicated as authoritati
 * INN definitions.
 * Crafting definitions.
 * Catalog contents.
+* Completed quest steps before the current active step.
+* Future quest steps and objective definitions.
+* Quest availability and `[!]` marker state.
+* Permanent flags that are not set.
+* Recruitment quest ID, step and configured ally level.
 
 Learned-skill IDs remain persisted for complete state validation. During reconstruction, automatically acquired skills are derived normally, while saved scroll-acquired skills are reapplied explicitly.
 
@@ -328,6 +362,12 @@ The following state is intentionally discarded:
 * Scenario-description display flags.
 * `ExplorationSession`.
 * Exploration position.
+* Open quest, NPC, dialogue, questionnaire and confirmation menus.
+* Queued quest notifications and temporary event batches.
+* Questionnaire answers, recommendation scores and ties.
+* Unconfirmed protagonist class choices.
+* Random uncommitted ally classes and constructed uncommitted allies.
+* `ClassPathTransitionPlan`, `AllyRecruitmentPlan`, `ClassPathRecruitmentPlan` and other prepared transaction state.
 * Merchant encounter flag for the current exploration.
 * Epic-encounter offer flag for the current exploration.
 * Random-generator state.
@@ -475,34 +515,29 @@ The saved current scenario must:
 For every saved unlocked route ID:
 
 * The ID must be non-empty.
-* The ID must exist in `TravelCatalog`.
+* The ID must exist in `TravelCatalog` or `ScenarioBranchCatalog`.
 * The ID must appear only once.
 
 Route-unlock order is not meaningful state. IDs may be serialized in a stable sorted order.
 
-A new `TravelProgress` automatically registers routes currently defined as initially unlocked. Saved IDs are then reapplied through `unlock()`.
+A new `TravelProgress` registers routes and scenario branches currently defined as initially unlocked. Saved unlocked IDs are then reapplied through `unlock()`. The same saved ID collection represents both kinds of passage.
 
 ## Shop-state validation
 
-Each saved shop state must:
+Saved shop IDs cannot be duplicated. A shop removed from the current catalog is ignored during loading. A shop added after the save was created receives newly generated initial offers.
 
-* Reference a current `ShopDefinition`.
-* Appear no more than once.
-* Contain at least one active offer.
-* Contain no more offers than its configured slot count.
+For a shop present in both the save and the current catalog:
 
-Each active offer must:
+* Saved offers retain their order, which controls their presentation in the menu.
+* Duplicate stock-entry IDs in the saved shop are invalid, including IDs whose entries were later removed.
+* Offers whose stock entries no longer exist are discarded.
+* An existing stock entry reassigned to another shop invalidates the saved offer.
+* If the current shop has fewer offer slots, only the earliest surviving offers up to that limit are retained.
+* A shop may consequently be restored with no active offers. New entries are not added to an existing shop until its next restock.
 
-* Reference a current `ShopStockEntry`.
-* Belong to the containing shop.
-* Appear no more than once in that shop state.
-* Store remaining stock from zero through its canonical initial stock.
+Each retained offer uses its current `ShopStockEntry`. Its remaining stock is the lesser of the saved quantity and the entry's current initial stock. Negative saved quantities remain invalid. Current definitions determine prices, weights and initial quantities; the save does not determine them.
 
-Offer order is persistent because it controls menu presentation.
-
-A restored `ShopOfferState` is created with canonical initial stock. The difference between initial and saved stock is then applied through `decreaseStock()`.
-
-Prices, weights and initial quantities are never trusted from the save.
+Stock-entry IDs must not be reused for different items. The snapshot records the entry ID and remaining quantity, so reusing an ID would associate an old saved offer with the new item.
 
 ## World time and shop restocking
 
@@ -695,12 +730,12 @@ independently from the outer `containerVersion`.
 * Unknown properties are rejected unless a later format version explicitly permits them.
 * Duplicate property keys must be detected before ordinary `Properties` loading can overwrite them silently.
 
-### Version-2 property schema
+### Version-3 property schema
 
-The decrypted version-2 payload contains exactly the following property structures.
+The decrypted version-3 payload contains exactly the following property structures.
 
 ```properties
-save.formatVersion=2
+save.formatVersion=3
 
 party.gold=1250
 
@@ -712,7 +747,7 @@ party.rewardModifier.gold.remainingVictories=0
 party.member.count=1
 
 party.member.0.name=Aragorn
-party.member.0.classId=flagelo
+party.member.0.classId=flagelo_iniciante
 party.member.0.level=7
 party.member.0.experience=120
 party.member.0.currentHp=85
@@ -754,6 +789,24 @@ shop.0.offer.0.stockEntryId=mercado_pocao
 shop.0.offer.0.remainingStock=3
 shop.0.offer.1.stockEntryId=mercado_espada
 shop.0.offer.1.remainingStock=0
+
+quest.active.count=1
+quest.active.0.id=os_sete_caminhos
+quest.active.0.currentStep=2
+quest.active.0.objective.count=1
+quest.active.0.objective.0.id=falar_com_mestre
+quest.active.0.objective.0.currentQuantity=0
+
+quest.completed.count=1
+quest.completed.0.id=a_ordem_dos_alquimistas
+
+flag.count=1
+flag.0.id=acesso_entrelugar
+
+recruitment.candidate.count=1
+recruitment.candidate.0.id=primeiro_aliado
+recruitment.candidate.0.name=Lina
+recruitment.candidate.0.recruited=false
 ```
 
 The values above are illustrative and are not canonical campaign data.
@@ -764,7 +817,7 @@ Equipment-slot properties are always present. An empty value represents an unequ
 
 `party.member.<index>.learnedSkill.*` contains only explicitly learned scroll-skill IDs. Skills acquired automatically from class and level are reconstructed from current definitions and are not serialized.
 
-Party members, learned skills, inventory entries, shops and active offers preserve their runtime order. Discovered scenarios, unlocked routes and dungeon-progress entries are serialized in stable ID order.
+Party members, learned skills, inventory entries, shops, active offers, active quests, completed quests, current objectives, set flags and recruitment candidates preserve their stable runtime or catalog order. Discovered scenarios, unlocked routes and dungeon-progress entries are serialized in stable ID order.
 
 Every repeated index starts at zero, is contiguous and is lower than its declared count. Missing indexes, additional indexes, duplicate IDs and duplicate property names invalidate the complete payload.
 
@@ -772,7 +825,13 @@ Every repeated index starts at zero, is contiguous and is lower than its declare
 
 `world.dungeon.<index>.narrativeBossDefeated` accepts only `true` or `false`. Recurring-boss availability must be zero while this value is `false` and nonzero while it is `true`. Both availability-hour properties must be non-negative.
 
-Properties outside the version-2 schema invalidate the payload. This prevents misspelled or unsupported fields from being silently ignored.
+Active and completed quest IDs must be unique across both collections. Every active quest step must exist in the current definition, and its objective collection must match that step's canonical objective set exactly. Objective counters must be non-negative and no greater than their current required quantities.
+
+Every saved flag ID must resolve through `FlagCatalog` and appear at most once.
+
+Every saved candidate ID must resolve through `QuestRecruitmentCatalog` and appear at most once. Candidate names must satisfy `CharacterNameRules` and remain unique among candidate states. `recruited` accepts only canonical `true` or `false`.
+
+Properties outside the version-3 schema invalidate the payload. This prevents misspelled or unsupported fields from being silently ignored.
 
 All numeric values use base-10 ASCII digits and must satisfy their documented domain boundaries.
 
@@ -782,7 +841,7 @@ The four reward-modifier properties are always present. An inactive modifier is 
 
 `shop.<index>.offer.count` must be positive because every valid runtime `ShopState` contains at least one active offer. Offers with zero remaining stock remain serialized.
 
-The version-2 payload contains no real-world timestamps, display names, formatted values, derived period symbols, cryptographic fields or transient runtime state.
+The version-3 payload contains no real-world timestamps, formatted values, derived period symbols, cryptographic fields, immutable quest or recruitment definitions, derived availability or transient runtime state.
 
 ## Save-format versioning
 
@@ -801,7 +860,19 @@ Rules:
 * Incompatible catalog-ID changes may require migration or intentional save incompatibility.
 * Raising the playable-character maximum level alone does not require a save-format change.
 
-The current implementation supports only internal format version 2. Internal version-1 development saves are rejected without migration because V5 has not yet been released. The encrypted outer-container format and its `containerVersion` remain unchanged.
+The current implementation supports only internal format version 3. Internal versions 1 and 2 are rejected without migration. The encrypted outer-container format remains version 1 and is unchanged by this schema evolution.
+
+### V6 Part 9 persistence boundary
+
+V6 Part 9 evolves the authenticated internal payload from version 2 to version 3 as one coordinated contract. It adds quest progress, set permanent flags and introduced recruitment-candidate state to the existing party, world, dungeon, clock and shop snapshot.
+
+The version increase is intentionally incompatible. A version-2 party could structurally contain multiple playable characters but could not prove the quest, flag and candidate transaction that produced a recruited ally. Supplying defaults or loading only the party would permit repeated recruitment or disagreement between narrative and character state, so version 2 is rejected explicitly instead of migrated.
+
+The outer container, application encryption key usage, AES-GCM parameters, duplicate-key protection and atomic replacement flow remain unchanged.
+
+`quest_recruitments.txt` remains immutable external definition data. Quest ID, step and configured ally level are reloaded from the current catalog and are not copied into the save payload.
+
+Questionnaire answers, recommendation scores, uncommitted selections, random uncommitted ally classes, constructed pending allies and prepared transaction plans remain transient in version 3.
 
 ## Atomic save operation
 
@@ -840,11 +911,15 @@ Loading follows this order:
 12. Restore inventory, GOLD and reward modifiers.
 13. Reconstruct world discovery.
 14. Reconstruct travel progress.
-15. Reconstruct shop states.
-16. Reconstruct world time after its representation is frozen.
-17. Validate cross-state invariants.
-18. Produce the campaign summary and complete candidate state.
-19. Construct `World` only after the candidate is valid.
+15. Reconstruct permanent dungeon progress.
+16. Reconstruct world time.
+17. Reconstruct shop states.
+18. Reconstruct active and completed quest progress through `QuestProgressRestorer`.
+19. Reconstruct set permanent flags through `CampaignFlags`.
+20. Reconstruct introduced candidate state through `RecruitmentCandidateStateRestorer`.
+21. Validate narrative and party cross-state invariants.
+22. Produce the campaign summary and complete isolated `RestoredCampaign`.
+23. Construct `World` only after the complete candidate campaign is valid.
 
 ### Character reconstruction order
 
@@ -886,6 +961,20 @@ A valid candidate campaign must satisfy all of the following:
 * Every shop has one valid restored state.
 * Every active offer belongs to its shop.
 * Validated world time, complete dungeon progress and the complete validated shop catalog come from the same candidate snapshot and are installed together without load-triggered events.
+* Active and completed quest IDs are mutually exclusive and resolve through the current `QuestCatalog`.
+* Every active quest uses a valid current step and the exact canonical objective set for that step.
+* Every objective counter fits its current canonical requirement.
+* Every set flag resolves through the current `FlagCatalog` and appears only once.
+* Every candidate resolves through `QuestRecruitmentCatalog`, uses a valid persistent name and appears only once.
+* Candidate names are unique among recruitment candidates.
+* A pending candidate matches no party member under `CharacterNameRules`.
+* A recruited candidate matches exactly one non-leader party member under `CharacterNameRules`.
+* A recruited ally is at least the externally configured entry level and does not use beginner or final Flagelo.
+* Every recruitment step already passed by quest progress corresponds to a recruited candidate, and every recruited candidate corresponds to a passed recruitment step.
+* The first ceremony state agrees across completed recruitment quest, permanent ceremony flag, leader class transition and recruited candidate.
+* When the first candidate is recruited, the matching ally occupies the second party position.
+* Every party member uses a distinct playable class.
+* Additional non-leader party members without candidate state remain valid for the isolated `--dev-party` development path.
 
 A failed invariant rejects the complete candidate.
 
@@ -910,22 +999,43 @@ A feature introducing persistent state must define:
 8. Restart-based verification tests.
 9. Documentation updates.
 
-Likely future persisted state includes:
+Internal format version 3 adds the implemented V6 campaign state as one coordinated contract:
 
-* Started quests.
-* Completed quests.
-* Quest stages and objective counters.
-* Pending mandatory rewards.
-* Story decisions.
+* Active quest IDs.
+* Current quest steps.
+* Current objective counters.
+* Completed quest IDs.
 * Permanent world flags.
-* Explicit access unlocks.
-* Level-7 class-path decisions.
+* Recruitment-candidate IDs.
+* Recruitment-candidate persistent names.
+* Recruitment-candidate recruited states.
 
-Placeholder persistence structures must not be created before the supporting gameplay systems exist.
+Pending transaction plans, random uncommitted choices and derived availability remain excluded.
+
+The protagonist's confirmed class already uses the persisted canonical playable-class ID. Version-3 restoration validates that class against the permanent ceremony-completion flag and the restored recruitment transaction state instead of serializing a second independent class-path decision.
+
+Version-3 restoration validates:
+
+* Every restored candidate ID exists in `QuestRecruitmentCatalog`.
+* Candidate IDs are unique.
+* Candidate names satisfy current character-name rules.
+* Candidate names are unique among candidates.
+* A pending candidate does not already appear as its recruited party member.
+* A recruited candidate corresponds to exactly one restored non-leader ally.
+* The first recruited candidate is consistent with the completed ceremony flag, protagonist final class and recruitment quest state.
+* The protagonist and every ally retain distinct playable classes.
+* Party order remains leader first followed by recruited allies.
+* No transient preparation or random-selection state is reconstructed.
+
+Every quest, flag and candidate object must be reconstructed and cross-validated in an isolated candidate campaign before `World` receives the restored state.
+
+Future schema evolution must continue to add snapshot structures only after their supporting gameplay systems exist.
 
 ## Verification groups
 
 Implementation verification must cover:
+
+Part 9 verified explicit version-2 rejection and a complete version-3 restart round trip with empty narrative collections. Part 10 also loaded a campaign with an active canonical quest. A representative save-and-restart round trip after recruitment, plus invalid narrative-payload cases, remain pending.
 
 | Group | Required coverage |
 |---|---|
@@ -941,7 +1051,8 @@ Implementation verification must cover:
 | Dungeons | Complete catalog coverage, narrative completion, recurring-boss availability, epic availability and invalid state |
 | Shops | Ordered offers, zero stock, invalid entries and complete restoration |
 | Clock | Saved time, advancement boundaries and no load-triggered restock |
+| Narrative | Active counters, completed quests, set flags, pending candidates, recruited candidates and party coherence |
 | Cryptography | Invalid Base64, altered ciphertext, wrong tag and unsupported container |
 | Atomicity | Failed save preserves old file; failed load preserves runtime state |
 | Player flow | Continue, New Game confirmation, both INN save actions and exit confirmation |
-| Packaging | Root save creation and no bundled user save |
+| Packaging | Root save creation and no bundled user save |

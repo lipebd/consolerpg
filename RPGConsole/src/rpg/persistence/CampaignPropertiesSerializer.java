@@ -18,7 +18,10 @@ public final class CampaignPropertiesSerializer {
 
 		serializeParty(properties, campaignSnapshot.getParty());
 		serializeWorld(properties, campaignSnapshot.getWorld());
-		serializeShops(properties, campaignSnapshot.getShops());
+        serializeShops(properties, campaignSnapshot.getShops());
+        serializeQuestProgress(properties, campaignSnapshot.getQuestProgress());
+        serializeCampaignFlags(properties, campaignSnapshot.getCampaignFlags());
+        serializeRecruitmentCandidates(properties, campaignSnapshot.getRecruitmentCandidates());
 
 		return properties;
 	}
@@ -175,6 +178,147 @@ public final class CampaignPropertiesSerializer {
                         offerPrefix + ".remainingStock",
                         Integer.toString(offer.getRemainingStock()));
 			}
+		}
+	}
+
+	private static void serializeQuestProgress(
+			Properties properties,
+			QuestProgressSnapshot questProgressSnapshot
+	) {
+		List<ActiveQuestSnapshot> activeQuests =
+				questProgressSnapshot.getActiveQuests();
+
+		properties.setProperty(
+				"quest.active.count",
+				Integer.toString(activeQuests.size())
+		);
+
+		for (int questIndex = 0;
+				questIndex < activeQuests.size();
+				questIndex++) {
+			ActiveQuestSnapshot quest =
+					activeQuests.get(questIndex);
+
+			String questPrefix =
+					"quest.active." + questIndex;
+
+			properties.setProperty(
+					questPrefix + ".id",
+					quest.getQuestId()
+			);
+
+			properties.setProperty(
+					questPrefix + ".currentStep",
+					Integer.toString(quest.getCurrentStep())
+			);
+
+			List<QuestObjectiveProgressSnapshot> objectives =
+					quest.getObjectiveProgressSnapshots();
+
+			properties.setProperty(
+					questPrefix + ".objective.count",
+					Integer.toString(objectives.size())
+			);
+
+			for (int objectiveIndex = 0;
+					objectiveIndex < objectives.size();
+					objectiveIndex++) {
+				QuestObjectiveProgressSnapshot objective =
+						objectives.get(objectiveIndex);
+
+				String objectivePrefix =
+						questPrefix
+								+ ".objective."
+								+ objectiveIndex;
+
+				properties.setProperty(
+						objectivePrefix + ".id",
+						objective.getObjectiveId()
+				);
+
+				properties.setProperty(
+						objectivePrefix + ".currentQuantity",
+						Integer.toString(
+								objective.getCurrentQuantity()
+						)
+				);
+			}
+		}
+
+		List<String> completedQuestIds =
+				questProgressSnapshot.getCompletedQuestIds();
+
+		properties.setProperty(
+				"quest.completed.count",
+				Integer.toString(completedQuestIds.size())
+		);
+
+		for (int index = 0;
+				index < completedQuestIds.size();
+				index++) {
+			properties.setProperty(
+					"quest.completed." + index + ".id",
+					completedQuestIds.get(index)
+			);
+		}
+	}
+
+	private static void serializeCampaignFlags(
+			Properties properties,
+			CampaignFlagsSnapshot campaignFlagsSnapshot
+	) {
+		List<String> setFlagIds =
+				campaignFlagsSnapshot.getSetFlagIds();
+
+		properties.setProperty(
+				"flag.count",
+				Integer.toString(setFlagIds.size())
+		);
+
+		for (int index = 0;
+				index < setFlagIds.size();
+				index++) {
+			properties.setProperty(
+					"flag." + index + ".id",
+					setFlagIds.get(index)
+			);
+		}
+	}
+
+	private static void serializeRecruitmentCandidates(
+			Properties properties,
+			List<RecruitmentCandidateSnapshot> candidates
+	) {
+		properties.setProperty(
+				"recruitment.candidate.count",
+				Integer.toString(candidates.size())
+		);
+
+		for (int index = 0;
+				index < candidates.size();
+				index++) {
+			RecruitmentCandidateSnapshot candidate =
+					candidates.get(index);
+
+			String prefix =
+					"recruitment.candidate." + index;
+
+			properties.setProperty(
+					prefix + ".id",
+					candidate.getCandidateId()
+			);
+
+			properties.setProperty(
+					prefix + ".name",
+					candidate.getName()
+			);
+
+			properties.setProperty(
+					prefix + ".recruited",
+					Boolean.toString(
+							candidate.isRecruited()
+					)
+			);
 		}
 	}
 }

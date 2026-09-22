@@ -1,0 +1,8 @@
+# id;description
+class_path_ceremony_completed;O protagonista completou a Cerimônia dos Caminhos.
+instituto_entrequando_descoberto;O grupo descobriu a localização do Instituto Entrequando.
+mago_partiu_setegalhos;O Mago Pesquisador deixou Entrelugar e seguiu para Setegalhos.
+centro_cerimonia_desbloqueado;O Centro da Cerimônia dos Caminhos foi aberto aos candidatos.
+galhos_cerimonia_desbloqueados;Os sete galhos da cerimônia estão acessíveis.
+praca_emblemas_desbloqueada;A Praça dos Emblemas está preparada para a cerimônia final.
+c3o_liberado;Boss C3O liberado pro combate.

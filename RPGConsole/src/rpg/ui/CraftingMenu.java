@@ -4,7 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 
+import rpg.quests.QuestProgressEvent;
+import rpg.quests.QuestProgressEventType;
 import rpg.characters.Party;
 import rpg.items.Item;
 import rpg.items.ItemCatalog;
@@ -18,6 +21,7 @@ import rpg.world.crafting.CraftingService;
 // Displays a crafter and coordinates player crafting choices.
 public final class CraftingMenu {
 
+	private final QuestProgressCoordinator questProgressCoordinator;
 	private final Party party;
 	private final ConsoleInput consoleInput;
 	private final ItemCatalog itemCatalog;
@@ -25,10 +29,11 @@ public final class CraftingMenu {
 	private final CraftingService craftingService;
 
 	public CraftingMenu(
-			Party party,
-			ConsoleInput consoleInput,
-			ItemCatalog itemCatalog,
-			CraftingRecipeCatalog craftingRecipeCatalog) {
+	        Party party,
+	        ConsoleInput consoleInput,
+	        ItemCatalog itemCatalog,
+	        CraftingRecipeCatalog craftingRecipeCatalog,
+	        QuestProgressCoordinator questProgressCoordinator) {
 		this.party = Objects.requireNonNull(
 				party,
 				"Party cannot be null."
@@ -47,6 +52,10 @@ public final class CraftingMenu {
 		);
 		this.craftingService =
 				new CraftingService(this.party, this.itemCatalog);
+		this.questProgressCoordinator =
+		        Objects.requireNonNull(
+		                questProgressCoordinator,
+		                "Quest progress coordinator cannot be null.");
 	}
 
 	public void open(CrafterDefinition crafterDefinition) {
@@ -105,6 +114,7 @@ public final class CraftingMenu {
 			CrafterDefinition crafterDefinition,
 			List<CraftingRecipeDefinition> recipes,
 			String feedbackMessage) {
+		ConsoleUI.clearScreen();
 		System.out.println(
 				"\n["
 						+ crafterDefinition.getName().toUpperCase(Locale.ROOT)
@@ -138,21 +148,28 @@ public final class CraftingMenu {
 
 	private String openRecipe(
 			CraftingRecipeDefinition recipeDefinition) {
+		ConsoleUI.clearScreen();
 		while (true) {
 			displayRecipe(recipeDefinition);
 
 			String choice = consoleInput.readTrimmedLine();
 
 			switch (choice) {
-			case "1" -> {
-				CraftingResult result =
-						craftingService.craft(recipeDefinition);
+                case "1" -> {
+                    CraftingResult result = craftingService.craft(recipeDefinition);
 
-				return getCraftingFeedback(
-						result,
-						recipeDefinition
-				);
-			}
+                    if (result.isSuccessful()) {
+                        QuestProgressEvent itemEvent =
+                                new QuestProgressEvent(
+                                        QuestProgressEventType.ITEM_OBTAINED,
+                                        Optional.of(recipeDefinition.getOutputItemId()),
+                                        1);
+
+                        questProgressCoordinator.processAndDisplay(List.of(itemEvent));
+                    }
+
+                    return getCraftingFeedback(result, recipeDefinition);
+                }
 
 			case "0" -> {
 				return null;
@@ -167,7 +184,7 @@ public final class CraftingMenu {
 			CraftingRecipeDefinition recipeDefinition) {
 		Item outputItem =
 				itemCatalog.getById(recipeDefinition.getOutputItemId());
-
+		ConsoleUI.clearScreen();
 		System.out.println(
 				"\n["
 						+ recipeDefinition.getName().toUpperCase(Locale.ROOT)
@@ -212,6 +229,7 @@ public final class CraftingMenu {
 	private String getCraftingFeedback(
 			CraftingResult result,
 			CraftingRecipeDefinition recipeDefinition) {
+		ConsoleUI.clearScreen();
 		return switch (result.getOutcome()) {
 		case SUCCESS ->
 			"Você fabricou "

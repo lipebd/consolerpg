@@ -1,0 +1,8 @@
+# classId;weaponItemId;armorItemId
+flagelo;espada_de_ferro;cota_de_aco
+bardo;alaude_profissional;robe_de_brim
+druida;cajado_comum;macacao_de_couro
+atirador;pistola_comum;macacao_de_couro
+metamorfo;grimorio_comum;robe_de_brim
+espectro;adaga_pesada;robe_de_brim
+quebramagos;luvas_de_couro;cota_de_aco

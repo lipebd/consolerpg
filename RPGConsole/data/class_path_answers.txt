@@ -1,0 +1,26 @@
+# questionId;order;text;classId
+
+coragem;1;Deixo a luz atravessar as folhas e conduzi-la de volta aos meus pés.;druida
+coragem;2;Permito que ela me toque e descubro no que podemos nos tornar juntos.;metamorfo
+coragem;3;Caminho ao lado dela. Talvez uma sombra saiba coisas que eu esqueci.;espectro
+
+inocencia;3;Seguro-a entre as mãos, ainda que seu poder tente me consumir.;quebramagos
+inocencia;1;Observo o ritmo de seus pulsos antes de me aproximar.;atirador
+inocencia;2;Toco o chão e descubro se o mundo está disposto a recebê-la.;druida
+
+determinacao;1;Finjo obedecer até descobrir a vontade que se esconde por trás delas.;espectro
+determinacao;2;Aguardo para descobrir quanto de mim elas realmente conseguem controlar.;quebramagos
+
+curiosidade;2;Eu a toco. Permito que ela revele um rosto que nem eu conhecia.;metamorfo
+curiosidade;1;Eu a visto. Mostro à árvore exatamente o rosto que ela espera encontrar.;bardo
+curiosidade;3;Eu a destruo. Nenhum encantamento decidirá quem sou.;quebramagos
+
+astucia;2;Ignoro o som e procuro o ponto exato de onde nasce sua vibração.;atirador
+astucia;1;Faço soar uma nota ainda mais alta e aguardo para ver qual deles responde.;bardo
+astucia;3;Escuto os intervalos, pois a mentira se revela nos momentos de silêncio.;espectro
+
+percepcao;1;Toco o espelho e permito que nossas formas troquem de lugar.;metamorfo
+percepcao;2;Observo atentamente e uso seus movimentos para antecipar o que está por vir.;atirador
+
+sabedoria;1;Conto uma história e deixo que cada eco invente uma versão ainda maior.;bardo
+sabedoria;2;Nada. Permaneço em silêncio até que o ambiente volte a escutar a si mesmo.;druida

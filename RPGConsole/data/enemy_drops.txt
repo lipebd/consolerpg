@@ -1,3 +1,7 @@
 # enemyId;itemId;dropChance;minQuantity;maxQuantity
-lobermo;meruma;50;1;1
-passavento;meruma;40;1;2
+lobermo;meruma;25;1;1
+lobermo;pelo_lupino;75;1;2
+passavento;meruma;80;1;2
+mestre_eletrogoblin;meruma_dourada;100;1;1
+l1d3r;fragmento_energia_residual;100;1;1
+goblin_amalgama;essencia_transformacao_amalgama;100;1;1

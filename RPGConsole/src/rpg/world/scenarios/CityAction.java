@@ -7,6 +7,7 @@ public enum CityAction {
 	LEAVE_CITY("Sair da cidade"),
 	CITY_TRANSPORT("Viajar"),
 	INVENTORY("Inventário"),
+	QUESTS("Diário"),
 	VIEW_STATUS("Ver status");
 
 	private final String displayName;

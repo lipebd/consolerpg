@@ -62,7 +62,7 @@ public final class CampaignSelectionMenu {
 	}
 
 	private void displayCampaignState(CampaignLoadResult loadResult) {
-		System.out.println();
+		System.out.println("[RPGCONSOLE]");
 		System.out.println("[CAMPANHA]");
 
 		switch (loadResult.getStatus()) {
@@ -101,7 +101,8 @@ public final class CampaignSelectionMenu {
 
 	private boolean confirmNewGame() {
 		while (true) {
-			System.out.println();
+			ConsoleUI.clearScreen();
+			System.out.println("[RPGCONSOLE]");
 			System.out.println("[NOVO JOGO]");
 
 			System.out.println();

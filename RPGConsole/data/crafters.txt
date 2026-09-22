@@ -1,3 +1,3 @@
 # id;scenarioId;name;description;recipeId;...
-ferreiro_bree;bree;Senhor das Armas;Um sábio ferreiro com conhecimento dos metais de toda a região.;espada_de_ferro
-alquimista_bree;bree;Alquimista de Bree;Uma estudiosa das propriedades restauradoras de frutas e ervas.;pocao_de_meruma
+# ferreiro_bree;bree;Senhor das Armas;Um sábio ferreiro com conhecimento dos metais de toda a região.;espada_de_ferro
+# alquimista_bree;bree;Alquimista de Bree;Uma estudiosa das propriedades restauradoras de frutas e ervas.;pocao_de_meruma

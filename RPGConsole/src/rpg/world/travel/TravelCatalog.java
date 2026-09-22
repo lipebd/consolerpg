@@ -8,59 +8,66 @@ import java.util.Map;
 // Stores and provides access to travel route definitions.
 public final class TravelCatalog {
 
-	private final Map<String, TravelRouteDefinition> routesById;
-	private final Map<String, List<TravelRouteDefinition>> routesBySourceScenarioId;
+    private final Map<String, TravelRouteDefinition> routesById;
+    private final Map<String, List<TravelRouteDefinition>> routesBySourceScenarioId;
 
-	public TravelCatalog() {
-		routesById = new LinkedHashMap<>();
-		routesBySourceScenarioId = new LinkedHashMap<>();
-	}
+    public TravelCatalog() {
+        routesById = new LinkedHashMap<>();
+        routesBySourceScenarioId = new LinkedHashMap<>();
+    }
 
-	public void register(TravelRouteDefinition routeDefinition) {
-		if (routeDefinition == null) {
-			throw new IllegalArgumentException("Travel route definition cannot be null.");
-		}
+    public void register(TravelRouteDefinition routeDefinition) {
+        if (routeDefinition == null) {
+            throw new IllegalArgumentException("Travel route definition cannot be null.");
+        }
 
-		String routeId = routeDefinition.getId();
+        String routeId = routeDefinition.getId();
 
-		if (routesById.containsKey(routeId)) {
-			throw new IllegalArgumentException("Travel route ID is already registered: " + routeId);
-		}
+        if (routesById.containsKey(routeId)) {
+            throw new IllegalArgumentException("Travel route ID is already registered: " + routeId);
+        }
 
-		String sourceScenarioId = routeDefinition.getSourceScenarioId();
+        String sourceScenarioId = routeDefinition.getSourceScenarioId();
 
-		List<TravelRouteDefinition> sourceRoutes = routesBySourceScenarioId.computeIfAbsent(sourceScenarioId,
-				id -> new ArrayList<>());
+        List<TravelRouteDefinition> sourceRoutes =
+                routesBySourceScenarioId.computeIfAbsent(sourceScenarioId, id -> new ArrayList<>());
 
-		for (TravelRouteDefinition existingRoute : sourceRoutes) {
-			if (existingRoute.getDestinationScenarioId().equals(routeDefinition.getDestinationScenarioId())) {
-				throw new IllegalArgumentException(
-						"Travel destination is already registered from scenario: " + sourceScenarioId);
-			}
-		}
+        for (TravelRouteDefinition existingRoute : sourceRoutes) {
+            if (existingRoute
+                    .getDestinationScenarioId()
+                    .equals(routeDefinition.getDestinationScenarioId())) {
+                throw new IllegalArgumentException(
+                        "Travel destination is already registered from scenario: "
+                                + sourceScenarioId);
+            }
+        }
 
-		routesById.put(routeId, routeDefinition);
-		sourceRoutes.add(routeDefinition);
-	}
+        routesById.put(routeId, routeDefinition);
+        sourceRoutes.add(routeDefinition);
+    }
 
-	public TravelRouteDefinition getById(String routeId) {
-		TravelRouteDefinition routeDefinition = routesById.get(routeId);
+    public boolean containsId(String routeId) {
+        return routesById.containsKey(routeId);
+    }
 
-		if (routeDefinition == null) {
-			throw new IllegalArgumentException("Travel route not found: " + routeId);
-		}
+    public TravelRouteDefinition getById(String routeId) {
+        TravelRouteDefinition routeDefinition = routesById.get(routeId);
 
-		return routeDefinition;
-	}
+        if (routeDefinition == null) {
+            throw new IllegalArgumentException("Travel route not found: " + routeId);
+        }
 
-	public List<TravelRouteDefinition> getRoutesFrom(String sourceScenarioId) {
-		List<TravelRouteDefinition> routes = routesBySourceScenarioId.getOrDefault(sourceScenarioId, List.of());
+        return routeDefinition;
+    }
 
-		return List.copyOf(routes);
-	}
+    public List<TravelRouteDefinition> getRoutesFrom(String sourceScenarioId) {
+        List<TravelRouteDefinition> routes =
+                routesBySourceScenarioId.getOrDefault(sourceScenarioId, List.of());
 
-	public List<TravelRouteDefinition> getAll() {
-		return List.copyOf(routesById.values());
-	}
+        return List.copyOf(routes);
+    }
 
+    public List<TravelRouteDefinition> getAll() {
+        return List.copyOf(routesById.values());
+    }
 }
