@@ -1,1 +1,57 @@
 # questId;step;title;description
+
+# QUEST 1
+ordem_dos_alquimistas;1;A preocupação de uma mãe;Converse com sua mãe para ver como ela está.
+ordem_dos_alquimistas;2;Palavras febris;Tente conversar com seu pai em um de seus breves momentos de consciência.
+ordem_dos_alquimistas;3;Uma decisão;Retorne ao Mestre Alquimista depois de conversar com seus pais.
+
+# QUEST 2
+o_discipulo;1;Rastros nos ermos;Investigue os goblins de Verdes Ermos e procure indícios do caminho seguido pelo discípulo.
+o_discipulo;2;Pistas entre sucatas;Retorne ao Mestre Alquimista e relate o que descobriu sobre os goblins.
+o_discipulo;3;Novas compressas;Vença batalhas em Verdes Ermos e colete Pelos Lupinos para a produção de novas compressas enquanto o Mestre analisa suas anotações sobre os goblins.
+o_discipulo;4;Anotações e cuidados;Retorne ao Mestre Alquimista para entregar os Pelos Lupinos e verificar se ele descobriu alguma coisa sobre os goblins.
+o_discipulo;5;Gruta Relamparrocha;Segundo o Mestre Alquimista, a Gruta Relamparrocha é onde os goblins vivem. Vá até lá procurar pelo discípulo desaparecido.
+o_discipulo;6;Prisioneiro dos goblins;Avance pelos túneis, encontre o discípulo e derrote quem o mantém prisioneiro. Tenha cuidado com inimigos extraordinariamente fortes.
+o_discipulo;7;O discípulo resgatado;Retorne ao Mestre Alquimista com o discípulo resgatado e entregue a Merumã Dourada recuperada na gruta.
+
+# QUEST 3
+entre_caminhos;1;Antes de partir;Converse novamente com sua mãe antes de deixar Bree.
+entre_caminhos;2;Caminhos incertos;Procure o Mestre Alquimista e peça orientações sobre a travessia de Entrelinhas.
+entre_caminhos;3;Além do Portão Leste;Atravesse o Portão Leste de Bree e chegue a Entrelinhas.
+entre_caminhos;4;Experiência no caminho;Treine em Entrelinhas antes de prosseguir para Entrelugar.
+entre_caminhos;5;A cidade impossível;Encontre a passagem para Entrelugar e chegue à cidade construída ao redor da anomalia.
+entre_caminhos;6;Encontro marcado;Procure o dono da taverna de Entrelugar. Seu contato de Bree já deve ter chegado.
+
+# QUEST 4
+energia_residual;1;Uma questão menor;Converse com a Pesquisadora da Anomalia sobre a doença surgida em Bree.
+energia_residual;2;A mancha vermelha;Pergunte ao Pesquisador de Sanguemar sobre sua pesquisa.
+energia_residual;3;Registros antigos;Procure o Arquivista de Entrequando e pergunte se existem registros de transformações semelhantes.
+energia_residual;4;O mago d'O Vão;Talvez um mago se interesse mais pela investigação de Bree.
+energia_residual;5;Além do túmulo;Encontre o acesso às Minas do Além-Túmulo e entre na antiga instalação.
+energia_residual;6;Energia nas máquinas;Investigue as criaturas das Minas e obtenha uma amostra da energia que as mantém ativas.
+energia_residual;7;A primeira resposta;Retorne ao Instituto Entrequando, entregue a amostra e discuta os resultados com o Mago Pesquisador.
+
+# QUEST 5
+os_sete_caminhos;1;Sob os sete galhos;Entre no Centro da Cerimônia dos Caminhos e converse com o Mestre da Cerimônia.
+os_sete_caminhos;2;A voz da Harmonia;Visite o Galho da Harmonia e converse com seu mentor para conhecer a primeira prova.
+os_sete_caminhos;3;A fonte da alegria;Segundo o Mentor da Harmonia, toda voz precisa conhecer a fonte de sua alegria. Retorne a Bree e procure sua família.
+os_sete_caminhos;4;Palavras que permanecem;Retorne ao Mentor da Harmonia levando consigo as palavras escritas por seu pai.
+os_sete_caminhos;5;As formas do Ciclo;Visite o Galho do Ciclo e converse com seu mentor para conhecer a próxima prova.
+os_sete_caminhos;6;Manifestações da vida;Observe diferentes manifestações da vida vegetal e compreenda como elas pertencem ao mesmo ciclo.
+os_sete_caminhos;7;O ciclo permanece;Retorne ao Mentor do Ciclo e compartilhe suas observações.
+os_sete_caminhos;8;Diante do Reflexo;Visite o Galho do Reflexo e converse com seu mentor para conhecer a próxima prova.
+os_sete_caminhos;9;Forma instável;Investigue uma criatura transformada e obtenha uma amostra de sua forma instável.
+os_sete_caminhos;10;Além da aparência;Leve suas descobertas ao Mentor do Reflexo.
+os_sete_caminhos;11;Antes do Instante;Visite o Galho do Instante e converse com seu mentor para conhecer a próxima prova.
+os_sete_caminhos;12;O momento preciso;Observe os movimentos dos Passaventos e aprenda a agir no momento correto.
+os_sete_caminhos;13;O momento exato;Retorne ao Mentor do Instante depois de concluir a prova.
+os_sete_caminhos;14;Aquilo que sussurra;Visite o Galho do Sussurro e converse com seu mentor para conhecer a próxima prova.
+os_sete_caminhos;15;Presenças esquecidas;Retorne às Minas do Além-Túmulo e enfrente as presenças que habitam seus corredores.
+os_sete_caminhos;16;Aquilo que não se anuncia;Retorne ao Mentor do Sussurro e relate o que encontrou nas Minas.
+os_sete_caminhos;17;O peso do Silêncio;Visite o Galho do Silêncio e converse com seu mentor para conhecer a próxima prova.
+os_sete_caminhos;18;Vontade inabalável;Enfrente criaturas alteradas por forças artificiais sem permitir que o caos delas determine suas ações.
+os_sete_caminhos;19;A própria voz;Retorne ao Mentor do Silêncio depois de interromper as criaturas.
+os_sete_caminhos;20;O antigo Valor;Visite o Galho da Ruína e converse com seu mentor para conhecer a última prova.
+os_sete_caminhos;21;O que resta da queda;Retorne à Gruta Relamparrocha e continue avançando mesmo sem a promessa de reconhecimento ou recompensa.
+os_sete_caminhos;22;Aquilo que permanece;Retorne ao Mentor da Ruína e conclua as provas dos sete galhos.
+os_sete_caminhos;23;O Julgamento dos Sete Presságios;Apresente-se ao Mestre da Cerimônia e descubra qual caminho responderá às suas escolhas.

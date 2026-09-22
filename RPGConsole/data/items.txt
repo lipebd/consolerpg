@@ -19,6 +19,12 @@ pocao_concentrada_de_frutas_da_montanha;CONSUMABLE;true;300;90;Poção Concentra
 pelo_lupino;MATERIAL;true;;15;Pelo Lupino;Um tufo espesso de pelo obtido de um Lobermo.
 madeira;MATERIAL;true;10;5;Madeira;Um material resistente obtido de árvores e construções.
 ferro;MATERIAL;true;50;20;Ferro;Um metal resistente obtido principalmente em minas e cavernas.
+essencia_transformacao_amalgama;MATERIAL;false;;;Essência da Transformação;Uma substância instável extraída de um Goblin Amálgama. Sua forma parece mudar quando não está sendo observada.
+fragmento_energia_residual;MATERIAL;false;;;Fragmento de Energia Residual;Um componente retirado das criaturas mecânicas das Minas do Além-Túmulo. Ainda pulsa com uma energia difícil de identificar.
+meruma_dourada;MATERIAL;false;;;Merumã Dourada;Uma fruta dourada raríssima. Utilizada pelos Alquimistas em tratamentos das mais diversas doenças.
+
+# Itens Chave
+poema_do_papai;KEY_ITEM;false;;;Poema do Papai;Um pequeno poema escrito pelo seu pai. Suas palavras lembram que sempre existe um caminho de volta para casa.
 
 # Armas
 adaga_improvisada;WEAPON;false;;;Adaga Improvisada;Uma lâmina simples e desgastada, adequada para golpes rápidos.

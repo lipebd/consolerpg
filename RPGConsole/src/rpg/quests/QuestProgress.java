@@ -185,7 +185,7 @@ public final class QuestProgress {
 		return resultingProgress;
 	}
 
-	boolean isCurrentStepComplete(String questId) {
+	public boolean isCurrentStepComplete(String questId) {
 		QuestDefinition questDefinition =
 				questCatalog.getById(questId);
 		ActiveQuestState activeState =

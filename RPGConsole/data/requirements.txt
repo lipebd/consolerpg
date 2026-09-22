@@ -1,1 +1,25 @@
 # setId;order;requirementType;targetId;requiredValue
+# PUXÕES DE ORELHA
+c3o_disponivel;1;FLAG_SET;c3o_liberado;
+
+# QUEST 2
+o_discipulo_disponivel;1;QUEST_COMPLETED;ordem_dos_alquimistas;
+o_discipulo_disponivel;2;LEADER_LEVEL_AT_LEAST;;3
+
+# QUEST 3
+entre_caminhos_disponivel;1;QUEST_COMPLETED;o_discipulo;
+
+# QUEST 4
+instituto_entrequando_visivel;1;FLAG_SET;instituto_entrequando_descoberto;
+energia_residual_disponivel;1;QUEST_COMPLETED;entre_caminhos;
+energia_residual_disponivel;2;LEADER_LEVEL_AT_LEAST;;5
+
+# QUEST 5
+os_sete_caminhos_disponivel;1;QUEST_COMPLETED;energia_residual;
+os_sete_caminhos_disponivel;2;LEADER_LEVEL_AT_LEAST;;7
+centro_cerimonia_visivel;1;FLAG_SET;centro_cerimonia_desbloqueado;
+galhos_cerimonia_visiveis;1;FLAG_SET;galhos_cerimonia_desbloqueados;
+praca_emblemas_visivel;1;FLAG_SET;praca_emblemas_desbloqueada;
+praca_emblemas_visivel;2;QUEST_ACTIVE;os_sete_caminhos;
+mago_entrelugar_visivel;1;FLAG_UNSET;mago_partiu_setegalhos;
+mago_setegalhos_visivel;1;FLAG_SET;mago_partiu_setegalhos;

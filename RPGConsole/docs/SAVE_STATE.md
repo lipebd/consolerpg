@@ -1,6 +1,6 @@
 # RPGConsole — Save State
 
-> **Implementation status:** Internal save format version 3 is fully integrated. The game creates one coordinated immutable snapshot containing party, world, shop, quest, permanent-flag and recruitment-candidate state; serializes and encrypts it into `save.txt`; atomically replaces the previous save; and validates and reconstructs an isolated complete campaign before runtime activation. Internal version-2 saves are rejected without migration. The empty-narrative V3 restart round trip and version-2 rejection have completed manual verification. Non-empty narrative round trips remain scheduled with the canonical quest content that can produce those states.
+> **Implementation status:** Internal save format version 3 is fully integrated. The game creates one coordinated immutable snapshot containing party, world, shop, quest, permanent-flag and recruitment-candidate state; serializes and encrypts it into `save.txt`; atomically replaces the previous save; and validates and reconstructs an isolated complete campaign before runtime activation. Internal version-2 saves are rejected without migration. The empty-narrative V3 restart round trip and version-2 rejection have completed manual verification. The empty-narrative version-3 restart round trip, explicit version-2 rejection and loading of a campaign with an active canonical quest have been verified. A representative restart round trip after the Quest 5 recruitment and invalid narrative-payload cases remain pending.
 
 ## Purpose
 
@@ -29,7 +29,7 @@ The game must:
 * Encrypt the saved information.
 
 The project implements this requirement as one encrypted campaign slot.
-
+f
 ## Core persistence principles
 
 * External `.txt` files remain the source of immutable game definitions.
@@ -515,34 +515,29 @@ The saved current scenario must:
 For every saved unlocked route ID:
 
 * The ID must be non-empty.
-* The ID must exist in `TravelCatalog`.
+* The ID must exist in `TravelCatalog` or `ScenarioBranchCatalog`.
 * The ID must appear only once.
 
 Route-unlock order is not meaningful state. IDs may be serialized in a stable sorted order.
 
-A new `TravelProgress` automatically registers routes currently defined as initially unlocked. Saved IDs are then reapplied through `unlock()`.
+A new `TravelProgress` registers routes and scenario branches currently defined as initially unlocked. Saved unlocked IDs are then reapplied through `unlock()`. The same saved ID collection represents both kinds of passage.
 
 ## Shop-state validation
 
-Each saved shop state must:
+Saved shop IDs cannot be duplicated. A shop removed from the current catalog is ignored during loading. A shop added after the save was created receives newly generated initial offers.
 
-* Reference a current `ShopDefinition`.
-* Appear no more than once.
-* Contain at least one active offer.
-* Contain no more offers than its configured slot count.
+For a shop present in both the save and the current catalog:
 
-Each active offer must:
+* Saved offers retain their order, which controls their presentation in the menu.
+* Duplicate stock-entry IDs in the saved shop are invalid, including IDs whose entries were later removed.
+* Offers whose stock entries no longer exist are discarded.
+* An existing stock entry reassigned to another shop invalidates the saved offer.
+* If the current shop has fewer offer slots, only the earliest surviving offers up to that limit are retained.
+* A shop may consequently be restored with no active offers. New entries are not added to an existing shop until its next restock.
 
-* Reference a current `ShopStockEntry`.
-* Belong to the containing shop.
-* Appear no more than once in that shop state.
-* Store remaining stock from zero through its canonical initial stock.
+Each retained offer uses its current `ShopStockEntry`. Its remaining stock is the lesser of the saved quantity and the entry's current initial stock. Negative saved quantities remain invalid. Current definitions determine prices, weights and initial quantities; the save does not determine them.
 
-Offer order is persistent because it controls menu presentation.
-
-A restored `ShopOfferState` is created with canonical initial stock. The difference between initial and saved stock is then applied through `decreaseStock()`.
-
-Prices, weights and initial quantities are never trusted from the save.
+Stock-entry IDs must not be reused for different items. The snapshot records the entry ID and remaining quantity, so reusing an ID would associate an old saved offer with the new item.
 
 ## World time and shop restocking
 
@@ -1040,7 +1035,7 @@ Future schema evolution must continue to add snapshot structures only after thei
 
 Implementation verification must cover:
 
-V6 Part 9 manually confirmed explicit version-2 rejection and a complete version-3 restart round trip with empty quest, flag and candidate collections. A non-empty narrative round trip and representative invalid narrative payloads remain pending until canonical quest content can produce coherent runtime fixtures in Parts 10 and 11. This deferral does not weaken the format contract or permit placeholder production content.
+Part 9 verified explicit version-2 rejection and a complete version-3 restart round trip with empty narrative collections. Part 10 also loaded a campaign with an active canonical quest. A representative save-and-restart round trip after recruitment, plus invalid narrative-payload cases, remain pending.
 
 | Group | Required coverage |
 |---|---|

@@ -1164,7 +1164,7 @@ The complete inventory consequence is calculated before mutation. Returned equip
 
 An invalid current class, insufficient level, previously completed ceremony or insufficient inventory capacity rejects the complete transition. Equipment, inventory, class, skills, resources and flags remain unchanged.
 
-The standalone transition can prepare and apply this state atomically. Its normal story resolution will compose the same prepared plan with the mandatory first-ally recruitment, quest transition, rewards and permanent effects so that Quest 4 cannot commit only part of the ceremony.
+The standalone transition can prepare and apply this state atomically. Its normal story resolution will compose the same prepared plan with the mandatory first-ally recruitment, quest transition, rewards and permanent effects so that Quest 5 cannot commit only part of the ceremony.
 
 ## Recruitment candidates and playable allies
 
@@ -1331,7 +1331,9 @@ The snapshot is serialized through the versioned property schema defined in `SAV
 
 Loading decrypts and structurally validates the snapshot, validates every catalog-backed reference and reconstructs an isolated runtime candidate without modifying active gameplay state. A valid campaign may be continued after the title screen, while saving is available exclusively through INNs.
 
-The authenticated internal save format is version 3. It stores active quest steps and objective counters, completed quests, set permanent flags, candidate IDs, persistent candidate names and recruited state in addition to the earlier campaign state. Active exploration sessions remain transient and are not restored.
+The authenticated internal save format is version 3. It persists quest progress, permanent campaign flags and recruitment-candidate state alongside party, world, travel, dungeon, clock and shop state. Version-2 saves are rejected without migration.
+
+Loading validates the relationships between the completed ceremony, the protagonist's class, recruitment quest progress, candidate state and the recruited party member before activating the restored campaign. Active exploration sessions, questionnaire answers, recommendations, uncommitted class choices and prepared recruitment plans remain transient.
 
 Internal version 2 is rejected without migration because its party snapshot cannot prove the quest, flag and candidate transaction that produced a recruited ally. Loading version 3 reconstructs quest, flag and candidate state in isolation and validates their coherence with the restored party before `World` receives the campaign.
 
@@ -1798,11 +1800,13 @@ Every dungeon defines:
 
 The narrative boss blocks the final position until the dungeon is completed for the first time.
 
+An optional dungeon-boss gate may require current campaign conditions before the encounter begins. If access is blocked, its configured reaction dialogue can be shown and the party transported to a configured scenario. A quest-specific reaction may take precedence over the general reaction for the same boss. Boss narrative and recurring dialogues are associated separately and presented before their encounters.
+
 Narrative-boss victory:
 
 - Permanently records the dungeon's narrative completion.
 - Completes the current exploration.
-- Permanently preserves otherwise-unlocked adjacent routes.
+- Does not unlock adjacent routes or scenario branches; passages remain controlled by their initial definitions and quest effects.
 - Starts the first recurring-boss cooldown after the victory advances world time by one hour.
 
 Completed dungeons remain available for reexploration.
@@ -1901,7 +1905,7 @@ Progress rules:
 
 Enemy-defeat progress is produced only by confirmed victory over the applicable enemy. Escape, party defeat and refusal of an optional encounter do not count defeated enemies.
 
-`WIN_BATTLE` counts completed victories independently from enemy identity.
+`WIN_BATTLE` counts confirmed victories. With a blank target, victories in any combat scenario count; with a scenario ID as target, only victories in that scenario count. Enemy identity does not affect this objective.
 
 `ANALYZE_ENEMY` records the confirmed analysis action against the configured enemy. It does not require defeating that enemy.
 
@@ -1984,28 +1988,24 @@ Quest rewards are all-or-nothing:
 
 Items received through one successfully completed quest may then produce acquisition events for other active quests. The quest that just completed cannot consume its own reward event retroactively.
 
-## Permanent quest effects
+## Quest effects
 
-The initial permanent effects are:
+Supported effects are:
 
-- Setting one campaign flag.
-- Unlocking one adjacent route.
+- `SET_FLAG`: permanently sets a campaign flag.
+- `UNLOCK_ROUTE`: unlocks one directed adjacent route or scenario branch by ID.
+- `GRANT_ITEM`: grants a configured quantity of an item during quest progression.
+- `TRANSPORT_PARTY`: moves the party to a configured scenario without charging for city transport.
 
-Effects may occur when:
+Effects may occur at `QUEST_START`, `STEP_COMPLETE` or `QUEST_COMPLETE`. `GRANT_ITEM` and `TRANSPORT_PARTY` cannot use `QUEST_START`.
 
-- A quest starts.
-- A specific step completes.
-- A quest completes.
+Effects at one trigger location preserve their configured order. Optional display text reports a visible consequence without determining whether the effect occurs. An effect without display text need not appear under a special “unlock” heading.
 
-Effects at one trigger location preserve their configured order. Optional display text reports a visible consequence without controlling whether the effect itself occurs.
+Setting an already active flag and unlocking an already unlocked passage are successful no-ops. Completing a field or dungeon does not unlock passages automatically.
 
-Flag assignment is idempotent. Setting an already active flag is a successful no-op rather than an error.
+Step effects belong to the same transaction as the step transition. Quest-completion effects belong to the same transaction as delivery consumption, material rewards and final status mutation. Item capacity and effect applicability are validated before campaign mutation.
 
-Route unlocking reuses `TravelProgress`. Unlocking an already unlocked route preserves its unlocked state.
-
-Step effects belong to the same transaction as the step transition. Quest-completion effects belong to the same transaction as delivery consumption, material rewards and final status mutation.
-
-Class changes and ally recruitment are not generic quest effects. The protagonist's class-path transition uses its dedicated validated plan, while the final Quest 4 resolution will compose that plan with the dedicated recruitment transaction.
+Class changes and ally recruitment remain dedicated typed behavior rather than generic quest effects. The conclusion of Quest 5, `Os Sete Caminhos`, composes the protagonist's class transition with the first ally's recruitment.
 
 ## Permanent flags and reusable requirements
 

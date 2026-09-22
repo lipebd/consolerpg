@@ -54,6 +54,7 @@ public final class InnMenu {
 	}
 
 	private void displayInn(InnDefinition innDefinition, String feedbackMessage) {
+		ConsoleUI.clearScreen();
 		System.out.println("\n[" + innDefinition.getName().toUpperCase(Locale.ROOT) + "]");
 
 		System.out.println(innDefinition.getDescription());
@@ -102,6 +103,7 @@ public final class InnMenu {
 
 	private boolean confirmStay(int price) {
 		while (true) {
+			ConsoleUI.clearScreen();
 			System.out.println("\nConfirmar estadia por " + GameCurrency.format(price) + "?");
 
 			System.out.println();

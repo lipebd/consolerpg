@@ -45,6 +45,7 @@ public final class CampaignLoadService {
 
 			return CampaignLoadResult.success(restoredCampaign);
 		} catch (IllegalArgumentException | IllegalStateException | ArithmeticException exception) {
+			exception.printStackTrace();
 			return CampaignLoadResult.invalidSave();
 		} finally {
 			Arrays.fill(encodedSave, (byte) 0);

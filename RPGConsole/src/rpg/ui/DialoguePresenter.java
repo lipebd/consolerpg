@@ -81,7 +81,15 @@ public final class DialoguePresenter {
         for (DialogueLineDefinition lineDefinition : dialogueDefinition.getLines()) {
             String speakerName = resolveSpeakerName(lineDefinition, party);
 
-            String text = NarrativeTextProcessor.resolve(lineDefinition.getText(), party);
+            String recruitResolvedText =
+                    NarrativeTextProcessor.resolveRecruitNames(
+                            lineDefinition.getText(),
+                            candidateStateCatalog);
+
+            String text =
+                    NarrativeTextProcessor.resolve(
+                            recruitResolvedText,
+                            party);
 
             renderedLines.add(new RenderedDialogueLine(speakerName, text));
         }
@@ -113,7 +121,7 @@ public final class DialoguePresenter {
     private void displayLine(RenderedDialogueLine renderedLine, List<String> headerLines) {
         ConsoleUI.clearScreen();
         for (String headerLine : headerLines) {
-            System.out.println("[" + headerLine + "]");
+            System.out.println("[" + headerLine.toUpperCase() + "]");
         }
 
         if (!headerLines.isEmpty()) {

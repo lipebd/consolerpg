@@ -895,8 +895,8 @@ Each active travel-route line contains exactly 7 fields:
 Examples:
 
 ```text
-bree_portao_sul;bree;verdes_ermos;true;Portão Sul;A estrada ao sul conduz aos Verdes Ermos.;1
-verdes_ermos_bree;verdes_ermos;bree;true;Retornar a Bree;Você segue pela estrada de volta a Bree.;
+bree_portao_sul;bree;verdes_ermos;false;Portão Sul;A estrada ao sul conduz aos Verdes Ermos.;1
+verdes_ermos_bree;verdes_ermos;bree;false;Retornar a Bree;Você segue pela estrada de volta a Bree.;
 ```
 
 Rules:
@@ -961,16 +961,16 @@ File:
 
 `data/scenario_branches.txt`
 
-Each active branch line contains exactly 6 fields:
+Each active branch line contains exactly 7 fields:
 
 ```text
-# id;sourceScenarioId;position;destinationScenarioId;displayName;description
+# id;sourceScenarioId;position;destinationScenarioId;initiallyUnlocked;displayName;description
 ```
 
 Example:
 
 ```text
-verdes_ermos_bifurcacao_setegalhos;verdes_ermos;3;setegalhos;Seguir para Setegalhos;Você encontra uma bifurcação entre os campos.\nUma estrada parcialmente escondida pela vegetação conduz ao Povoado de Setegalhos.
+verdes_ermos_bifurcacao_setegalhos;verdes_ermos;3;setegalhos;false;Seguir para Setegalhos;Você encontra uma bifurcação entre os campos.\nUma estrada parcialmente escondida pela vegetação conduz ao Povoado de Setegalhos.
 ```
 
 Rules:
@@ -1163,8 +1163,8 @@ Runtime rules:
 - Old offers and remaining quantities are not merged into the new cycle.
 - A complete replacement `ShopStateCatalog` is generated before world time or active shop state changes.
 - Failed replacement generation preserves the previous world time and shop states.
-- A new campaign creates the initial clock and shop states, while continuing a valid saved campaign restores both states without generating new offers.
-- The snapshot schema preserves world time and active shop offers together. Catalog-backed loading restores both without generating additional shop offers or advancing fictional time.
+- A new campaign generates every shop state. Loading a campaign preserves surviving saved offers and generates initial offers only for shops added since the save.
+- Loading does not advance fictional time or restock existing shops. Offers removed from current definitions are discarded, remaining stock is capped at the current initial stock, and an existing shop may load with no active offers.
 
 Loading flow:
 
@@ -1567,7 +1567,10 @@ Target and quantity rules:
 | `DELIVER_ITEM` | Canonical item ID | Positive |
 | `REACH_SCENARIO` | Canonical scenario ID | Exactly `1` |
 | `COMPLETE_DUNGEON` | Canonical dungeon scenario ID | Exactly `1` |
-| `WIN_BATTLE` | Blank | Positive |
+| `WIN_BATTLE` | Blank for any scenario, or a canonical combat-scenario ID | Positive |
+
+- `WIN_BATTLE` with a blank target counts victories in any combat scenario.
+- `WIN_BATTLE` with a combat-scenario target counts victories only in that scenario.
 
 Additional rules:
 
@@ -1760,19 +1763,19 @@ quest_rewards.txt
     -> QuestRewardCatalog
 ```
 
-## Quest permanent-effect definitions
+## Quest-effect definitions
 
-Permanent effects caused by quest progression are loaded from:
+Quest effects are loaded from:
 
 `data/quest_effects.txt`
 
 Header:
 
 ```text
-# questId;step;trigger;order;effectType;targetId;displayText
+# questId;step;trigger;order;effectType;targetId;quantity;displayText
 ```
 
-Each valid line contains exactly 7 fields:
+Each valid line contains exactly 8 fields:
 
 | Position | Field | Java type | Empty value |
 | ---: | --- | --- | --- |
@@ -1782,32 +1785,37 @@ Each valid line contains exactly 7 fields:
 | 4 | Effect order | `int` | Not allowed |
 | 5 | Effect type | `QuestEffectType` | Not allowed |
 | 6 | Target ID | `String` | Not allowed |
-| 7 | Player-facing display text | `String` | Allowed |
+| 7 | Quantity | `int` | Required only for `GRANT_ITEM`; blank otherwise |
+| 8 | Player-facing display text | `String` | Allowed |
 
-The initial triggers are exactly:
+Triggers:
 
 - `QUEST_START`
 - `STEP_COMPLETE`
 - `QUEST_COMPLETE`
 
-The initial effect types are exactly:
+Effect types:
 
 - `SET_FLAG`
 - `UNLOCK_ROUTE`
+- `GRANT_ITEM`
+- `TRANSPORT_PARTY`
 
 Rules:
 
 - Every quest ID must reference `QuestCatalog`.
 - `QUEST_START` and `QUEST_COMPLETE` use step `0`.
-- `STEP_COMPLETE` uses a real positive step belonging to the referenced quest.
+- `STEP_COMPLETE` uses a positive step belonging to the referenced quest.
 - Effect order begins at 1 and is unique and consecutive for each quest, step and trigger location.
 - `SET_FLAG` targets a canonical flag ID.
-- `UNLOCK_ROUTE` targets a canonical adjacent-route ID.
-- Duplicate applications of the same effect type and target at one trigger location are rejected.
-- Display text is optional and describes a visible permanent consequence.
-- An absent display text does not suppress the effect itself.
-- Step effects belong atomically to their step transition.
-- Quest-completion effects belong atomically to delivery consumption, material rewards and final quest status mutation.
+- `UNLOCK_ROUTE` targets a canonical travel-route or scenario-branch ID. Routes are unlocked by quest effects, not automatically by completing a combat scenario.
+- `GRANT_ITEM` targets a canonical item ID and requires a positive quantity.
+- `TRANSPORT_PARTY` targets a canonical scenario ID.
+- `GRANT_ITEM` and `TRANSPORT_PARTY` cannot use `QUEST_START`.
+- Other effect types leave `quantity` blank.
+- Display text is optional. A blank display text does not suppress the effect.
+- Step effects belong to their step transition.
+- Quest-completion effects belong to quest completion.
 - Class change and ally recruitment are not represented as generic effects.
 
 Loading flow:
@@ -1935,7 +1943,7 @@ Rules:
 - A blank requirement-set ID makes the placement visible whenever its location is visible.
 - A non-empty requirement-set ID must reference `RequirementCatalog`.
 - Placement requirements do not override location requirements; both must succeed.
-- NPC movement and conditional alternative placements are not supported in V6.
+- A single NPC ID cannot move between placements. To portray the same character in two locations at different points in the story, define two NPC IDs with separate placements and complementary visibility requirements, such as `FLAG_UNSET` and `FLAG_SET` for the same flag. This is a content convention; each ID remains a distinct NPC definition.
 - Declaration order is preserved inside each narrative location.
 
 Loading flow:
@@ -2016,6 +2024,91 @@ dialogues.txt
     -> ordered DialogueLineDefinition objects
     -> DialogueDefinition
     -> DialogueCatalog
+```
+
+## Dungeon-boss gate definitions
+
+Access conditions for dungeon bosses are loaded from:
+
+`data/dungeon_boss_gates.txt`
+
+Header:
+
+```text
+# dungeonId;availabilityRequirementSetId;defaultBlockedDialogueId;blockedDestinationScenarioId
+```
+
+Each line contains exactly 4 fields:
+
+| Position | Field | Required reference |
+| ---: | --- | --- |
+| 1 | Dungeon ID | Canonical dungeon scenario ID |
+| 2 | Availability requirement-set ID | Existing set in `requirements.txt` |
+| 3 | Default blocked-dialogue ID | Existing dialogue in `dialogues.txt` |
+| 4 | Blocked destination scenario ID | Existing scenario ID |
+
+When the party reaches a gated boss without satisfying the requirement set, the encounter does not begin. The game presents a matching `BOSS_GATED` dialogue from `combat_scenario_dialogues.txt`, or the default dialogue declared here, then moves the party to the configured destination.
+
+A gate is reusable across quests: the requirement set decides access, while quest-specific dialogue associations can change the reaction without changing the gate.
+
+## Combat-scenario dialogue associations
+
+Dialogues triggered by combat-scenario events are associated through:
+
+`data/combat_scenario_dialogues.txt`
+
+Header:
+
+```text
+# scenarioId;trigger;questId;step;dialogueId
+```
+
+Each valid line contains exactly 5 fields:
+
+| Position | Field | Java type | Empty value |
+| ---: | --- | --- | --- |
+| 1 | Scenario ID | `String` | Not allowed |
+| 2 | Trigger | `CombatScenarioDialogueDefinition.Trigger` | Not allowed |
+| 3 | Quest ID | `String` | Allowed for a general dialogue |
+| 4 | Quest step | `int` | Blank when the quest ID is blank |
+| 5 | Dialogue ID | `String` | Not allowed |
+
+Supported triggers:
+
+- `BOSS_GATED`: the party reaches a dungeon boss whose access requirements are not satisfied.
+- `BOSS_NARRATIVE`: the first, narrative boss encounter, before battle.
+- `BOSS_RECURRING`: later boss encounters, before battle.
+
+Rules:
+
+- All currently supported triggers reference a canonical dungeon scenario.
+- The dialogue ID must exist in `DialogueCatalog`.
+- A quest-specific record requires a canonical quest ID and a positive existing step.
+- A general record leaves both `questId` and `step` blank.
+- A scenario, trigger and quest-step combination cannot be declared twice.
+- A matching active quest-step dialogue takes priority over the general dialogue for the same scenario and trigger.
+- If `BOSS_GATED` has no matching dialogue here, the default dialogue in `dungeon_boss_gates.txt` is used.
+- `BOSS_NARRATIVE` and `BOSS_RECURRING` have no dialogue when neither a matching quest-step record nor a general record exists.
+- Encounter dialogue is presented before battle. Escaping does not complete the narrative boss, so another attempt may present the same dialogue again.
+- NPC speakers in these dialogues do not need a narrative-location placement. Enemy speakers use their canonical enemy IDs.
+- Dialogue associations are definitions, not mutable save state.
+
+Examples:
+
+```text
+minas_alem_tumulo;BOSS_GATED;energia_residual;6;aviso_mago_minas
+gruta_relamparrocha;BOSS_NARRATIVE;;;confronto_mestre_eletrogoblin
+```
+
+Loading flow:
+
+```text
+combat_scenario_dialogues.txt
+    -> CombatScenarioDialogueLoader
+    -> CombatScenarioDialogueDefinition
+    -> CombatScenarioDialogueCatalog
+    -> DungeonBossAccessResolver
+    -> DialoguePresenter
 ```
 
 ## Quest-dialogue definitions
@@ -2109,7 +2202,6 @@ Rules:
 - One quest-and-step combination may appear at most once.
 - One candidate ID may appear at most once.
 - The catalog accepts at most three records, matching the three non-leader party positions.
-- The file may remain header-only before canonical recruitment quests are authored.
 - Candidate name and recruited state are mutable campaign data and are not stored in this file.
 - Candidate class is selected at recruitment time and is not stored in this file.
 - Introductory equipment is resolved from the selected class path and is not stored in this file.
@@ -2137,6 +2229,7 @@ The following placeholders are supported in quest descriptions, step description
 - `{groupMember2}`
 - `{groupMember3}`
 - `{groupMember4}`
+- `{recruitName:candidateId}`
 
 Rules:
 

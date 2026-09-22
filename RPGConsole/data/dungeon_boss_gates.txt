@@ -1,0 +1,2 @@
+# dungeonId;availabilityRequirementSetId;defaultBlockedDialogueId;blockedDestinationScenarioId
+minas_alem_tumulo;c3o_disponivel;aviso_generico_minas;entrelugar

@@ -86,7 +86,11 @@ public final class BattleCoordinator {
 		if (result == BattleResult.VICTORY) {
 		    BattleRewards rewards = grantVictoryRewards(enemies, combatScenario);
 
-		    addVictoryProgressEvents(progressEvents, enemies, rewards);
+		    addVictoryProgressEvents(
+		            progressEvents,
+		            enemies,
+		            rewards,
+		            combatScenario);
 		}
 
 		if (!progressEvents.isEmpty()) {
@@ -108,7 +112,8 @@ public final class BattleCoordinator {
     private static void addVictoryProgressEvents(
             List<QuestProgressEvent> progressEvents,
             List<Enemy> defeatedEnemies,
-            BattleRewards rewards) {
+            BattleRewards rewards,
+            CombatScenario combatScenario) {
         Map<String, Integer> defeatedQuantitiesById = new LinkedHashMap<>();
 
         for (Enemy enemy : defeatedEnemies) {
@@ -124,7 +129,10 @@ public final class BattleCoordinator {
         }
 
         progressEvents.add(
-                new QuestProgressEvent(QuestProgressEventType.BATTLE_WON, Optional.empty(), 1));
+                new QuestProgressEvent(
+                        QuestProgressEventType.BATTLE_WON,
+                        Optional.of(combatScenario.getId()),
+                        1));
 
         for (Map.Entry<Item, Integer> collectedItem : rewards.getCollectedItems().entrySet()) {
             progressEvents.add(

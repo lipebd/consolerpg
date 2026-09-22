@@ -53,13 +53,14 @@ public final class QuestObjectiveDefinition {
 			QuestObjectiveType objectiveType,
 			Optional<String> targetId) {
 		if (objectiveType == QuestObjectiveType.WIN_BATTLE) {
-			if (targetId.isPresent()) {
-				throw new IllegalArgumentException(
-						"WIN_BATTLE objective cannot define a target ID."
-				);
-			}
+		    if (targetId.isEmpty()) {
+		        return Optional.empty();
+		    }
 
-			return Optional.empty();
+		    return Optional.of(
+		            validateId(
+		                    targetId.orElseThrow(),
+		                    "Quest objective target"));
 		}
 
 		if (targetId.isEmpty()) {

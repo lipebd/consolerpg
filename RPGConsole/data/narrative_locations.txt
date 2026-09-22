@@ -1,1 +1,17 @@
 # id;cityId;name;description;requirementSetId
+# BREE
+ordem_alquimistas_bree;bree;Ordem dos Alquimistas;O aroma intenso de ervas e reagentes domina o salão, onde mesas cobertas por frascos dividem espaço com leitos improvisados.\nAlquimistas circulam apressados entre os enfermos enquanto fórmulas incompletas e anotações se acumulam pelas paredes.;
+# ENTRELUGAR
+taverna_entreato;entrelugar;Taverna do Entreato;Uma taverna movimentada onde viajantes, pesquisadores e habitantes de Entrelugar trocam histórias sobre caminhos que nem sempre levam ao mesmo destino.;
+instituto_entrequando;entrelugar;Instituto Entrequando;Um centro de pesquisa dedicado às anomalias de Entrelugar. Instrumentos de formatos improváveis ocupam suas salas, registrando medições que nem sempre obedecem à mesma ordem em que foram realizadas.;instituto_entrequando_visivel
+# SETEGALHOS
+sombra_sete_galhos;setegalhos;Sombra dos Sete Galhos;A sombra da árvore colossal cobre uma parte movimentada da vila sem impedir que a luz alcance suas ruas. Viajantes e moradores se reúnem entre raízes maiores que muitas construções.;
+centro_cerimonia_caminhos;setegalhos;Centro da Cerimônia dos Caminhos;Um amplo salão construído junto ao tronco colossal de Setegalhos. É aqui que candidatos conhecem os termos e as responsabilidades da cerimônia.;centro_cerimonia_visivel
+galho_harmonia;setegalhos;Galho da Harmonia;Uma construção amarela onde música, histórias e conversas se misturam aos sons da vila.;galhos_cerimonia_visiveis
+galho_instante;setegalhos;Galho do Instante;Uma construção azul aberta ao vento, repleta de alvos, mecanismos e observadores silenciosos.;galhos_cerimonia_visiveis
+galho_reflexo;setegalhos;Galho do Reflexo;Uma construção roxa cujas superfícies alteram lentamente a forma das imagens refletidas.;galhos_cerimonia_visiveis
+galho_sussurro;setegalhos;Galho do Sussurro;Uma construção cinza envolvida por sombras suaves, onde até os pássaros parecem evitar chamar atenção.;galhos_cerimonia_visiveis
+galho_silencio;setegalhos;Galho do Silêncio;Uma construção branca na qual encantamentos enfraquecem e ruídos externos parecem perder sua força.;galhos_cerimonia_visiveis
+galho_ciclo;setegalhos;Galho do Ciclo;Uma construção verde cercada por raízes, folhas e pequenos jardins que parecem crescer junto à própria árvore.;galhos_cerimonia_visiveis
+galho_ruina;setegalhos;Galho da Ruína;Uma construção vermelha marcada pelo tempo. Antigos símbolos de valor permanecem gravados sob seu nome atual.;galhos_cerimonia_visiveis
+praca_emblemas;setegalhos;Praça dos Emblemas;Uma praça aberta diante do tronco magnífico de Setegalhos. É aqui que os caminhos respondem às escolhas dos candidatos.;praca_emblemas_visivel

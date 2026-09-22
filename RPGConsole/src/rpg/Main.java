@@ -59,6 +59,7 @@ import rpg.persistence.CampaignLoadService;
 import rpg.persistence.CampaignSaveService;
 import rpg.persistence.CampaignSnapshotRestorer;
 import rpg.persistence.RestoredCampaign;
+import rpg.quests.effects.QuestTransportState;
 import rpg.quests.QuestCatalog;
 import rpg.quests.QuestLoader;
 import rpg.quests.QuestProgress;
@@ -77,6 +78,7 @@ import rpg.recruitment.RecruitmentCandidateIntroductionService;
 import rpg.recruitment.RecruitmentCandidateStateCatalog;
 import rpg.requirements.QuestAvailabilityValidator;
 import rpg.requirements.RequirementCatalog;
+import rpg.requirements.RequirementEvaluator;
 import rpg.requirements.RequirementLoader;
 import rpg.skills.SkillCatalog;
 import rpg.skills.SkillLoader;
@@ -110,6 +112,11 @@ import rpg.world.rewards.ExplorationRewardCatalog;
 import rpg.world.rewards.ExplorationRewardLoader;
 import rpg.world.scenarios.CombatScenarioDefinitionCatalog;
 import rpg.world.scenarios.CombatScenarioLoader;
+import rpg.world.scenarios.DungeonBossAccessResolver;
+import rpg.world.scenarios.DungeonBossGateCatalog;
+import rpg.world.scenarios.DungeonBossGateLoader;
+import rpg.world.scenarios.CombatScenarioDialogueCatalog;
+import rpg.world.scenarios.CombatScenarioDialogueLoader;
 import rpg.world.scenarios.DungeonDefinitionCatalog;
 import rpg.world.scenarios.DungeonLoader;
 import rpg.world.scenarios.DungeonProgress;
@@ -164,6 +171,7 @@ public class Main {
 			ScenarioCatalog scenarioCatalog;
 			ScenarioBranchCatalog scenarioBranchCatalog;
 			Scenario currentScenario;
+			DungeonBossGateCatalog dungeonBossGateCatalog;
 
 			CityTransportCatalog cityTransportCatalog;
 			TravelCatalog travelCatalog;
@@ -190,7 +198,7 @@ public class Main {
 			QuestProgress questProgress;
 			CampaignFlags campaignFlags;
 			RecruitmentCandidateStateCatalog candidateStateCatalog;
-
+			CombatScenarioDialogueCatalog combatScenarioDialogueCatalog;
 			WorldProgress worldProgress;
 			DungeonProgress dungeonProgress;
 
@@ -403,6 +411,26 @@ public class Main {
 								combatScenarioDefinitionCatalog,
 								enemyCatalog);
 
+				DungeonBossGateLoader dungeonBossGateLoader =
+				        new DungeonBossGateLoader();
+
+				dungeonBossGateCatalog =
+				        dungeonBossGateLoader.load(
+				                Path.of("data", "dungeon_boss_gates.txt"),
+				                scenarioDefinitionCatalog,
+				                dungeonDefinitionCatalog,
+				                requirementCatalog,
+				                dialogueCatalog);
+				CombatScenarioDialogueLoader combatScenarioDialogueLoader =
+				        new CombatScenarioDialogueLoader();
+
+				combatScenarioDialogueCatalog =
+				        combatScenarioDialogueLoader.load(
+				                Path.of("data", "combat_scenario_dialogues.txt"),
+				                dungeonDefinitionCatalog,
+				                questCatalog,
+				                dialogueCatalog);
+
 				ScenarioBranchLoader scenarioBranchLoader = new ScenarioBranchLoader();
 				scenarioBranchCatalog =
 						scenarioBranchLoader.load(
@@ -441,7 +469,10 @@ public class Main {
 				                Path.of("data", "quest_effects.txt"),
 				                questCatalog,
 				                flagCatalog,
-				                travelCatalog);
+				                itemCatalog,
+				                travelCatalog,
+				                scenarioBranchCatalog,
+				                scenarioDefinitionCatalog);
 
 				CityTransportLoader cityTransportLoader = new CityTransportLoader();
 				cityTransportCatalog =
@@ -512,8 +543,8 @@ public class Main {
 				currentScenario = scenarioCatalog.getById("bree");
 				worldProgress = new WorldProgress(scenarioCatalog);
                 dungeonProgress = new DungeonProgress(scenarioCatalog);
-				travelProgress = new TravelProgress(travelCatalog);
-				worldClock = new WorldClock();
+                travelProgress = new TravelProgress(travelCatalog, scenarioBranchCatalog);
+                worldClock = new WorldClock();
 				shopStateCatalog = shopStateGenerator.generate();
 				questProgress = new QuestProgress(questCatalog);
 				campaignFlags = new CampaignFlags(flagCatalog);
@@ -531,8 +562,10 @@ public class Main {
 						scenarioCatalog,
 						innCatalog,
 						travelCatalog,
+						scenarioBranchCatalog,
 						shopCatalog,
 						shopStockCatalog,
+						shopStateGenerator,
                         characterGrowthCalculator,
                         questCatalog,
                         flagCatalog,
@@ -585,8 +618,8 @@ public class Main {
 					currentScenario = scenarioCatalog.getById("bree");
 					worldProgress = new WorldProgress(scenarioCatalog);
                     dungeonProgress = new DungeonProgress(scenarioCatalog);
-					travelProgress = new TravelProgress(travelCatalog);
-					worldClock = new WorldClock();
+                    travelProgress = new TravelProgress(travelCatalog, scenarioBranchCatalog);
+                    worldClock = new WorldClock();
 					shopStateCatalog = shopStateGenerator.generate();
 					questProgress = new QuestProgress(questCatalog);
 					campaignFlags = new CampaignFlags(flagCatalog);
@@ -605,15 +638,18 @@ public class Main {
 					new RecruitmentCandidateIntroductionService(
 							recruitmentNameSelector, candidateStateCatalog, party);
 
+			QuestTransportState questTransportState = new QuestTransportState();
+
 			QuestProgressService questProgressService =
-					new QuestProgressService(
-							questProgress,
-							questRewardCatalog,
-							questEffectCatalog,
-							party,
-							itemCatalog,
-							campaignFlags,
-							travelProgress);
+			        new QuestProgressService(
+			                questProgress,
+			                questRewardCatalog,
+			                questEffectCatalog,
+			                party,
+			                itemCatalog,
+			                campaignFlags,
+			                travelProgress,
+			                questTransportState);
 
 			ClassPathTransitionService classPathTransitionService =
 					new ClassPathTransitionService(
@@ -685,6 +721,18 @@ public class Main {
 
 			CampaignSaveService campaignSaveService = new CampaignSaveService();
 
+			DungeonBossAccessResolver dungeonBossAccessResolver =
+			        new DungeonBossAccessResolver(
+			                dungeonBossGateCatalog,
+			                combatScenarioDialogueCatalog,
+			                dungeonProgress,
+			                questProgress,
+			                requirementCatalog,
+			                new RequirementEvaluator(itemCatalog),
+			                party,
+			                campaignFlags);
+			var inventory = party.getInventory();
+
             World world =
                     new World(
 					party,
@@ -705,7 +753,8 @@ public class Main {
 					explorationRewardCatalog,
 					scenarioCatalog,
 					worldProgress,
-                    dungeonProgress,
+					dungeonProgress,
+					dungeonBossAccessResolver,
 					worldClock,
 					cityTransportCatalog,
 					innCatalog,
@@ -717,6 +766,7 @@ public class Main {
                     dialogueCatalog,
                     requirementCatalog,
                     questProgress,
+                    questTransportState,
                     campaignFlags,
 					candidateStateCatalog,
 					candidateIntroductionService,

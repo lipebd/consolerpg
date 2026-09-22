@@ -21,3 +21,12 @@ mata_agouro;GOLD;;8;25;45;ANY
 # Ruínas de Sanguemar
 ruinas_sanguemar;ITEM;meruma;1;2;45;ANY
 ruinas_sanguemar;GOLD;;15;40;55;ANY
+
+# Entrelinhas
+entrelinhas;GOLD;;20;50;55;ANY
+entrelinhas;GOLD;;40;70;25;SPECIAL_ONLY
+entrelinhas;ITEM;meruma;2;3;45;NORMAL_ONLY
+entrelinhas;ITEM;meruma;4;5;15;SPECIAL_ONLY
+entrelinhas;GOLD;;25;45;25;NORMAL_ONLY
+entrelinhas;GOLD;;90;150;5;SPECIAL_ONLY
+entrelinhas;ITEM;meruma;3;3;45;SPECIAL_ONLY

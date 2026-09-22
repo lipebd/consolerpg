@@ -105,12 +105,11 @@ public final class QuestProgressPresenter {
         }
     }
 
-    private static void displayEffects(List<String> effectDisplayTexts) {
+    private static void displayEffects(
+            List<String> effectDisplayTexts) {
         if (effectDisplayTexts.isEmpty()) {
             return;
         }
-
-        System.out.println("Desbloqueios:");
 
         for (String displayText : effectDisplayTexts) {
             System.out.println("- " + displayText);

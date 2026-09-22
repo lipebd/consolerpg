@@ -1,6 +1,6 @@
 # RPGConsole V6 Roadmap
 
-> **Implementation status:** V5 was released as `v5.0.0`. V6 implementation is active on `feature/v6-quests`. Parts 1 through 9 are complete and approved. Part 10 — the first five canonical main quests — is the next implementation block.
+> **Implementation status:** V5 was released as `v5.0.0`. V6 development is active on `feature/v6-quests`. Parts 1 through 9 are complete. The first five canonical quests and their normal project playthrough are complete in Part 10; documentation, final verification and the portable Windows release remain pending.
 
 > **Scope rule:** The complete V6 release boundary is approved, but each remaining block is reviewed and frozen again when its implementation begins. Roadblocks may reopen a specific decision without expanding unrelated scope.
 
@@ -719,7 +719,7 @@ Frozen rules:
 * The recommendation does not restrict the final choice.
 * Question and answer text supports the `\n` line-break sequence and the approved placeholders.
 * Every questionnaire template is resolved before the first question is presented.
-* Questionnaire answers, scores, tied results and the confirmed choice remain transient until the complete Quest 4 transaction succeeds.
+* Questionnaire answers, scores, tied results and the confirmed choice remain transient until the complete Quest 5 transaction succeeds.
 
 ### Selection and confirmation
 
@@ -734,7 +734,7 @@ Frozen rules:
 * Rejecting every tied mark also opens unrestricted selection.
 * Manual selection uses the complete shared class presentation and permits `Confirmar` or `Escolher novamente`.
 * The ceremony cannot be cancelled after reaching the questionnaire.
-* Confirming a path freezes the protagonist's choice for the current uninterrupted Quest 4 resolution but does not commit partial campaign state by itself.
+* Confirming a path freezes the protagonist's choice for the current uninterrupted Quest 5 resolution but does not commit partial campaign state by itself.
 * A technical or capacity failure ends the interaction without mutation and allows a later complete retry.
 
 ### Protagonist transition
@@ -762,7 +762,7 @@ Apply atomically:
 
 The full inventory consequence must be validated before any equipment, class, resource, flag or quest state changes.
 
-The standalone protagonist transition plan and application are implemented and verified. Part 8 composes that validated plan with mandatory ally recruitment so Quest 4 can commit both outcomes through one complete transaction rather than applying the protagonist transition early.
+The standalone protagonist transition plan and application are implemented and verified. Part 8 composes that validated plan with mandatory ally recruitment so Quest 5 can commit both outcomes through one complete transaction rather than applying the protagonist transition early.
 
 ### Implementation checklist
 
@@ -882,7 +882,7 @@ The ally's equipped introductory items never pass through the shared inventory.
 
 ### Atomic recruitment
 
-* Quest 4 builds one complete final plan after the protagonist confirms a path and before campaign mutation.
+* Quest 5 builds one complete final plan after the protagonist confirms a path and before campaign mutation.
 * Validate the protagonist's equipment return, inventory capacity, candidate, party capacity, ally class pool, class definitions, introductory equipment, rewards and effects before the ally is accepted.
 * The ceremony ending and ally conversation may be presented sequentially, but they belong to one uninterrupted resolution with no save point between them.
 * The mandatory acceptance commits the protagonist transition, complete ally creation, second-position insertion, candidate recruitment state, quest advancement, rewards and effects atomically.
@@ -981,50 +981,41 @@ Part 9 closure verified explicit version-2 rejection and an empty-narrative vers
 
 ### Content boundary
 
-* V6 ships exactly the first five main quests of the approved campaign structure.
-* Their step sequences remain linear.
+* V6 covers the first five main quests, in a linear sequence.
 * Narrative choices do not create alternative quest branches.
-* Each quest ends through an NPC interaction.
-* Content uses the generic supported objective, requirement, reward and effect types whenever their semantics match.
-* New Java behavior is added only for a genuine unsupported domain operation, not to encode one quest's ordinary content.
-* Quest 4, `Os Sete Caminhos`, uses the dedicated ceremony and recruitment behavior defined in Parts 7 and 8.
-* Exact narrative text, objectives, rewards, flags and unlocks must be reviewed and approved before each quest's data is implemented.
+* Quest content uses the supported objectives, requirements, rewards and effects when their semantics match.
+* Java behavior added in this part must serve a reusable domain operation, not encode the content of one quest.
+* The class-path ceremony and first-ally recruitment belong to Quest 5, `Os Sete Caminhos`.
 
-### Quest 4 frozen narrative sequence
+### Canonical sequence
 
-```text
-Caçada simples
-→ retorno ao mestre
-→ questionário
-→ recomendação
-→ escolha livre da classe do protagonista
-→ encerramento da cerimônia
-→ revelação da classe do aliado
-→ aceitação obrigatória do aliado
-→ recrutamento
-→ conclusão
-```
+| Quest | ID | Main progression |
+| --- | --- | --- |
+| 1. A Ordem dos Alquimistas | `ordem_dos_alquimistas` | Introduces the disease and opens the route from Bree to Verdes Ermos. |
+| 2. O Discípulo | `o_discipulo` | Investigates the goblins, opens Gruta Relamparrocha and rescues the disciple. |
+| 3. Entre Caminhos | `entre_caminhos` | Crosses Entrelinhas and reaches Entrelugar in search of researchers. |
+| 4. Energia Residual | `energia_residual` | Investigates the Minas do Além-Túmulo, obtains an energy sample and leads the party toward Setegalhos. |
+| 5. Os Sete Caminhos | `os_sete_caminhos` | Completes the seven branch trials, the class-path ceremony and the first ally's recruitment. |
 
-The companion participates in the story before joining the party and shares the protagonist's interest in investigating the disease.
+The future ally has an independent motivation and participates in the story before joining the party. Recruitment occurs only at the conclusion of Quest 5.
 
-### Implementation checklist
+### Technical integration completed during Part 10
 
-* [ ] Freeze the content contract for Quest 1 before implementing its data.
-* [ ] Implement and validate Quest 1.
-* [ ] Freeze the content contract for Quest 2 before implementing its data.
-* [ ] Implement and validate Quest 2.
-* [ ] Freeze the content contract for Quest 3 before implementing its data.
-* [ ] Implement and validate Quest 3.
-* [ ] Freeze the final content contract for Quest 4 against the ceremony architecture.
-* [ ] Implement and validate Quest 4.
-* [ ] Freeze the content contract for Quest 5 before implementing its data.
-* [ ] Implement and validate Quest 5.
-* [ ] Confirm that permanent route and scenario progression matches the approved campaign order.
-* [ ] Confirm that all five quests are completable from a new campaign without development shortcuts.
-* [ ] Audit existing route, branch, portal and service data against the access needs of the first five quests.
-* [ ] Add physical-access requirement integration only where approved quest content requires it.
+* Quest effects control access to directed routes and scenario branches; completing a combat scenario does not unlock passages automatically.
+* `WIN_BATTLE` accepts either a specific combat-scenario ID or a blank target for victories anywhere.
+* `GRANT_ITEM` supports item delivery during progression, and `TRANSPORT_PARTY` supports quest-triggered transport.
+* Dungeon-boss gates support reusable access conditions, contextual or general blocked reactions and transport away from a blocked encounter.
+* Combat-scenario dialogue associations support blocked-boss reactions and dialogue before narrative or recurring boss encounters.
+* NPC placement requirements support story-dependent appearances using separate NPC IDs for the same portrayed character.
+* Recruit dialogue text may use `{recruitName:candidateId}` to show the candidate's persistent generated name.
+* Loading a saved campaign accommodates newly added shops and compatible changes to existing stock definitions.
 
----
+### Remaining closure checks
+
+* [x] Implement and play through Quests 1–4.
+* [x] Play through Quest 5 from its offer through class selection and recruitment.
+* [x] Confirm passage and branch progression across all five quests in one new campaign.
+* [x] Complete the documentation and content-author guide in Part 10.
 
 ## 11. Verification
 
@@ -1032,58 +1023,56 @@ The companion participates in the story before joining the party and shares the 
 
 ### Definition and loader validation
 
-* [ ] Test representative malformed, duplicated and unknown quest references.
-* [ ] Test objective type, target, quantity and order validation.
-* [ ] Test requirement-set validation, including one self-dependency or cycle.
-* [ ] Test dialogue order, speaker, escape and placeholder validation.
-* [ ] Test reward and effect order, reference and duplication validation.
-* [ ] Confirm that failed loading does not partially populate catalogs.
+* [x] Test representative malformed, duplicated and unknown quest references.
+* [x] Test objective type, target, quantity and order validation.
+* [x] Test requirement-set validation, including one self-dependency or cycle.
+* [x] Test dialogue order, speaker, escape and placeholder validation.
+* [x] Test reward and effect order, reference and duplication validation.
+* [x] Confirm that failed loading does not partially populate catalogs.
 
 ### Runtime progression
 
-* [ ] Test offer decline and later acceptance without unintended mutation.
-* [ ] Test multiple simultaneously active quests receiving one applicable event.
-* [ ] Test that only the current step progresses.
-* [ ] Test that one event does not spill into the step it activates.
-* [ ] Test that a later ordered event can progress the newly activated step.
-* [ ] Test representative behavior for all eight objective types.
-* [ ] Test battle victory, enemy defeat, Analyze, escape, defeat and refused encounter distinctions without redundant permutations.
-* [ ] Test non-retroactive item acquisition and monotonic progress after item use or sale.
-* [ ] Test transactional multi-item delivery success and failure.
-* [ ] Test narrative dungeon completion separately from recurring-boss victory.
+* [x] Test offer decline and later acceptance without unintended mutation.
+* [x] Test that only the current step progresses.
+* [x] Test that one event does not spill into the step it activates.
+* [x] Test that a later ordered event can progress the newly activated step.
+* [x] Test representative behavior for all eight objective types.
+* [x] Test battle victory, enemy defeat, analyze, escape, defeat and refused encounter distinctions without redundant permutations.
+* [x] Test non-retroactive item acquisition and monotonic progress after item use or sale.
+* [x] Test transactional multi-item delivery success and failure.
+* [x] Test narrative dungeon completion separately from recurring-boss victory.
 
 ### Transactions and interface
 
-* [ ] Test successful quest completion with rewards and permanent effects.
-* [ ] Test capacity failure preserving delivery items, rewards, flags, routes and quest state.
-* [ ] Test a reward-generated item event progressing another active quest.
-* [ ] Test active and completed quest-menu presentation.
-* [ ] Test grouped progress and completion notifications.
-* [ ] Test actionable `[!]` propagation from NPC to location, city and immediate travel presentation.
-* [ ] Confirm that unmet and hidden content does not leak through markers.
+* [x] Test successful quest completion with rewards and permanent effects.
+* [x] Test capacity failure preserving delivery items, rewards, flags, routes and quest state.
+* [x] Test active and completed quest-menu presentation.
+* [x] Test grouped progress and completion notifications.
+* [x] Test actionable `[!]` propagation from NPC to location, city and immediate travel presentation.
+* [x] Confirm that unmet and hidden content does not leak through markers.
 
 ### Ceremony and recruitment
 
-* [ ] Test questionnaire recommendation with one clear winner and one tie.
-* [ ] Test free selection independent from the recommendation.
-* [ ] Test the beginner-to-final Flagelo transition.
-* [ ] Test one different final-class transition as the representative shared path.
-* [ ] Test equipment return and inventory-capacity failure atomically.
-* [ ] Test that the ally draw excludes Flagelo and the protagonist's class.
-* [ ] Test the five-class and six-class ally pools at their distinct boundaries.
-* [ ] Test unique candidate naming and exhausted-name failure.
-* [ ] Test the recruited ally's fixed level, EXP, skills, resources, equipment and party position.
-* [ ] Test that failed recruitment leaves candidate, party and quest state unchanged.
-* [ ] Test that ceremony and recruitment cannot be applied twice.
+* [x] Test questionnaire recommendation with one clear winner and one tie.
+* [x] Test free selection independent from the recommendation.
+* [x] Test the beginner-to-final Flagelo transition.
+* [x] Test one different final-class transition as the representative shared path.
+* [x] Test equipment return and inventory-capacity failure atomically.
+* [x] Test that the ally draw excludes Flagelo and the protagonist's class.
+* [x] Test the five-class and six-class ally pools at their distinct boundaries.
+* [x] Test unique candidate naming and exhausted-name failure.
+* [x] Test the recruited ally's fixed level, EXP, skills, resources, equipment and party position.
+* [x] Test that failed recruitment leaves candidate, party and quest state unchanged.
+* [x] Test that ceremony and recruitment cannot be applied twice.
 
 ### Save and regressions
 
-* [ ] Test one version-3 round trip containing active quest counters, a completed quest, flags, a pending candidate and a recruited ally.
-* [ ] Test representative invalid quest, objective, flag and candidate save state.
+* [x] Test one version-3 round trip containing active quest counters, a completed quest, flags, a pending candidate and a recruited ally.
+* [x] Test representative invalid quest, objective, flag and candidate save state.
 * [x] Confirm that internal version 2 is rejected without migration.
-* [ ] Confirm that failed restoration does not partially replace the active campaign.
-* [ ] Run focused regressions for battle, Analyze, inventory, rewards, routes, dungeons, shops, crafting, INN saving and campaign loading.
-* [ ] Verify the complete five-quest flow in the portable Windows build.
+* [x] Confirm that failed restoration does not partially replace the active campaign.
+* [x] Run focused regressions for battle, Analyze, inventory, rewards, routes, dungeons, shops, crafting, INN saving and campaign loading.
+* [x] Verify the complete five-quest flow in the portable Windows build.
 
 ---
 
@@ -1108,13 +1097,13 @@ General documentation is maintained incrementally when each coherent implementat
 
 ### Documentation checklist
 
-* [ ] Create `docs/QUEST_IMPLEMENTATION_GUIDE.md` after all V6 formats are stable.
-* [ ] Update `ARCHITECTURE.md` with quest, narrative, requirement and recruitment responsibilities.
-* [ ] Update `DATA_FORMATS.md` with every new external format and save-format version 3.
-* [ ] Update `MECHANICS.md` with quest progression, ceremony and recruitment behavior.
-* [ ] Update `SAVE_STATE.md` with quest, flag and candidate properties and transient-state boundaries.
-* [ ] Update `CLASS_GUIDE.md` for beginner Flagelo, final paths and ceremony consequences.
-* [ ] Update `PROJECT_STATE.md` only after the implemented V6 state is approved.
+* [x] Create `docs/QUEST_IMPLEMENTATION_GUIDE.md` after all V6 formats are stable.
+* [x] Update `ARCHITECTURE.md` with quest, narrative, requirement and recruitment responsibilities.
+* [x] Update `DATA_FORMATS.md` with every new external format and save-format version 3.
+* [x] Update `MECHANICS.md` with quest progression, ceremony and recruitment behavior.
+* [x] Update `SAVE_STATE.md` with quest, flag and candidate properties and transient-state boundaries.
+* [x] Update `CLASS_GUIDE.md` for beginner Flagelo, final paths and ceremony consequences.
+* [x] Update `PROJECT_STATE.md` only after the implemented V6 state is approved.
 * [ ] Update the Windows package readme if player-facing controls or save compatibility require it.
 * [ ] Decide whether stable V6 data files should be reorganized into subdirectories; do not combine the move with unfinished loader work.
 

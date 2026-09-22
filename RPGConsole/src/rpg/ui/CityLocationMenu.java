@@ -13,7 +13,7 @@ public final class CityLocationMenu {
 		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 	}
 
-	public OptionalInt selectLocation(List<String> locationNames) {
+	public OptionalInt selectLocation(List<String> locationNames, String cityName) {
 		Objects.requireNonNull(locationNames, "City location names cannot be null.");
 
 		if (locationNames.isEmpty()) {
@@ -21,8 +21,10 @@ public final class CityLocationMenu {
 		}
 
 		while (true) {
+			ConsoleUI.clearScreen();
+			System.out.println("[" + cityName.toUpperCase() + "]");
 			System.out.println("\nOnde deseja ir?");
-
+			System.out.println();
 			for (int index = 0; index < locationNames.size(); index++) {
 				System.out.println(
 						"[" + (index + 1) + "] " + locationNames.get(index)

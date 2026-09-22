@@ -67,6 +67,10 @@ public final class ScenarioBranchCatalog {
 		positionBranches.add(branchDefinition);
 	}
 
+	public boolean containsId(String branchId) {
+	    return branchesById.containsKey(branchId);
+	}
+
 	public ScenarioBranchDefinition getById(String branchId) {
 		ScenarioBranchDefinition branchDefinition =
 				branchesById.get(branchId);

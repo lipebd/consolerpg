@@ -773,7 +773,7 @@ An equipped trinket's EXP modifier applies only to its wearer. Gold modifiers fr
 
 `TravelCatalog` stores immutable directed `TravelRouteDefinition` entries loaded from `data/travel_routes.txt`.
 
-A route must be registered separately for each permitted direction. `TravelProgress` tracks which route IDs are currently unlocked and exposes only unlocked routes from a requested source scenario.
+A route must be registered separately for each permitted direction. `TravelProgress` tracks unlocked IDs for both adjacent routes and scenario branches. Completing a field or dungeon permits travel through passages already unlocked; completion does not unlock passages. Quest `UNLOCK_ROUTE` effects control narrative access to either kind of passage.
 
 `World` decides whether adjacent-route selection is currently allowed:
 
@@ -1156,11 +1156,17 @@ A `NarrativeLocationDefinition` associates one narrative space with a city and a
 
 `NpcDefinition` owns stable identity, display name, description and default dialogue. `NpcPlacementDefinition` independently associates that NPC with at most one narrative location and an optional visibility requirement set. This separation permits an NPC to exist as a dialogue speaker without being placed in a city.
 
+A character who appears in different cities at different story moments may use separate NPC definitions with complementary placement requirements. Each NPC ID still has at most one placement; the shared character identity is conveyed by narrative content.
+
 `DialogueDefinition` contains an ordered immutable sequence of utterances. Speaker types are `NPC`, `ENEMY`, `LEADER`, `NARRATOR` and `RECRUIT`. Ordinary NPC and enemy speakers resolve canonical catalog identities. Leader and narrator lines do not define speaker IDs. Recruit speakers reference canonical candidate IDs declared by `QuestRecruitmentCatalog`. `World` introduces missing candidate state before presentation, while `DialoguePresenter` only resolves the already established persistent generated name. Repeated presentation never rerolls or recreates the candidate.
 
-`NarrativeTextProcessor` centralizes the supported literal `\n` decoding, placeholder validation and runtime replacement. The current placeholders are `{leaderName}`, `{groupMember2}`, `{groupMember3}` and `{groupMember4}`. Resolution fails before mutation when a referenced party position does not exist.
+`NarrativeTextProcessor` centralizes the supported literal `\n` decoding, placeholder validation and runtime replacement.
+
+The supported placeholders include `{leaderName}`, `{groupMember2}`, `{groupMember3}`, `{groupMember4}` and `{recruitName:candidateId}`. The recruit placeholder resolves the persistent generated name of the specified candidate without requiring that candidate to be a party member. Resolution fails before mutation when a referenced party position does not exist.
 
 `QuestDialogueCatalog` associates quest state with external dialogues through the `OFFER`, `ACCEPT`, `DECLINE`, `PENDING` and `COMPLETE` contexts. Accept and decline choices are interface behavior rather than a generic branching-dialogue language.
+
+`CombatScenarioDialogueCatalog` associates a combat scenario, trigger and optional quest-step context with an existing dialogue. `BOSS_GATED` selects a contextual reaction or its general fallback when access to a dungeon boss is blocked. `BOSS_NARRATIVE` and `BOSS_RECURRING` present dialogue before the corresponding boss encounter. These associations reuse `DialogueCatalog` and `DialoguePresenter`; presentation does not itself record new campaign state.
 
 Startup validation is shared between the individual narrative loaders and `NarrativeReferenceValidator`. Together, they verify narrative locations, NPC placements, dialogue speakers, default NPC dialogues, quest starting NPCs, interaction-objective NPCs and quest-dialogue coverage without exposing a partially populated catalog.
 
@@ -1250,7 +1256,7 @@ ClassPathTransitionService.apply(...)
 
 The standalone transition rejects an already completed ceremony, a non-beginner protagonist, insufficient level and item-capacity overflow. Application reconstructs and compares the current plan before mutation so a stale plan cannot silently commit against changed campaign state.
 
-Class change and recruitment remain dedicated typed behavior rather than generic quest effects. Part 8 composes the validated protagonist plan with mandatory ally recruitment, quest progression, rewards and effects so the final Quest 4 resolution does not commit either character outcome independently.
+Class change and recruitment remain dedicated typed behavior rather than generic quest effects. Part 8 composes the validated protagonist plan with mandatory ally recruitment, quest progression, rewards and effects so the final Quest 5 resolution does not commit either character outcome independently.
 
 ## Recruitment candidate and first-ally architecture
 
@@ -1544,15 +1550,9 @@ Version-3 restoration validates active objective structure and counters against 
 The following implementations remain intentionally temporary:
 
 - Reward-modifier potions are deferred. Their future item behavior will activate the existing `PartyRewardModifierState` rather than duplicate reward calculation or duration state.
-- New games currently begin with only the confirmed protagonist because canonical recruitment quest content remains V6 Part 10 work. The mandatory first-ally runtime transaction is implemented and validated, while party-title acquisition remains future narrative work.
 - `character_names.txt` currently contains only temporary entries pending creative-team curation.
 - Playable-class definitions, natural class growth and the complete approved 30-skill class-progression roster are integrated; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy actions currently use basic attacks; enemy skill selection can reuse the skill executor later but is outside the current scope.
-- Every registered city provides an INN, while other system and narrative locations depend on their external definitions. Canonical campaign narrative-location and NPC content remains scheduled with the first five quests.
-- Quest, objective, reward, effect, flag, requirement, narrative, dialogue, class-path and recruitment infrastructure is implemented. Temporary validation content was removed after representative end-to-end testing; the first five canonical quests remain V6 Part 10 content.
-- Canonical class-path equipment and questionnaire content are integrated. The protagonist transition is composed with candidate identity, quest completion and mandatory first-ally recruitment, but normal campaign access remains absent until canonical Quest 4 is authored.
-- `quest_recruitments.txt` is intentionally header-only until canonical recruitment steps are authored.
-- `RECRUIT` dialogue references are valid only for candidate IDs declared by `QuestRecruitmentCatalog`. No canonical recruit dialogue exists while the recruitment catalog remains empty.
 - The first recruitment composes with the level-7 class-path ceremony. Later recruitments remain narrative events and will reuse the generic recruitment components without repeating the ceremony.
 - Non-empty quest, flag and candidate restart verification remains pending canonical Part 10 content; the implemented version-3 schema and empty-narrative restart baseline are complete.
 - Narrative text uses automatic wrapping, while older map, enemy, item and other description screens retain their existing presentation until the post-V6 interface review.

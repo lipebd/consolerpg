@@ -1,5 +1,4 @@
 # id;name;maxHp;maxMp;maxSp;attack;defense;magic;resistance;speed;luck;rank;description
-
 lobermo;Lobermo;50;1;1;8;5;1;1;5;1;COMMON;Predador comum de Verdes Ermos.\nUma pequena criatura lupina que não oferece risco aos aventureiros experientes,\nmas perigoso para quem sai de despreparado de Bree.
 
 passavento;Passavento;50;1;1;1;5;1;1;25;1;COMMON;Animal muito leve e veloz. Seu pouco peso permite que essa doninha plane em correntes de ar\ncomo um pássaro, embora não possua qualquer estrutura semelhante a asas.\nNão é hostil, mas pode atacar quando está com fome, frequentemente deixando viajantes\nsem suas merumãs.
@@ -8,7 +7,7 @@ goblin_catador;Goblin Catador;75;1;1;10;7;1;1;7;1;COMMON;sucateiro, comberto de 
 
 javardo_marrom;Javardo Marrom;75;1;1;7;10;1;1;7;1;VETERAN;Animal hostil e de carcaça dura. Após eras sendo caçada por sua carne exótica,\na espécie aprendeu a atacar primeiro, mas, diferente do Javardo Negro das regiões montanhosas,\no Javardo Marrom tem apenas ataques físicos.
 
-goblin_saqueador;Goblin Saqueador;100;1;1;15;10;1;1;7;1;VETERAN;Goblin sem vergonha que persegue aventureiros desavisados para roubar seus pertences.\nQuando bem-sucedido, interrompe o ataque e foge para o sul, em direção à formação rochosa\nde eletrorrochas.
+goblin_saqueador;Goblin Saqueador;100;1;1;10;10;1;1;7;1;VETERAN;Goblin sem vergonha que persegue aventureiros desavisados para roubar seus pertences.\nQuando bem-sucedido, interrompe o ataque e foge para o sul, em direção à formação rochosa\nde eletrorrochas.
 
 trepa_trepa;Trepa-Trepa;50;1;1;5;5;5;5;10;1;COMMON;Criatura fofa, peluda e venenosa de 16 patas, com micro-ventosas especiais que permitem\nsubir e se movimentar facilmente pelos troncos de árvores e utras superfícies verticais.
 
@@ -18,17 +17,31 @@ aranhurso_do_mato;Aranhurso do Mato;100;1;1;10;10;1;5;7;1;VETERAN;Animal peludo,
 
 herbatedor;Herbatedor;75;1;1;15;7;1;7;10;1;VETERAN;Quando uma flor vermelha brota na cabeça de um Herbalístico, ele passa a absorver nutrientes\ndo solo ao redor de criaturas mortas. Seu comportamento se torna mais agressivo,\ne sua intenção agora é matar.
 
-corujaro;Corújaro;200;1;1;20;10;15;10;12;1;LEADER;Grande coruja noturna de quatro asas. Seu piado é inaudível aos ouvidos humanos,\nmas alerta todos os animais da floresta de sua presença.
+corujaro;Corújaro;200;1;1;15;10;15;10;12;1;LEADER;Grande coruja noturna de quatro asas. Seu piado é inaudível aos ouvidos humanos,\nmas alerta todos os animais da floresta de sua presença.
 
 goblin_mecanico;Goblin Mecânico;75;1;1;10;10;7;7;7;1;COMMON;Criatura irritante, equipada com sucatas e pequenas ferramentas elétricas que construiu\ncom as quinqulharias de sua época como Globlin Catador.
 
 goblin_engenheiro;Goblin Engenheiro;100;1;1;15;10;15;7;10;1;VETERAN;Goblin especialista em dispositivos e armadilhas que causam debuffs.\nSeu visor permite saber se seu oponente é mais vulnerável a ataques físicos ou mágicos.
 
-goblin_amalgama;Goblin Amálgama;200;1;1;20;15;20;10;10;1;LEADER;Diferente dos seus subordinados, o Amálgama é fundido com peças mecânicas e eletrorrochas,\nadquirindo grande poder físico e mágico. Fora de situações de confronto, O Goblin Amálgama\ncultiva Flores de Sucata.
+goblin_amalgama;Goblin Amálgama;100;1;1;10;10;10;10;10;1;LEADER;Diferente dos seus subordinados, o Amálgama é fundido com peças mecânicas e eletrorrochas,\nadquirindo grande poder físico e mágico. Fora de situações de confronto, O Goblin Amálgama\ncultiva Flores de Sucata.
 
-mestre_eletrogoblin;Mestre Eletrogoblin;200;1;1;30;20;20;10;10;1;BOSS;Um goblin extremamente engenhoso, substituiu seu sangue por fluido eletromagnético.\nVeloz e de grande poder mágico, extremamente hostil a forasteiros, mas que se importa muito\ncom seus goblins subordinados.
+mestre_eletrogoblin;Mestre Eletrogoblin;150;1;1;20;20;20;10;10;1;BOSS;Um goblin extremamente engenhoso, substituiu seu sangue por fluido eletromagnético.\nVeloz e de grande poder mágico, extremamente hostil a forasteiros, mas que se importa muito\ncom seus goblins subordinados.
 
 relampagolem;Relampagolem;200;1;1;50;75;35;25;10;1;EPIC;Golem formado por eletrorrochas que marcha sem objetivo pelos túneis da Gruta Relamparrocha.\nAlgo brilha em suas costas. Seu corpo maciço resiste com facilidade a impactos físicos,\nenquanto seus golpes combinam força bruta e energia elétrica. Contudo, sua estrutura reage mal\nà magia, e seus movimentos são lentos e previsíveis.
+
+passassombra;Passassombra;120;70;15;5;7;19;14;11;3;VETERAN;Uma figura escura frequentemente avistada imóvel junto às antigas estradas de Entrelinhas.\nNão costuma perseguir viajantes, mas podem atacar violentamente àqueles que tentam atravessá-la.
+
+lumivaga;Lumivaga;55;30;10;5;3;11;7;9;4;COMMON;Um pequeno inseto luminoso que se alimenta do néctar das flores de Entrelinhas.\nSuas asas acumulam energia mágica, liberando clarões intensos quando se sente ameaçado.\nÉ frequentemente encontrado próximo às lanternas dos viajantes, atraído pela luz.
+
+briselho;Briselho;60;20;25;6;4;8;5;12;4;COMMON;Um pequeno mamífero de orelhas compridas que habita a vegetação rasteira de Entrelinhas.\nUtiliza correntes de ar para realizar saltos extraordinários e atacar seus predadores.\nParece inofensivo à primeira vista, mas é agressiva e usa rajadas mágicas para enfraquecer seus oponentes.
+
+espantacao;Espantação;125;35;25;13;9;12;9;5;2;VETERAN;Um antigo espantalho animado por encantamentos agrícolas.\nContinua protegendo plantações que há muito deixaram de existir, perseguindo qualquer criatura que atravesse seu território.\nSua palha ressecada se agita mesmo na ausência de vento, enquanto uma magia persistente mantém seus membros em movimento.
+
+entrechifres;Entrechifres;210;75;40;17;13;20;15;10;6;LEADER;Um cervo de grande porte que demarca seu território esfregando os chifres contra pedras e árvores próximas às estradas.\nAs marcas deixadas por ele acumulam energia mágica e estimulam o crescimento da vegetação ao redor.\nExtremamente territorial, utiliza essa mesma energia para proteger a si próprio e outras criaturas que habitam seus domínios.
+
+rachatrilha;Rachatrilha;140;40;30;16;12;15;8;9;3;LEADER;Uma centopeia de grande porte, protegida por placas minerais e dotada de mandíbulas capazes de partir rochas.\nEscava galerias sob as antigas estradas de Entrelinhas, emboscando criaturas que atravessam seu território.\nSua carapaça acumula energia mágica do solo, liberada em violentas rupturas que fragmentam a terra ao redor de suas presas.
+
+teiafunebre;Teiafúnebre;125;65;20;7;8;17;12;8;3;VETERAN;Uma aranha de grande porte que tece suas armadilhas entre árvores e marcos da Mata do Agouro.\nSeus fios absorvem a energia mágica de pequenos insetos luminosos, especialmente Lumivagas, mantendo as teias iluminadas mesmo depois que suas presas são consumidas.\nQuando ameaçada, libera a energia acumulada em violentas descargas mágicas.
 
 conchinha_da_areia;Conchinha-da-Areia;50;1;1;5;8;1;5;8;1;COMMON;Pequeno crustáceo que constrói a própria carapaça com areia, saliva e outros objetos\nque encontra no litoral. Por sua fragilidade, costuma andar em bandos, seguindo Cara-Caranguejos\nem busca de proteção.
 

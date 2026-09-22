@@ -1,1 +1,36 @@
 # id;name;description;defaultDialogueId
+
+# BREE
+mestre_alquimista;Mestre Alquimista;Um alquimista experiente que coordena os esforços para compreender e tratar a doença que começou a se espalhar por Bree.;conversa_mestre_alquimista
+mae_protagonista;Mãe;Sentada junto ao leito do marido, ela tenta controlar o medo enquanto acompanha cada mudança em seu estado.;conversa_mae_protagonista
+pai_protagonista;Pai;Debilitado pela doença, ele permanece deitado em um dos leitos improvisados da Ordem, alternando entre febre, gemidos e breves momentos de consciência.;conversa_pai_protagonista
+jovem_de_bree;Jovem de Bree;Uma pessoa de Bree cuja mãe e irmã estão sob os cuidados da Ordem dos Alquimistas.;conversa_jovem_de_bree
+discipulo_alquimista;Discípulo Alquimista;Discípulo enviado em busca de uma Merumã Dourada para auxiliar no tratamento da doença.;conversa_discipulo_alquimista
+
+# ENTRELUGAR
+dono_taverna_entrelugar;Dono da Taverna;Responsável pela Taverna do Entreato e acostumado a intermediar encontros entre viajantes.;conversa_dono_taverna_entrelugar
+cliente_taverna_entrelugar;Cliente da Taverna;Uma presença habitual da Taverna do Entreato, sempre atenta às conversas e aos rumores que atravessam Entrelugar.;conversa_cliente_taverna_entrelugar
+pesquisadora_anomalia;Pesquisadora da Anomalia;Uma cientista inteiramente dedicada às distorções espaciais de Entrelugar e pouco interessada em fenômenos que considera distantes de sua área.;conversa_pesquisadora_anomalia
+pesquisador_sanguemar;Pesquisador de Sanguemar;Um estudioso convencido de que a mancha vermelha de Sanguemar explica praticamente todos os fenômenos incomuns da região.;conversa_pesquisador_sanguemar
+arquivista_entrequando;Arquivista de Entrequando;Responsável por organizar registros que frequentemente mudam de posição, data ou conteúdo dentro do Instituto.;conversa_arquivista_entrequando
+mago_pesquisador;Mago Pesquisador;Um mago vindo d'O Vão que pesquisa a relação entre energia, maldições e transformações de seres vivos.;conversa_mago_pesquisador
+
+# SETEGALHOS
+mago_pesquisador_setegalhos;Mago Pesquisador;O misterioso pesquisador d'O Vão. Como prometido, chegou a Setegalhos antes de vocês.;padrao_mago_setegalhos
+ancia_setegalhos;Anciã de Setegalhos;Uma das habitantes mais antigas da vila. Presenciou inúmeras Cerimônias dos Caminhos.;padrao_ancia_setegalhos
+mestre_cerimonia;Mestre da Cerimônia;Responsável por orientar candidatos e preservar as tradições da Cerimônia dos Caminhos.;padrao_mestre_cerimonia
+mestre_cerimonia_praca;Mestre da Cerimônia;Responsável por conduzir o Julgamento dos Sete Presságios diante de toda Setegalhos.;padrao_mestre_cerimonia_praca
+mentor_harmonia;Mentor da Harmonia;Representante do Galho da Harmonia e estudioso das vozes que aproximam pessoas.;padrao_mentor_harmonia
+musicista_desafinado;Musicista Desafinado;Um artista entusiasmado cuja confiança é consideravelmente maior que seu domínio musical.;padrao_musicista_desafinado
+mentor_ciclo;Mentor do Ciclo;Representante do Galho do Ciclo e observador paciente das transformações da natureza.;padrao_mentor_ciclo
+jardineira_das_raizes;Jardineira das Raízes;Cuida dos jardins cultivados entre as raízes vivas de Setegalhos.;padrao_jardineira_das_raizes
+mentor_reflexo;Mentor do Reflexo;Representante do Galho do Reflexo e estudioso das formas assumidas por seres vivos.;padrao_mentor_reflexo
+aprendiz_mutavel;Aprendiz Mutável;Um aprendiz cuja aparência sofre pequenas alterações conforme seu humor.;padrao_aprendiz_mutavel
+mentor_instante;Mentor do Instante;Representante do Galho do Instante e observador atento de tudo que se move ao seu redor.;padrao_mentor_instante
+arqueira_paciente;Arqueira Paciente;Uma atiradora que pode permanecer imóvel por horas enquanto aguarda a oportunidade correta.;padrao_arqueira_paciente
+mentor_sussurro;Mentor do Sussurro;Representante do Galho do Sussurro e conhecedor dos caminhos que passam despercebidos.;padrao_mentor_sussurro
+viajante_sem_passos;Viajante sem Passos;Uma figura discreta que parece atravessar o galho sem jamais produzir som.;padrao_viajante_sem_passos
+mentor_silencio;Mentor do Silêncio;Representante do Galho do Silêncio e estudioso da resistência contra influências mágicas.;padrao_mentor_silencio
+estudiosa_encantamentos;Estudiosa de Encantamentos;Pesquisa feitiços não pelo poder que possuem, mas pelas maneiras de interrompê-los.;padrao_estudiosa_encantamentos
+mentor_ruina;Mentor da Ruína;Responsável pela academia vermelha durante a ausência prolongada de seu último mestre.;padrao_mentor_ruina
+zeladora_ruina;Zeladora da Ruína;Mantém preservada a antiga academia do Flagelo enquanto aguarda o retorno de seu mestre.;padrao_zeladora_ruina

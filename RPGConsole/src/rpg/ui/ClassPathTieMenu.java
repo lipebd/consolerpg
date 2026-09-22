@@ -73,7 +73,7 @@ public final class ClassPathTieMenu {
 
         System.out.println();
         ConsoleUI.displayWrappedText(
-                "Os seis mestres observam você em silêncio.");
+                "Seis vozes atravessam a sombra em perfeita harmonia.");
 
         ConsoleUI.pause(NARRATIVE_PAUSE_MILLISECONDS);
 
@@ -85,7 +85,7 @@ public final class ClassPathTieMenu {
 
         System.out.println();
         ConsoleUI.displayWrappedText(
-                "“Qual destas faces deseja carregar para além deste salão?”");
+                "“Qual destas faces deseja carregar para além desta sombra?”");
 
         ConsoleUI.pause(NARRATIVE_PAUSE_MILLISECONDS);
 

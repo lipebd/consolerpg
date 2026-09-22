@@ -36,7 +36,7 @@ public final class CombatScenarioMenu {
 			                .map(
 			                        action ->
 			                                markedActions.contains(action)
-			                                        ? "[!] " + action
+			                                        ? "\u001B[33m[!]\u001B[0m " + action
 			                                        : action.toString())
 			                .toList();
 

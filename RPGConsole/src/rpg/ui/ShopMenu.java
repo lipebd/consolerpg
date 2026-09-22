@@ -78,6 +78,7 @@ public final class ShopMenu {
 	}
 
 	private void displayMainMenu(ShopState shopState, String feedbackMessage) {
+		ConsoleUI.clearScreen();
 		System.out.println("\n[" + shopState.getDefinition().getName().toUpperCase(Locale.ROOT) + "]");
 		System.out.println();
 		System.out.println(WorldTimeFormatter.formatCurrentTime(worldClock));
@@ -102,6 +103,7 @@ public final class ShopMenu {
 	}
 
 	private void openPurchaseOffers(ShopState shopState) {
+		ConsoleUI.clearScreen();
 		int currentPage = 0;
 		String feedbackMessage = null;
 
@@ -200,6 +202,7 @@ public final class ShopMenu {
 	}
 
 	private OptionalInt selectPurchaseQuantity(ShopOfferState offerState) {
+		ConsoleUI.clearScreen();
 		int availableQuantity = offerState.getRemainingStock();
 
 		if (availableQuantity == 1) {

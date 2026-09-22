@@ -56,7 +56,7 @@ public final class QuestOfferMenu {
                 throw new IllegalArgumentException("Quest offer header line cannot be empty.");
             }
 
-            System.out.println("[" + headerLine.trim() + "]");
+            System.out.println("[" + headerLine.trim().toUpperCase() + "]");
         }
 
         if (!headerLines.isEmpty()) {

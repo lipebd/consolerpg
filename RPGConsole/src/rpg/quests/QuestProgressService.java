@@ -18,6 +18,7 @@ import rpg.quests.effects.QuestEffectCatalog;
 import rpg.quests.effects.QuestEffectDefinition;
 import rpg.quests.effects.QuestEffectTrigger;
 import rpg.quests.effects.QuestEffectType;
+import rpg.quests.effects.QuestTransportState;
 import rpg.quests.rewards.QuestRewardCatalog;
 import rpg.quests.rewards.QuestRewardDefinition;
 import rpg.quests.rewards.QuestRewardType;
@@ -26,6 +27,7 @@ import rpg.world.travel.TravelProgress;
 // Applies confirmed gameplay events and atomic quest transitions.
 public final class QuestProgressService {
 
+	private final QuestTransportState questTransportState;
     private final QuestProgress questProgress;
     private final QuestRewardCatalog rewardCatalog;
     private final QuestEffectCatalog effectCatalog;
@@ -41,7 +43,8 @@ public final class QuestProgressService {
             Party party,
             ItemCatalog itemCatalog,
             CampaignFlags campaignFlags,
-            TravelProgress travelProgress) {
+            TravelProgress travelProgress,
+            QuestTransportState questTransportState) {
         if (questProgress == null) {
             throw new IllegalArgumentException("Quest progress cannot be null.");
         }
@@ -70,7 +73,11 @@ public final class QuestProgressService {
             throw new IllegalArgumentException("Travel progress cannot be null.");
         }
 
-        this.questProgress = questProgress;
+		if (questTransportState == null) {
+			throw new IllegalArgumentException("Quest transport state cannot be null.");
+		}
+
+        this.questTransportState = questTransportState;this.questProgress = questProgress;
         this.rewardCatalog = rewardCatalog;
         this.effectCatalog = effectCatalog;
         this.party = party;
@@ -85,7 +92,10 @@ public final class QuestProgressService {
         questProgress.activateQuest(questId);
 
         applyEffects(
-                effectCatalog.getByTrigger(questId, 0, QuestEffectTrigger.QUEST_START),
+                effectCatalog.getByTrigger(
+                        questId,
+                        0,
+                        QuestEffectTrigger.QUEST_START),
                 accumulator);
 
         return accumulator.createResult();
@@ -232,19 +242,26 @@ public final class QuestProgressService {
     }
 
     public boolean canRetryQuestCompletion(String questId) {
-        Optional<QuestStepDefinition> currentStep = questProgress.getCurrentStep(questId);
+        Optional<QuestStepDefinition> currentStep =
+                questProgress.getCurrentStep(questId);
 
         if (currentStep.isEmpty()) {
             return false;
         }
 
-        if (!questProgress.isCurrentStepFinal(questId)
-                || !questProgress.isCurrentStepComplete(questId)) {
+        if (!questProgress.isCurrentStepComplete(questId)) {
             return false;
         }
 
-        for (QuestObjectiveDefinition objective : currentStep.orElseThrow().getObjectives()) {
-            if (objective.getObjectiveType() == QuestObjectiveType.TALK_TO_NPC) {
+        for (QuestObjectiveDefinition objective
+                : currentStep.orElseThrow().getObjectives()) {
+            if (objective.getObjectiveType()
+                    == QuestObjectiveType.TALK_TO_NPC) {
+                return false;
+            }
+
+            if (objective.getObjectiveType()
+                    == QuestObjectiveType.DELIVER_ITEM) {
                 return false;
             }
         }
@@ -387,10 +404,9 @@ public final class QuestProgressService {
     }
 
     private List<QuestCompletionFailure> validateCompletionPlan(
-			String questId,
-			Map<Item, Integer> deliveredItems,
-			Map<Item, Integer> pendingInventoryAdditions
-			) {
+            String questId,
+            Map<Item, Integer> deliveredItems,
+            Map<Item, Integer> pendingInventoryAdditions) {
         List<QuestCompletionFailure> failures = new ArrayList<>();
 
         Inventory inventory = party.getInventory();
@@ -405,6 +421,34 @@ public final class QuestProgressService {
                                 delivery.getKey().getId(),
                                 delivery.getValue(),
                                 ownedQuantity));
+            }
+        }
+
+        if (!failures.isEmpty()) {
+            return failures;
+        }
+
+        Map<Item, Integer> completionAdditions = new LinkedHashMap<>(pendingInventoryAdditions);
+
+        for (Map.Entry<Item, Integer> addition : collectGrantedItems(questId).entrySet()) {
+            completionAdditions.merge(addition.getKey(), addition.getValue(), Math::addExact);
+        }
+
+        for (Map.Entry<Item, Integer> addition : completionAdditions.entrySet()) {
+            Item item = addition.getKey();
+
+            int ownedQuantity = inventory.getQuantity(item);
+
+            int deliveredQuantity = deliveredItems.getOrDefault(item, 0);
+
+            int quantityBeforeAddition = ownedQuantity - deliveredQuantity;
+
+            int remainingCapacity = Inventory.MAXIMUM_QUANTITY_PER_ITEM - quantityBeforeAddition;
+
+            if (addition.getValue() > remainingCapacity) {
+                failures.add(
+                        QuestCompletionFailure.itemCapacityExceeded(
+                                questId, item.getId(), addition.getValue(), remainingCapacity));
             }
         }
 
@@ -425,29 +469,19 @@ public final class QuestProgressService {
                 }
 
                 case ITEM -> {
-				Item item =
-						itemCatalog.getById(
-								reward.getRewardId().orElseThrow());
+                    Item item = itemCatalog.getById(reward.getRewardId().orElseThrow());
 
-				int ownedQuantity =
-						inventory.getQuantity(item);
+                    int ownedQuantity = inventory.getQuantity(item);
 
-				int deliveredQuantity =
-						deliveredItems.getOrDefault(item, 0);
+                    int deliveredQuantity = deliveredItems.getOrDefault(item, 0);
 
-				int pendingAddition =
-						pendingInventoryAdditions.getOrDefault(
-								item,
-								0);
+                    int pendingAddition = completionAdditions.getOrDefault(item, 0);
 
-				int quantityBeforeReward =
-						Math.addExact(
-								ownedQuantity - deliveredQuantity,
-								pendingAddition);
+                    int quantityBeforeReward =
+                            Math.addExact(ownedQuantity - deliveredQuantity, pendingAddition);
 
                     int remainingCapacity =
-						Inventory.MAXIMUM_QUANTITY_PER_ITEM
-						- quantityBeforeReward;
+                            Inventory.MAXIMUM_QUANTITY_PER_ITEM - quantityBeforeReward;
 
                     if (reward.getQuantity() > remainingCapacity) {
                         failures.add(
@@ -505,17 +539,24 @@ public final class QuestProgressService {
 
         List<QuestProgressEvent> generatedEvents = new ArrayList<>();
 
-        applyEffects(
-                effectCatalog.getByTrigger(
-                        questId, completedStep.getStep(), QuestEffectTrigger.STEP_COMPLETE),
-                accumulator);
+        generatedEvents.addAll(
+                applyEffects(
+                        effectCatalog.getByTrigger(
+                                questId,
+                                completedStep.getStep(),
+                                QuestEffectTrigger.STEP_COMPLETE),
+                        accumulator));
 
         if (finalStep) {
-            generatedEvents.addAll(applyMaterialRewards(questId));
+        	generatedEvents.addAll(applyMaterialRewards(questId));
 
-            applyEffects(
-                    effectCatalog.getByTrigger(questId, 0, QuestEffectTrigger.QUEST_COMPLETE),
-                    accumulator);
+        	generatedEvents.addAll(
+        	        applyEffects(
+        	                effectCatalog.getByTrigger(
+        	                        questId,
+        	                        0,
+        	                        QuestEffectTrigger.QUEST_COMPLETE),
+        	                accumulator));
         }
 
         boolean questCompleted = questProgress.advanceCompletedStep(questId);
@@ -588,32 +629,70 @@ public final class QuestProgressService {
         return generatedEvents;
     }
 
-    private void applyEffects(
-            List<QuestEffectDefinition> effects, ProgressAccumulator accumulator) {
+    private List<QuestProgressEvent> applyEffects(
+            List<QuestEffectDefinition> effects,
+            ProgressAccumulator accumulator) {
+        List<QuestProgressEvent> generatedEvents =
+                new ArrayList<>();
+
         for (QuestEffectDefinition effect : effects) {
             boolean stateChanged = applyEffect(effect);
 
-            if (stateChanged) {
-                effect.getDisplayText().ifPresent(accumulator.effectDisplayTexts::add);
+            if (!stateChanged) {
+                continue;
+            }
+
+            effect.getDisplayText()
+                    .ifPresent(accumulator.effectDisplayTexts::add);
+
+            if (effect.getEffectType()
+                    == QuestEffectType.GRANT_ITEM) {
+                generatedEvents.add(
+                        new QuestProgressEvent(
+                                QuestProgressEventType.ITEM_OBTAINED,
+                                Optional.of(effect.getTargetId()),
+                                effect.getQuantity().orElseThrow()));
             }
         }
+
+        return generatedEvents;
     }
 
-    private boolean applyEffect(QuestEffectDefinition effect) {
-        return switch (effect.getEffectType()) {
-            case SET_FLAG -> campaignFlags.set(effect.getTargetId());
+	private boolean applyEffect(QuestEffectDefinition effect) {
+		return switch (effect.getEffectType()) {
 
-            case UNLOCK_ROUTE -> {
-                boolean alreadyUnlocked = travelProgress.isUnlocked(effect.getTargetId());
+		case SET_FLAG -> campaignFlags.set(effect.getTargetId());
 
-                if (!alreadyUnlocked) {
-                    travelProgress.unlock(effect.getTargetId());
-                }
+		case UNLOCK_ROUTE -> {
+			boolean alreadyUnlocked = travelProgress.isUnlocked(effect.getTargetId());
 
-                yield !alreadyUnlocked;
-            }
-        };
-    }
+			if (!alreadyUnlocked) {
+				travelProgress.unlock(effect.getTargetId());
+			}
+
+			yield !alreadyUnlocked;
+		}
+
+		case GRANT_ITEM -> {
+			Item item = itemCatalog.getById(effect.getTargetId());
+			int quantity = effect.getQuantity().orElseThrow();
+
+			if (!party.getInventory().addItem(item, quantity)) {
+				throw new IllegalStateException(
+						"Validated quest item effect could not be applied: " + effect.getQuestId() + " -> "
+								+ item.getId()
+				);
+			}
+
+			yield true;
+		}
+
+		case TRANSPORT_PARTY -> {
+			questTransportState.request(effect.getTargetId());
+			yield true;
+		}
+		};
+	}
 
     private void validateTalkInteraction(
             String questId, String npcId, QuestStepDefinition currentStep) {
@@ -748,12 +827,20 @@ public final class QuestProgressService {
     }
 
     private Optional<QuestObjectiveDefinition> findMatchingObjective(
-            QuestStepDefinition currentStep, QuestProgressEvent event) {
-        QuestObjectiveType expectedObjectiveType = event.getEventType().getObjectiveType();
+            QuestStepDefinition currentStep,
+            QuestProgressEvent event) {
+        QuestObjectiveType expectedObjectiveType =
+                event.getEventType().getObjectiveType();
 
-        for (QuestObjectiveDefinition objective : currentStep.getObjectives()) {
-            if (objective.getObjectiveType() == expectedObjectiveType
-                    && objective.getTargetId().equals(event.getTargetId())) {
+        for (QuestObjectiveDefinition objective
+                : currentStep.getObjectives()) {
+            if (objective.getObjectiveType()
+                    != expectedObjectiveType) {
+                continue;
+            }
+
+            if (objective.getTargetId().isEmpty()
+                    || objective.getTargetId().equals(event.getTargetId())) {
                 return Optional.of(objective);
             }
         }
@@ -800,6 +887,53 @@ public final class QuestProgressService {
 
         private QuestProgressResult createResult() {
             return new QuestProgressResult(updates, effectDisplayTexts, completionFailures);
+        }
+    }
+
+    private Map<Item, Integer> collectGrantedItems(
+            String questId) {
+        QuestStepDefinition currentStep =
+                questProgress
+                        .getCurrentStep(questId)
+                        .orElseThrow();
+
+        Map<Item, Integer> grantedItems =
+                new LinkedHashMap<>();
+
+        collectGrantedItems(
+                effectCatalog.getByTrigger(
+                        questId,
+                        currentStep.getStep(),
+                        QuestEffectTrigger.STEP_COMPLETE),
+                grantedItems);
+
+        if (questProgress.isCurrentStepFinal(questId)) {
+            collectGrantedItems(
+                    effectCatalog.getByTrigger(
+                            questId,
+                            0,
+                            QuestEffectTrigger.QUEST_COMPLETE),
+                    grantedItems);
+        }
+
+        return grantedItems;
+    }
+
+    private void collectGrantedItems(
+            List<QuestEffectDefinition> effects,
+            Map<Item, Integer> grantedItems) {
+        for (QuestEffectDefinition effect : effects) {
+            if (effect.getEffectType()
+                    != QuestEffectType.GRANT_ITEM) {
+                continue;
+            }
+
+            Item item = itemCatalog.getById(effect.getTargetId());
+
+            grantedItems.merge(
+                    item,
+                    effect.getQuantity().orElseThrow(),
+                    Math::addExact);
         }
     }
 }

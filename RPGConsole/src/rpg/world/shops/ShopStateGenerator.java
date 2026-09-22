@@ -21,25 +21,30 @@ public final class ShopStateGenerator {
 	}
 
 	public ShopStateCatalog generate() {
-		ShopStateCatalog stateCatalog = new ShopStateCatalog();
+	    ShopStateCatalog stateCatalog = new ShopStateCatalog();
 
-		for (ShopDefinition shopDefinition : shopCatalog.getAll()) {
-			List<ShopStockEntry> possibleEntries = new ArrayList<>(stockCatalog.getByShopId(shopDefinition.getId()));
+	    for (ShopDefinition shopDefinition : shopCatalog.getAll()) {
+	        stateCatalog.register(generateForShop(shopDefinition));
+	    }
 
-			int activeOfferCount = Math.min(shopDefinition.getOfferSlots(), possibleEntries.size());
+	    return stateCatalog;
+	}
 
-			List<ShopOfferState> activeOffers;
+	public ShopState generateForShop(ShopDefinition shopDefinition) {
+	    Objects.requireNonNull(shopDefinition, "Shop definition cannot be null.");
 
-			if (activeOfferCount == possibleEntries.size()) {
-				activeOffers = createOfferStates(possibleEntries);
-			} else {
-				activeOffers = selectWeightedOffers(possibleEntries, activeOfferCount);
-			}
+	    List<ShopStockEntry> possibleEntries =
+	            new ArrayList<>(stockCatalog.getByShopId(shopDefinition.getId()));
 
-			stateCatalog.register(new ShopState(shopDefinition, activeOffers));
-		}
+	    int activeOfferCount =
+	            Math.min(shopDefinition.getOfferSlots(), possibleEntries.size());
 
-		return stateCatalog;
+	    List<ShopOfferState> activeOffers =
+	            activeOfferCount == possibleEntries.size()
+	                    ? createOfferStates(possibleEntries)
+	                    : selectWeightedOffers(possibleEntries, activeOfferCount);
+
+	    return new ShopState(shopDefinition, activeOffers);
 	}
 
 	private List<ShopOfferState> createOfferStates(List<ShopStockEntry> entries) {

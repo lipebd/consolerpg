@@ -14,7 +14,7 @@ import rpg.world.scenarios.ScenarioType;
 // Loads fixed exploration branches from external data.
 public final class ScenarioBranchLoader {
 
-	private static final int EXPECTED_FIELD_COUNT = 6;
+	private static final int EXPECTED_FIELD_COUNT = 7;
 
 	public ScenarioBranchCatalog load(
 			Path filePath,
@@ -114,19 +114,23 @@ public final class ScenarioBranchLoader {
 							+ explorationPosition);
 		}
 
-		String displayName = fields[4].trim();
+		boolean initiallyUnlocked =
+		        parseBoolean(fields[4], "initially unlocked");
 
-		String description = fields[5]
+		String displayName = fields[5].trim();
+
+		String description = fields[6]
 				.trim()
 				.replace("\\n", "\n");
 
 		return new ScenarioBranchDefinition(
-				id,
-				sourceScenarioId,
-				explorationPosition,
-				destinationScenarioId,
-				displayName,
-				description);
+		        id,
+		        sourceScenarioId,
+		        explorationPosition,
+		        destinationScenarioId,
+		        initiallyUnlocked,
+		        displayName,
+		        description);
 	}
 
 	private int parseInteger(String value, String fieldName) {
@@ -140,5 +144,20 @@ public final class ScenarioBranchLoader {
 							+ normalizedValue,
 					exception);
 		}
+	}
+
+	private boolean parseBoolean(String value, String fieldName) {
+	    String normalizedValue = value.trim();
+
+	    if (normalizedValue.equalsIgnoreCase("true")) {
+	        return true;
+	    }
+
+	    if (normalizedValue.equalsIgnoreCase("false")) {
+	        return false;
+	    }
+
+	    throw new IllegalArgumentException(
+	            "Invalid " + fieldName + ": " + normalizedValue);
 	}
 }

@@ -7,7 +7,7 @@ import java.util.Objects;
 public final class ConsoleUI {
 
 	private static final int ACTION_MENU_COLUMN_WIDTH = 25;
-	private static final int TEXT_COLUMN_WIDTH = 90;
+	private static final int TEXT_COLUMN_WIDTH = 75;
 
 	private ConsoleUI() {
 	}
@@ -36,7 +36,10 @@ public final class ConsoleUI {
 			if (index == lastIndex - 1) {
 				System.out.println(option);
 			} else {
-				System.out.printf("%-" + ACTION_MENU_COLUMN_WIDTH + "s", option);
+				String visibleOption = option.replaceAll("\u001B\\[[0-9;]*m", "");
+				int padding = Math.max(0, ACTION_MENU_COLUMN_WIDTH - visibleOption.length());
+
+				System.out.print(option + " ".repeat(padding));
 			}
 		}
 	}

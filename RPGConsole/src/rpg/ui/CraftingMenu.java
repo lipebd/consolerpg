@@ -114,6 +114,7 @@ public final class CraftingMenu {
 			CrafterDefinition crafterDefinition,
 			List<CraftingRecipeDefinition> recipes,
 			String feedbackMessage) {
+		ConsoleUI.clearScreen();
 		System.out.println(
 				"\n["
 						+ crafterDefinition.getName().toUpperCase(Locale.ROOT)
@@ -147,6 +148,7 @@ public final class CraftingMenu {
 
 	private String openRecipe(
 			CraftingRecipeDefinition recipeDefinition) {
+		ConsoleUI.clearScreen();
 		while (true) {
 			displayRecipe(recipeDefinition);
 
@@ -182,7 +184,7 @@ public final class CraftingMenu {
 			CraftingRecipeDefinition recipeDefinition) {
 		Item outputItem =
 				itemCatalog.getById(recipeDefinition.getOutputItemId());
-
+		ConsoleUI.clearScreen();
 		System.out.println(
 				"\n["
 						+ recipeDefinition.getName().toUpperCase(Locale.ROOT)
@@ -227,6 +229,7 @@ public final class CraftingMenu {
 	private String getCraftingFeedback(
 			CraftingResult result,
 			CraftingRecipeDefinition recipeDefinition) {
+		ConsoleUI.clearScreen();
 		return switch (result.getOutcome()) {
 		case SUCCESS ->
 			"Você fabricou "

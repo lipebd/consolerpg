@@ -6,7 +6,7 @@ V5 is complete and preserved as the current released version.
 
 Current stage:
 
-`V6 quest-system implementation — Parts 1 through 9 completed; Part 10 canonical quest content is next`
+`V6 quest-system implementation — Parts 1 through 9 completed; Part 10's first five quests implemented and tested in the project; documentation and portable release remain pending`
 
 Current Git branch:
 
@@ -858,7 +858,7 @@ Complete encrypted round trips, campaign reconstruction, valid and invalid start
 
 ## V6 quest and narrative foundation
 
-V6 Parts 1 through 9 are implemented and approved. The protagonist class-path transition, persistent candidate identity and mandatory first-ally recruitment are composed through one validated transaction, and their complete campaign state now belongs to authenticated internal save format version 3. Canonical Quest 4 content remains scheduled for Part 10.
+V6 Parts 1 through 9 are implemented. Part 10 added the first five canonical quests, and their normal project playthrough has been validated, including the Quest 5 ceremony, class selection and first-ally recruitment. Portable Windows build verification remains pending.
 
 The current foundation includes:
 
@@ -872,13 +872,13 @@ The current foundation includes:
 - Pure uncached requirement evaluation against leader level, inventory, quest status and flags.
 - Quest-availability validation rejecting missing sets, self-dependencies and dependency cycles.
 - External material quest rewards for GOLD, party EXP and items.
-- External permanent effects for setting flags and unlocking adjacent routes.
+- External quest effects for setting flags, unlocking directed routes or branches, granting items and transporting the party.
 - Complete completion-plan validation before campaign mutation.
 - Atomic delivery consumption, reward application, permanent effects and quest-state transition.
 - Explicit completion failures that preserve every affected state.
 - External narrative city locations with requirement-controlled visibility.
 - Canonical NPC identities separated from fixed city placements.
-- External linear dialogues with canonical speakers and party-name placeholders.
+- External linear dialogues with canonical speakers, party-name placeholders and a placeholder for a recruitment candidate's persistent generated name.
 - External quest-dialogue associations for offer, acceptance, refusal, pending and completion contexts.
 - Stable NPC interaction menus preserving the permanent `Conversar` option.
 - Automatic narrative-text wrapping at 90 console columns.
@@ -945,36 +945,28 @@ The new external files are:
 - `class_path_questions.txt`
 - `class_path_answers.txt`
 - `quest_recruitments.txt`
+- `dungeon_boss_gates.txt`
+- `combat_scenario_dialogues.txt`
 
 The complete narrative interaction was validated through one temporary quest and NPC. Representative testing covered city, location and NPC markers; default conversation; offer refusal and later acceptance; quest activation; required completion dialogue; atomic completion; a real GOLD reward; grouped notifications; marker removal after completion; and preservation of default dialogue access.
 
 Part 6 representative testing covered journal navigation without world-time advancement; active and completed quest details; current objective counters and reward summaries; manual retry after an atomic reward-capacity failure; confirmed analysis followed by escape; grouped enemy-defeat, battle-victory and collected-item progress; immediate route and city-transport markers; scenario-arrival progress; narrative dungeon completion; marker removal after objective completion; and inline presentation of simple battle progress.
 
-All temporary quest and NPC validation content was removed after approval. Quest and narrative files without canonical campaign content may therefore remain header-only until the first five main quests are authored.
-
 Part 7 representative testing covered required beginner and final Flagelo validation; complete final-path equipment coverage; questionnaire loading, line-break decoding and placeholder preservation; direct scoring; ordered three-way ties; player-controlled tie resolution; unrestricted rejection and free selection; shared class presentation; optional description access; invalid-input handling without replaying timed sequences; inventory-capacity rejection without mutation; equipped-item return; introductory-item grants; class and natural-skill replacement; complete resource restoration; permanent-flag assignment; and repeated-transition prevention.
 
 Part 8 representative testing covered header-only startup; candidate creation at the first recruit dialogue; stable candidate name across repeated offer refusal and acceptance; the then-current version-2 restart boundary; multiple valid ally-class draws; exclusion of beginner Flagelo, final Flagelo and the protagonist's confirmed class; complete level-7 ally state; direct introductory equipment; empty trinket slot; second-position party insertion; mandatory acceptance; quest reward and effect application; zero ally EXP after `PARTY_EXP`; prevention of repeated recruitment; combined protagonist-item and quest-reward capacity rejection without mutation; minimum-level ceremony rejection without mutation; maximum three-record enforcement; duplicate candidate rejection; duplicate quest-step rejection; and invalid ally-level rejection.
 
-All temporary Part 8 quest, NPC, dialogue, flag, requirement, reward, effect, recruitment and validation-class fixtures were removed after approval. `quest_recruitments.txt` therefore remains header-only until canonical recruitment content is authored.
-
 Part 9 added immutable quest, flag and candidate snapshots; strict version-3 property serialization and deserialization; explicit version-2 incompatibility; domain-local quest and candidate restorers; complete narrative-state injection through `RestoredCampaign`; and cross-state validation for quest steps, objective counters, flags, candidates, party membership, distinct classes and the first ceremony transaction. The encrypted outer container, AES-GCM behavior and atomic file replacement remain unchanged.
-
-The version-3 empty-narrative baseline compiled and completed two restart-based round trips without error. Because canonical quest and recruitment files remain header-only, non-empty narrative round trips and representative corrupt narrative payloads are deferred to the canonical content and verification blocks instead of introducing artificial production data or permanent development bypasses.
-
-The canonical class-path equipment definitions and canonical seven-question questionnaire are retained as real V6 content. The protagonist transition is now composed with the complete first recruitment transaction. Normal campaign access remains absent only because canonical Quest 4 content is scheduled for Part 10.
 
 ## Current limitations and temporary implementations
 
 - Permanent skill-scroll content and curated scroll drops remain absent while the draft skills await required combat mechanics and final content review.
-- The class-path questionnaire, recommendation interface and first-recruitment transaction are implemented and validated but are not yet reachable through normal campaign play because canonical Quest 4 content remains Part 10 work.
 - Playable-class definitions, natural growth and the complete approved 30-skill roster are external; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy turns currently use basic attacks; enemy skill selection is deferred.
-- Mutable quest progress, permanent campaign flags and recruitment-candidate state are persisted together in internal format version 3. Non-empty restart verification remains pending reachable canonical quest content.
-- `RECRUIT` references are now validated through `QuestRecruitmentCatalog` and resolved through candidate state, but no canonical recruit dialogue exists while `quest_recruitments.txt` remains header-only.
+- `RECRUIT` references are now validated through `QuestRecruitmentCatalog` and resolved through candidate state.
 - After a normal victory, defeated allies remain unavailable until revived by a skill, item or city INN; full-party defeat instead activates rescue and complete restoration.
 - Items sold by the player cannot be bought back.
-- Normal new games currently begin with only the protagonist because the canonical recruitment quests have not yet been authored. The first-ally runtime behavior is implemented; later allies remain future narrative content.
+- Normal new games currently begin with only the protagonist. The first-ally runtime behavior is implemented; later allies remain future narrative content.
 - Candidate naming reuses the implemented shared external-name selection and preserves one generated name across the active campaign and version-3 save/load cycles.
 - The four current random character names remain temporary pending creative-team curation.
 - Party-title acquisition and character-history presentation remain future narrative work.
@@ -985,25 +977,11 @@ The canonical class-path equipment definitions and canonical seven-question ques
 
 ## Current next step
 
-V5 remains complete, packaged and released as `v5.0.0`.
+V5 remains the latest packaged release as `v5.0.0`. V6 development continues on `feature/v6-quests`.
 
-V6 implementation is active on `feature/v6-quests`. Parts 1 through 9 have completed:
+Parts 1 through 9 are implemented, including the version-3 campaign save format for quest progress, permanent flags and recruitment candidates. Part 10 contains the first five canonical quests and the reusable technical integration required by their progression. All five quests have been played through in the project, including the class-path ceremony and first-ally recruitment.
 
-- Quest definitions and lifecycle.
-- Quest objectives and core progress.
-- Permanent flags and reusable requirements.
-- Quest rewards and permanent effects.
-- Narrative locations, NPCs and dialogue.
-- Gameplay integration, quest journal and interaction-marker propagation.
-- Level-7 class-path definitions, questionnaire, player-controlled recommendation and atomic protagonist transition.
-- Persistent recruitment-candidate identity, generic ally construction and the atomic first-ally transaction.
-- Coordinated version-3 persistence for quest progress, permanent flags, recruitment candidates and their party coherence.
-
-The next implementation block is V6 Part 10: the first five canonical main quests. It begins by freezing the exact content contract for Quest 1 before any data is authored.
-
-Questionnaire answers, recommendation scores, uncommitted class choices, random uncommitted ally classes, constructed pending allies and prepared transaction plans remain transient and must not enter the save format.
-
-The first five canonical quests, including the real content trigger for the class-path and recruitment transaction, remain the complete scope of V6 Part 10. Part 11 verification remains separate and must not be mixed into Part 10 content decisions.
+Current closure work is to finish the V6 documentation and content-author guide, review the complete five-quest progression and regressions, then build and verify the portable Windows package. The V6 release has not yet been packaged or tagged.
 
 ## Important conventions
 

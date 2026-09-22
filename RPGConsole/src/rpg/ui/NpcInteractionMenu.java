@@ -32,8 +32,8 @@ public final class NpcInteractionMenu {
 
         while (true) {
             ConsoleUI.clearScreen();
-            System.out.println("[" + cityName.trim() + "]");
-            System.out.println("[" + locationDefinition.getName() + "]");
+            System.out.println("[" + cityName.trim().toUpperCase() + "]");
+            System.out.println("[" + locationDefinition.getName().toUpperCase() + "]");
             System.out.println();
             System.out.println(npcDefinition.getName());
             System.out.println();
@@ -42,7 +42,7 @@ public final class NpcInteractionMenu {
             System.out.println();
 
             for (int index = 0; index < questTitles.size(); index++) {
-                System.out.println("[" + (index + 1) + "] " + questTitles.get(index));
+                System.out.println("\u001B[33m[" + (index + 1) + "] " + questTitles.get(index) + "\u001B[0m");
             }
 
             int talkOption = questTitles.size() + 1;

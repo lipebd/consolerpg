@@ -2,185 +2,258 @@ package rpg.narrative;
 
 import java.util.List;
 import java.util.Set;
+import java.util.LinkedHashSet;
 
+import rpg.recruitment.RecruitmentCandidateStateCatalog;
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
 
 // Validates, decodes and resolves external narrative text.
 public final class NarrativeTextProcessor {
 
-    private static final Set<String> SUPPORTED_PLACEHOLDERS =
-            Set.of("leaderName", "groupMember2", "groupMember3", "groupMember4");
+	private static final Set<String> SUPPORTED_SIMPLE_PLACEHOLDERS = Set
+			.of("leaderName", "groupMember2", "groupMember3", "groupMember4");
 
-    private NarrativeTextProcessor() {}
+	private static final String RECRUIT_NAME_PREFIX = "recruitName:";
 
-    public static String decodeTemplate(String value, String fieldName) {
-        String decodedText = decodeLineBreaks(value, fieldName);
+	private static final String ID_PATTERN = "[a-z0-9]+(?:_[a-z0-9]+)*";
 
-        return validateTemplate(decodedText, fieldName);
-    }
+	private NarrativeTextProcessor() {
+	}
 
-    public static String decodeLiteral(String value, String fieldName) {
-        String decodedText = decodeLineBreaks(value, fieldName);
+	public static String decodeTemplate(String value, String fieldName) {
+		String decodedText = decodeLineBreaks(value, fieldName);
 
-        rejectPlaceholderCharacters(decodedText, fieldName);
+		return validateTemplate(decodedText, fieldName);
+	}
 
-        return decodedText;
-    }
+	public static String decodeLiteral(String value, String fieldName) {
+		String decodedText = decodeLineBreaks(value, fieldName);
 
-    public static String requireLiteral(String value, String fieldName) {
-        String normalizedValue = requireText(value, fieldName);
+		rejectPlaceholderCharacters(decodedText, fieldName);
 
-        if (normalizedValue.contains("\\")) {
-            throw new IllegalArgumentException(fieldName + " cannot contain backslashes.");
-        }
+		return decodedText;
+	}
 
-        if (normalizedValue.contains("\n") || normalizedValue.contains("\r")) {
-            throw new IllegalArgumentException(fieldName + " cannot contain line breaks.");
-        }
+	public static String requireLiteral(String value, String fieldName) {
+		String normalizedValue = requireText(value, fieldName);
 
-        rejectPlaceholderCharacters(normalizedValue, fieldName);
+		if (normalizedValue.contains("\\")) {
+			throw new IllegalArgumentException(fieldName + " cannot contain backslashes.");
+		}
 
-        return normalizedValue;
-    }
+		if (normalizedValue.contains("\n") || normalizedValue.contains("\r")) {
+			throw new IllegalArgumentException(fieldName + " cannot contain line breaks.");
+		}
 
-    public static String validateTemplate(String value, String fieldName) {
-        String normalizedValue = requireText(value, fieldName);
+		rejectPlaceholderCharacters(normalizedValue, fieldName);
 
-        if (normalizedValue.contains("\\")) {
-            throw new IllegalArgumentException(
-                    fieldName + " cannot contain unresolved backslashes.");
-        }
+		return normalizedValue;
+	}
 
-        validatePlaceholders(normalizedValue, fieldName);
+	public static String validateTemplate(String value, String fieldName) {
+		String normalizedValue = requireText(value, fieldName);
 
-        return normalizedValue;
-    }
+		if (normalizedValue.contains("\\")) {
+			throw new IllegalArgumentException(fieldName + " cannot contain unresolved backslashes.");
+		}
 
-    public static String resolve(String template, Party party) {
-        if (party == null) {
-            throw new IllegalArgumentException("Party cannot be null.");
-        }
+		validatePlaceholders(normalizedValue, fieldName);
 
-        String validatedTemplate = validateTemplate(template, "Narrative text");
+		return normalizedValue;
+	}
 
-        List<PlayableCharacter> members = party.getMembers();
+	public static String resolve(String template, Party party) {
+		if (party == null) {
+			throw new IllegalArgumentException("Party cannot be null.");
+		}
 
-        StringBuilder resolvedText = new StringBuilder();
+		String validatedTemplate = validateTemplate(template, "Narrative text");
 
-        for (int index = 0; index < validatedTemplate.length(); index++) {
-            char character = validatedTemplate.charAt(index);
+		List<PlayableCharacter> members = party.getMembers();
 
-            if (character != '{') {
-                resolvedText.append(character);
-                continue;
-            }
+		StringBuilder resolvedText = new StringBuilder();
 
-            int closingBrace = validatedTemplate.indexOf('}', index + 1);
+		for (int index = 0; index < validatedTemplate.length(); index++) {
+			char character = validatedTemplate.charAt(index);
 
-            String placeholder = validatedTemplate.substring(index + 1, closingBrace);
+			if (character != '{') {
+				resolvedText.append(character);
+				continue;
+			}
 
-            resolvedText.append(resolvePlaceholder(placeholder, members));
+			int closingBrace = validatedTemplate.indexOf('}', index + 1);
 
-            index = closingBrace;
-        }
+			String placeholder = validatedTemplate.substring(index + 1, closingBrace);
 
-        return resolvedText.toString();
-    }
+			resolvedText.append(resolvePlaceholder(placeholder, members));
 
-    private static String decodeLineBreaks(String value, String fieldName) {
-        String normalizedValue = requireText(value, fieldName);
+			index = closingBrace;
+		}
 
-        StringBuilder decodedText = new StringBuilder();
+		return resolvedText.toString();
+	}
 
-        for (int index = 0; index < normalizedValue.length(); index++) {
-            char character = normalizedValue.charAt(index);
+	public static String resolveRecruitNames(String template, RecruitmentCandidateStateCatalog candidateStateCatalog) {
+		if (candidateStateCatalog == null) {
+			throw new IllegalArgumentException("Recruitment candidate state catalog cannot be null.");
+		}
 
-            if (character != '\\') {
-                decodedText.append(character);
-                continue;
-            }
+		String validatedTemplate = validateTemplate(template, "Narrative text");
 
-            if (index + 1 >= normalizedValue.length() || normalizedValue.charAt(index + 1) != 'n') {
-                throw new IllegalArgumentException(
-                        fieldName
-                                + " can only use backslashes as the \\\\n "
-                                + "line-break sequence.");
-            }
+		StringBuilder resolvedText = new StringBuilder();
 
-            decodedText.append('\n');
-            index++;
-        }
+		for (int index = 0; index < validatedTemplate.length(); index++) {
+			char character = validatedTemplate.charAt(index);
 
-        return decodedText.toString();
-    }
+			if (character != '{') {
+				resolvedText.append(character);
+				continue;
+			}
 
-    private static void validatePlaceholders(String value, String fieldName) {
-        for (int index = 0; index < value.length(); index++) {
-            char character = value.charAt(index);
+			int closingBrace = validatedTemplate.indexOf('}', index + 1);
 
-            if (character == '}') {
-                throw new IllegalArgumentException(
-                        fieldName + " contains an unmatched closing brace.");
-            }
+			String placeholder = validatedTemplate.substring(index + 1, closingBrace);
 
-            if (character != '{') {
-                continue;
-            }
+			if (placeholder.startsWith(RECRUIT_NAME_PREFIX)) {
+				String candidateId = placeholder.substring(RECRUIT_NAME_PREFIX.length());
 
-            int closingBrace = value.indexOf('}', index + 1);
+				resolvedText.append(candidateStateCatalog.getByCandidateId(candidateId).getName());
+			} else {
+				resolvedText.append('{').append(placeholder).append('}');
+			}
 
-            if (closingBrace < 0) {
-                throw new IllegalArgumentException(
-                        fieldName + " contains an unclosed placeholder.");
-            }
+			index = closingBrace;
+		}
 
-            String placeholder = value.substring(index + 1, closingBrace);
+		return resolvedText.toString();
+	}
 
-            if (placeholder.contains("{") || !SUPPORTED_PLACEHOLDERS.contains(placeholder)) {
-                throw new IllegalArgumentException(
-                        fieldName + " contains an unsupported placeholder: {" + placeholder + "}");
-            }
+	public static Set<String> getRecruitmentCandidateIds(String template) {
+		String validatedTemplate = validateTemplate(template, "Narrative text");
 
-            index = closingBrace;
-        }
-    }
+		Set<String> candidateIds = new LinkedHashSet<>();
 
-    private static String resolvePlaceholder(String placeholder, List<PlayableCharacter> members) {
-        int memberIndex =
-                switch (placeholder) {
-                    case "leaderName" -> 0;
-                    case "groupMember2" -> 1;
-                    case "groupMember3" -> 2;
-                    case "groupMember4" -> 3;
-                    default ->
-                            throw new IllegalStateException(
-                                    "Unsupported validated placeholder: " + placeholder);
-                };
+		for (int index = 0; index < validatedTemplate.length(); index++) {
+			if (validatedTemplate.charAt(index) != '{') {
+				continue;
+			}
 
-        if (memberIndex >= members.size()) {
-            throw new IllegalStateException(
-                    "Narrative text requires unavailable party member: {" + placeholder + "}");
-        }
+			int closingBrace = validatedTemplate.indexOf('}', index + 1);
 
-        return members.get(memberIndex).getName();
-    }
+			String placeholder = validatedTemplate.substring(index + 1, closingBrace);
 
-    private static void rejectPlaceholderCharacters(String value, String fieldName) {
-        if (value.contains("{") || value.contains("}")) {
-            throw new IllegalArgumentException(fieldName + " cannot contain placeholders.");
-        }
-    }
+			if (placeholder.startsWith(RECRUIT_NAME_PREFIX)) {
+				candidateIds.add(placeholder.substring(RECRUIT_NAME_PREFIX.length()));
+			}
 
-    private static String requireText(String value, String fieldName) {
-        if (fieldName == null || fieldName.isBlank()) {
-            throw new IllegalArgumentException("Narrative text field name cannot be empty.");
-        }
+			index = closingBrace;
+		}
 
-        if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException(fieldName + " cannot be empty.");
-        }
+		return Set.copyOf(candidateIds);
+	}
 
-        return value.trim();
-    }
+	private static String decodeLineBreaks(String value, String fieldName) {
+		String normalizedValue = requireText(value, fieldName);
+
+		StringBuilder decodedText = new StringBuilder();
+
+		for (int index = 0; index < normalizedValue.length(); index++) {
+			char character = normalizedValue.charAt(index);
+
+			if (character != '\\') {
+				decodedText.append(character);
+				continue;
+			}
+
+			if (index + 1 >= normalizedValue.length() || normalizedValue.charAt(index + 1) != 'n') {
+				throw new IllegalArgumentException(
+						fieldName + " can only use backslashes as the \\\\n " + "line-break sequence."
+				);
+			}
+
+			decodedText.append('\n');
+			index++;
+		}
+
+		return decodedText.toString();
+	}
+
+	private static void validatePlaceholders(String value, String fieldName) {
+		for (int index = 0; index < value.length(); index++) {
+			char character = value.charAt(index);
+
+			if (character == '}') {
+				throw new IllegalArgumentException(fieldName + " contains an unmatched closing brace.");
+			}
+
+			if (character != '{') {
+				continue;
+			}
+
+			int closingBrace = value.indexOf('}', index + 1);
+
+			if (closingBrace < 0) {
+				throw new IllegalArgumentException(fieldName + " contains an unclosed placeholder.");
+			}
+
+			String placeholder = value.substring(index + 1, closingBrace);
+
+			if (placeholder.contains("{") || !isSupportedPlaceholder(placeholder)) {
+				throw new IllegalArgumentException(
+						fieldName + " contains an unsupported placeholder: {" + placeholder + "}"
+				);
+			}
+
+			index = closingBrace;
+		}
+	}
+
+	private static boolean isSupportedPlaceholder(String placeholder) {
+		if (SUPPORTED_SIMPLE_PLACEHOLDERS.contains(placeholder)) {
+			return true;
+		}
+
+		if (!placeholder.startsWith(RECRUIT_NAME_PREFIX)) {
+			return false;
+		}
+
+		String candidateId = placeholder.substring(RECRUIT_NAME_PREFIX.length());
+
+		return candidateId.matches(ID_PATTERN);
+	}
+
+	private static String resolvePlaceholder(String placeholder, List<PlayableCharacter> members) {
+		int memberIndex = switch (placeholder) {
+		case "leaderName" -> 0;
+		case "groupMember2" -> 1;
+		case "groupMember3" -> 2;
+		case "groupMember4" -> 3;
+		default -> throw new IllegalStateException("Unsupported validated placeholder: " + placeholder);
+		};
+
+		if (memberIndex >= members.size()) {
+			throw new IllegalStateException("Narrative text requires unavailable party member: {" + placeholder + "}");
+		}
+
+		return members.get(memberIndex).getName();
+	}
+
+	private static void rejectPlaceholderCharacters(String value, String fieldName) {
+		if (value.contains("{") || value.contains("}")) {
+			throw new IllegalArgumentException(fieldName + " cannot contain placeholders.");
+		}
+	}
+
+	private static String requireText(String value, String fieldName) {
+		if (fieldName == null || fieldName.isBlank()) {
+			throw new IllegalArgumentException("Narrative text field name cannot be empty.");
+		}
+
+		if (value == null || value.isBlank()) {
+			throw new IllegalArgumentException(fieldName + " cannot be empty.");
+		}
+
+		return value.trim();
+	}
 }

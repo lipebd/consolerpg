@@ -33,7 +33,7 @@ public final class QuestDialogueDefinition {
                 }
             }
 
-            case PENDING, COMPLETE -> {
+            case PENDING, PRE_COMPLETE, COMPLETE -> {
                 if (step <= 0) {
                     throw new IllegalArgumentException(
                             context + " quest dialogue must use a positive step number.");

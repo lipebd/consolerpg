@@ -127,12 +127,13 @@ public final class QuestDialogueLoader {
                 }
             }
 
-            case COMPLETE -> {
+            case PRE_COMPLETE, COMPLETE -> {
                 QuestStepDefinition stepDefinition = getStep(questDefinition, step);
 
                 if (!containsObjectiveType(stepDefinition, QuestObjectiveType.TALK_TO_NPC)) {
                     throw new IllegalArgumentException(
-                            "COMPLETE dialogue requires a TALK_TO_NPC objective in quest "
+                            context
+                                    + " dialogue requires a TALK_TO_NPC objective in quest "
                                     + questDefinition.getId()
                                     + ", step "
                                     + step

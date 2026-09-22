@@ -1,1 +1,19 @@
 # questId;order;rewardType;rewardId;quantity
+
+# QUEST 1
+ordem_dos_alquimistas;1;PARTY_EXP;;5
+ordem_dos_alquimistas;2;ITEM;adaga_improvisada;1
+ordem_dos_alquimistas;3;ITEM;meruma;2
+
+# QUEST 2
+o_discipulo;1;PARTY_EXP;;15
+o_discipulo;2;GOLD;;30
+o_discipulo;3;ITEM;vestes_comuns;1
+
+# QUEST 3
+entre_caminhos;1;PARTY_EXP;;15
+entre_caminhos;2;GOLD;;30
+
+# QUEST 4
+energia_residual;1;PARTY_EXP;;15
+energia_residual;2;GOLD;;30

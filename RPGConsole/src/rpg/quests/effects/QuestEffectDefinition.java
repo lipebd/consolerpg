@@ -1,12 +1,14 @@
 package rpg.quests.effects;
 
 import java.util.Optional;
+import java.util.OptionalInt;
 
 // Stores one immutable permanent effect produced by quest progression.
 public final class QuestEffectDefinition {
 
     private static final String ID_PATTERN = "[a-z0-9]+(?:_[a-z0-9]+)*";
 
+    private final OptionalInt quantity;
     private final String questId;
     private final int step;
     private final QuestEffectTrigger trigger;
@@ -22,6 +24,7 @@ public final class QuestEffectDefinition {
             int order,
             QuestEffectType effectType,
             String targetId,
+            OptionalInt quantity,
             Optional<String> displayText) {
         this.questId = validateId(questId, "Quest");
 
@@ -48,6 +51,7 @@ public final class QuestEffectDefinition {
         this.order = order;
         this.effectType = effectType;
         this.targetId = validateId(targetId, "Quest effect target");
+        this.quantity = validateQuantity(effectType, quantity);
         this.displayText =
                 displayText.map(
                         value -> {
@@ -92,6 +96,31 @@ public final class QuestEffectDefinition {
         return trimmedValue;
     }
 
+    private static OptionalInt validateQuantity(
+            QuestEffectType effectType,
+            OptionalInt quantity) {
+        if (quantity == null) {
+            throw new IllegalArgumentException(
+                    "Quest effect quantity cannot be null.");
+        }
+
+        if (effectType == QuestEffectType.GRANT_ITEM) {
+            if (quantity.isEmpty() || quantity.getAsInt() <= 0) {
+                throw new IllegalArgumentException(
+                        "GRANT_ITEM effect requires a positive quantity.");
+            }
+
+            return quantity;
+        }
+
+        if (quantity.isPresent()) {
+            throw new IllegalArgumentException(
+                    effectType + " effect cannot define a quantity.");
+        }
+
+        return OptionalInt.empty();
+    }
+
     public String getQuestId() {
         return questId;
     }
@@ -118,5 +147,9 @@ public final class QuestEffectDefinition {
 
     public Optional<String> getDisplayText() {
         return displayText;
+    }
+
+    public OptionalInt getQuantity() {
+        return quantity;
     }
 }

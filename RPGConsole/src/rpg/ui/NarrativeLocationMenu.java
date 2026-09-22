@@ -80,8 +80,8 @@ public final class NarrativeLocationMenu {
 
     private static void displayLocationHeader(
             String cityName, NarrativeLocationDefinition locationDefinition) {
-        System.out.println("[" + cityName.trim() + "]");
-        System.out.println("[" + locationDefinition.getName() + "]");
+        System.out.println("[" + cityName.trim().toUpperCase() + "]");
+        System.out.println("[" + locationDefinition.getName().toUpperCase() + "]");
         System.out.println();
 
         ConsoleUI.displayWrappedText(

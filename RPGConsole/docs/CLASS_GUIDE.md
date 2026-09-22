@@ -293,10 +293,10 @@ As descrições exibidas ao jogador são derivadas dessas definições; não exi
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
 | `QuestEffectTrigger` | Enum de domínio | Define os momentos `QUEST_START`, `STEP_COMPLETE` e `QUEST_COMPLETE`. |
-| `QuestEffectType` | Enum de domínio | Define os efeitos permanentes iniciais `SET_FLAG` e `UNLOCK_ROUTE`. |
-| `QuestEffectDefinition` | Definição imutável | Armazena quest, passo, trigger, ordem, tipo, alvo canônico e texto visível opcional. Valida a relação entre trigger e número do passo. |
+| `QuestEffectType` | Enum de domínio | Define `SET_FLAG`, `UNLOCK_ROUTE`, `GRANT_ITEM` e `TRANSPORT_PARTY`. |
+| `QuestEffectDefinition` | Definição imutável | Armazena quest, passo, trigger, ordem, tipo, alvo, quantidade quando aplicável e texto visível opcional. Valida a relação entre trigger e passo. |
 | `QuestEffectCatalog` | Catálogo de relações | Agrupa efeitos ordenados por localização de trigger e permite consulta durante início, transição ou conclusão de quest. |
-| `QuestEffectLoader` | Carregamento de dados | Lê `quest_effects.txt`, valida quests, passos, flags, rotas, ordem e duplicações e publica somente o catálogo completo. |
+| `QuestEffectLoader` | Carregamento de dados | Lê `quest_effects.txt` e valida referências de flags, rotas, bifurcações, itens e cenários. Impede `GRANT_ITEM` e `TRANSPORT_PARTY` em `QUEST_START`. |
 
 Efeitos de passo pertencem à transição do passo. Efeitos finais pertencem à mesma transação que entregas, recompensas e conclusão da quest.
 
@@ -324,7 +324,7 @@ Efeitos de passo pertencem à transição do passo. Efeitos finais pertencem à 
 | `QuestDialogueDefinition` | Definição de relação | Associa quest, passo e contexto a um diálogo canônico. |
 | `QuestDialogueCatalog` | Catálogo de relações | Resolve diálogos contextuais por quest, passo e contexto sem duplicar o conteúdo de `DialogueDefinition`. |
 | `QuestDialogueLoader` | Carregamento de dados | Lê `quest_dialogues.txt`, valida combinações de passo e contexto e prepara as relações para validação cruzada. |
-| `NarrativeTextProcessor` | Processador compartilhado | Decodifica apenas `\n`, valida placeholders permitidos e resolve nomes da party antes da apresentação ou mutação relacionada. |
+| `NarrativeTextProcessor` | Processador compartilhado | Decodifica `\n`, valida os placeholders e resolve nomes da party e de candidatos introduzidos, inclusive `{recruitName:candidateId}`. |
 | `NarrativeReferenceValidator` | Validador cruzado | Depois que todos os catálogos existem, valida diálogos padrão, locutores, NPCs iniciais, alvos de conversa e cobertura contextual das interações de quest. |
 
 Identidade, posicionamento e fala são conceitos separados. Um NPC pode existir sem posicionamento, e vários diálogos podem reutilizar a mesma identidade canônica.
@@ -648,6 +648,13 @@ ExplorationReward          = o resultado concreto do sorteio
 | `DungeonLoader` | Carregamento de dados | Lê `dungeons.txt`, valida cenário e configuração de combate, resolve inimigos, exige ranks e grupos corretos, valida cooldowns, posição e área do épico e produz `DungeonDefinition`. |
 | `DungeonDefinition` | Definição imutável | Armazena boss narrativo, boss recorrente, seus cooldowns, grupo épico, posição mínima e restrição de área. Permite que grupos narrativo e recorrente reutilizem IDs, mas mantém épicos separados dos dois. |
 | `DungeonDefinitionCatalog` | Catálogo de definições | Registra e localiza `DungeonDefinition` por ID de cenário. É consultado por `ScenarioFactory` ao criar cada dungeon de execução. |
+| `DungeonBossGateDefinition` | Definição imutável | Associa uma masmorra a um conjunto de requisitos, diálogo padrão de bloqueio e cenário de retirada. |
+| `DungeonBossGateCatalog` | Catálogo | Consulta a condição de acesso configurada para cada masmorra. |
+| `DungeonBossGateLoader` | Carregamento de dados | Lê `dungeon_boss_gates.txt` e valida masmorra, requisitos, diálogo e destino. |
+| `CombatScenarioDialogueDefinition` | Definição de relação | Associa cenário, trigger (`BOSS_GATED`, `BOSS_NARRATIVE` ou `BOSS_RECURRING`), contexto opcional de quest e diálogo canônico. |
+| `CombatScenarioDialogueCatalog` | Catálogo de relações | Resolve diálogo contextual por cenário, trigger, quest e etapa, com possibilidade de diálogo geral. |
+| `CombatScenarioDialogueLoader` | Carregamento de dados | Lê `combat_scenario_dialogues.txt` e valida cenários, gatilhos, contextos de quest e diálogos. |
+| `DungeonBossAccessResolver` | Resolvedor de acesso | Avalia o bloqueio do chefe e seleciona a reação contextual ou padrão; também fornece os diálogos configurados antes dos encontros. |
 
 ### Criação e registro dos cenários de execução
 
@@ -684,8 +691,8 @@ todos os catálogos de definição
 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
-| `ScenarioBranchLoader` | Carregamento de dados | Lê `scenario_branches.txt`, interpreta ID, cenário de origem, posição, destino, nome e descrição, converte quebras literais `\n` e valida as referências. Exige uma origem explorável, rejeita posições fora da exploração e impede bifurcações na posição final de masmorras. |
-| `ScenarioBranchDefinition` | Definição imutável | Representa uma saída disponível numa posição específica: ID estável, cenário de origem, posição, cenário de destino, nome apresentado ao jogador e texto descritivo. O destino pode ser cidade, campo ou masmorra. |
+| `ScenarioBranchLoader` | Carregamento de dados | Lê os sete campos de `scenario_branches.txt`, inclusive `initiallyUnlocked`; valida cenários, posição, estado inicial e textos. Rejeita bifurcações na posição final de masmorras. |
+| `ScenarioBranchDefinition` | Definição imutável | Representa uma saída em uma posição de exploração: ID, origem, posição, destino, estado inicial de desbloqueio, nome e descrição. Não guarda o desbloqueio mutável. |
 | `ScenarioBranchCatalog` | Catálogo | Registra bifurcações por ID e por combinação de cenário de origem e posição. Permite múltiplos destinos na mesma posição e rejeita IDs ou destinos duplicados no mesmo ponto. |
 
 ### Fluxo da bifurcação
@@ -780,7 +787,7 @@ As ofertas ativas são geradas no início de uma nova campanha, persistidas no s
 | `TravelRouteLoader` | Carregamento de dados | Lê `travel_routes.txt`, interpreta ID, origem, destino, estado inicial, nome, descrição e posição de chegada, converte quebras literais `\n` e valida as referências. Exige posição vazia para cidades e uma posição válida para campos e masmorras. |
 | `TravelRouteDefinition` | Definição imutável | Representa uma rota direcionada carregada do arquivo: ID, origem, destino, desbloqueio inicial, textos e posição opcional de chegada na exploração. Não guarda o desbloqueio mutável da campanha. |
 | `TravelCatalog` | Catálogo | Registra as definições de rota, rejeita IDs duplicados e fornece as rotas que partem de um cenário. É consultado por `TravelProgress` e pelo fluxo de viagem. Cada direção precisa de uma definição própria. |
-| `TravelProgress` | Estado mutável | Mantém quais rotas estão desbloqueadas na execução atual. Inicializa o estado usando `initiallyUnlocked`, filtra as rotas disponíveis e permite que `World` consulte ou libere saídas conforme o progresso. |
+| `TravelProgress` | Estado mutável | Mantém os IDs desbloqueados de rotas direcionais e bifurcações. Inicializa ambos conforme `initiallyUnlocked` e expõe apenas passagens disponíveis; efeitos de quest podem liberar seus IDs. |
 
 ### Diferença essencial
 

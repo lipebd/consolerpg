@@ -1,25 +1,30 @@
 # id;sourceScenarioId;destinationScenarioId;initiallyUnlocked;displayName;description;destinationExplorationPosition
-bree_portao_sul;bree;verdes_ermos;true;Portão Sul;A estrada ao sul conduz aos Verdes Ermos.;1
-verdes_ermos_bree;verdes_ermos;bree;true;Retornar a Bree;Você segue pela estrada de volta a Bree.;
+bree_portao_sul;bree;verdes_ermos;false;Portão Sul;A estrada ao sul conduz aos Verdes Ermos.;1
+bree_portao_leste;bree;entrelinhas;false;Portão Leste;A estrada ao leste leva ao emaranhado de caminhos rumo a Entrelugar;1
+verdes_ermos_bree;verdes_ermos;bree;false;Retornar a Bree;Você segue pela estrada de volta a Bree.;
 verdes_ermos_gruta_relamparrocha;verdes_ermos;gruta_relamparrocha;false;Entrar na Gruta Relamparrocha;Uma imensa formação rochosa marca a entrada da gruta.;1
-gruta_relamparrocha_verdes_ermos;gruta_relamparrocha;verdes_ermos;true;Sair para os Verdes Ermos;Você deixa os túneis eletrificados e retorna aos campos.;1
-gruta_relamparrocha_bree;gruta_relamparrocha;bree;true;Retornar a Bree;Você abandona a gruta e inicia o caminho de volta a Bree.;
+entrelinhas_bree;entrelinhas;bree;false;Seguir em direção a Bree;Um caminho tortuoso e conhecido leva a Bree;
+entrelinhas_entrelugar;entrelinhas;entrelugar;false;Seguir para Entrelugar;Um caminho que vai em direção à muralha de Entrelugar;
+entrelugar_distorcao_norte;entrelugar;entrelinhas;false;Distorção Norte;É possível atravessar o portal norte em direção a Entrelinhas;1
+gruta_relamparrocha_verdes_ermos;gruta_relamparrocha;verdes_ermos;false;Sair para os Verdes Ermos;Você deixa os túneis eletrificados e retorna aos campos.;1
+gruta_relamparrocha_bree;gruta_relamparrocha;bree;false;Retornar a Bree;Você abandona a gruta e inicia o caminho de volta a Bree.;
 gruta_relamparrocha_o_vao;gruta_relamparrocha;o_vao;false;Seguir pela rachadura;Uma estreita rachadura entre as eletrorrochas conduz para além da gruta.;
-setegalhos_estrada_sudoeste;setegalhos;mata_agouro;true;Estrada Sudoeste;Uma estrada sombreada segue em direção à Mata do Agouro.;1
-mata_agouro_setegalhos;mata_agouro;setegalhos;true;Retornar a Setegalhos;Você deixa a mata para trás e segue em direção a Setegalhos.;
+setegalhos_estrada_sudoeste;setegalhos;mata_agouro;false;Estrada Sudoeste;Uma estrada sombreada segue em direção à Mata do Agouro.;1
+mata_agouro_setegalhos;mata_agouro;setegalhos;false;Retornar a Setegalhos;Você deixa a mata para trás e segue em direção a Setegalhos.;
 mata_agouro_o_vao;mata_agouro;o_vao;false;Atravessar o portão;O gigantesco portão de madeira bloqueia uma passagem para além da mata.;
-entrelugar_portal_oeste;entrelugar;praia_sanguemar;true;Portal Oeste;O portal revela a faixa de areia clara da Praia de Sanguemar.;1
-entrelugar_portal_subterraneo;entrelugar;minas_alem_tumulo;true;Portal Subterrâneo;O portal subterrâneo conduz às profundezas das Minas do Além-Túmulo.;1
-o_vao_portoes;o_vao;mata_agouro;true;Atravessar os portões;Os grandes portões de madeira se abrem para a Mata do Agouro.;1
-o_vao_rachadura;o_vao;gruta_relamparrocha;true;Atravessar a rachadura;Uma rachadura estreita conduz aos túneis eletrificados da Gruta Relamparrocha.;1
-praia_sanguemar_entrelugar;praia_sanguemar;entrelugar;true;Retornar a Entrelugar;Você deixa a praia e retorna à cidade de Entrelugar.;
-minas_alem_tumulo_bree;minas_alem_tumulo;bree;true;Retornar a Bree;Você deixa as máquinas e os túneis para trás e inicia o caminho de volta a Bree.;
-minas_alem_tumulo_entrelugar;minas_alem_tumulo;entrelugar;true;Retornar a Entrelugar;O portal subterrâneo conduz de volta à cidade de Entrelugar.;
-deep_valley_portal_nao_magico;deep_valley;ruinas_sanguemar;true;Portal Não Mágico;A passagem submersa conduz às antigas Ruínas de Sanguemar.;1
+entrelugar_portal_oeste;entrelugar;praia_sanguemar;false;Portal Oeste;O portal revela a faixa de areia clara da Praia de Sanguemar.;1
+entrelugar_portal_subterraneo;entrelugar;minas_alem_tumulo;false;Portal Subterrâneo;O portal subterrâneo conduz às profundezas das Minas do Além-Túmulo.;1
+o_vao_portoes;o_vao;mata_agouro;false;Atravessar os portões;Os grandes portões de madeira se abrem para a Mata do Agouro.;1
+o_vao_rachadura;o_vao;gruta_relamparrocha;false;Atravessar a rachadura;Uma rachadura estreita conduz aos túneis eletrificados da Gruta Relamparrocha.;1
+praia_sanguemar_entrelugar;praia_sanguemar;entrelugar;false;Retornar a Entrelugar;Você deixa a praia e retorna à cidade de Entrelugar.;
+minas_alem_tumulo_bree;minas_alem_tumulo;bree;false;Retornar a Bree;Você deixa as máquinas e os túneis para trás e inicia o caminho de volta a Bree.;
+minas_alem_tumulo_entrelinhas;minas_alem_tumulo;entrelinhas;false;Sair para Entrelinhas;Você segue os túneis de volta para a saída, em direção a Entrelinhas.;4
+minas_alem_tumulo_entrelugar;minas_alem_tumulo;entrelugar;false;Retornar a Entrelugar;O portal subterrâneo conduz de volta à cidade de Entrelugar.;
+deep_valley_portal_nao_magico;deep_valley;ruinas_sanguemar;false;Portal Não Mágico;A passagem submersa conduz às antigas Ruínas de Sanguemar.;1
 praia_sanguemar_ruinas_sanguemar;praia_sanguemar;ruinas_sanguemar;false;Descer às Ruínas;As condições da maré revelam uma passagem para as Ruínas de Sanguemar.;1
-ruinas_sanguemar_praia_sanguemar;ruinas_sanguemar;praia_sanguemar;true;Retornar à Praia;Você sobe em direção à faixa de areia da Praia de Sanguemar.;1
-ruinas_sanguemar_entrelugar;ruinas_sanguemar;entrelugar;true;Retornar a Entrelugar;Uma passagem pelas ruínas conduz de volta a Entrelugar.;
+ruinas_sanguemar_praia_sanguemar;ruinas_sanguemar;praia_sanguemar;false;Retornar à Praia;Você sobe em direção à faixa de areia da Praia de Sanguemar.;1
+ruinas_sanguemar_entrelugar;ruinas_sanguemar;entrelugar;false;Retornar a Entrelugar;Uma passagem pelas ruínas conduz de volta a Entrelugar.;
 ruinas_sanguemar_deep_valley;ruinas_sanguemar;deep_valley;false;Atravessar o portal;O portal protegido pelos guardiões finalmente revela o caminho para Deep Valley.;
 verdes_ermos_entrelugar;verdes_ermos;entrelugar;false;Seguir para Entrelugar;Uma bifurcação entre os campos revela um caminho incomum até Entrelugar.;
-entrelugar_muro_destruido;entrelugar;verdes_ermos;true;Muro Destruído;Uma abertura no antigo muro da cidade conduz aos Verdes Ermos.;1
-setegalhos_estrada_leste;setegalhos;verdes_ermos;true;Estrada Leste;A estrada leste deixa o povoado para trás e retorna aos Verdes Ermos.;4
+entrelugar_muro_destruido;entrelugar;verdes_ermos;false;Muro Destruído;Uma abertura no antigo muro da cidade conduz aos Verdes Ermos.;1
+setegalhos_estrada_leste;setegalhos;verdes_ermos;false;Estrada Leste;A estrada leste deixa o povoado para trás e retorna aos Verdes Ermos.;4

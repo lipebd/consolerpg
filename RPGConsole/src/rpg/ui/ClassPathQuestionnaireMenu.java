@@ -71,7 +71,7 @@ public final class ClassPathQuestionnaireMenu {
         while (true) {
             ConsoleUI.clearScreen();
 
-            System.out.println("[RITO DOS SETE CAMINHOS]");
+            System.out.println("[JULGAMENTO DOS SETE PRESSÁGIOS]");
             System.out.println("[PERGUNTA " + questionNumber + "/" + questionCount + "]");
 
             System.out.println();

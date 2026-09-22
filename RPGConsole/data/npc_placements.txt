@@ -1,1 +1,34 @@
 # npcId;narrativeLocationId;requirementSetId
+
+# BREE
+mestre_alquimista;ordem_alquimistas_bree;
+mae_protagonista;ordem_alquimistas_bree;
+pai_protagonista;ordem_alquimistas_bree;
+
+# ENTRELUGAR
+dono_taverna_entrelugar;taverna_entreato;
+cliente_taverna_entrelugar;taverna_entreato;
+pesquisadora_anomalia;instituto_entrequando;
+pesquisador_sanguemar;instituto_entrequando;
+arquivista_entrequando;instituto_entrequando;
+mago_pesquisador;instituto_entrequando;mago_entrelugar_visivel
+
+# SETEGALHOS
+mago_pesquisador_setegalhos;sombra_sete_galhos;mago_setegalhos_visivel
+ancia_setegalhos;sombra_sete_galhos;
+mestre_cerimonia;centro_cerimonia_caminhos;
+mestre_cerimonia_praca;praca_emblemas;
+mentor_harmonia;galho_harmonia;
+musicista_desafinado;galho_harmonia;
+mentor_ciclo;galho_ciclo;
+jardineira_das_raizes;galho_ciclo;
+mentor_reflexo;galho_reflexo;
+aprendiz_mutavel;galho_reflexo;
+mentor_instante;galho_instante;
+arqueira_paciente;galho_instante;
+mentor_sussurro;galho_sussurro;
+viajante_sem_passos;galho_sussurro;
+mentor_silencio;galho_silencio;
+estudiosa_encantamentos;galho_silencio;
+mentor_ruina;galho_ruina;
+zeladora_ruina;galho_ruina;

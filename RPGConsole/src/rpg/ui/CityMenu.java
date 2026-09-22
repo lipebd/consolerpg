@@ -21,7 +21,7 @@ public final class CityMenu {
     }
 
     public Optional<CityAction> selectAction(
-            String cityName, List<CityAction> actions, Set<CityAction> markedActions) {
+        String cityName, List<CityAction> actions, Set<CityAction> markedActions) {
         Objects.requireNonNull(cityName, "City name cannot be null.");
 
         Objects.requireNonNull(actions, "City actions cannot be null.");
@@ -30,7 +30,6 @@ public final class CityMenu {
 
         while (true) {
             System.out.println("\n" + WorldTimeFormatter.formatCurrentTime(worldClock));
-
             System.out.println("\nO que deseja fazer?");
             System.out.println();
 
@@ -39,7 +38,7 @@ public final class CityMenu {
                             .map(
                                     action ->
                                             markedActions.contains(action)
-                                                    ? "[!] " + action
+                                                    ? "\u001B[33m[!]\u001B[0m " + action
                                                     : action.toString())
                             .toList();
 

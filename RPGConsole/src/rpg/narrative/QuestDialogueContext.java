@@ -6,5 +6,6 @@ public enum QuestDialogueContext {
     ACCEPT,
     DECLINE,
     PENDING,
+    PRE_COMPLETE,
     COMPLETE
 }

@@ -16,9 +16,9 @@ public enum QuestProgressEventType {
 			true,
 			false),
 	BATTLE_WON(
-			QuestObjectiveType.WIN_BATTLE,
-			false,
-			false),
+	        QuestObjectiveType.WIN_BATTLE,
+	        true,
+	        false),
 	ITEM_OBTAINED(
 			QuestObjectiveType.OBTAIN_ITEM,
 			true,

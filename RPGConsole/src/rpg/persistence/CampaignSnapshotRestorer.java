@@ -40,6 +40,7 @@ import rpg.skills.SkillDefinition;
 import rpg.skills.SkillLearningResult;
 import rpg.world.WorldClock;
 import rpg.world.WorldProgress;
+import rpg.world.branches.ScenarioBranchCatalog;
 import rpg.world.inns.InnCatalog;
 import rpg.world.scenarios.City;
 import rpg.world.scenarios.DungeonProgress;
@@ -54,10 +55,12 @@ import rpg.world.shops.ShopStockCatalog;
 import rpg.world.shops.ShopStockEntry;
 import rpg.world.travel.TravelCatalog;
 import rpg.world.travel.TravelProgress;
+import rpg.world.shops.ShopStateGenerator;
 
 // Validates campaign snapshots against current definitions and reconstructs runtime state.
 public final class CampaignSnapshotRestorer {
 
+	private final ScenarioBranchCatalog scenarioBranchCatalog;
 	private final ShopCatalog shopCatalog;
 	private final ShopStockCatalog shopStockCatalog;
 	private final ScenarioCatalog scenarioCatalog;
@@ -71,6 +74,7 @@ public final class CampaignSnapshotRestorer {
 	private final QuestCatalog questCatalog;
 	private final FlagCatalog flagCatalog;
 	private final QuestRecruitmentCatalog recruitmentCatalog;
+	private final ShopStateGenerator shopStateGenerator;
 
 	public CampaignSnapshotRestorer(
 			PlayableClassCatalog playableClassCatalog,
@@ -80,8 +84,10 @@ public final class CampaignSnapshotRestorer {
 			ScenarioCatalog scenarioCatalog,
 			InnCatalog innCatalog,
 			TravelCatalog travelCatalog,
+			ScenarioBranchCatalog scenarioBranchCatalog,
 			ShopCatalog shopCatalog,
 			ShopStockCatalog shopStockCatalog,
+			ShopStateGenerator shopStateGenerator,
             CharacterGrowthCalculator growthCalculator,
             QuestCatalog questCatalog,
             FlagCatalog flagCatalog,
@@ -111,6 +117,11 @@ public final class CampaignSnapshotRestorer {
         this.recruitmentCatalog =
                 Objects.requireNonNull(
                         recruitmentCatalog, "Quest recruitment catalog cannot be null.");
+        this.scenarioBranchCatalog =
+                Objects.requireNonNull(
+                        scenarioBranchCatalog, "Scenario branch catalog cannot be null.");
+        this.shopStateGenerator =
+                Objects.requireNonNull(shopStateGenerator, "Shop state generator cannot be null.");
 	}
 
 	public RestoredCampaign restore(CampaignSnapshot snapshot) {
@@ -213,70 +224,69 @@ public final class CampaignSnapshotRestorer {
 	}
 
 	ShopStateCatalog restoreShopStates(List<ShopSnapshot> snapshots) {
-		Objects.requireNonNull(snapshots, "Shop snapshots cannot be null.");
+	    Objects.requireNonNull(snapshots, "Shop snapshots cannot be null.");
 
-		ShopStateCatalog restoredCatalog = new ShopStateCatalog();
-		Set<String> restoredShopIds = new HashSet<>();
+	    Map<String, ShopSnapshot> snapshotsByShopId = new LinkedHashMap<>();
 
-		for (ShopSnapshot snapshot : snapshots) {
-			Objects.requireNonNull(snapshot, "Shop snapshot cannot be null.");
+	    for (ShopSnapshot snapshot : snapshots) {
+	        Objects.requireNonNull(snapshot, "Shop snapshot cannot be null.");
 
-			if (!restoredShopIds.add(snapshot.getShopId())) {
-                throw new IllegalArgumentException(
-                        "Shop snapshot is duplicated: " + snapshot.getShopId());
-			}
+	        if (snapshotsByShopId.putIfAbsent(snapshot.getShopId(), snapshot) != null) {
+	            throw new IllegalArgumentException(
+	                    "Shop snapshot is duplicated: " + snapshot.getShopId());
+	        }
+	    }
 
-			ShopState shopState = restoreShopState(snapshot);
+	    ShopStateCatalog restoredCatalog = new ShopStateCatalog();
 
-			restoredCatalog.register(shopState);
-		}
+	    for (ShopDefinition shopDefinition : shopCatalog.getAll()) {
+	        ShopSnapshot savedShop = snapshotsByShopId.get(shopDefinition.getId());
 
-		for (ShopDefinition shopDefinition : shopCatalog.getAll()) {
-			if (!restoredShopIds.contains(shopDefinition.getId())) {
-                throw new IllegalArgumentException(
-                        "Saved campaign is missing shop state: " + shopDefinition.getId());
-			}
-		}
+	        restoredCatalog.register(
+	                savedShop == null
+	                        ? shopStateGenerator.generateForShop(shopDefinition)
+	                        : restoreShopState(shopDefinition, savedShop));
+	    }
 
-		return restoredCatalog;
+	    return restoredCatalog;
 	}
 
-	private ShopState restoreShopState(ShopSnapshot snapshot) {
-		ShopDefinition shopDefinition = shopCatalog.getById(snapshot.getShopId());
-
-		if (snapshot.getActiveOffers().size() > shopDefinition.getOfferSlots()) {
-			throw new IllegalArgumentException(
-                    "Saved active offers exceed the configured slots for shop: "
-                            + shopDefinition.getId());
-		}
-
+	private ShopState restoreShopState(ShopDefinition shopDefinition, ShopSnapshot snapshot) {
 		List<ShopOfferState> restoredOffers = new ArrayList<>();
+		Set<String> savedOfferIds = new HashSet<>();
 
 		for (ShopOfferSnapshot offerSnapshot : snapshot.getActiveOffers()) {
-			ShopStockEntry stockEntry = shopStockCatalog.getById(offerSnapshot.getStockEntryId());
+			String entryId = offerSnapshot.getStockEntryId();
 
+			if (!savedOfferIds.add(entryId)) {
+				throw new IllegalArgumentException("Saved shop offer is duplicated: " + entryId);
+			}
+
+			ShopStockEntry stockEntry = shopStockCatalog.getAll().stream()
+					.filter(entry -> entry.getId().equals(entryId)).findFirst().orElse(null);
+
+			// The offer was removed from the current definitions.
+			if (stockEntry == null) {
+				continue;
+			}
+
+			// A saved offer cannot silently move to a different merchant.
 			if (!stockEntry.getShopId().equals(shopDefinition.getId())) {
-                throw new IllegalArgumentException(
-                        "Saved offer belongs to another shop: " + stockEntry.getId());
+				throw new IllegalArgumentException("Saved offer belongs to another shop: " + entryId);
 			}
 
-			if (offerSnapshot.getRemainingStock() > stockEntry.getInitialStock()) {
-				throw new IllegalArgumentException(
-                        "Saved remaining stock exceeds the canonical initial stock: "
-                                + stockEntry.getId());
+			// If the shop now has fewer slots, preserve the earliest surviving offers.
+			if (restoredOffers.size() >= shopDefinition.getOfferSlots()) {
+				continue;
 			}
+
+			int remainingStock = Math.min(offerSnapshot.getRemainingStock(), stockEntry.getInitialStock());
 
 			ShopOfferState offerState = new ShopOfferState(stockEntry);
-
-			int consumedStock = stockEntry.getInitialStock() - offerSnapshot.getRemainingStock();
+			int consumedStock = stockEntry.getInitialStock() - remainingStock;
 
 			if (consumedStock > 0) {
 				offerState.decreaseStock(consumedStock);
-			}
-
-			if (offerState.getRemainingStock() != offerSnapshot.getRemainingStock()) {
-                throw new IllegalStateException(
-                        "Restored shop stock differs from the snapshot: " + stockEntry.getId());
 			}
 
 			restoredOffers.add(offerState);
@@ -324,7 +334,7 @@ public final class CampaignSnapshotRestorer {
 	TravelProgress restoreTravelProgress(WorldSnapshot snapshot) {
 		Objects.requireNonNull(snapshot, "World snapshot cannot be null.");
 
-		TravelProgress travelProgress = new TravelProgress(travelCatalog);
+        TravelProgress travelProgress = new TravelProgress(travelCatalog, scenarioBranchCatalog);
 
 		for (String routeId : snapshot.getUnlockedRouteIds()) {
 			travelProgress.unlock(routeId);

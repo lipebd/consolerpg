@@ -33,14 +33,15 @@ public final class RouteMenu {
 		}
 
 		while (true) {
-			System.out.println("\nEscolha seu destino:");
+			ConsoleUI.clearScreen();
+			System.out.println("Aonde deseja ir?");
 
 			for (int index = 0; index < routes.size(); index++) {
 				TravelRouteDefinition route = routes.get(index);
 
 				String marker =
 				        markedDestinationScenarioIds.contains(route.getDestinationScenarioId())
-				                ? "[!] "
+				                ? "\u001B[33m[!]\u001B[0m "
 				                : "";
 
 				System.out.println(

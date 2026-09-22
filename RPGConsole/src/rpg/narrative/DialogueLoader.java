@@ -111,6 +111,10 @@ public final class DialogueLoader {
 				enemyCatalog,
 				recruitmentCatalog);
 
+		validateRecruitmentPlaceholders(
+		        definition,
+		        recruitmentCatalog);
+
         return definition;
     }
 
@@ -130,6 +134,16 @@ public final class DialogueLoader {
             case LEADER, NARRATOR -> {
                 // These speaker types do not reference a catalog entry.
             }
+        }
+    }
+
+    private void validateRecruitmentPlaceholders(
+            DialogueLineDefinition definition,
+            QuestRecruitmentCatalog recruitmentCatalog) {
+        for (String candidateId :
+                NarrativeTextProcessor.getRecruitmentCandidateIds(
+                        definition.getText())) {
+            recruitmentCatalog.getByCandidateId(candidateId);
         }
     }
 
