@@ -902,7 +902,7 @@ The city flow separates three navigation concepts:
 - Leaving through an unlocked adjacent route.
 - Traveling directly to another discovered city through paid transport.
 
-`CityLocationMenu` displays every currently accessible destination associated with the city. The list may combine the city's INN, `CITY` shops, crafters and visible narrative locations while preserving continuous numbering. Descriptions and destination-specific actions are shown only after the player enters the selected location.
+`World` builds the city-destination list in selection order: the INN, `CITY` shops, crafters and visible narrative locations. It filters narrative locations by their current requirements and derives actionable quest markers before opening `CityLocationMenu`. The menu receives the number of functional destinations and presents them in two aligned columns, `Serviços` and `Locais`, while preserving one continuous option-to-destination mapping. Missing positions display non-selectable `--` placeholders. Names wrap within their columns without splitting ordinary words, and `[!]` remains attached to the relevant narrative option. The menu owns redraw, input feedback and `[0] Voltar`; descriptions and destination-specific actions appear only after selection.
 
 System locations preserve their existing definitions and dedicated menus. Narrative locations are resolved separately through `NarrativeLocationCatalog` and filtered through their current requirement sets. A visible narrative location may contain no visible NPCs, in which case its menu displays `Não há ninguém aqui.` without treating the data as invalid.
 
@@ -1378,6 +1378,8 @@ The UI package contains console-specific behavior:
 - Waiting for the player to continue.
 
 `ConsoleUI` owns shared console-level presentation behavior. Automatic wrapping uses a fixed width of 75 visible columns. ANSI escape sequences do not consume visible width, and the same internal visible-length rule is reused by wrapping and aligned action rows. Explicit line breaks remain authored paragraph or structural boundaries, consecutive intentional blank lines are preserved, and an isolated word wider than the available width remains intact.
+
+City-destination columns reuse its configurable wrapping width and ANSI-aware visible-length calculation; trimming surrounding whitespace preserves leading ANSI color sequences.
 
 Wrapped output may receive a stable prefix such as indentation or a list marker. The prefix is preserved on every automatically wrapped line and after every explicit line break. The wrapping calculation remains reusable inside `rpg.ui` so later animated dialogue output can consume the same resolved lines instead of implementing another wrapping algorithm.
 

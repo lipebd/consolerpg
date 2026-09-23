@@ -113,11 +113,11 @@ The checklist fixes **what belongs to V7**, not every rule for implementing it. 
 
 ## 3. City destinations
 
-* [ ] Display functional city destinations and quest/narrative locations in two columns on the existing city-destination screen.
-* [ ] Include the currently available shop, crafting and INN destinations on the functional side; allow the same presentation to accommodate a future trading post without implementing one in V7.
-* [ ] Preserve one selection flow, stable option-to-destination mapping, visibility requirements and actionable quest markers.
-* [ ] Handle one empty column and long or varying destination names without breaking the menu layout.
-* [ ] Verify destination selection, return, hidden locations and quest markers.
+* [x] Display functional city destinations and quest/narrative locations in two columns on the existing city-destination screen.
+* [x] Include the currently available shop, crafting and INN destinations on the functional side; allow the same presentation to accommodate a future trading post without implementing one in V7.
+* [x] Preserve one selection flow, stable option-to-destination mapping, visibility requirements and actionable quest markers.
+* [x] Handle one empty column and long or varying destination names without breaking the menu layout.
+* [x] Verify destination selection, return, hidden locations and quest markers.
 
 ## 4. Dialogue presentation
 

@@ -624,7 +624,9 @@ public class World {
             locationNames.add(locationLabel);
         }
 
-        OptionalInt selectedLocation = cityLocationMenu.selectLocation(locationNames, city.getName());
+		int serviceCount = (innDefinition.isPresent() ? 1 : 0) + cityShops.size() + cityCrafters.size();
+
+		OptionalInt selectedLocation = cityLocationMenu.selectLocation(locationNames, serviceCount, city.getName());
 
 		if (selectedLocation.isEmpty()) {
 			return;

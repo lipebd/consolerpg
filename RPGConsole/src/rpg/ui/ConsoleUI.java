@@ -113,10 +113,14 @@ public final class ConsoleUI {
 	}
 
 	private static List<String> wrapText(String text, String linePrefix) {
+		return wrapText(text, linePrefix, TEXT_COLUMN_WIDTH);
+	}
+
+	static List<String> wrapText(String text, String linePrefix, int columnWidth) {
 		Objects.requireNonNull(text, "Displayed text cannot be null.");
 		Objects.requireNonNull(linePrefix, "Line prefix cannot be null.");
 
-		int availableWidth = TEXT_COLUMN_WIDTH - getVisibleLength(linePrefix);
+		int availableWidth = columnWidth - getVisibleLength(linePrefix);
 
 		if (availableWidth <= 0) {
 			throw new IllegalArgumentException("Line prefix must leave visible space for text.");
@@ -139,7 +143,7 @@ public final class ConsoleUI {
 
 	private static void
 			appendWrappedParagraph(List<String> wrappedLines, String paragraph, String linePrefix, int availableWidth) {
-		String[] words = paragraph.trim().split("\\s+");
+		String[] words = paragraph.strip().split("\\s+");
 		StringBuilder currentLine = new StringBuilder();
 
 		for (String word : words) {
@@ -165,7 +169,7 @@ public final class ConsoleUI {
 		}
 	}
 
-	private static int getVisibleLength(String text) {
+	static int getVisibleLength(String text) {
 		String visibleText = ANSI_ESCAPE_PATTERN.matcher(text).replaceAll("");
 
 		return visibleText.codePointCount(0, visibleText.length());
