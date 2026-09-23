@@ -204,10 +204,11 @@ public class World {
 	private final QuestTransportState questTransportState;
 	private Random random;
 	private Scenario currentScenario;
+	private final List<String> pendingExplorationMessages =
+			new ArrayList<>();
 
 	private boolean running;
 	private boolean shouldDisplayScenarioDescription;
-	private boolean scenarioNameAlreadyDisplayed;
 
 	public World(
 			Party party,
@@ -437,15 +438,22 @@ public class World {
         // Runtime flags
         this.running = true;
         this.shouldDisplayScenarioDescription = true;
-        this.scenarioNameAlreadyDisplayed = false;
     }
 
 	public void start() {
-	    while (running) {
-	        displayCurrentScenario();
-	        executeCurrentScenarioMenu();
-	        executePendingQuestTransport();
-	    }
+		while (running) {
+			executeCurrentScenarioMenu();
+			executePendingQuestTransport();
+		}
+	}
+
+	private boolean consumeScenarioDescriptionDisplay() {
+		boolean displayDescription =
+				shouldDisplayScenarioDescription;
+
+		shouldDisplayScenarioDescription = false;
+
+		return displayDescription;
 	}
 
 	private void executePendingQuestTransport() {
@@ -461,46 +469,6 @@ public class World {
 	                    pendingDestination.orElseThrow());
 
 	    changeScenario(destination);
-	}
-
-	private void displayCurrentScenario() {
-		if (!scenarioNameAlreadyDisplayed || shouldDisplayScenarioDescription) {
-			displayScenarioName();
-		}
-
-		scenarioNameAlreadyDisplayed = false;
-
-		if (shouldDisplayScenarioDescription) {
-			System.out.println();
-			ConsoleUI.displayWrappedText(currentScenario.getDescription());
-			shouldDisplayScenarioDescription = false;
-		}
-
-		displayExplorationProgress();
-	}
-
-	private void displayExplorationProgress() {
-		if (!(currentScenario instanceof CombatScenario) || explorationSession == null) {
-			return;
-		}
-
-		if (explorationSession.isComplete()) {
-			System.out.println("\n[EXPLORAÇÃO CONCLUÍDA]");
-			return;
-		}
-
-		System.out.println(
-                "\n[EXPLORAÇÃO "
-                        + explorationSession.getCurrentPosition()
-                        + "/"
-                        + explorationSession.getSettings().getLength()
-                        + "]");
-
-        if (currentScenario instanceof Dungeon dungeon
-                && explorationSession.isAtFinalPosition()
-                && isDungeonBossAvailable(dungeon)) {
-			displayDungeonBossObstacle();
-		}
 	}
 
 	private void executeCurrentScenarioMenu() {
@@ -560,11 +528,13 @@ public class World {
 		List<CityAction> availableActions = getAvailableCityActions(city);
 
 		Optional<CityAction> selectedAction =
-		        cityMenu.selectAction(
-		                city.getName(),
-		                availableActions,
-		                getMarkedCityActions(city, availableActions));
-
+				cityMenu.selectAction(
+						city.getName(),
+						city.getDescription(),
+						consumeScenarioDescriptionDisplay(),
+						availableActions,
+						getMarkedCityActions(city, availableActions)
+				);
 		if (selectedAction.isEmpty()) {
 			requestExitWithoutSaving();
 			return;
@@ -656,37 +626,37 @@ public class World {
 
         OptionalInt selectedLocation = cityLocationMenu.selectLocation(locationNames, city.getName());
 
-        if (selectedLocation.isEmpty()) {
-            return;
-        }
+		if (selectedLocation.isEmpty()) {
+			return;
+		}
 
-        int selectedIndex = selectedLocation.getAsInt();
+		int selectedIndex = selectedLocation.getAsInt();
 
-        if (innDefinition.isPresent()) {
-            if (selectedIndex == 0) {
-                executeInnMenu(innDefinition.get());
-                return;
-            }
+		if (innDefinition.isPresent()) {
+			if (selectedIndex == 0) {
+				executeInnMenu(city, innDefinition.get());
+				return;
+			}
 
-            selectedIndex--;
-        }
+			selectedIndex--;
+		}
 
-        if (selectedIndex < cityShops.size()) {
-            ShopDefinition selectedShop = cityShops.get(selectedIndex);
+		if (selectedIndex < cityShops.size()) {
+			ShopDefinition selectedShop = cityShops.get(selectedIndex);
 
-            ShopState selectedShopState = shopStateCatalog.getByShopId(selectedShop.getId());
+			ShopState selectedShopState = shopStateCatalog.getByShopId(selectedShop.getId());
 
-            shopMenu.open(selectedShopState);
-            return;
-        }
+			shopMenu.open(city.getName(), selectedShopState);
+			return;
+		}
 
-        selectedIndex -= cityShops.size();
+		selectedIndex -= cityShops.size();
 
-        if (selectedIndex < cityCrafters.size()) {
-            CrafterDefinition selectedCrafter = cityCrafters.get(selectedIndex);
+		if (selectedIndex < cityCrafters.size()) {
+			CrafterDefinition selectedCrafter = cityCrafters.get(selectedIndex);
 
-            craftingMenu.open(selectedCrafter);
-            return;
+			craftingMenu.open(city.getName(), selectedCrafter);
+			return;
         }
 
         selectedIndex -= cityCrafters.size();
@@ -760,23 +730,20 @@ public class World {
 
             switch (selection.action()) {
                 case TALK ->
-			displayDialogue(
-                                npcDefinition.getDefaultDialogueId(),
-                                createNarrativeHeaders(city, locationDefinition));
+					displayDialogue(npcDefinition.getDefaultDialogueId(), city.getName(), locationDefinition.getName());
 
-                case QUEST -> {
-                    QuestDefinition selectedQuest = availableQuests.get(selection.questIndex());
+				case QUEST -> {
+					QuestDefinition selectedQuest = availableQuests.get(selection.questIndex());
 
-                    executeQuestNpcInteraction(
-                            city, locationDefinition, npcDefinition, selectedQuest);
-                }
+					executeQuestNpcInteraction(city, locationDefinition, npcDefinition, selectedQuest);
+				}
 
-                case BACK -> {
-                    return;
-                }
-            }
-        }
-    }
+				case BACK -> {
+					return;
+				}
+				}
+			}
+		}
 
     private List<NarrativeLocationDefinition>
     getVisibleNarrativeLocations(String cityId) {
@@ -834,9 +801,9 @@ public class World {
                 campaignFlags);
     }
 
-    private void executeInnMenu(InnDefinition innDefinition) {
+	private void executeInnMenu(City city, InnDefinition innDefinition) {
         while (running) {
-            InnMenu.Selection selection = innMenu.open(innDefinition);
+			InnMenu.Selection selection = innMenu.open(city.getName(), innDefinition);
 
             if (selection == InnMenu.Selection.BACK) {
                 return;
@@ -904,20 +871,54 @@ public class World {
 		}
 	}
 
-    private void executeCombatScenarioMenu() {
-        List<CombatScenarioAction> availableActions = getAvailableCombatScenarioActions();
+	private void executeCombatScenarioMenu() {
+		if (!(currentScenario
+				instanceof CombatScenario combatScenario)) {
+			throw new IllegalStateException(
+					"Current scenario is not a combat scenario."
+			);
+		}
 
-        Optional<CombatScenarioAction> selectedAction =
-                combatScenarioMenu.selectAction(
-                        availableActions, getMarkedCombatScenarioActions(availableActions));
+		if (explorationSession == null) {
+			throw new IllegalStateException(
+					"Combat scenario requires an exploration session."
+			);
+		}
 
-        if (selectedAction.isEmpty()) {
-            requestExitWithoutSaving();
-            return;
-        }
+		List<CombatScenarioAction> availableActions =
+				getAvailableCombatScenarioActions();
 
-        executeCombatScenarioAction(selectedAction.get());
-    }
+		boolean dungeonBossObstacleVisible =
+				combatScenario instanceof Dungeon dungeon
+						&& !explorationSession.isComplete()
+						&& explorationSession.isAtFinalPosition()
+						&& isDungeonBossAvailable(dungeon);
+
+		List<String> explorationMessages =
+				consumeExplorationMessages();
+
+		Optional<CombatScenarioAction> selectedAction =
+				combatScenarioMenu.selectAction(
+						combatScenario.getName(),
+						combatScenario.getDescription(),
+						explorationSession,
+						consumeScenarioDescriptionDisplay(),
+						dungeonBossObstacleVisible,
+						party.size(),
+						explorationMessages,
+						availableActions,
+						getMarkedCombatScenarioActions(
+								availableActions
+						)
+				);
+
+		if (selectedAction.isEmpty()) {
+			requestExitWithoutSaving();
+			return;
+		}
+
+		executeCombatScenarioAction(selectedAction.get());
+	}
 
     private void executeQuestNpcInteraction(
             City city,
@@ -943,27 +944,43 @@ public class World {
         }
     }
 
-    private void executeQuestOffer(
-            City city,
-            NarrativeLocationDefinition locationDefinition,
-            NpcDefinition npcDefinition,
-            QuestDefinition questDefinition) {
-        List<String> headers = createNarrativeHeaders(city, locationDefinition);
+	private void executeQuestOffer(
+			City city,
+			NarrativeLocationDefinition locationDefinition,
+			NpcDefinition npcDefinition,
+			QuestDefinition questDefinition
+	) {
 
-        displayRequiredQuestDialogue(
-                questDefinition.getId(), 0, QuestDialogueContext.OFFER, headers);
+		displayRequiredQuestDialogue(
+				questDefinition.getId(),
+				0,
+				QuestDialogueContext.OFFER,
+				city.getName(),
+				locationDefinition.getName()
+		);
 
-        QuestOfferMenu.Selection selection = questOfferMenu.select(headers, questDefinition);
+		QuestOfferMenu.Selection selection = questOfferMenu
+				.select(city.getName(), locationDefinition.getName(), questDefinition);
 
-        if (selection == QuestOfferMenu.Selection.DECLINE) {
-            displayOptionalQuestDialogue(
-                    questDefinition.getId(), 0, QuestDialogueContext.DECLINE, headers);
+		if (selection == QuestOfferMenu.Selection.DECLINE) {
+			displayOptionalQuestDialogue(
+					questDefinition.getId(),
+					0,
+					QuestDialogueContext.DECLINE,
+					city.getName(),
+					locationDefinition.getName()
+			);
 
-            return;
-        }
+			return;
+		}
 
-        displayOptionalQuestDialogue(
-                questDefinition.getId(), 0, QuestDialogueContext.ACCEPT, headers);
+		displayOptionalQuestDialogue(
+				questDefinition.getId(),
+				0,
+				QuestDialogueContext.ACCEPT,
+				city.getName(),
+				locationDefinition.getName()
+		);
 
         requireAvailableQuestInteraction(npcDefinition.getId(), questDefinition.getId());
 
@@ -1003,28 +1020,33 @@ public class World {
         int currentStep =
                 questProgress.getCurrentStep(questDefinition.getId()).orElseThrow().getStep();
 
-        List<String> headers = createNarrativeHeaders(city, locationDefinition);
-
         List<QuestCompletionFailure> failures =
                 questProgressService.validateNpcInteractionCompletion(
                         questDefinition.getId(), npcDefinition.getId());
 
-        if (!failures.isEmpty()) {
-            if (containsFailureType(failures, QuestCompletionFailureType.MISSING_DELIVERY_ITEM)) {
-                displayOptionalQuestDialogue(
-                        questDefinition.getId(),
-                        currentStep,
-                        QuestDialogueContext.PENDING,
-                        headers);
-            }
+		if (!failures.isEmpty()) {
+			if (containsFailureType(failures, QuestCompletionFailureType.MISSING_DELIVERY_ITEM)) {
+				displayOptionalQuestDialogue(
+						questDefinition.getId(),
+						currentStep,
+						QuestDialogueContext.PENDING,
+						city.getName(),
+						locationDefinition.getName()
+				);
+			}
 
-            questProgressPresenter.displayCompletionFailures(failures);
+			questProgressPresenter.displayCompletionFailures(failures);
 
-            return;
-        }
+			return;
+		}
 
-        displayRequiredQuestDialogue(
-                questDefinition.getId(), currentStep, QuestDialogueContext.COMPLETE, headers);
+		displayRequiredQuestDialogue(
+				questDefinition.getId(),
+				currentStep,
+				QuestDialogueContext.COMPLETE,
+				city.getName(),
+				locationDefinition.getName()
+		);
 
         failures =
                 questProgressService.validateNpcInteractionCompletion(
@@ -1054,8 +1076,6 @@ public class World {
 				.orElseThrow()
 				.getStep();
 
-		List<String> headers =
-				createNarrativeHeaders(city, locationDefinition);
 		QuestDialogueDefinition preCompletionDialogue =
 		        getRequiredQuestDialogue(
 		                questDefinition.getId(),
@@ -1070,7 +1090,8 @@ public class World {
 
 		displayDialogue(
 		        preCompletionDialogue.getDialogueId(),
-		        headers);
+		        city.getName(),
+		        locationDefinition.getName());
 
 		PlayableClassDefinition selectedClass =
 		        classPathChoiceCoordinator.chooseClassPath();
@@ -1090,7 +1111,8 @@ public class World {
 
 		displayDialogue(
 				completionDialogue.getDialogueId(),
-				headers);
+				city.getName(),
+				locationDefinition.getName());
 
 		allyRecruitmentMenu.confirm(
 				plan.getAllyRecruitmentPlan().getAlly());
@@ -1114,15 +1136,16 @@ public class World {
 				preparation.getQuestCompletionFailures());
 	}
 
-    private void displayRequiredQuestDialogue(
+	private void displayRequiredQuestDialogue(
 			String questId,
 			int step,
 			QuestDialogueContext context,
-			List<String> headers) {
-        QuestDialogueDefinition definition =
-				getRequiredQuestDialogue(questId, step, context);
+			String cityName,
+			String locationName
+	) {
+		QuestDialogueDefinition definition = getRequiredQuestDialogue(questId, step, context);
 
-		displayDialogue(definition.getDialogueId(), headers);
+		displayDialogue(definition.getDialogueId(), cityName, locationName);
 	}
 
 	private QuestDialogueDefinition getRequiredQuestDialogue(
@@ -1142,17 +1165,16 @@ public class World {
                                                         + context));
     }
 
-    private void displayOptionalQuestDialogue(
-            String questId, int step, QuestDialogueContext context, List<String> headers) {
-        questDialogueCatalog
-                .find(questId, step, context)
-		.ifPresent(definition -> displayDialogue(definition.getDialogueId(), headers));
-    }
-
-    private static List<String> createNarrativeHeaders(
-            City city, NarrativeLocationDefinition locationDefinition) {
-        return List.of(city.getName(), locationDefinition.getName());
-    }
+	private void displayOptionalQuestDialogue(
+			String questId,
+			int step,
+			QuestDialogueContext context,
+			String cityName,
+			String locationName
+	) {
+		questDialogueCatalog.find(questId, step, context)
+				.ifPresent(definition -> displayDialogue(definition.getDialogueId(), cityName, locationName));
+	}
 
     private boolean hasQuestInteractionInCity(City city) {
         for (NarrativeLocationDefinition locationDefinition :
@@ -1198,10 +1220,16 @@ public class World {
         return false;
     }
 
-	private void displayDialogue(String dialogueId, List<String> headers) {
+	private void displayDialogue(String dialogueId, String heading) {
 		introduceDialogueCandidates(dialogueId);
 
-		dialoguePresenter.display(dialogueId, party, headers);
+		dialoguePresenter.display(dialogueId, party, heading);
+	}
+
+	private void displayDialogue(String dialogueId, String context, String qualifier) {
+		introduceDialogueCandidates(dialogueId);
+
+		dialoguePresenter.display(dialogueId, party, context, qualifier);
 	}
 
 	private void introduceDialogueCandidates(String dialogueId) {
@@ -1311,9 +1339,11 @@ public class World {
 		                explorationSession.getCurrentPosition());
 
 		Optional<ScenarioBranchDefinition> selectedBranch =
-		        scenarioBranchMenu.open(
-		                availableBranches,
-		                getMarkedDestinationScenarioIds());
+				scenarioBranchMenu.open(
+						currentScenario.getName(),
+						availableBranches,
+						getMarkedDestinationScenarioIds()
+				);
 
 		if (selectedBranch.isEmpty()) {
 			return;
@@ -1373,7 +1403,7 @@ public class World {
 
 			completeCurrentExploration();
 
-			System.out.println("\nVocê chegou ao fim da exploração de " + currentScenario.getName() + "!");
+			queueExplorationMessage("Você chegou ao fim da exploração de " + currentScenario.getName() + "!");
 
 			return;
 		}
@@ -1382,7 +1412,11 @@ public class World {
 
 		boolean specialArea = explorationSession.determineSpecialArea(random);
 
-		displayCurrentExplorationArea(settings, specialArea);
+		queueExplorationMessage(
+				specialArea
+						? settings.getSpecialAreaMessage()
+						: settings.getNormalAreaMessage()
+		);
 
         boolean explorationContinues =
                 resolveCurrentExplorationEvent(settings, position, specialArea);
@@ -1416,7 +1450,7 @@ public class World {
                         settings.getMaxEnemies());
 
 		if (selectedDefinitions.isEmpty()) {
-			System.out.println("Nenhum inimigo foi encontrado nesta região.");
+			queueExplorationMessage("Nenhum inimigo foi encontrado nesta região.");
 
 			return true;
 		}
@@ -1424,8 +1458,7 @@ public class World {
 		return startEncounter(selectedDefinitions) != BattleResult.DEFEAT;
 	}
 
-    private boolean executeExplorationEvent(
-            ExplorationEventType eventType, int position, boolean specialArea) {
+	private boolean executeExplorationEvent(ExplorationEventType eventType, int position, boolean specialArea) {
 		switch (eventType) {
 		case BATTLE -> {
 			return startRandomEncounter(position, specialArea);
@@ -1439,8 +1472,7 @@ public class World {
 			return executeEpicEncounter();
 		}
 
-            case NOTHING ->
-                    System.out.println("Você explorou os arredores, mas não encontrou nada.");
+		case NOTHING -> queueExplorationMessage("Você explorou os arredores, mas não encontrou nada.");
 		}
 
 		return true;
@@ -1474,19 +1506,17 @@ public class World {
                     questProgressCoordinator.processAndDisplay(List.of(itemEvent));
                 }
 
-                int discardedQuantity = Math.subtractExact(foundQuantity, grantedQuantity);
+				int discardedQuantity = Math.subtractExact(foundQuantity, grantedQuantity);
 
-                System.out.println("Você encontrou " + item.getName() + " x" + foundQuantity + "!");
+				queueExplorationMessage("Você encontrou " + item.getName() + " x" + foundQuantity + "!");
 
-                if (discardedQuantity > 0) {
-                    System.out.println(
-                            "Recebido: x"
-                                    + grantedQuantity
-                                    + " | Descartado: x"
-                                    + discardedQuantity
-                                    + " (limite do inventário).");
+				if (discardedQuantity > 0) {
+					queueExplorationMessage(
+							"Recebido: x" + grantedQuantity + " | Descartado: x" + discardedQuantity
+									+ " (limite do inventário)."
+					);
+				}
 			}
-		}
 
 		case GOLD -> {
 			int foundGold = reward.getQuantity();
@@ -1500,15 +1530,13 @@ public class World {
 
 			int discardedGold = Math.subtractExact(foundGold, grantedGold);
 
-			System.out.println("Você encontrou " + GameCurrency.format(foundGold) + "!");
+			queueExplorationMessage("Você encontrou " + GameCurrency.format(foundGold) + "!");
 
 			if (discardedGold > 0) {
-				System.out.println(
-                            "Recebido: "
-                                    + GameCurrency.format(grantedGold)
-                                    + " | Descartado: "
-                                    + GameCurrency.format(discardedGold)
-                                    + " (limite da carteira).");
+				queueExplorationMessage(
+						"Recebido: " + GameCurrency.format(grantedGold) + " | Descartado: "
+								+ GameCurrency.format(discardedGold) + " (limite da carteira)."
+				);
 			}
 		}
 		}
@@ -1519,9 +1547,10 @@ public class World {
 
 		ShopState merchantState = selectExplorationMerchant();
 
-		System.out.println("\n[MERCADOR]");
-
-		shopMenu.open(merchantState);
+		shopMenu.open(
+				currentScenario.getName(),
+				merchantState
+		);
 	}
 
 	private ShopState selectExplorationMerchant() {
@@ -1576,10 +1605,10 @@ public class World {
         List<EnemyDefinition> epicDefinitions =
                 resolveEnemyDefinitions(dungeon.getDungeonSettings().getEpicEnemyIds());
 
-		boolean accepted = epicEncounterMenu.confirmEncounter(epicDefinitions);
+		boolean accepted = epicEncounterMenu.confirmEncounter(currentScenario.getName(), epicDefinitions);
 
 		if (!accepted) {
-			System.out.println("Você decidiu evitar o confronto.");
+			queueExplorationMessage("Você decidiu evitar o confronto.");
 
 			return true;
 		}
@@ -1621,10 +1650,8 @@ public class World {
 			advanceWorldTime(HOURS_PER_FINISHED_BATTLE);
 		}
 
-		switch (result) {
-		case VICTORY, FLED -> shouldDisplayScenarioDescription = true;
-
-		case DEFEAT -> rescueParty(combatScenario);
+		if (result == BattleResult.DEFEAT) {
+			rescueParty(combatScenario);
 		}
 
 		return result;
@@ -1653,10 +1680,12 @@ public class World {
 		}
 
 		Optional<CityTransportDefinition> selectedDestination =
-		        cityTransportMenu.open(
-		                availableDestinations,
-		                getCityTransportDestinationSlotCount(),
-		                getMarkedDestinationScenarioIds());
+				cityTransportMenu.open(
+						currentScenario.getName(),
+						availableDestinations,
+						getCityTransportDestinationSlotCount(),
+						getMarkedDestinationScenarioIds()
+				);
 
 		if (selectedDestination.isEmpty()) {
 			return;
@@ -1678,15 +1707,17 @@ public class World {
 	private void executeRouteMenu() {
 		if (currentScenario instanceof CombatScenario
 				&& (explorationSession == null || !explorationSession.isComplete())) {
-			System.out.println("\nVocê precisa concluir a exploração antes de viajar.");
+			queueExplorationMessage("Você permanece diante do caminho bloqueado.");
 
 			return;
 		}
 
 		Optional<TravelRouteDefinition> selectedRoute =
-		        routeMenu.open(
-		                currentScenario.getId(),
-		                getMarkedDestinationScenarioIds());
+				routeMenu.open(
+						currentScenario.getId(),
+						currentScenario.getName(),
+						getMarkedDestinationScenarioIds()
+				);
 
 		if (selectedRoute.isEmpty()) {
 			return;
@@ -1777,7 +1808,7 @@ public class World {
 
 	private void changeScenario(Scenario destination, int startingPosition) {
 		currentScenario = destination;
-
+		pendingExplorationMessages.clear();
 		worldProgress.discover(destination.getId());
 
 		if (destination instanceof CombatScenario combatScenario) {
@@ -1810,7 +1841,11 @@ public class World {
 	private void executeDungeonBossGate(Dungeon dungeon) {
 		DungeonBossGateDefinition gateDefinition = dungeonBossAccessResolver.getGateDefinition(dungeon);
 
-		displayDialogue(dungeonBossAccessResolver.resolveBlockedDialogueId(dungeon), List.of("INTERVENÇÃO"));
+		displayDialogue(
+				dungeonBossAccessResolver
+						.resolveBlockedDialogueId(dungeon),
+				"Intervenção"
+		);
 
 		Scenario destination = scenarioCatalog.getById(gateDefinition.getBlockedDestinationScenarioId());
 
@@ -1833,8 +1868,11 @@ public class World {
 
         List<EnemyDefinition> bossDefinitions = resolveEnemyDefinitions(bossEnemyIds);
 
-        System.out.println("\n[BOSS]");
-		System.out.println("\nO caminho está bloqueado por:");
+		ConsoleUI.clearScreen();
+		ConsoleUI.displayHeading(dungeon.getName(), "Boss");
+
+		System.out.println();
+		System.out.println("O caminho está bloqueado por:");
 
 		for (EnemyDefinition bossDefinition : bossDefinitions) {
 			System.out.println("- " + bossDefinition.getName());
@@ -1843,13 +1881,13 @@ public class World {
 		BattleResult result = startEncounter(bossDefinitions);
 
 		if (result == BattleResult.VICTORY) {
-            long elapsedHours = worldClock.getElapsedHours();
+			long elapsedHours = worldClock.getElapsedHours();
 
-            if (narrativeBoss) {
-                dungeonProgress.recordNarrativeBossVictory(dungeonId, elapsedHours);
-            } else {
-                dungeonProgress.recordRecurringBossVictory(dungeonId, elapsedHours);
-            }
+			if (narrativeBoss) {
+				dungeonProgress.recordNarrativeBossVictory(dungeonId, elapsedHours);
+			} else {
+				dungeonProgress.recordRecurringBossVictory(dungeonId, elapsedHours);
+			}
 
 			completeCurrentExploration();
 
@@ -1863,28 +1901,6 @@ public class World {
 		} else if (result == BattleResult.FLED) {
 			System.out.println("\nVocê permanece diante do caminho bloqueado.");
 		}
-	}
-
-	private void displayScenarioName() {
-		System.out.println("[" + currentScenario.getName().toUpperCase() + "]");
-	}
-
-	private void displayDungeonBossObstacle() {
-		String target = party.size() == 1 ? "você" : "o grupo";
-
-		System.out.println("\nUma criatura se coloca entre " + target + " e o caminho de volta.");
-	}
-
-	private void displayCurrentExplorationArea(ExplorationSettings settings, boolean specialArea) {
-		displayScenarioName();
-		scenarioNameAlreadyDisplayed = true;
-
-		System.out.println();
-
-        String areaMessage =
-                specialArea ? settings.getSpecialAreaMessage() : settings.getNormalAreaMessage();
-
-        ConsoleUI.displayWrappedText(areaMessage);
 	}
 
     private boolean resolveCurrentExplorationEvent(
@@ -2040,4 +2056,22 @@ public class World {
 	    return Set.copyOf(markedIds);
 	}
 
+	private void queueExplorationMessage(String message) {
+		if (message == null || message.isBlank()) {
+			throw new IllegalArgumentException(
+					"Exploration message cannot be empty."
+			);
+		}
+
+		pendingExplorationMessages.add(message);
+	}
+
+	private List<String> consumeExplorationMessages() {
+		List<String> messages =
+				List.copyOf(pendingExplorationMessages);
+
+		pendingExplorationMessages.clear();
+
+		return messages;
+	}
 }

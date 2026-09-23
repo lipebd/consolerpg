@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
+import java.util.Locale;
 
 // Provides shared console presentation utilities.
 public final class ConsoleUI {
@@ -84,6 +85,27 @@ public final class ConsoleUI {
 		for (String line : wrapText(text, linePrefix)) {
 			System.out.println(line);
 		}
+	}
+
+	public static void displayHeading(String heading) {
+		System.out.println("[" + normalizeHeadingComponent(heading, "Heading") + "]");
+	}
+
+	public static void displayHeading(String context, String qualifier) {
+		System.out.println(
+				"[" + normalizeHeadingComponent(context, "Heading context") + " - "
+						+ normalizeHeadingComponent(qualifier, "Heading qualifier") + "]"
+		);
+	}
+
+	private static String normalizeHeadingComponent(String component, String componentName) {
+		Objects.requireNonNull(component, componentName + " cannot be null.");
+
+		if (component.isBlank()) {
+			throw new IllegalArgumentException(componentName + " cannot be empty.");
+		}
+
+		return component.trim().toUpperCase(Locale.ROOT);
 	}
 
 	static List<String> wrapText(String text) {

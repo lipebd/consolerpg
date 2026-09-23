@@ -22,6 +22,32 @@ final class ItemMenuFormatter {
 		return truncatedName + "...";
 	}
 
+	static String formatItemTableHeader() {
+		return String.format(
+				"%-4s %-" + ITEM_NAME_WIDTH + "s %s",
+				"",
+				"Item",
+				"Qtd."
+		);
+	}
+
+	static String formatItemTableRow(int optionNumber, String itemName, int quantity) {
+		return String.format(
+				"[%d]  %-" + ITEM_NAME_WIDTH + "s x%d",
+				optionNumber,
+				truncateName(itemName),
+				quantity
+		);
+	}
+
+	static String formatEmptyItemTableRow() {
+		return String.format(
+				"     %-" + ITEM_NAME_WIDTH + "s %s",
+				"--",
+				"--"
+		);
+	}
+
 	static String getRecoveryEffectSummary(RecoveryItem recoveryItem) {
 		StringBuilder summary = new StringBuilder();
 

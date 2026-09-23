@@ -69,7 +69,8 @@ public final class PartyStatusMenu {
 	}
 
 	private void displayPartyStatus(List<PlayableCharacter> members) {
-		System.out.println("\n[STATUS]\n");
+		ConsoleUI.displayHeading("Status");
+		System.out.println();
 		int nameWidth = party.getMembers().stream().mapToInt(currentMember -> currentMember.getName().length()).max().orElse(1);
 		int levelWidth = party.getMembers().stream()
 				.mapToInt(currentMember -> String.valueOf(currentMember.getLevel()).length()).max().orElse(1);

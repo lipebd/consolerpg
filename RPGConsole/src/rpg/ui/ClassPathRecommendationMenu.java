@@ -28,7 +28,8 @@ public final class ClassPathRecommendationMenu {
         while (true) {
             ConsoleUI.clearScreen();
 
-            System.out.println("[A MARCA ESCOLHIDA]\n");
+            ConsoleUI.displayHeading("A Marca Escolhida");
+            System.out.println();
             ConsoleUI.displayWrappedText("“Este é o seu caminho. Você ousa recusá-lo?”");
             System.out.println();
 
@@ -72,7 +73,7 @@ public final class ClassPathRecommendationMenu {
     private void displayRevelation(PlayableClassDefinition classDefinition) {
         ConsoleUI.clearScreen();
 
-        System.out.println("[A MARCA ESCOLHIDA]");
+        ConsoleUI.displayHeading("A Marca Escolhida");
         System.out.println();
 
         System.out.println(
@@ -105,7 +106,7 @@ public final class ClassPathRecommendationMenu {
     private void displayDescription(PlayableClassDefinition classDefinition) {
         ConsoleUI.clearScreen();
 
-        System.out.println("[A MARCA ESCOLHIDA]");
+        ConsoleUI.displayHeading("A Marca Escolhida");
         System.out.println();
 
         ConsoleUI.displayWrappedText(

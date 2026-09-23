@@ -17,133 +17,107 @@ import rpg.recruitment.RecruitmentCandidateStateCatalog;
 public final class DialoguePresenter {
 
 	private final RecruitmentCandidateStateCatalog candidateStateCatalog;
-    private final ConsoleInput consoleInput;
-    private final DialogueCatalog dialogueCatalog;
-    private final NpcCatalog npcCatalog;
-    private final EnemyCatalog enemyCatalog;
+	private final ConsoleInput consoleInput;
+	private final DialogueCatalog dialogueCatalog;
+	private final NpcCatalog npcCatalog;
+	private final EnemyCatalog enemyCatalog;
 
-    public DialoguePresenter(
-            ConsoleInput consoleInput,
-            DialogueCatalog dialogueCatalog,
-            NpcCatalog npcCatalog,
+	public DialoguePresenter(
+			ConsoleInput consoleInput,
+			DialogueCatalog dialogueCatalog,
+			NpcCatalog npcCatalog,
 			EnemyCatalog enemyCatalog,
 			RecruitmentCandidateStateCatalog candidateStateCatalog
-			) {
-        this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
-        this.dialogueCatalog =
-                Objects.requireNonNull(dialogueCatalog, "Dialogue catalog cannot be null.");
-        this.npcCatalog = Objects.requireNonNull(npcCatalog, "NPC catalog cannot be null.");
-        this.enemyCatalog = Objects.requireNonNull(enemyCatalog, "Enemy catalog cannot be null.");
-		this.candidateStateCatalog =
-				Objects.requireNonNull(
-						candidateStateCatalog,
-						"Recruitment candidate state catalog cannot be null.");
-    }
+	) {
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
+		this.dialogueCatalog = Objects.requireNonNull(dialogueCatalog, "Dialogue catalog cannot be null.");
+		this.npcCatalog = Objects.requireNonNull(npcCatalog, "NPC catalog cannot be null.");
+		this.enemyCatalog = Objects.requireNonNull(enemyCatalog, "Enemy catalog cannot be null.");
+		this.candidateStateCatalog = Objects
+				.requireNonNull(candidateStateCatalog, "Recruitment candidate state catalog cannot be null.");
+	}
 
-    public void display(String dialogueId, Party party) {
-        display(dialogueId, party, List.of());
-    }
+	public void display(String dialogueId, Party party, String heading) {
+		displayResolvedDialogue(dialogueId, party, heading, null);
+	}
 
-    public void display(String dialogueId, Party party, List<String> headerLines) {
-        Objects.requireNonNull(party, "Party cannot be null.");
+	public void display(String dialogueId, Party party, String context, String qualifier) {
+		displayResolvedDialogue(dialogueId, party, context, qualifier);
+	}
 
-        Objects.requireNonNull(headerLines, "Dialogue header lines cannot be null.");
+	private void
+			displayResolvedDialogue(String dialogueId, Party party, String headingContext, String headingQualifier) {
+		Objects.requireNonNull(party, "Party cannot be null.");
 
-        List<String> validatedHeaderLines = validateHeaderLines(headerLines);
+		DialogueDefinition dialogueDefinition = dialogueCatalog.getById(dialogueId);
 
-        DialogueDefinition dialogueDefinition = dialogueCatalog.getById(dialogueId);
+		List<RenderedDialogueLine> renderedLines = prepareLines(dialogueDefinition, party);
 
-        List<RenderedDialogueLine> renderedLines = prepareLines(dialogueDefinition, party);
+		for (RenderedDialogueLine renderedLine : renderedLines) {
+			displayLine(renderedLine, headingContext, headingQualifier);
+		}
+	}
 
-        for (RenderedDialogueLine renderedLine : renderedLines) {
-            displayLine(renderedLine, validatedHeaderLines);
-        }
-    }
+	private List<RenderedDialogueLine> prepareLines(DialogueDefinition dialogueDefinition, Party party) {
+		List<RenderedDialogueLine> renderedLines = new ArrayList<>();
 
-    private static List<String> validateHeaderLines(List<String> headerLines) {
-        List<String> validatedHeaderLines = new ArrayList<>();
+		for (DialogueLineDefinition lineDefinition : dialogueDefinition.getLines()) {
+			String speakerName = resolveSpeakerName(lineDefinition, party);
 
-        for (String headerLine : headerLines) {
-            if (headerLine == null || headerLine.isBlank()) {
-                throw new IllegalArgumentException("Dialogue header line cannot be empty.");
-            }
+			String recruitResolvedText = NarrativeTextProcessor
+					.resolveRecruitNames(lineDefinition.getText(), candidateStateCatalog);
 
-            validatedHeaderLines.add(headerLine.trim());
-        }
+			String text = NarrativeTextProcessor.resolve(recruitResolvedText, party);
 
-        return List.copyOf(validatedHeaderLines);
-    }
+			renderedLines.add(new RenderedDialogueLine(speakerName, text));
+		}
 
-    private List<RenderedDialogueLine> prepareLines(
-            DialogueDefinition dialogueDefinition, Party party) {
-        List<RenderedDialogueLine> renderedLines = new ArrayList<>();
+		return List.copyOf(renderedLines);
+	}
 
-        for (DialogueLineDefinition lineDefinition : dialogueDefinition.getLines()) {
-            String speakerName = resolveSpeakerName(lineDefinition, party);
+	private String resolveSpeakerName(DialogueLineDefinition lineDefinition, Party party) {
+		return switch (lineDefinition.getSpeakerType()) {
+		case NPC -> npcCatalog.getById(lineDefinition.getSpeakerId().orElseThrow()).getName();
 
-            String recruitResolvedText =
-                    NarrativeTextProcessor.resolveRecruitNames(
-                            lineDefinition.getText(),
-                            candidateStateCatalog);
+		case ENEMY -> enemyCatalog.getById(lineDefinition.getSpeakerId().orElseThrow()).getName();
 
-            String text =
-                    NarrativeTextProcessor.resolve(
-                            recruitResolvedText,
-                            party);
+		case LEADER -> party.getLeader().getName();
 
-            renderedLines.add(new RenderedDialogueLine(speakerName, text));
-        }
+		case NARRATOR -> null;
 
-        return List.copyOf(renderedLines);
-    }
+		case RECRUIT -> candidateStateCatalog.getByCandidateId(lineDefinition.getSpeakerId().orElseThrow()).getName();
+		};
+	}
 
-    private String resolveSpeakerName(DialogueLineDefinition lineDefinition, Party party) {
-        return switch (lineDefinition.getSpeakerType()) {
-		case NPC -> npcCatalog.getById(lineDefinition.getSpeakerId().orElseThrow())
-		.getName();
+	private void displayLine(RenderedDialogueLine renderedLine, String headingContext, String headingQualifier) {
+		ConsoleUI.clearScreen();
 
-            case ENEMY ->
-		enemyCatalog.getById(lineDefinition.getSpeakerId().orElseThrow())
-		.getName();
+		if (headingQualifier == null) {
+			ConsoleUI.displayHeading(headingContext);
+		} else {
+			ConsoleUI.displayHeading(headingContext, headingQualifier);
+		}
 
-		case LEADER -> party.getLeader()
-		.getName();
+		System.out.println();
 
-            case NARRATOR -> null;
+		if (renderedLine.speakerName() != null) {
+			System.out.println(renderedLine.speakerName());
+			System.out.println();
+		}
 
-            case RECRUIT ->
-		candidateStateCatalog
-		.getByCandidateId(lineDefinition.getSpeakerId().orElseThrow())
-		.getName();
-        };
-    }
+		ConsoleUI.displayWrappedText(renderedLine.text());
 
-    private void displayLine(RenderedDialogueLine renderedLine, List<String> headerLines) {
-        ConsoleUI.clearScreen();
-        for (String headerLine : headerLines) {
-            System.out.println("[" + headerLine.toUpperCase() + "]");
-        }
+		System.out.println();
+		System.out.print("[Enter] Continuar");
 
-        if (!headerLines.isEmpty()) {
-            System.out.println();
-        }
-        if (renderedLine.speakerName() != null) {
-            System.out.println(renderedLine.speakerName());
-            System.out.println();
-        }
+		consoleInput.readLine();
+	}
 
-        ConsoleUI.displayWrappedText(renderedLine.text());
-        System.out.println();
-        System.out.print("[Enter] Continuar");
-
-        consoleInput.readLine();
-    }
-
-    private record RenderedDialogueLine(String speakerName, String text) {
-        private RenderedDialogueLine {
-            if (text == null || text.isBlank()) {
-                throw new IllegalArgumentException("Rendered dialogue text cannot be empty.");
-            }
-        }
-    }
+	private record RenderedDialogueLine(String speakerName, String text) {
+		private RenderedDialogueLine {
+			if (text == null || text.isBlank()) {
+				throw new IllegalArgumentException("Rendered dialogue text cannot be empty.");
+			}
+		}
+	}
 }

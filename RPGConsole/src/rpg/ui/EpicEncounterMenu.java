@@ -14,27 +14,59 @@ public final class EpicEncounterMenu {
 		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 	}
 
-	public boolean confirmEncounter(EnemyDefinition epicDefinition) {
-		Objects.requireNonNull(epicDefinition, "Epic enemy definition cannot be null.");
+	public boolean confirmEncounter(
+			String scenarioName,
+			EnemyDefinition epicDefinition
+	) {
+		Objects.requireNonNull(
+				epicDefinition,
+				"Epic enemy definition cannot be null."
+		);
 
-		return confirmEncounter(List.of(epicDefinition));
+		return confirmEncounter(
+				scenarioName,
+				List.of(epicDefinition)
+		);
 	}
 
-	public boolean confirmEncounter(List<EnemyDefinition> epicDefinitions) {
-		Objects.requireNonNull(epicDefinitions, "Epic enemy definitions cannot be null.");
+	public boolean confirmEncounter(
+			String scenarioName,
+			List<EnemyDefinition> epicDefinitions
+	) {
+		if (scenarioName == null || scenarioName.isBlank()) {
+			throw new IllegalArgumentException(
+					"Epic encounter scenario name cannot be empty."
+			);
+		}
+
+		Objects.requireNonNull(
+				epicDefinitions,
+				"Epic enemy definitions cannot be null."
+		);
 
 		if (epicDefinitions.isEmpty()) {
-			throw new IllegalArgumentException("Epic enemy definitions cannot be empty.");
+			throw new IllegalArgumentException(
+					"Epic enemy definitions cannot be empty."
+			);
 		}
 
 		for (EnemyDefinition epicDefinition : epicDefinitions) {
-			Objects.requireNonNull(epicDefinition, "Epic enemy definition cannot be null.");
+			Objects.requireNonNull(
+					epicDefinition,
+					"Epic enemy definition cannot be null."
+			);
 		}
-		String feedbackMessage = null;
-		while (true) {
-			displayEncounter(epicDefinitions, feedbackMessage);
 
-			String choice = consoleInput.readLine();
+		String feedbackMessage = null;
+
+		while (true) {
+			displayEncounter(
+					scenarioName,
+					epicDefinitions,
+					feedbackMessage
+			);
+
+			String choice = consoleInput.readTrimmedLine();
 
 			switch (choice) {
 			case "1" -> {
@@ -45,30 +77,29 @@ public final class EpicEncounterMenu {
 				return false;
 			}
 
-			default -> System.out.println("Opção inválida.");
+			default ->
+				feedbackMessage = "Opção inválida.";
 			}
 		}
 	}
 
-	private void displayEncounter(List<EnemyDefinition> epicDefinitions, String feedbackMessage) {
+	private void displayEncounter(String scenarioName, List<EnemyDefinition> epicDefinitions, String feedbackMessage) {
 		ConsoleUI.clearScreen();
-		System.out.println("[ENCONTRO ÉPICO]");
+		ConsoleUI.displayHeading(scenarioName, "Encontro Épico");
 
 		for (EnemyDefinition epicDefinition : epicDefinitions) {
 			System.out.println();
-			System.out.println("[" + epicDefinition.getName() + "]");
-			System.out.println();
-
+			System.out.println(epicDefinition.getName());
 			ConsoleUI.displayWrappedText(epicDefinition.getDescription());
 		}
-
-		System.out.println();
-		System.out.println("[1] Enfrentar");
 
 		if (feedbackMessage != null) {
 			System.out.println();
 			ConsoleUI.displayWrappedText(feedbackMessage);
 		}
+
+		System.out.println();
+		System.out.println("[1] Enfrentar");
 
 		System.out.println();
 		System.out.println("[0] Evitar confronto");

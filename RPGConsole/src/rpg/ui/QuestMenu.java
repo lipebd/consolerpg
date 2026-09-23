@@ -56,7 +56,7 @@ public final class QuestMenu {
         while (true) {
             ConsoleUI.clearScreen();
 
-            System.out.println("[DIÁRIO]");
+            ConsoleUI.displayHeading("Diário");
 
             if (feedbackMessage != null) {
                 System.out.println();
@@ -136,7 +136,7 @@ public final class QuestMenu {
 		while (true) {
 			ConsoleUI.clearScreen();
 
-			System.out.println("[" + heading + "]");
+			ConsoleUI.displayHeading(heading);
 			System.out.println();
 
 			if (quests.isEmpty()) {
@@ -200,7 +200,7 @@ public final class QuestMenu {
 
             ConsoleUI.clearScreen();
 
-            System.out.println("[MISSÃO ATIVA]");
+            ConsoleUI.displayHeading("Missão ativa");
             System.out.println();
             System.out.println(questDefinition.getTitle());
             System.out.println();
@@ -295,7 +295,7 @@ public final class QuestMenu {
 
 		ConsoleUI.clearScreen();
 
-		System.out.println("[MISSÃO CONCLUÍDA]");
+		ConsoleUI.displayHeading("Missão concluída");
 		System.out.println();
 		System.out.println(questDefinition.getTitle());
 		System.out.println();

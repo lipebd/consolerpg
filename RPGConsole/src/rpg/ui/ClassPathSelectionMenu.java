@@ -44,9 +44,9 @@ public final class ClassPathSelectionMenu {
         while (true) {
             ConsoleUI.clearScreen();
 
-            System.out.println("[SETE CAMINHOS]");
+            ConsoleUI.displayHeading("Sete Caminhos");
             System.out.println();
-            System.out.println("Escolha um caminho para conhecer:");
+            System.out.println("Decida o seu caminho:");
 
             System.out.println();
 

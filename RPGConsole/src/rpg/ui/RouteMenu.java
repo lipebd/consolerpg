@@ -21,8 +21,11 @@ public final class RouteMenu {
     this.travelProgress = travelProgress;
 }
 
-    public Optional<TravelRouteDefinition> open(
-            String sourceScenarioId, Set<String> markedDestinationScenarioIds) {
+	public Optional<TravelRouteDefinition> open(
+			String sourceScenarioId,
+			String sourceScenarioName,
+			Set<String> markedDestinationScenarioIds
+	) {
         Objects.requireNonNull(
                 markedDestinationScenarioIds, "Marked destination scenario IDs cannot be null.");
         List<TravelRouteDefinition> routes = travelProgress.getUnlockedRoutesFrom(sourceScenarioId);
@@ -33,7 +36,9 @@ public final class RouteMenu {
 		}
 		String feedbackMessage = null;
 		while (true) {
-			ConsoleUI.clearScreen();
+			ConsoleUI.displayHeading(sourceScenarioName, "Rotas");
+
+			System.out.println();
 			System.out.println("Aonde deseja ir?");
 
 			for (int index = 0; index < routes.size(); index++) {

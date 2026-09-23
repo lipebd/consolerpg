@@ -50,7 +50,7 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.world.rewards` | External exploration reward pools, validation and weighted selection | `ExplorationRewardEntry`, `ExplorationRewardCatalog`, `ExplorationRewardLoader`, `ExplorationRewardGenerator`, `ExplorationReward`, `ExplorationRewardType` |
 | `rpg.world.travel` | External directed-route definitions, loading and runtime unlock progress | `TravelRouteDefinition`, `TravelCatalog`, `TravelRouteLoader`, `TravelProgress` |
 | `rpg.world.transport` | External paid city-transport definitions, loading and destination lookup | `CityTransportDefinition`, `CityTransportCatalog`, `CityTransportLoader` |
-| `rpg.ui` | Console input, centralized wrapping and clearing, menus, character creation, navigation, dialogue and quest presentation, target selection, shared formatters and information screens | `ConsoleUI`, `ConsoleInput`, `TitleScreen`, `CharacterCreationMenu`, `PartyRescueScreen`, `CombatScenarioMenu`, `CityMenu`, `InventoryMenu`, `EquipmentMenu`, `ShopMenu`, `CraftingMenu`, `DialoguePresenter`, `QuestMenu`, `QuestProgressPresenter` |
+| `rpg.ui` | Console input, centralized wrapping, heading composition and clearing, menus, character creation, navigation, dialogue and quest presentation, target selection, shared formatters and information screens | `ConsoleUI`, `ConsoleInput`, `TitleScreen`, `CharacterCreationMenu`, `PartyRescueScreen`, `CombatScenarioMenu`, `CityMenu`, `InventoryMenu`, `EquipmentMenu`, `ShopMenu`, `CraftingMenu`, `DialoguePresenter`, `QuestMenu`, `QuestProgressPresenter` |
 
 ## Application initialization
 
@@ -724,7 +724,9 @@ Inventory -> equipment item -> character -> confirmation
 Status -> character -> equipment slot -> inventory item -> confirmation
 ```
 
-`EquipmentDetailFormatter` produces shared details and change-only confirmation comparisons. Player-facing text calls weapon base damage `Poder`; `DBA` remains internal vocabulary. Equipped units are absent from inventory rather than marked with an `(E)` flag.
+`EquipmentDetailFormatter` produces the shared compact technical block used by equipment details and comparisons. Player-facing text calls weapon base damage `Poder`; `DBA` remains internal vocabulary. Equipment detail screens separate the item name and description from aligned technical fields, identify the current wearer when applicable and omit inventory quantity because it is already visible in the preceding item list.
+
+`ItemMenuFormatter` centralizes the paginated item-table layout reused by inventory and equipment selection. Equipped units are absent from inventory rather than marked with an `(E)` flag.
 
 `EquipmentService` checks inventory capacity before returning an unequipped or replaced item. A transfer that cannot return every participating item is rejected before changing equipment, while defensive rollback checks protect items already removed from inventory.
 
@@ -881,12 +883,16 @@ The generated catalog is committed as a whole. A generation failure therefore pr
 ## City, shop and INN flow
 
 `World` dispatches the current scenario to a type-specific menu:
+
 - `CombatScenarioMenu` is exclusive to fields and dungeons.
 - `CityMenu` is exclusive to cities.
-
 - Unsupported runtime scenario types cause an internal-state error.
 
+`World` remains responsible for orchestration, current-scenario state and domain decisions. `CityMenu` and `CombatScenarioMenu` own the complete redraw of their respective root screens, including the contextual heading, optional scenario description, current world time, action layout and validation feedback. Neither menu receives `World` nor a callback that delegates rendering back to it.
+
 `CityMenu` receives an incrementally built list of available `CityAction` values. It omits actions that currently have no functional destination and keeps continuous numeric selection. Scenario actions appear horizontally on the first row, while inventory and party status appear on the second row. The current formatted world time is displayed immediately above the action prompt.
+
+The city root uses the city name as its single contextual heading. Physical facilities and narrative locations receive the current city name as simple presentation context and compose it with their own name when opening their screens.
 
 The paid `Viajar` action is included only when at least one configured and discovered destination city is available. It opens `CityTransportMenu` without mixing paid transport with city exits or adjacent-route unlocking.
 
@@ -938,7 +944,11 @@ data/inns.txt
 
 `City`, location and INN navigation remain iterative. Returning from the INN leads back to location selection, and returning again leads back to the city menu without recursive menu calls.
 
-`CombatScenarioMenu` uses the same two-row action presentation and displays the same shared `WorldClock` state. `ConsoleUI.displayActionRows()` centralizes the numbered two-row layout without moving action availability or selection rules out of their owning menus.
+`CombatScenarioMenu` owns the combat-scenario root heading, exploration progress, optional scenario description, current world time, queued exploration messages and the same two-row action presentation used by the city menu. `ConsoleUI.displayActionRows()` centralizes the numbered layout without moving action availability or selection rules out of their owning menus.
+
+`shouldDisplayScenarioDescription` means that the next opening of the root scenario menu includes the scenario description. `World` activates it for campaign initialization, restoration and successful scenario changes, then consumes it when preparing the next root menu. The captured value remains active through invalid-input redraws inside that menu call, but returning from a nested functional screen or a same-scenario battle does not reactivate it.
+
+Exploration narration is independent from the scenario-description lifecycle. `World` queues resolved exploration messages, and `CombatScenarioMenu` consumes and displays them on the following root screen after the world time and before the action prompt. This prevents messages from being erased by the next screen clear while keeping domain resolution outside the UI.
 
 Current shop data and runtime flow:
 
@@ -962,7 +972,7 @@ data/shop_stock.txt
 
 `CITY` shops are exposed through `CityLocationMenu`. `EXPLORATION` shops are exposed through the existing merchant event. Both access types resolve the same `ShopState` objects and open the same `ShopMenu`.
 
-`ShopMenu` controls player-facing navigation, deterministic sorting, pagination, quantity selection, transaction confirmation and feedback. It displays every monetary value through `GameCurrency`, the current time through `WorldTimeFormatter` and the exact next midnight restocking boundary on its main screen.
+`ShopMenu` controls player-facing navigation, deterministic sorting, pagination, quantity selection, transaction confirmation and feedback. It displays every monetary value through `GameCurrency` and the current time through `WorldTimeFormatter`. `CITY` shops also display the exact next midnight restocking boundary; `EXPLORATION` merchants omit that mechanical information from their narrative presentation.
 
 `ShopTransactionService` owns the shared transaction rules:
 
@@ -1373,6 +1383,10 @@ Wrapped output may receive a stable prefix such as indentation or a list marker.
 
 Headings, options, prompts, blank lines, separators, status values, columns and tables remain under direct `print`, `println` or `printf` control. Iterative standalone screens retain feedback as render state and redraw in the order of clearing, headings, content, primary actions, feedback, return action and prompt. Valid navigation clears obsolete feedback before opening or returning from a nested screen.
 
+`ConsoleUI.displayHeading(String)` and `ConsoleUI.displayHeading(String, String)` centralize ordinary screen headings. The single-component form produces `[CONTEXT]`; the composed form produces `[CONTEXT - QUALIFIER]`. Components must be non-null and non-blank and are converted with `Locale.ROOT`. `ConsoleUI` owns the brackets and separator, while callers own the surrounding vertical spacing.
+
+Every independent interactive or informational screen has one bracketed heading as its first visible line after clearing. Physical context and its qualifier share one composed heading instead of being stacked. Functional screens such as inventory, quest journal and party status remain independent from map context. `TitleScreen` is the application-branding exception.
+
 `ConsoleUI.clearScreen()` owns the cursor movement, terminal clearing and flush required to apply the clear command. Ordinary screens do not scatter additional explicit flush calls. Timed dialogue, battle and transition output may define their own later presentation contracts.
 
 Important UI components include:
@@ -1436,7 +1450,7 @@ Important UI components include:
 
 `World` selects the appropriate menu according to the runtime scenario type. Combat actions are built incrementally from exploration progress, available branches, unlocked routes and paid-transport availability, then displayed by `CombatScenarioMenu`. City actions are built from functional locations, unlocked exits and paid-transport availability, then displayed by `CityMenu`. Both menus preserve continuous numbering, omit unavailable actions and separate action groups through whitespace.
 
-`DialoguePresenter` resolves every speaker and placeholder before displaying the first utterance. This prevents a later invalid line from interrupting a dialogue after partial presentation or after a related mutation. Each utterance advances only after Enter. Narrative-location dialogues include city and location headers, while the presenter remains reusable for dialogues initiated outside those locations.
+`DialoguePresenter` resolves every speaker and placeholder before displaying the first utterance. This prevents a later invalid line from interrupting a dialogue after partial presentation or after a related mutation. Each utterance advances only after Enter. Narrative-location dialogues compose city and location into one contextual heading, while the presenter remains reusable with a single heading for dialogues initiated outside those locations.
 
 `QuestOfferMenu` owns only the generated accept-or-decline choice. External dialogue data provides the surrounding `OFFER`, optional `ACCEPT` and optional `DECLINE` sequences without defining a generic branching language.
 
@@ -1468,13 +1482,11 @@ Important UI components include:
 
 `EquipmentMenu` supports equipping from an inventory item and managing a selected character's three slots. It filters incompatible choices, confirms change-only stat and attack differences and delegates mutations to `EquipmentService`.
 
-`EquipmentDetailFormatter` formats equipment descriptions, requirements, bonuses and comparison previews for both entry routes.
+`EquipmentDetailFormatter` formats compact equipment technical details and comparison previews for both entry routes. `ItemMenuFormatter` provides the shared category tables used by inventory and equipment selection.
 
 `SkillDetailFormatter` derives one shared player-facing skill sheet from `SkillDefinition` and its ordered components. It uses the first displayable `PRIMARY` component as the main type, power and target, while the external narrative description explains secondary effects. `CharacterStatusMenu` and battle confirmation reuse the same formatted details instead of maintaining separate translations.
 
 `RewardModifierFormatter` produces shared multiplier text. Party status and the battle-reward screen show temporary global EXP and total party GOLD; the individual character screen separately shows that character's total EXP multiplier. The battle-reward screen intentionally does not list every ally's individual EXP modifier.
-
-Narrative text currently uses shared automatic wrapping at 90 console columns. Intentional line breaks decoded from literal `\n` remain paragraph boundaries. Applying the same wrapping and consistent screen-clearing behavior to every older description screen is deferred to the post-V6 interface review.
 
 `Main` creates one shared `ConsoleInput`, which is passed to every component that reads player commands. `World` does not retain the input object after constructing its menus and battle services.
 
@@ -1561,7 +1573,7 @@ The following implementations remain intentionally temporary:
 - Enemy actions currently use basic attacks; enemy skill selection can reuse the skill executor later but is outside the current scope.
 - The first recruitment composes with the level-7 class-path ceremony. Later recruitments remain narrative events and will reuse the generic recruitment components without repeating the ceremony.
 - Non-empty quest, flag and candidate restart verification remains pending canonical Part 10 content; the implemented version-3 schema and empty-narrative restart baseline are complete.
-- `CityMenu`, `CombatScenarioMenu` and `ScenarioBranchMenu` still depend on location context rendered by `World`. Their complete redraw and the location-aware epic-encounter heading remain scheduled for the V7 location-heading pass.
+- `Battle` and battle-specific menus retain their legacy headings until the complete V7 battle-screen reconstruction. The contextual `[MAP - BATALHA]` heading will be introduced with that lifecycle instead of through an intermediate presentation change.
 - `Battle` remains large and may later be divided into more focused action services.
 - Permanent skill-scroll items, skills and curated enemy drops remain deferred until their draft effects receive the required combat mechanics and final content review. Scroll-skill preservation across class transition is structurally implemented but cannot yet be exercised with canonical content.
 - Only the first ceremony-composed recruitment currently has runtime orchestration. Although `quest_recruitments.txt` structurally accepts up to three definitions, second- and third-ally records must wait for their narrative recruitment dispatcher.

@@ -23,9 +23,9 @@ public final class BattleRewardScreen {
 	}
 
 	public void show(BattleRewards rewards) {
+		ConsoleUI.clearScreen();
 		Objects.requireNonNull(rewards, "Battle rewards cannot be null.");
-
-		System.out.println("\n[RESULTADO DA BATALHA]");
+		ConsoleUI.displayHeading("Resultado da Batalha");
 
 		displayRewardModifiers(rewards);
 		displayRewardSummary(rewards);

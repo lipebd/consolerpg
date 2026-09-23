@@ -16,7 +16,7 @@ public final class ExitConfirmationMenu {
 		while (true) {
 			ConsoleUI.clearScreen();
 			System.out.println();
-			System.out.println("[ENCERRAR JOGO]");
+			ConsoleUI.displayHeading("Encerrar Jogo");
 
 			System.out.println();
 			System.out.println("Tem certeza de que deseja sair?");

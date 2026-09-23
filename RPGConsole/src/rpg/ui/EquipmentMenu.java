@@ -87,23 +87,30 @@ public final class EquipmentMenu {
 
 		EquipmentDefinition definition = equipmentCatalog.getByItemId(item.getId());
 		String feedbackMessage = null;
+
 		while (true) {
 			ConsoleUI.clearScreen();
+			ConsoleUI.displayHeading("Equipamento", getSlotName(definition.getItemCategory()));
+
+			System.out.println();
+			System.out.println(item.getName() + ", Nv. " + definition.getLevelRequirement());
+			ConsoleUI.displayWrappedText(item.getDescription());
+
+			System.out.println();
 			System.out.println(EquipmentDetailFormatter.formatDetails(item, definition));
 
-			System.out.println("Quantidade disponível: " + party.getInventory().getQuantity(item));
+			if (feedbackMessage != null) {
+				System.out.println();
+				ConsoleUI.displayWrappedText(feedbackMessage);
+			}
 
 			System.out.println();
 			System.out.println("[1] Equipar");
 
-			if (feedbackMessage != null) {
-			    System.out.println();
-			    ConsoleUI.displayWrappedText(feedbackMessage);
-			}
-
 			System.out.println();
 			System.out.println("[0] Voltar");
 			System.out.print("> ");
+
 			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
@@ -111,14 +118,13 @@ public final class EquipmentMenu {
 			}
 
 			if (!choice.equals("1")) {
-			    feedbackMessage = "Opção inválida.";
-			    continue;
+				feedbackMessage = "Opção inválida.";
+				continue;
 			}
 
 			feedbackMessage = null;
 
-			Optional<PlayableCharacter> selectedCharacter =
-			        selectCharacterForItem(item, definition);
+			Optional<PlayableCharacter> selectedCharacter = selectCharacterForItem(item, definition);
 
 			if (selectedCharacter.isEmpty()) {
 				continue;
@@ -130,27 +136,26 @@ public final class EquipmentMenu {
 		}
 	}
 
-	private void displayCharacterEquipment(
-	        PlayableCharacter character,
-	        String feedbackMessage
-	) {
+	private void displayCharacterEquipment(PlayableCharacter character, String feedbackMessage) {
 		CharacterEquipment equipment = character.getEquipment();
 
-		System.out.println("\n[" + character.getName().toUpperCase(Locale.ROOT) + " - EQUIPAMENTOS]");
+		ConsoleUI.clearScreen();
+		ConsoleUI.displayHeading("Equipamentos");
+
+		System.out.println();
+		System.out.println("Personagem: " + character.getName());
 
 		System.out.println();
 		System.out.println("[1] Arma:      " + getEquippedItemName(equipment.getWeapon().orElse(null)));
-
 		System.out.println("[2] Armadura:  " + getEquippedItemName(equipment.getArmor().orElse(null)));
-
 		System.out.println("[3] Berloque:  " + getEquippedItemName(equipment.getTrinket().orElse(null)));
 		if (feedbackMessage != null) {
 		    System.out.println();
 		    ConsoleUI.displayWrappedText(feedbackMessage);
 		}
-
 		System.out.println();
 		System.out.println("[0] Voltar");
+		System.out.print("> ");
 	}
 
 	private String getEquippedItemName(EquipmentDefinition definition) {
@@ -230,20 +235,33 @@ public final class EquipmentMenu {
 			ItemCategory equipmentCategory,
 			EquipmentDefinition definition
 	) {
-		System.out.println();
-		System.out.println(
-				"[" + character.getName().toUpperCase(Locale.ROOT) + " - "
-						+ getSlotName(equipmentCategory).toUpperCase(Locale.ROOT) + "]"
+		ConsoleUI.clearScreen();
+		ConsoleUI.displayHeading(
+				"Equipamento",
+				getSlotName(equipmentCategory)
 		);
 
 		if (definition == null) {
-			System.out.println("\nNenhum item equipado.");
+			System.out.println();
+			System.out.println("Nenhum item equipado em " + character.getName() + ".");
 			return;
 		}
 
 		Item item = itemCatalog.getById(definition.getItemId());
 
-		System.out.println("\n" + EquipmentDetailFormatter.formatDetails(item, definition));
+		System.out.println();
+		System.out.println(
+				item.getName()
+						+ ", Nv. "
+						+ definition.getLevelRequirement()
+		);
+		ConsoleUI.displayWrappedText(item.getDescription());
+
+		System.out.println();
+		System.out.println(EquipmentDetailFormatter.formatDetails(item, definition));
+
+		System.out.println();
+		System.out.println("Equipado em: " + character.getName());
 	}
 
 	private Optional<Item> selectItemForCharacter(PlayableCharacter character, ItemCategory equipmentCategory) {
@@ -261,12 +279,12 @@ public final class EquipmentMenu {
 				).toList();
 
 		if (availableItems.isEmpty()) {
-		    displayMessageAndWaitForBack(
-		            "Não há "
-		                    + getSlotName(equipmentCategory)
-		                            .toLowerCase(Locale.ROOT)
-		                    + " compatível no inventário."
-		    );
+			displayMessageAndWaitForBack(
+					equipmentCategory,
+					"Não há "
+							+ getSlotName(equipmentCategory).toLowerCase(Locale.ROOT)
+							+ "s compatíveis."
+			);
 
 		    return Optional.empty();
 		}
@@ -282,21 +300,20 @@ public final class EquipmentMenu {
 		int currentPage = 0;
 		String feedbackMessage = null;
 		int totalPages = (availableItems.size() + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE;
-
 		while (true) {
 			int firstIndex = currentPage * ITEMS_PER_PAGE;
 
 			int lastIndex = Math.min(firstIndex + ITEMS_PER_PAGE, availableItems.size());
 
 			displayItemSelectionPage(
-			        character,
-			        equipmentCategory,
-			        availableItems,
-			        firstIndex,
-			        lastIndex,
-			        currentPage,
-			        totalPages,
-			        feedbackMessage
+					character,
+					equipmentCategory,
+					availableItems,
+					firstIndex,
+					lastIndex,
+					currentPage,
+					totalPages,
+					feedbackMessage
 			);
 
 			String choice = consoleInput.readTrimmedLine();
@@ -304,18 +321,16 @@ public final class EquipmentMenu {
 			if (choice.equals("0")) {
 				return Optional.empty();
 			}
-
-			if (choice.equalsIgnoreCase("P")
-			        && currentPage < totalPages - 1) {
-			    feedbackMessage = null;
-			    currentPage++;
-			    continue;
+			if (choice.equalsIgnoreCase("P") && currentPage < totalPages - 1) {
+				currentPage++;
+				feedbackMessage = null;
+				continue;
 			}
 
 			if (choice.equalsIgnoreCase("A") && currentPage > 0) {
-			    feedbackMessage = null;
-			    currentPage--;
-			    continue;
+				currentPage--;
+				feedbackMessage = null;
+				continue;
 			}
 
 			try {
@@ -345,41 +360,41 @@ public final class EquipmentMenu {
 			String feedbackMessage
 	) {
 		ConsoleUI.clearScreen();
-		System.out.println(
-				"[" + character.getName().toUpperCase(Locale.ROOT) + " - "
-						+ getSlotName(equipmentCategory).toUpperCase(Locale.ROOT) + "S DISPONÍVEIS" + " — PÁGINA "
-						+ (currentPage + 1) + "/" + totalPages + "]"
-		);
+		ConsoleUI.displayHeading("Equipamento", getSlotName(equipmentCategory));
 
 		System.out.println();
+		System.out.println("Selecione um item para equipar:");
+
+		System.out.println(ItemMenuFormatter.formatItemTableHeader());
 
 		for (int index = firstIndex; index < lastIndex; index++) {
 			Item item = availableItems.get(index);
-
-			EquipmentDefinition definition = equipmentCatalog.getByItemId(item.getId());
-
 			int optionNumber = index - firstIndex + 1;
+			int quantity = party.getInventory().getQuantity(item);
 
-			System.out.println(
-					"[" + optionNumber + "] " + item.getName() + " [Nv. " + definition.getLevelRequirement() + "]"
-			);
+			System.out.println(ItemMenuFormatter.formatItemTableRow(optionNumber, item.getName(), quantity));
+		}
 
-			System.out.println("    " + EquipmentDetailFormatter.formatBonuses(definition));
+		int displayedItemCount = lastIndex - firstIndex;
+
+		for (int emptySlot = displayedItemCount; emptySlot < ITEMS_PER_PAGE; emptySlot++) {
+			System.out.println(ItemMenuFormatter.formatEmptyItemTableRow());
 		}
 
 		System.out.println();
+		System.out.println("Página " + (currentPage + 1) + "/" + totalPages);
 
 		if (currentPage > 0) {
-		    System.out.println("[A] Página anterior");
+			System.out.println("[A] Página anterior");
 		}
 
 		if (currentPage < totalPages - 1) {
-		    System.out.println("[P] Próxima página");
+			System.out.println("[P] Próxima página");
 		}
 
 		if (feedbackMessage != null) {
-		    System.out.println();
-		    ConsoleUI.displayWrappedText(feedbackMessage);
+			System.out.println();
+			ConsoleUI.displayWrappedText(feedbackMessage);
 		}
 
 		System.out.println();
@@ -393,10 +408,9 @@ public final class EquipmentMenu {
 				.filter(character -> !isCurrentlyEquipped(character, definition)).toList();
 
 		if (eligibleCharacters.isEmpty()) {
-		    displayMessageAndWaitForBack(
-		            "Nenhum personagem pode equipar "
-		                    + item.getName()
-		                    + " no momento."
+			displayMessageAndWaitForBack(
+					definition.getItemCategory(),
+					"Nenhum personagem pode equipar " + item.getName() + " no momento."
 			);
 
 			return Optional.empty();
@@ -406,7 +420,14 @@ public final class EquipmentMenu {
 
 		while (true) {
 			ConsoleUI.clearScreen();
-			System.out.println("[QUEM DEVE EQUIPAR?]");
+			ConsoleUI.displayHeading("Equipamento", getSlotName(definition.getItemCategory()));
+
+			System.out.println();
+			System.out.println(item.getName() + ", Nv. " + definition.getLevelRequirement());
+
+			System.out.println();
+			System.out.println("Quem deve equipar este item?");
+
 			System.out.println();
 
 			for (int index = 0; index < eligibleCharacters.size(); index++) {
@@ -417,14 +438,13 @@ public final class EquipmentMenu {
 						definition.getItemCategory()
 				);
 
-				System.out.println(
-						"[" + (index + 1) + "] " + character.getName() + " | Atual: "
-								+ getEquippedItemName(currentDefinition)
-				);
+				System.out.println("[" + (index + 1) + "] " + character.getName());
+				System.out.println("    Atual: " + getEquippedItemName(currentDefinition));
 			}
+
 			if (feedbackMessage != null) {
-			    System.out.println();
-			    ConsoleUI.displayWrappedText(feedbackMessage);
+				System.out.println();
+				ConsoleUI.displayWrappedText(feedbackMessage);
 			}
 
 			System.out.println();
@@ -458,25 +478,29 @@ public final class EquipmentMenu {
 				definition.getItemCategory()
 		);
 		Item currentItem = currentDefinition == null ? null : itemCatalog.getById(currentDefinition.getItemId());
+
 		String feedbackMessage = null;
+
 		while (true) {
 			ConsoleUI.clearScreen();
-			System.out.println("[CONFIRMAR EQUIPAMENTO]");
+			ConsoleUI.displayHeading("Equipamento", getSlotName(definition.getItemCategory()));
+
 			System.out.println();
+			System.out.println("Confirmar alteração no equipamento de " + character.getName() + "?");
 
-			System.out.println(character.getName().toUpperCase(Locale.ROOT));
-
+			System.out.println();
 			System.out.println(
 					EquipmentDetailFormatter
 							.formatComparison(character, currentItem, currentDefinition, item, definition)
 			);
-			System.out.println();
-			System.out.println("[1] Confirmar");
 
 			if (feedbackMessage != null) {
-			    System.out.println();
-			    ConsoleUI.displayWrappedText(feedbackMessage);
+				System.out.println();
+				ConsoleUI.displayWrappedText(feedbackMessage);
 			}
+
+			System.out.println();
+			System.out.println("[1] Confirmar");
 
 			System.out.println();
 			System.out.println("[0] Cancelar");
@@ -489,19 +513,15 @@ public final class EquipmentMenu {
 			}
 
 			if (!choice.equals("1")) {
-			    feedbackMessage = "Opção inválida.";
-			    continue;
+				feedbackMessage = "Opção inválida.";
+				continue;
 			}
 
 			boolean equipped = equipmentService.equip(party, character, item);
 
 			if (!equipped) {
-			    System.out.println();
-			    ConsoleUI.displayWrappedText(
-			            "Não foi possível equipar o item.");
-			    ConsoleUI.pause(1000, consoleInput);
-
-			    return false;
+				feedbackMessage = "Não foi possível equipar o item.";
+				continue;
 			}
 
 			return true;
@@ -516,23 +536,35 @@ public final class EquipmentMenu {
 		}
 
 		Item item = itemCatalog.getById(currentDefinition.getItemId());
+
+		String slotReference = switch (equipmentCategory) {
+		case WEAPON -> "a arma";
+		case ARMOR -> "a armadura";
+		case TRINKET -> "o berloque";
+
+		default -> throw new IllegalArgumentException("Item category is not an equipment slot: " + equipmentCategory);
+		};
+
 		String feedbackMessage = null;
+
 		while (true) {
 			ConsoleUI.clearScreen();
-			System.out.println("[CONFIRMAR REMOÇÃO]");
+			ConsoleUI.displayHeading("Equipamento", getSlotName(equipmentCategory));
+
 			System.out.println();
+			System.out.println("Desequipar " + slotReference + " de " + character.getName() + "?");
 
-			System.out.println(character.getName().toUpperCase(Locale.ROOT));
-
+			System.out.println();
 			System.out
 					.println(EquipmentDetailFormatter.formatComparison(character, item, currentDefinition, null, null));
-			System.out.println();
-			System.out.println("[1] Confirmar");
 
 			if (feedbackMessage != null) {
-			    System.out.println();
-			    ConsoleUI.displayWrappedText(feedbackMessage);
+				System.out.println();
+				ConsoleUI.displayWrappedText(feedbackMessage);
 			}
+
+			System.out.println();
+			System.out.println("[1] Confirmar");
 
 			System.out.println();
 			System.out.println("[0] Cancelar");
@@ -545,19 +577,15 @@ public final class EquipmentMenu {
 			}
 
 			if (!choice.equals("1")) {
-			    feedbackMessage = "Opção inválida.";
-			    continue;
+				feedbackMessage = "Opção inválida.";
+				continue;
 			}
 
 			boolean unequipped = equipmentService.unequip(party, character, equipmentCategory);
 
 			if (!unequipped) {
-			    System.out.println();
-			    ConsoleUI.displayWrappedText(
-			            "Não foi possível desequipar o item.");
-			    ConsoleUI.pause(1000, consoleInput);
-
-			    return false;
+				feedbackMessage = "Não foi possível desequipar o item.";
+				continue;
 			}
 
 			return true;
@@ -593,29 +621,32 @@ public final class EquipmentMenu {
 		};
 	}
 
-	private void displayMessageAndWaitForBack(String message) {
-	    String feedbackMessage = null;
+	private void displayMessageAndWaitForBack(ItemCategory equipmentCategory, String message) {
+		String feedbackMessage = null;
 
-	    while (true) {
-	        ConsoleUI.clearScreen();
-	        ConsoleUI.displayWrappedText(message);
+		while (true) {
+			ConsoleUI.clearScreen();
+			ConsoleUI.displayHeading("Equipamento", getSlotName(equipmentCategory));
 
-	        if (feedbackMessage != null) {
-	            System.out.println();
-	            ConsoleUI.displayWrappedText(feedbackMessage);
-	        }
+			System.out.println();
+			ConsoleUI.displayWrappedText(message);
 
-	        System.out.println();
-	        System.out.println("[0] Voltar");
-	        System.out.print("> ");
+			if (feedbackMessage != null) {
+				System.out.println();
+				ConsoleUI.displayWrappedText(feedbackMessage);
+			}
 
-	        String choice = consoleInput.readTrimmedLine();
+			System.out.println();
+			System.out.println("[0] Voltar");
+			System.out.print("> ");
 
-	        if (choice.equals("0")) {
-	            return;
-	        }
+			String choice = consoleInput.readTrimmedLine();
 
-	        feedbackMessage = "Opção inválida.";
-	    }
+			if (choice.equals("0")) {
+				return;
+			}
+
+			feedbackMessage = "Opção inválida.";
+		}
 	}
 }

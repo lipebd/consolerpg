@@ -58,11 +58,11 @@ public final class CraftingMenu {
 		                "Quest progress coordinator cannot be null.");
 	}
 
-	public void open(CrafterDefinition crafterDefinition) {
-		Objects.requireNonNull(
-				crafterDefinition,
-				"Crafter definition cannot be null."
-		);
+	public void open(String cityName, CrafterDefinition crafterDefinition) {
+		Objects.requireNonNull(crafterDefinition, "Crafter definition cannot be null.");
+		if (cityName == null || cityName.isBlank()) {
+			throw new IllegalArgumentException("Crafter city name cannot be empty.");
+		}
 
 		List<CraftingRecipeDefinition> recipes =
 				resolveRecipes(crafterDefinition);
@@ -71,6 +71,7 @@ public final class CraftingMenu {
 
 		while (true) {
 			displayCrafter(
+					cityName,
 					crafterDefinition,
 					recipes,
 					feedbackMessage
@@ -90,8 +91,7 @@ public final class CraftingMenu {
 					continue;
 				}
 
-				feedbackMessage =
-						openRecipe(recipes.get(selectedIndex));
+				feedbackMessage = openRecipe(cityName, crafterDefinition, recipes.get(selectedIndex));
 
 			} catch (NumberFormatException exception) {
 				feedbackMessage = "Digite o número de uma receita.";
@@ -111,17 +111,21 @@ public final class CraftingMenu {
 	}
 
 	private void displayCrafter(
+			String cityName,
 			CrafterDefinition crafterDefinition,
 			List<CraftingRecipeDefinition> recipes,
-			String feedbackMessage) {
+			String feedbackMessage
+	) {
 		ConsoleUI.clearScreen();
-		System.out.println(
-				"\n["
-						+ crafterDefinition.getName().toUpperCase(Locale.ROOT)
-						+ "]"
+		ConsoleUI.displayHeading(
+				cityName,
+				crafterDefinition.getName()
 		);
+
 		System.out.println();
-		ConsoleUI.displayWrappedText(crafterDefinition.getDescription());
+		ConsoleUI.displayWrappedText(
+				crafterDefinition.getDescription()
+		);
 		System.out.println();
 		System.out.println("Receitas disponíveis:");
 
@@ -144,11 +148,19 @@ public final class CraftingMenu {
 	}
 
 	private String openRecipe(
-			CraftingRecipeDefinition recipeDefinition) {
+			String cityName,
+			CrafterDefinition crafterDefinition,
+			CraftingRecipeDefinition recipeDefinition
+	) {
 
 		String feedbackMessage = null;
 		while (true) {
-			displayRecipe(recipeDefinition, feedbackMessage);
+			displayRecipe(
+					cityName,
+					crafterDefinition,
+					recipeDefinition,
+					feedbackMessage
+			);
 
 			String choice = consoleInput.readTrimmedLine();
 
@@ -179,21 +191,29 @@ public final class CraftingMenu {
 	}
 
 	private void displayRecipe(
-	        CraftingRecipeDefinition recipeDefinition,
-	        String feedbackMessage
+			String cityName,
+			CrafterDefinition crafterDefinition,
+			CraftingRecipeDefinition recipeDefinition,
+			String feedbackMessage
 	) {
 		Item outputItem =
-				itemCatalog.getById(recipeDefinition.getOutputItemId());
+				itemCatalog.getById(
+						recipeDefinition.getOutputItemId()
+				);
+
 		ConsoleUI.clearScreen();
-		System.out.println(
-				"\n["
-						+ recipeDefinition.getName().toUpperCase(Locale.ROOT)
-						+ "]"
+		ConsoleUI.displayHeading(
+				cityName,
+				crafterDefinition.getName()
 		);
 
 		System.out.println();
-		ConsoleUI.displayWrappedText(recipeDefinition.getDescription());
+		System.out.println(recipeDefinition.getName());
 
+		System.out.println();
+		ConsoleUI.displayWrappedText(
+				recipeDefinition.getDescription()
+		);
 		System.out.println();
 		System.out.println("Produz:");
 		System.out.println("- " + outputItem.getName() + " x1");

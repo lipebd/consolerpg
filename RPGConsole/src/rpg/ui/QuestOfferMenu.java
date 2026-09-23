@@ -14,60 +14,46 @@ public final class QuestOfferMenu {
         this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
     }
 
-    public Selection select(List<String> headerLines, QuestDefinition questDefinition) {
-        Objects.requireNonNull(headerLines, "Quest offer header lines cannot be null.");
+	public Selection select(String cityName, String locationName, QuestDefinition questDefinition) {
+		Objects.requireNonNull(questDefinition, "Quest definition cannot be null.");
 
-        Objects.requireNonNull(questDefinition, "Quest definition cannot be null.");
-        String feedbackMessage = null;
-        while (true) {
-            ConsoleUI.clearScreen();
+		String feedbackMessage = null;
 
-            displayHeaders(headerLines);
+		while (true) {
+			ConsoleUI.clearScreen();
+			ConsoleUI.displayHeading(cityName, locationName);
 
-            System.out.println(questDefinition.getTitle());
-            System.out.println();
+			System.out.println();
+			System.out.println(questDefinition.getTitle());
 
-            ConsoleUI.displayWrappedText(questDefinition.getDescription());
+			System.out.println();
+			ConsoleUI.displayWrappedText(questDefinition.getDescription());
 
-            System.out.println();
-            System.out.println("[1] Aceitar");
-            System.out.println("[2] Recusar");
-            if (feedbackMessage != null) {
-                System.out.println();
-                ConsoleUI.displayWrappedText(feedbackMessage);
-            }
+			if (feedbackMessage != null) {
+				System.out.println();
+				ConsoleUI.displayWrappedText(feedbackMessage);
+			}
 
-            System.out.print("> ");
+			System.out.println();
+			System.out.println("[1] Aceitar");
+			System.out.println("[2] Recusar");
+			System.out.print("> ");
 
-            String choice = consoleInput.readTrimmedLine();
+			String choice = consoleInput.readTrimmedLine();
 
-            switch (choice) {
-                case "1" -> {
-                    return Selection.ACCEPT;
-                }
+			switch (choice) {
+			case "1" -> {
+				return Selection.ACCEPT;
+			}
 
-                case "2" -> {
-                    return Selection.DECLINE;
-                }
+			case "2" -> {
+				return Selection.DECLINE;
+			}
 
-                default -> feedbackMessage = "Escolha inválida.";
-            }
-        }
-    }
-
-    private static void displayHeaders(List<String> headerLines) {
-        for (String headerLine : headerLines) {
-            if (headerLine == null || headerLine.isBlank()) {
-                throw new IllegalArgumentException("Quest offer header line cannot be empty.");
-            }
-
-            System.out.println("[" + headerLine.trim().toUpperCase() + "]");
-        }
-
-        if (!headerLines.isEmpty()) {
-            System.out.println();
-        }
-    }
+			default -> feedbackMessage = "Escolha inválida.";
+			}
+		}
+	}
 
     public enum Selection {
         ACCEPT,

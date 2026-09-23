@@ -27,34 +27,37 @@ public final class CityTransportMenu {
 	}
 
 	public Optional<CityTransportDefinition> open(
-	        List<CityTransportDefinition> destinations,
-	        int destinationSlotCount,
-	        Set<String> markedDestinationScenarioIds) {
-        Objects.requireNonNull(destinations, "City transport destinations cannot be null.");
+			String sourceScenarioName,
+			List<CityTransportDefinition> destinations,
+			int destinationSlotCount,
+			Set<String> markedDestinationScenarioIds
+	) {
+		Objects.requireNonNull(destinations, "City transport destinations cannot be null.");
 
-        Objects.requireNonNull(
-                markedDestinationScenarioIds, "Marked destination scenario IDs cannot be null.");
+		Objects.requireNonNull(markedDestinationScenarioIds, "Marked destination scenario IDs cannot be null.");
 
-        if (destinationSlotCount < destinations.size()) {
-            throw new IllegalArgumentException(
-                    "Destination slot count cannot be lower than the available destination count.");
-        }
+		if (destinationSlotCount < destinations.size()) {
+			throw new IllegalArgumentException(
+					"Destination slot count cannot be lower than the available destination count."
+			);
+		}
 
-        if (destinations.isEmpty()) {
-            return Optional.empty();
-        }
+		if (destinations.isEmpty()) {
+			return Optional.empty();
+		}
 
-        Objects.requireNonNull(
-                markedDestinationScenarioIds, "Marked destination scenario IDs cannot be null.");
+		Objects.requireNonNull(markedDestinationScenarioIds, "Marked destination scenario IDs cannot be null.");
 
 		String feedbackMessage = null;
 
 		while (true) {
-            displayMenu(
-                    destinations,
-                    destinationSlotCount,
-                    markedDestinationScenarioIds,
-                    feedbackMessage);
+			displayMenu(
+					sourceScenarioName,
+					destinations,
+					destinationSlotCount,
+					markedDestinationScenarioIds,
+					feedbackMessage
+			);
 
 			String choice = consoleInput.readTrimmedLine();
 
@@ -77,7 +80,7 @@ public final class CityTransportMenu {
 					continue;
 				}
 
-				if (!confirmTravel(selectedDestination)) {
+				if (!confirmTravel(sourceScenarioName, selectedDestination)) {
 					feedbackMessage = null;
 					continue;
 				}
@@ -95,67 +98,72 @@ public final class CityTransportMenu {
 	}
 
 	private void displayMenu(
-	        List<CityTransportDefinition> destinations,
-	        int destinationSlotCount,
-	        Set<String> markedDestinationScenarioIds,
-	        String feedbackMessage) {
-	    ConsoleUI.clearScreen();
-	    System.out.println("Aonde deseja ir?");
+			String sourceScenarioName,
+			List<CityTransportDefinition> destinations,
+			int destinationSlotCount,
+			Set<String> markedDestinationScenarioIds,
+			String feedbackMessage
+	) {
+		ConsoleUI.displayHeading(sourceScenarioName, "Viagem");
 
-	    for (int index = 0; index < destinations.size(); index++) {
-	        CityTransportDefinition definition = destinations.get(index);
-	        Scenario destination = scenarioCatalog.getById(definition.getDestinationScenarioId());
+		System.out.println();
+		System.out.println("Aonde deseja ir?");
 
-	        String marker = markedDestinationScenarioIds.contains(
-	                definition.getDestinationScenarioId())
-	                        ? "\u001B[33m[!]\u001B[0m "
-	                        : "";
+		for (int index = 0; index < destinations.size(); index++) {
+			CityTransportDefinition definition = destinations.get(index);
+			Scenario destination = scenarioCatalog.getById(definition.getDestinationScenarioId());
 
-	        String destinationLabel = marker + destination.getName();
-	        String visibleLabel = destinationLabel.replaceAll("\u001B\\[[0-9;]*m", "");
-	        int padding = Math.max(0, DESTINATION_NAME_WIDTH - visibleLabel.length());
+			String marker = markedDestinationScenarioIds.contains(definition.getDestinationScenarioId())
+					? "\u001B[33m[!]\u001B[0m "
+					: "";
 
-	        System.out.printf(
-	                "[%d] %s%s %s%n",
-	                index + 1,
-	                destinationLabel,
-	                " ".repeat(padding),
-	                GameCurrency.format(definition.getPrice()));
-	    }
+			String destinationLabel = marker + destination.getName();
+			String visibleLabel = destinationLabel.replaceAll("\u001B\\[[0-9;]*m", "");
+			int padding = Math.max(0, DESTINATION_NAME_WIDTH - visibleLabel.length());
 
-	    int emptySlotCount = destinationSlotCount - destinations.size();
+			System.out.printf(
+					"[%d] %s%s %s%n",
+					index + 1,
+					destinationLabel,
+					" ".repeat(padding),
+					GameCurrency.format(definition.getPrice())
+			);
+		}
 
-	    for (int index = 0; index < emptySlotCount; index++) {
-	        System.out.printf("    %-" + DESTINATION_NAME_WIDTH + "s --%n", "--");
-	    }
+		int emptySlotCount = destinationSlotCount - destinations.size();
 
-	    System.out.println(
-	            "\n" + GameCurrency.getName() + " disponível: "
-	                    + GameCurrency.format(party.getGold()));
+		for (int index = 0; index < emptySlotCount; index++) {
+			System.out.printf("    %-" + DESTINATION_NAME_WIDTH + "s --%n", "--");
+		}
 
-	    if (feedbackMessage != null) {
-	        System.out.println();
-	        ConsoleUI.displayWrappedText(feedbackMessage);
-	    }
+		System.out.println("\n" + GameCurrency.getName() + " disponível: " + GameCurrency.format(party.getGold()));
 
-	    System.out.println();
-	    System.out.println("[0] Voltar");
-	    System.out.print("> ");
+		if (feedbackMessage != null) {
+			System.out.println();
+			ConsoleUI.displayWrappedText(feedbackMessage);
+		}
+
+		System.out.println();
+		System.out.println("[0] Voltar");
+		System.out.print("> ");
 	}
 
-	private boolean confirmTravel(CityTransportDefinition destinationDefinition) {
+	private boolean confirmTravel(String sourceScenarioName, CityTransportDefinition destinationDefinition) {
 		Scenario destination = scenarioCatalog.getById(destinationDefinition.getDestinationScenarioId());
 		String feedbackMessage = null;
 
 		while (true) {
-		    ConsoleUI.clearScreen();
+			ConsoleUI.clearScreen();
+			ConsoleUI.displayHeading(sourceScenarioName, "Viagem");
+
+			System.out.println();
 			System.out.println(
-					"\nViajar para " + destination.getName() + " por "
+					"Viajar para " + destination.getName() + " por "
 							+ GameCurrency.format(destinationDefinition.getPrice()) + "?"
 			);
 			if (feedbackMessage != null) {
-			    System.out.println();
-			    ConsoleUI.displayWrappedText(feedbackMessage);
+				System.out.println();
+				ConsoleUI.displayWrappedText(feedbackMessage);
 			}
 			System.out.println();
 			System.out.println("[1] Confirmar");

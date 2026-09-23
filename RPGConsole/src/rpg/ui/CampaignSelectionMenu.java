@@ -23,26 +23,26 @@ public final class CampaignSelectionMenu {
 
 	public Selection select(CampaignLoadResult loadResult) {
 		Objects.requireNonNull(loadResult, "Campaign load result cannot be null.");
+
+		boolean canContinue = loadResult.isSuccess();
 		String feedbackMessage = null;
+
 		while (true) {
 			ConsoleUI.clearScreen();
-
 			displayCampaignState(loadResult);
 
-			if (feedbackMessage != null) {
-			    System.out.println();
-			    ConsoleUI.displayWrappedText(feedbackMessage);
-			}
-
-			boolean canContinue = loadResult.isSuccess();
+			System.out.println();
 
 			if (canContinue) {
-				System.out.println();
 				System.out.println("[1] Continuar");
 				System.out.println("[2] Nova Campanha");
 			} else {
-				System.out.println();
 				System.out.println("[1] Nova Campanha");
+			}
+
+			if (feedbackMessage != null) {
+				System.out.println();
+				ConsoleUI.displayWrappedText(feedbackMessage);
 			}
 
 			System.out.print("> ");
@@ -53,17 +53,15 @@ public final class CampaignSelectionMenu {
 				return Selection.CONTINUE;
 			}
 
-			boolean selectedNewGame = canContinue ? choice.equals("2") : choice.equals("1");
+			boolean selectedNewCampaign = canContinue ? choice.equals("2") : choice.equals("1");
 
-			if (selectedNewGame) {
-			    feedbackMessage = null;
+			if (selectedNewCampaign) {
+				if (loadResult.getStatus() == CampaignLoadStatus.SAVE_NOT_FOUND || confirmNewGame()) {
+					return Selection.NEW_GAME;
+				}
 
-			    if (loadResult.getStatus() == CampaignLoadStatus.SAVE_NOT_FOUND
-			            || confirmNewGame()) {
-			        return Selection.NEW_GAME;
-			    }
-
-			    continue;
+				feedbackMessage = null;
+				continue;
 			}
 
 			feedbackMessage = "Opção inválida.";
@@ -71,24 +69,28 @@ public final class CampaignSelectionMenu {
 	}
 
 	private void displayCampaignState(CampaignLoadResult loadResult) {
-		System.out.println("[RPGCONSOLE - CONTINUAR]");
+		if (loadResult.isSuccess()) {
+			ConsoleUI.displayHeading("Continuar");
+		} else {
+			ConsoleUI.displayHeading("Nova Campanha");
+		}
 
 		switch (loadResult.getStatus()) {
 		case SUCCESS -> displayCampaignSummary(loadResult.getRestoredCampaign().orElseThrow());
 
 		case SAVE_NOT_FOUND -> {
 			System.out.println();
-			System.out.println("Não há campanha ativa.");
+			ConsoleUI.displayWrappedText("Nenhuma campanha ativa.");
 		}
 
 		case FILE_READ_FAILED -> {
 			System.out.println();
-			System.out.println("Não foi possível ler a campanha salva.");
+			ConsoleUI.displayWrappedText("Não foi possível ler a campanha salva.");
 		}
 
 		case INVALID_SAVE -> {
 			System.out.println();
-			System.out.println("A campanha salva não pôde ser carregada.");
+			ConsoleUI.displayWrappedText("A campanha salva não pôde ser carregada.");
 		}
 		}
 	}
@@ -101,25 +103,28 @@ public final class CampaignSelectionMenu {
 				.collect(Collectors.joining(" "));
 
 		System.out.println();
-		System.out.println("Líder: " + leader.getName());
-		System.out.println("Nível: " + leader.getLevel());
-		System.out.println("Cidade: " + campaign.getCurrentScenario().getName());
-		System.out.println("Grupo: " + partySymbols);
+		System.out.printf("%-7s%s%n", "Líder:", leader.getName());
+		System.out.printf("%-7s%d%n", "Nível:", leader.getLevel());
+		System.out.printf("%-7s%s%n", "Local:", campaign.getCurrentScenario().getName());
+		System.out.printf("%-7s%s%n", "Grupo:", partySymbols);
 	}
 
 	private boolean confirmNewGame() {
 		String feedbackMessage = null;
+
 		while (true) {
 			ConsoleUI.clearScreen();
-			System.out.println("[RPGCONSOLE - NOVA CAMPANHA]");
+			ConsoleUI.displayHeading("Nova Campanha");
 
 			System.out.println();
-			System.out.println("A campanha salva atual continuará preservada.");
-			System.out.println("Ela só será substituída quando o novo jogo for salvo com sucesso.");
+			ConsoleUI.displayWrappedText("A campanha salva atual continuará preservada.");
+			ConsoleUI.displayWrappedText("Ela só será substituída quando a nova campanha for salva com sucesso.");
+
 			if (feedbackMessage != null) {
-			    System.out.println();
-			    ConsoleUI.displayWrappedText(feedbackMessage);
+				System.out.println();
+				ConsoleUI.displayWrappedText(feedbackMessage);
 			}
+
 			System.out.println();
 			System.out.println("[1] Confirmar");
 			System.out.println("[0] Voltar");

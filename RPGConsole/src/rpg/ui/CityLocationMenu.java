@@ -22,8 +22,9 @@ public final class CityLocationMenu {
 		String feedbackMessage = null;
 		while (true) {
 			ConsoleUI.clearScreen();
-			System.out.println("[" + cityName.toUpperCase() + "]");
-			System.out.println("\nOnde deseja ir?");
+			ConsoleUI.displayHeading(cityName);
+			System.out.println();
+			System.out.println("\nAnde deseja ir?");
 			System.out.println();
 			for (int index = 0; index < locationNames.size(); index++) {
 				System.out.println(

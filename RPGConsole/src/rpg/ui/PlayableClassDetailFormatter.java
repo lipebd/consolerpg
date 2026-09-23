@@ -13,7 +13,7 @@ public final class PlayableClassDetailFormatter {
         Objects.requireNonNull(classDefinition, "Playable class definition cannot be null.");
 
         return formatSummary(classDefinition)
-                + "\n\nDescrição:\n"
+                + "\n\n"
                 + classDefinition.getDescription();
     }
 

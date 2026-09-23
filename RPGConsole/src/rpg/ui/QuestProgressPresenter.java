@@ -9,10 +9,10 @@ import rpg.quests.QuestCompletionFailure;
 import rpg.quests.QuestDefinition;
 import rpg.quests.QuestProgressResult;
 import rpg.quests.QuestProgressUpdate;
+import rpg.quests.QuestProgressUpdateType;
 import rpg.quests.QuestStepDefinition;
 import rpg.quests.rewards.QuestRewardCatalog;
 import rpg.quests.rewards.QuestRewardDefinition;
-import rpg.quests.QuestProgressUpdateType;
 
 // Presents grouped quest progress, effects, failures, and rewards.
 public final class QuestProgressPresenter {
@@ -51,22 +51,21 @@ public final class QuestProgressPresenter {
 
         ConsoleUI.clearScreen();
 
-        if (containsQuestCompletion(result)) {
-            System.out.println("QUEST CONCLUÍDA");
-        } else {
-            System.out.println("PROGRESSO DE QUEST");
-        }
+		if (containsQuestCompletion(result)) {
+			ConsoleUI.displayHeading("Missão Concluída");
+		} else {
+			ConsoleUI.displayHeading("Progresso de Missão");
+		}
+		System.out.println();
 
-        System.out.println();
+		displayUpdates(result.getUpdates());
+		displayEffects(result.getEffectDisplayTexts());
+		displayFailures(result.getCompletionFailures());
+		displayCompletedQuestRewards(result.getUpdates());
 
-        displayUpdates(result.getUpdates());
-        displayEffects(result.getEffectDisplayTexts());
-        displayFailures(result.getCompletionFailures());
-        displayCompletedQuestRewards(result.getUpdates());
-
-        System.out.print("[Enter] Continuar");
-        consoleInput.readLine();
-    }
+		System.out.print("[Enter] Continuar");
+		consoleInput.readLine();
+	}
 
 	private void displayUpdates(List<QuestProgressUpdate> updates) {
 		for (QuestProgressUpdate update : updates) {
@@ -90,7 +89,7 @@ public final class QuestProgressPresenter {
 			}
 
 			case QUEST_COMPLETED ->
-				ConsoleUI.displayWrappedText("Quest concluída: " + questDefinition.getTitle() + ".");
+				System.out.println("Missão concluída: " + questDefinition.getTitle() + ".");
 			}
 		}
 
@@ -205,7 +204,7 @@ public final class QuestProgressPresenter {
 
         ConsoleUI.clearScreen();
 
-        System.out.println("QUEST INICIADA");
+        ConsoleUI.displayHeading("Missão Iniciada");
         System.out.println();
         System.out.println(questDefinition.getTitle());
         System.out.println();
@@ -231,7 +230,7 @@ public final class QuestProgressPresenter {
 
         ConsoleUI.clearScreen();
 
-        System.out.println("QUEST BLOQUEADA");
+        ConsoleUI.displayHeading("Missão Bloqueada");
         System.out.println();
 
         displayFailures(failures);

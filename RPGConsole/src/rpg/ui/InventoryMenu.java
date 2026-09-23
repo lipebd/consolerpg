@@ -43,7 +43,7 @@ public final class InventoryMenu {
 		String feedbackMessage = null;
 		while (true) {
 			ConsoleUI.clearScreen();
-			System.out.println("[INVENTÁRIO]");
+			ConsoleUI.displayHeading("Inventário");
 			System.out.println();
 			System.out.println(GameCurrency.getName() + ": " + GameCurrency.format(party.getGold()));
 
@@ -199,7 +199,8 @@ public final class InventoryMenu {
 		String feedbackMessage = null;
 		while (true) {
 			ConsoleUI.clearScreen();
-			System.out.println("[" + getCategoryDisplayName(category).toUpperCase(Locale.ROOT) + "]");
+			ConsoleUI.displayHeading(
+			        getCategoryDisplayName(category));
 
 			System.out.println();
 			System.out.println("Você não possui itens nesta categoria.");
@@ -231,35 +232,30 @@ public final class InventoryMenu {
 			String feedbackMessage
 	) {
 		ConsoleUI.clearScreen();
-		System.out.println(
-				"[" + getCategoryDisplayName(category).toUpperCase(Locale.ROOT) + " — PÁGINA " + (currentPage + 1) + "/"
-						+ totalPages + "]"
-		);
+		ConsoleUI.displayHeading(getCategoryDisplayName(category) + " — Página " + (currentPage + 1) + "/" + totalPages);
 
 		System.out.println();
-		System.out.println("Selecione um item para ver detalhes:");
-
-		System.out.printf("%-4s %-" + ItemMenuFormatter.ITEM_NAME_WIDTH + "s %s%n", "", "Item", "Qtd.");
+		System.out.println("Selecione um item:");
+		System.out.println(ItemMenuFormatter.formatItemTableHeader());
 
 		for (int index = firstIndex; index < lastIndex; index++) {
 			Map.Entry<Item, Integer> entry = entries.get(index);
 
-			String displayName = ItemMenuFormatter.truncateName(entry.getKey().getName());
-
 			int pageOption = index - firstIndex + 1;
 
-			System.out.printf(
-					"[%d]  %-" + ItemMenuFormatter.ITEM_NAME_WIDTH + "s x%d%n",
-					pageOption,
-					displayName,
-					entry.getValue()
+			System.out.println(
+					ItemMenuFormatter.formatItemTableRow(
+							pageOption,
+							entry.getKey().getName(),
+							entry.getValue()
+					)
 			);
 		}
 
 		int displayedItemCount = lastIndex - firstIndex;
 
 		for (int emptySlot = displayedItemCount; emptySlot < ITEMS_PER_PAGE; emptySlot++) {
-			System.out.printf("     %-" + ItemMenuFormatter.ITEM_NAME_WIDTH + "s %s%n", "--", "--");
+			System.out.println(ItemMenuFormatter.formatEmptyItemTableRow());
 		}
 
 		if (currentPage > 0) {
@@ -288,7 +284,7 @@ public final class InventoryMenu {
 		String feedbackMessage = null;
 		while (true) {
 			ConsoleUI.clearScreen();
-			System.out.println("[" + item.getName().toUpperCase(Locale.ROOT) + "]");
+			ConsoleUI.displayHeading(item.getName());
 
 			System.out.println();
 			ConsoleUI.displayWrappedText(item.getDescription());
@@ -337,7 +333,7 @@ public final class InventoryMenu {
 		String feedbackMessage = null;
 		while (true) {
 			ConsoleUI.clearScreen();
-			System.out.println("[PERGAMINHO DE HABILIDADE]");
+			ConsoleUI.displayHeading("Pergaminho de habilidade");
 
 			System.out.println();
 			System.out.println(SkillDetailFormatter.formatDetails(skillScroll.getSkillDefinition()));

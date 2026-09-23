@@ -17,8 +17,10 @@ public final class ScenarioBranchMenu {
 	}
 
 	public Optional<ScenarioBranchDefinition> open(
-	        List<ScenarioBranchDefinition> branches,
-	        Set<String> markedDestinationScenarioIds) {
+			String sourceScenarioName,
+			List<ScenarioBranchDefinition> branches,
+			Set<String> markedDestinationScenarioIds
+	) {
 	    Objects.requireNonNull(
 	            markedDestinationScenarioIds,
 	            "Marked destination scenario IDs cannot be null.");
@@ -30,7 +32,11 @@ public final class ScenarioBranchMenu {
 		}
 
 		while (true) {
-			System.out.println("\nEscolha o caminho que deseja seguir:");
+			ConsoleUI.clearScreen();
+			ConsoleUI.displayHeading(sourceScenarioName, "Bifurcação");
+
+			System.out.println();
+			System.out.println("Escolha o caminho que deseja seguir:");
 
 			for (int index = 0; index < branches.size(); index++) {
 				ScenarioBranchDefinition branch = branches.get(index);

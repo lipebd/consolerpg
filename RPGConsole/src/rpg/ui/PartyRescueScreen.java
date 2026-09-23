@@ -17,6 +17,7 @@ public final class PartyRescueScreen {
 	}
 
 	public void show(Party party, CombatScenario defeatedScenario, City rescueDestination, int rescueCost) {
+		ConsoleUI.clearScreen();
 		Objects.requireNonNull(party, "Party cannot be null.");
 		Objects.requireNonNull(defeatedScenario, "Defeated scenario cannot be null.");
 		Objects.requireNonNull(rescueDestination, "Rescue destination cannot be null.");
@@ -24,8 +25,7 @@ public final class PartyRescueScreen {
 		if (rescueCost < 0) {
 			throw new IllegalArgumentException("Rescue cost cannot be negative.");
 		}
-		ConsoleUI.clearScreen();
-		System.out.println("[DERROTA]");
+		ConsoleUI.displayHeading("Derrota");
 
 		System.out.println("\nPressione ENTER para continuar...");
 

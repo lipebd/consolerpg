@@ -19,6 +19,7 @@ import rpg.world.shops.ShopTransactionService;
 import rpg.items.ItemCategory;
 import rpg.world.shops.ShopSaleResult;
 import rpg.world.WorldClock;
+import rpg.world.shops.ShopAccessType;
 
 // Displays a shop and its currently available offers.
 public final class ShopMenu {
@@ -46,12 +47,17 @@ public final class ShopMenu {
 		this.transactionService = new ShopTransactionService(this.party);
 	}
 
-	public void open(ShopState shopState) {
+	public void open(String scenarioName, ShopState shopState) {
+		if (scenarioName == null || scenarioName.isBlank()) {
+			throw new IllegalArgumentException("Shop scenario name cannot be empty.");
+		}
+
 		Objects.requireNonNull(shopState, "Shop state cannot be null.");
 
 		String feedbackMessage = null;
+
 		while (true) {
-			displayMainMenu(shopState, feedbackMessage);
+			displayMainMenu(scenarioName, shopState, feedbackMessage);
 
 			String choice = consoleInput.readTrimmedLine();
 
@@ -75,12 +81,17 @@ public final class ShopMenu {
 		}
 	}
 
-	private void displayMainMenu(ShopState shopState, String feedbackMessage) {
+	private void displayMainMenu(String scenarioName, ShopState shopState, String feedbackMessage) {
 		ConsoleUI.clearScreen();
-		System.out.println("\n[" + shopState.getDefinition().getName().toUpperCase(Locale.ROOT) + "]");
+		ConsoleUI.displayHeading(scenarioName, shopState.getDefinition().getName());
+
 		System.out.println();
 		System.out.println(WorldTimeFormatter.formatCurrentTime(worldClock));
-		System.out.println("Próxima reposição: " + WorldTimeFormatter.formatNextRestockingTime(worldClock));
+
+		if (shopState.getDefinition().getAccessType() == ShopAccessType.CITY) {
+			System.out.println("Próxima reposição: " + WorldTimeFormatter.formatNextRestockingTime(worldClock));
+		}
+
 		System.out.println();
 		ConsoleUI.displayWrappedText(shopState.getDefinition().getDescription());
 

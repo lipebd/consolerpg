@@ -78,12 +78,19 @@ public final class NarrativeLocationMenu {
 		consoleInput.readLine();
 	}
 
-	private static void displayLocationHeader(String cityName, NarrativeLocationDefinition locationDefinition) {
-		System.out.println("[" + cityName.trim().toUpperCase() + "]");
-		System.out.println("[" + locationDefinition.getName().toUpperCase() + "]");
-		System.out.println();
+	private static void displayLocationHeader(
+			String cityName,
+			NarrativeLocationDefinition locationDefinition
+	) {
+		ConsoleUI.displayHeading(
+				cityName,
+				locationDefinition.getName()
+		);
 
-		ConsoleUI.displayWrappedText(locationDefinition.getDescription());
+		System.out.println();
+		ConsoleUI.displayWrappedText(
+				locationDefinition.getDescription()
+		);
 		System.out.println();
 	}
 }

@@ -21,7 +21,7 @@ public final class ClassPathConfirmationMenu {
         while (true) {
             ConsoleUI.clearScreen();
 
-            System.out.println("[ESCOLHA DO CAMINHO]");
+            ConsoleUI.displayHeading("Escolha do Caminho");
             System.out.println();
 
             ConsoleUI.displayWrappedText(

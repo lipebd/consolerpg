@@ -29,7 +29,7 @@ public final class AllyRecruitmentMenu {
 
 		while (true) {
 			ConsoleUI.clearScreen();
-			System.out.println("[NOVA COMPANHIA]");
+			ConsoleUI.displayHeading("Nova Companhia");
 			System.out.println();
 
 			System.out.println(

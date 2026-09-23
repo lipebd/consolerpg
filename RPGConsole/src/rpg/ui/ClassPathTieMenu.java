@@ -60,7 +60,7 @@ public final class ClassPathTieMenu {
     private void displayTie(List<PlayableClassDefinition> classes) {
         ConsoleUI.clearScreen();
 
-        System.out.println("[AS MARCAS]");
+        ConsoleUI.displayHeading("As Marcas");
         System.out.println();
 
         if (classes.size() == 2) {

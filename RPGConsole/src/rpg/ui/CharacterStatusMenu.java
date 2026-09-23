@@ -68,7 +68,9 @@ public final class CharacterStatusMenu {
 	}
 
 	private void displayCharacterStatus(PlayableCharacter character) {
-		System.out.println("\n[" + character.getName().toUpperCase() + " - STATUS]");
+		ConsoleUI.displayHeading(
+		        character.getName(),
+		        "Status");
 		System.out.println();
 		if (!character.isAlive()) {
 			System.out.println("Estado: DERROTADO");
@@ -103,8 +105,9 @@ public final class CharacterStatusMenu {
 
 		while (true) {
 			ConsoleUI.clearScreen();
-			System.out.println("[" + character.getName().toUpperCase() + " - HABILIDADES]");
-
+			ConsoleUI.displayHeading(
+			        character.getName(),
+			        "Habilidades");
 			System.out.println();
 
 			if (skills.isEmpty()) {
@@ -156,14 +159,13 @@ public final class CharacterStatusMenu {
 	}
 
 	private void displaySkillDetails(SkillDefinition skill, PlayableCharacter character) {
-		System.out.println("[" + character.getName().toUpperCase() + " - HABILIDADES]");
-		System.out.println();
 		String feedbackMessage = null;
 
 	    while (true) {
 	        ConsoleUI.clearScreen();
-	        System.out.println(
-	                SkillDetailFormatter.formatDetails(skill));
+	        ConsoleUI.displayHeading("Habilidade");
+	        System.out.println();
+	        System.out.println(SkillDetailFormatter.formatDetails(skill));
 
 	        if (feedbackMessage != null) {
 	            System.out.println();

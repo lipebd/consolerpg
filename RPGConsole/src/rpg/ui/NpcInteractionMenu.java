@@ -9,68 +9,65 @@ import rpg.narrative.NarrativeLocationDefinition;
 // Displays the currently available interactions with one NPC.
 public final class NpcInteractionMenu {
 
-    private final ConsoleInput consoleInput;
+	private final ConsoleInput consoleInput;
 
-    public NpcInteractionMenu(ConsoleInput consoleInput) {
-        this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
-    }
+	public NpcInteractionMenu(ConsoleInput consoleInput) {
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
+	}
 
-    public Selection selectAction(
-            String cityName,
-            NarrativeLocationDefinition locationDefinition,
-            NpcDefinition npcDefinition,
-            List<String> questTitles
-    ) {
-        if (cityName == null || cityName.isBlank()) {
-            throw new IllegalArgumentException("City name cannot be empty.");
-        }
+	public Selection selectAction(
+			String cityName,
+			NarrativeLocationDefinition locationDefinition,
+			NpcDefinition npcDefinition,
+			List<String> questTitles
+	) {
+		if (cityName == null || cityName.isBlank()) {
+			throw new IllegalArgumentException("City name cannot be empty.");
+		}
 
-        Objects.requireNonNull(
-                locationDefinition, "Narrative location definition cannot be null.");
-        Objects.requireNonNull(npcDefinition, "NPC definition cannot be null.");
-        Objects.requireNonNull(questTitles, "Quest titles cannot be null.");
-        String feedbackMessage = null;
-        while (true) {
-            ConsoleUI.clearScreen();
-            System.out.println("[" + cityName.trim().toUpperCase() + "]");
-            System.out.println("[" + locationDefinition.getName().toUpperCase() + "]");
-            System.out.println();
-            System.out.println(npcDefinition.getName());
-            System.out.println();
-            ConsoleUI.displayWrappedText(
-                    npcDefinition.getDescription());
-            System.out.println();
+		Objects.requireNonNull(locationDefinition, "Narrative location definition cannot be null.");
+		Objects.requireNonNull(npcDefinition, "NPC definition cannot be null.");
+		Objects.requireNonNull(questTitles, "Quest titles cannot be null.");
+		String feedbackMessage = null;
+		while (true) {
+			ConsoleUI.clearScreen();
+			ConsoleUI.displayHeading(cityName, locationDefinition.getName());
+			System.out.println();
+			System.out.println(npcDefinition.getName());
+			System.out.println();
+			ConsoleUI.displayWrappedText(npcDefinition.getDescription());
+			System.out.println();
 
-            for (int index = 0; index < questTitles.size(); index++) {
-                System.out.println("\u001B[33m[" + (index + 1) + "] " + questTitles.get(index) + "\u001B[0m");
-            }
+			for (int index = 0; index < questTitles.size(); index++) {
+				System.out.println("\u001B[33m[" + (index + 1) + "] " + questTitles.get(index) + "\u001B[0m");
+			}
 
-            int talkOption = questTitles.size() + 1;
+			int talkOption = questTitles.size() + 1;
 
-            System.out.println("[" + talkOption + "] Conversar");
-            if (feedbackMessage != null) {
-                System.out.println();
-                ConsoleUI.displayWrappedText(feedbackMessage);
-            }
-            System.out.println("[0] Voltar");
-            System.out.print("> ");
+			System.out.println("[" + talkOption + "] Conversar");
+			if (feedbackMessage != null) {
+				System.out.println();
+				ConsoleUI.displayWrappedText(feedbackMessage);
+			}
+			System.out.println("[0] Voltar");
+			System.out.print("> ");
 
-            String choice = consoleInput.readTrimmedLine();
+			String choice = consoleInput.readTrimmedLine();
 
-            if (choice.equals("0")) {
-                return Selection.back();
-            }
+			if (choice.equals("0")) {
+				return Selection.back();
+			}
 
-            try {
-                int selectedOption = Integer.parseInt(choice);
+			try {
+				int selectedOption = Integer.parseInt(choice);
 
-                if (selectedOption >= 1 && selectedOption <= questTitles.size()) {
-                    return Selection.quest(selectedOption - 1);
-                }
+				if (selectedOption >= 1 && selectedOption <= questTitles.size()) {
+					return Selection.quest(selectedOption - 1);
+				}
 
-                if (selectedOption == talkOption) {
-                    return Selection.talk();
-                }
+				if (selectedOption == talkOption) {
+					return Selection.talk();
+				}
 
 				feedbackMessage = "Interação inválida.";
 			} catch (NumberFormatException exception) {
@@ -79,36 +76,33 @@ public final class NpcInteractionMenu {
 		}
 	}
 
-    public enum Action {
-        QUEST,
-        TALK,
-        BACK
-    }
+	public enum Action {
+		QUEST, TALK, BACK
+	}
 
-    public record Selection(Action action, int questIndex) {
-        public Selection {
-            Objects.requireNonNull(action, "NPC interaction action cannot be null.");
+	public record Selection(Action action, int questIndex) {
+		public Selection {
+			Objects.requireNonNull(action, "NPC interaction action cannot be null.");
 
-            if (action == Action.QUEST && questIndex < 0) {
-                throw new IllegalArgumentException("Quest interaction index cannot be negative.");
-            }
+			if (action == Action.QUEST && questIndex < 0) {
+				throw new IllegalArgumentException("Quest interaction index cannot be negative.");
+			}
 
-            if (action != Action.QUEST && questIndex != -1) {
-                throw new IllegalArgumentException(
-                        "Non-quest interaction cannot define a quest index.");
-            }
-        }
+			if (action != Action.QUEST && questIndex != -1) {
+				throw new IllegalArgumentException("Non-quest interaction cannot define a quest index.");
+			}
+		}
 
-        public static Selection quest(int questIndex) {
-            return new Selection(Action.QUEST, questIndex);
-        }
+		public static Selection quest(int questIndex) {
+			return new Selection(Action.QUEST, questIndex);
+		}
 
-        public static Selection talk() {
-            return new Selection(Action.TALK, -1);
-        }
+		public static Selection talk() {
+			return new Selection(Action.TALK, -1);
+		}
 
-        public static Selection back() {
-            return new Selection(Action.BACK, -1);
-        }
-    }
+		public static Selection back() {
+			return new Selection(Action.BACK, -1);
+		}
+	}
 }

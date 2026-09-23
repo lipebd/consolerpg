@@ -157,7 +157,7 @@ public final class SkillScrollUseMenu {
 	) {
 		ConsoleUI.clearScreen();
 		System.out.println();
-		System.out.println("[LIMITE DE HABILIDADES]");
+		ConsoleUI.displayHeading("Nova Habilidade");;
 
 		System.out.println();
 		ConsoleUI.displayWrappedText(
@@ -189,7 +189,7 @@ public final class SkillScrollUseMenu {
 		while (true) {
 			ConsoleUI.clearScreen();
 			System.out.println();
-			System.out.println("[CONFIRMAR SUBSTITUIÇÃO]");
+			ConsoleUI.displayHeading("Nova Habilidade");
 
 			System.out.println();
 			System.out.println("Esquecer: " + replacedSkill.getName());

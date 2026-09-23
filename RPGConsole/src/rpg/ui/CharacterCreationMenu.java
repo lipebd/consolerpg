@@ -26,6 +26,7 @@ public final class CharacterCreationMenu {
 
 		String proposedName = null;
 		String feedbackMessage = null;
+
 		while (true) {
 			if (proposedName == null) {
 				Optional<String> selectedName = selectName(null);
@@ -35,12 +36,10 @@ public final class CharacterCreationMenu {
 				}
 
 				proposedName = selectedName.get();
+				feedbackMessage = null;
 			}
 
-			displayConfirmation(
-			        proposedName,
-			        classDefinition,
-			        feedbackMessage);
+			displayConfirmation(proposedName, classDefinition, feedbackMessage);
 
 			String choice = consoleInput.readTrimmedLine();
 
@@ -50,14 +49,13 @@ public final class CharacterCreationMenu {
 			}
 
 			case "2" -> {
-			    feedbackMessage = null;
+				Optional<String> selectedName = selectName(proposedName);
 
-			    Optional<String> selectedName =
-			            selectName(proposedName);
+				if (selectedName.isPresent()) {
+					proposedName = selectedName.get();
+				}
 
-			    if (selectedName.isPresent()) {
-			        proposedName = selectedName.get();
-			    }
+				feedbackMessage = null;
 			}
 
 			case "0" -> {
@@ -71,9 +69,10 @@ public final class CharacterCreationMenu {
 
 	private Optional<String> selectName(String currentName) {
 		String feedbackMessage = null;
+
 		while (true) {
 			ConsoleUI.clearScreen();
-			System.out.println("[RPGCONSOLE - NOVA CAMPANHA]");
+			ConsoleUI.displayHeading("Nova Campanha");
 
 			System.out.println();
 			System.out.println("Como deseja escolher seu nome?");
@@ -81,29 +80,27 @@ public final class CharacterCreationMenu {
 			System.out.println();
 			System.out.println("[1] Digitar nome");
 			System.out.println("[2] Decida por mim");
+
 			if (feedbackMessage != null) {
-			    System.out.println();
-			    ConsoleUI.displayWrappedText(feedbackMessage);
+				System.out.println();
+				ConsoleUI.displayWrappedText(feedbackMessage);
 			}
 
 			System.out.println();
-			System.out.println(
-			        currentName == null
-			                ? "[0] Cancelar criação"
-			                : "[0] Voltar");
+			System.out.println(currentName == null ? "[0] Cancelar criação" : "[0] Voltar");
 			System.out.print("> ");
 
 			String choice = consoleInput.readTrimmedLine();
 
 			switch (choice) {
 			case "1" -> {
-			    feedbackMessage = null;
+				Optional<String> manualName = readManualName();
 
-			    Optional<String> manualName = readManualName();
+				if (manualName.isPresent()) {
+					return manualName;
+				}
 
-			    if (manualName.isPresent()) {
-			        return manualName;
-			    }
+				feedbackMessage = null;
 			}
 
 			case "2" -> {
@@ -123,22 +120,21 @@ public final class CharacterCreationMenu {
 
 	private Optional<String> readManualName() {
 		String feedbackMessage = null;
+
 		while (true) {
 			ConsoleUI.clearScreen();
-			System.out.println("[RPGCONSOLE - NOVA CAMPANHA]");
+			ConsoleUI.displayHeading("Nova Campanha");
 
 			System.out.println();
 			System.out.println("Digite seu nome.");
+
 			System.out.println();
-			ConsoleUI.displayWrappedText(
-			        "Máximo de "
-			                + CharacterNameRules.getMaximumLength()
-			                + " caracteres.\nUse letras, espaços, hífens e apóstrofos."
-			);
+			ConsoleUI.displayWrappedText("Máximo de " + CharacterNameRules.getMaximumLength() + " caracteres.");
+			ConsoleUI.displayWrappedText("Use letras, espaços, hífens e apóstrofos.");
 
 			if (feedbackMessage != null) {
-			    System.out.println();
-			    ConsoleUI.displayWrappedText(feedbackMessage);
+				System.out.println();
+				ConsoleUI.displayWrappedText(feedbackMessage);
 			}
 
 			System.out.println();
@@ -159,30 +155,27 @@ public final class CharacterCreationMenu {
 		}
 	}
 
-	private void displayConfirmation(
-	        String proposedName,
-	        PlayableClassDefinition classDefinition,
-	        String feedbackMessage
-	) {
+	private void displayConfirmation(String proposedName, PlayableClassDefinition classDefinition, String feedbackMessage) {
 		ConsoleUI.clearScreen();
-		System.out.println("[RPGCONSOLE - NOVA CAMPANHA]");
+		ConsoleUI.displayHeading("Nova Campanha");
 
 		System.out.println();
 		System.out.println("Nome: " + proposedName);
+
 		System.out.println();
-		ConsoleUI.displayWrappedText(
-		        PlayableClassDetailFormatter.formatPresentation(classDefinition));
+		ConsoleUI.displayWrappedText(PlayableClassDetailFormatter.formatPresentation(classDefinition));
+
+		if (feedbackMessage != null) {
+			System.out.println();
+			ConsoleUI.displayWrappedText(feedbackMessage);
+		}
 
 		System.out.println();
 		System.out.println("[1] Confirmar");
 		System.out.println("[2] Alterar nome");
-		if (feedbackMessage != null) {
-		    System.out.println();
-		    ConsoleUI.displayWrappedText(feedbackMessage);
-		}
 
 		System.out.println();
 		System.out.println("[0] Cancelar");
 		System.out.print("> ");
 	}
-}
+	}

@@ -19,13 +19,15 @@ public final class InnMenu {
 		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 	}
 
-	public Selection open(InnDefinition innDefinition) {
+	public Selection open(String cityName, InnDefinition innDefinition) {
 		Objects.requireNonNull(innDefinition, "Inn definition cannot be null.");
-
+		if (cityName == null || cityName.isBlank()) {
+			throw new IllegalArgumentException("Inn city name cannot be empty.");
+		}
 		String feedbackMessage = null;
 
 		while (true) {
-			displayInn(innDefinition, feedbackMessage);
+			displayInn(cityName, innDefinition, feedbackMessage);
 
 			String choice = consoleInput.readTrimmedLine();
 
@@ -34,7 +36,7 @@ public final class InnMenu {
 				return Selection.BACK;
 			}
 
-			case "1" -> feedbackMessage = tryRest(innDefinition);
+			case "1" -> feedbackMessage = tryRest(cityName, innDefinition);
 
 			case "2" -> {
 				return Selection.SAVE_AND_CONTINUE;
@@ -53,33 +55,44 @@ public final class InnMenu {
 		BACK, SAVE_AND_CONTINUE, SAVE_AND_EXIT
 	}
 
-	private void displayInn(InnDefinition innDefinition, String feedbackMessage) {
+	private void displayInn(
+			String cityName,
+			InnDefinition innDefinition,
+			String feedbackMessage
+	) {
 		ConsoleUI.clearScreen();
-		System.out.println("\n[" + innDefinition.getName().toUpperCase(Locale.ROOT) + "]");
+		ConsoleUI.displayHeading(
+				cityName,
+				innDefinition.getName()
+		);
 
-		ConsoleUI.displayWrappedText(innDefinition.getDescription());
-
+		System.out.println();
+		ConsoleUI.displayWrappedText(
+				innDefinition.getDescription()
+		);
 		String stayPriceLabel = "Estadia do grupo:";
 		String availableGoldLabel = GameCurrency.getName() + " disponível:";
 		int labelWidth = Math.max(stayPriceLabel.length(), availableGoldLabel.length()) + 1;
 
 		System.out.printf("\n%-" + labelWidth + "s%s%n", stayPriceLabel, GameCurrency.format(innDefinition.getPrice()));
 		System.out.printf("%-" + labelWidth + "s%s%n", availableGoldLabel, GameCurrency.format(party.getGold()));
-
-		if (feedbackMessage != null) {
-			System.out.println();
-			ConsoleUI.displayWrappedText(feedbackMessage);
-		}
-
 		System.out.println();
 		System.out.println("[1] Descansar");
 		System.out.println("[2] Salvar e continuar");
 		System.out.println("[3] Salvar e encerrar");
+		if (feedbackMessage != null) {
+			System.out.println();
+			ConsoleUI.displayWrappedText(feedbackMessage);
+		}
+		System.out.println();
 		System.out.println("[0] Voltar");
 		System.out.print("> ");
 	}
 
-	private String tryRest(InnDefinition innDefinition) {
+	private String tryRest(
+			String cityName,
+			InnDefinition innDefinition
+	) {
 		if (isPartyFullyRestored()) {
 			return "O grupo ainda está descansado e não precisa de uma estadia.";
 		}
@@ -88,7 +101,7 @@ public final class InnMenu {
 			return "As moedas do grupo não são suficientes para pagar a estadia.";
 		}
 
-		if (!confirmStay(innDefinition.getPrice())) {
+		if (!confirmStay(cityName, innDefinition)) {
 			return null;
 		}
 
@@ -101,20 +114,24 @@ public final class InnMenu {
 		return "Após uma noite de descanso, todos despertam com as forças completamente renovadas.";
 	}
 
-	private boolean confirmStay(int price) {
+	private boolean confirmStay(String cityName, InnDefinition innDefinition) {
 		String feedbackMessage = null;
+
 		while (true) {
 			ConsoleUI.clearScreen();
-			System.out.println("\nConfirmar estadia por " + GameCurrency.format(price) + "?");
+			ConsoleUI.displayHeading(cityName, innDefinition.getName());
+
+			System.out.println();
+			System.out.println("Confirmar estadia por " + GameCurrency.format(innDefinition.getPrice()) + "?");
+
+			if (feedbackMessage != null) {
+				System.out.println();
+				ConsoleUI.displayWrappedText(feedbackMessage);
+			}
 
 			System.out.println();
 			System.out.println("[1] Confirmar");
 			System.out.println("[0] Cancelar");
-			if (feedbackMessage != null) {
-			    System.out.println();
-			    ConsoleUI.displayWrappedText(feedbackMessage);
-			}
-
 			System.out.print("> ");
 
 			String choice = consoleInput.readTrimmedLine();

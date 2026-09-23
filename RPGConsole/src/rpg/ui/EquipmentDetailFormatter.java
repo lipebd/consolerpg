@@ -2,7 +2,6 @@ package rpg.ui;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.function.ToIntFunction;
 
@@ -30,13 +29,6 @@ public final class EquipmentDetailFormatter {
 
 		List<String> lines = new ArrayList<>();
 
-		lines.add("[" + item.getName().toUpperCase(Locale.ROOT) + "]");
-
-		lines.add("");
-		lines.add(item.getDescription());
-		lines.add("");
-		lines.add("Categoria: " + item.getCategory());
-
 		if (definition instanceof WeaponDefinition weaponDefinition) {
 			addWeaponDetails(lines, weaponDefinition);
 		} else if (definition instanceof ArmorDefinition armorDefinition) {
@@ -47,8 +39,7 @@ public final class EquipmentDetailFormatter {
 			throw new IllegalArgumentException("Unsupported equipment definition: " + definition.getItemId());
 		}
 
-		lines.add("");
-		lines.add("Bônus: " + formatBonuses(definition));
+		lines.add(formatDetailLine("Bônus:", formatBonuses(definition)));
 
 		return String.join(System.lineSeparator(), lines);
 	}
@@ -78,7 +69,7 @@ public final class EquipmentDetailFormatter {
 			return "--";
 		}
 
-		return String.join(" | ", bonuses);
+		return String.join(", ", bonuses);
 	}
 
 	public static String formatComparison(
@@ -211,27 +202,27 @@ public final class EquipmentDetailFormatter {
 	}
 
 	private static void addWeaponDetails(List<String> lines, WeaponDefinition definition) {
-		lines.add("Tipo: " + definition.getWeaponType());
-		lines.add("Dano: " + definition.getDamageType());
-		lines.add("Nível necessário: " + definition.getLevelRequirement());
-		lines.add("Ataque normal: " + definition.getNormalAttackName());
-		lines.add("Poder: " + definition.getBaseWeaponDamage());
+		lines.add(formatDetailLine("Ataque:", definition.getNormalAttackName()));
+		lines.add(formatDetailLine("Dano:", definition.getDamageType()));
+		lines.add(formatDetailLine("Poder:", definition.getBaseWeaponDamage()));
 	}
 
 	private static void addArmorDetails(List<String> lines, ArmorDefinition definition) {
-		lines.add("Peso: " + definition.getArmorWeight());
-		lines.add("Nível necessário: " + definition.getLevelRequirement());
+		lines.add(formatDetailLine("Peso:", definition.getArmorWeight()));
 	}
 
 	private static void addTrinketDetails(List<String> lines, TrinketDefinition definition) {
-		lines.add("Tipo: " + definition.getTrinketType());
-		lines.add("Nível necessário: " + definition.getLevelRequirement());
+		lines.add(formatDetailLine("Tipo:", definition.getTrinketType()));
 	}
 
 	private static void addBonus(List<String> bonuses, String label, int value) {
 		if (value > 0) {
 			bonuses.add(label + " +" + value);
 		}
+	}
+
+	private static String formatDetailLine(String label, Object value) {
+		return String.format("%-8s%s", label, value);
 	}
 
 	private static void addPercentageBonus(List<String> bonuses, String label, int value) {

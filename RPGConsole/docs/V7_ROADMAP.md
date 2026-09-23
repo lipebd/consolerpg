@@ -46,13 +46,70 @@ The checklist fixes **what belongs to V7**, not every rule for implementing it. 
 >
 > `CityMenu`, `CombatScenarioMenu` and `ScenarioBranchMenu` remain coupled to context currently printed by `World`; their complete redraw is carried into Part 2 together with location-heading composition. Part 2 will also provide the location context required for the final epic-encounter heading. `ClassPathTieMenu` intentionally retains its one-time narrative rendering so invalid input does not replay timed pauses.
 
-## 2. Consistent location headings
+## 2. Consistent screen headings
 
-* [ ] Define which screens have a current city, a current local area, or no meaningful location context.
-* [ ] Show the applicable `[CIDADE]` and `[LOCAL]` headings consistently on world, service, narrative and battle-related screens.
-* [ ] Add missing headings and correct headings shown in the wrong position or with the wrong context.
-* [ ] Preserve useful screen titles such as inventory, quest and shop titles beneath the location context where applicable.
-* [ ] Check representative city, facility, narrative, exploration and battle screens, including screens without a city context.
+### Frozen heading contract
+
+* [x] Give every independent interactive or informational screen one bracketed heading as its first visible line after `clearScreen()`.
+* [x] Do not stack multiple bracketed headings on one screen. Context and qualifier must share one heading when both are required.
+* [x] Use `[CONTEXT]` for a single heading and `[CONTEXT - QUALIFIER]` for a composed heading.
+* [x] Use the regular hyphen surrounded by spaces in composed headings. Broader dash review remains deferred to Part 7.
+* [x] Centralize heading output in `ConsoleUI` through `displayHeading(String heading)` and `displayHeading(String context, String qualifier)`.
+* [x] Make `ConsoleUI` validate non-null, non-blank heading components, convert them with `Locale.ROOT` and own the brackets and separator.
+* [x] Keep vertical spacing outside `displayHeading(...)`; the caller remains responsible for blank lines between the heading and its content.
+* [x] Preserve `TitleScreen` as the application-branding exception. Ordinary campaign screens do not repeat `[RPGCONSOLE]`.
+
+### Location and functional contexts
+
+* [x] Use only the current city or scenario name for the root world screen, such as `[BREE]`, `[VERDES ERMOS]` or `[RELAMPARROCHA]`.
+* [x] Combine a city or scenario with a physical sublocation, service or localized event, such as `[BREE - MERCADO DE BREE]`, `[BREE - TAVERNA DO PÔNEI SALTITANTE]`, `[VERDES ERMOS - MERCADOR VIAJANTE]`, `[VERDES ERMOS - ENCONTRO ÉPICO]` and `[VERDES ERMOS - BATALHA]`.
+* [x] Use only the current location heading on route, branch, city-transport and other destination-selection screens. Their question and options provide the action context.
+* [x] Combine narrative city and location context into one heading for narrative-location, NPC, quest-offer and dialogue screens. Dialogue geometry and animation remain deferred to Part 4.
+* [x] Keep functional screens independent from map context. Inventory, quest journal and current group status use `[INVENTÁRIO]`, `[DIÁRIO]` and `[STATUS]`.
+* [x] Do not implement group naming in V7. A future group name may reuse the composed format as `[NOME DO GRUPO - STATUS]`.
+* [x] Use entity-first functional headings for individual character screens, including `[NOME - STATUS]`, `[NOME - EQUIPAMENTOS]` and `[NOME - HABILIDADES]`.
+* [x] Preserve concise dedicated headings for confirmations, results, empty states and other self-explanatory flows, such as `[CONFIRMAR COMPRA]`, `[MISSÃO CONCLUÍDA]` and `[DERROTA]`.
+* [x] Ensure screens currently beginning only with a question, description or option list receive the appropriate heading.
+
+### Campaign-flow headings
+
+* [x] Use `[CONTINUAR]` when a saved campaign is loaded successfully.
+* [x] Use `[NOVA CAMPANHA]` when no campaign can be continued, including missing, unreadable or invalid saves.
+* [x] Keep `[NOVA CAMPANHA]` throughout new-campaign confirmation, name-selection, manual-name and final character-confirmation screens.
+* [x] Replace the player-facing expression `Novo Jogo` with `Nova Campanha` in this flow.
+* [x] Let each screen's content explain its current step instead of creating more specific headings such as `[NOME]` or `[CRIAÇÃO DE PERSONAGEM]`.
+* [x] Include the direct instruction `Digite seu nome.` on the manual-name screen before its validation rules.
+
+### Root world-screen ownership
+
+* [x] Keep `World` responsible for orchestration, current-scenario state and domain decisions, but move root city and combat-scenario rendering into `CityMenu` and `CombatScenarioMenu`.
+* [x] Do not pass `World` or a rendering callback into UI classes.
+* [x] Let the root menus receive the current scenario data and read-only exploration state required for presentation. They may inspect that state but must not mutate world or exploration rules.
+* [x] Keep boss availability and other domain decisions in `World`; pass only their resolved state when required for presentation.
+* [x] Pass a simple context-name string to other location-aware menus rather than introducing a new heading-context class.
+* [x] Remove the obsolete `displayCurrentScenario()`, root scenario-name/progress presentation and `scenarioNameAlreadyDisplayed` flow from `World` once the root menus own complete redraws.
+* [x] Keep unrelated world-event presentation outside this ownership change unless its heading must use the shared `ConsoleUI` contract.
+
+### Scenario-description lifecycle
+
+* [x] Define `shouldDisplayScenarioDescription` as meaning that the next opening of the root scenario menu includes the scenario description.
+* [x] Initialize it as active when a campaign begins or is restored, and reactivate it whenever `changeScenario(...)` completes.
+* [x] Consume the world-level flag when opening the next root menu, while passing its captured value into that menu.
+* [x] Preserve the captured value throughout invalid-input redraws in the same menu call so the description does not disappear after the first invalid command.
+* [x] Do not reactivate the description after inventory, journal, status, facilities, ordinary exploration, victory or escape when the current scenario has not changed.
+* [x] Keep exploration-area messages independent from the general scenario-description lifecycle.
+* [x] Remove the current battle-result behavior that reactivates the scenario description after victory or escape.
+
+### Part boundary and verification
+
+* [x] Defer `[MAP - BATALHA]` and the remaining battle-menu headings to Part 5 so they are implemented together with the complete battle-screen reconstruction.
+* [x] Limit dialogue work in this part to the unified contextual heading; fixed geometry and animated text remain frozen for Part 4.
+* [x] Do not add group naming, new world rules, new navigation behavior or a general screen-context class.
+* [x] Verify representative city-root, exploration-root, facility, narrative, functional, campaign, epic-encounter and battle headings.
+* [x] Verify that a newly entered scenario retains its description across invalid commands, loses it after a valid action and does not redisplay it after returning from a nested functional screen or same-scenario battle.
+* [x] Update only the documentation affected by the implemented behavior after the part is tested and approved.
+
+> **Deferred discussion:** routine quest-progress screens may later become contextual notifications on the following world or narrative screen. The replacement is not committed yet; its architectural cost and interaction with synchronous quest presentation must be evaluated before changing the current flow.
 
 ## 3. City destinations
 
