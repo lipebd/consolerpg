@@ -31,7 +31,7 @@ public final class RouteMenu {
 			System.out.println("\nNão há destinos possíveis.");
 			return Optional.empty();
 		}
-
+		String feedbackMessage = null;
 		while (true) {
 			ConsoleUI.clearScreen();
 			System.out.println("Aonde deseja ir?");
@@ -47,9 +47,13 @@ public final class RouteMenu {
 				System.out.println(
 				        "[" + (index + 1) + "] " + marker + route.getDisplayName());
 
-				System.out.println("    " + route.getDescription().replace("\n", "\n    "));
+				ConsoleUI.displayWrappedText(route.getDescription(), "    ");
 			}
-
+            if (feedbackMessage != null) {
+                System.out.println();
+                ConsoleUI.displayWrappedText(feedbackMessage);
+            }
+            System.out.println();
 			System.out.println("[0] Voltar");
 			System.out.print("> ");
 
@@ -63,7 +67,7 @@ public final class RouteMenu {
 				int selectedIndex = Integer.parseInt(choice) - 1;
 
 				if (selectedIndex < 0 || selectedIndex >= routes.size()) {
-					System.out.println("Destino inválido.");
+					feedbackMessage = "Destino inválido.";
 					continue;
 				}
 
@@ -72,7 +76,7 @@ public final class RouteMenu {
 				return Optional.of(selectedRoute);
 
 			} catch (NumberFormatException exception) {
-				System.out.println("Comando inválido.");
+				feedbackMessage = "Digite o número do destino desejado.";
 			}
 		}
 	}

@@ -74,6 +74,7 @@ import rpg.ui.ClassPathChoiceCoordinator;
 import rpg.ui.ClassPathTransitionFailurePresenter;
 import rpg.ui.CombatScenarioMenu;
 import rpg.ui.ConsoleInput;
+import rpg.ui.ConsoleUI;
 import rpg.ui.CraftingMenu;
 import rpg.ui.DialoguePresenter;
 import rpg.ui.EpicEncounterMenu;
@@ -173,7 +174,6 @@ public class World {
 	private final CrafterCatalog crafterCatalog;
 	private final CityTransportCatalog cityTransportCatalog;
 	private final ScenarioCatalog scenarioCatalog;
-	private final ScenarioBranchCatalog scenarioBranchCatalog;
 	private final EnemyCatalog enemyCatalog;
 	private final ShopCatalog shopCatalog;
 	private final ShopStateGenerator shopStateGenerator;
@@ -271,9 +271,6 @@ public class World {
 				Objects.requireNonNull(dungeonProgress, "Dungeon progress cannot be null.");
 		this.dungeonBossAccessResolver = Objects
 				.requireNonNull(dungeonBossAccessResolver, "Dungeon boss access resolver cannot be null.");
-        this.scenarioBranchCatalog =
-                Objects.requireNonNull(
-                        scenarioBranchCatalog, "Scenario branch catalog cannot be null.");
         this.travelProgress =
                 Objects.requireNonNull(travelProgress, "Travel progress cannot be null.");
         this.crafterCatalog =
@@ -474,7 +471,8 @@ public class World {
 		scenarioNameAlreadyDisplayed = false;
 
 		if (shouldDisplayScenarioDescription) {
-			System.out.println("\n"+currentScenario.getDescription());
+			System.out.println();
+			ConsoleUI.displayWrappedText(currentScenario.getDescription());
 			shouldDisplayScenarioDescription = false;
 		}
 
@@ -1671,7 +1669,10 @@ public class World {
 
 		changeScenario(destination);
 
-		System.out.println("\n" + destinationDefinition.getTravelDescription());
+		System.out.println();
+		ConsoleUI.displayWrappedText(
+				destinationDefinition.getTravelDescription()
+		);
 	}
 
 	private void executeRouteMenu() {
@@ -1883,7 +1884,7 @@ public class World {
         String areaMessage =
                 specialArea ? settings.getSpecialAreaMessage() : settings.getNormalAreaMessage();
 
-		System.out.println(areaMessage);
+        ConsoleUI.displayWrappedText(areaMessage);
 	}
 
     private boolean resolveCurrentExplorationEvent(

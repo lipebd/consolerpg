@@ -12,13 +12,19 @@ public final class ExitConfirmationMenu {
 	}
 
 	public boolean confirm() {
+		String feedbackMessage = null;
 		while (true) {
+			ConsoleUI.clearScreen();
 			System.out.println();
 			System.out.println("[ENCERRAR JOGO]");
 
 			System.out.println();
-			System.out.println("Tem certeza de que deseja sair?\nTodo o progresso realizado após o último salvamento será perdido.");
-
+			System.out.println("Tem certeza de que deseja sair?");
+			System.out.println("Todo o progresso realizado após o último salvamento será perdido.");
+			if (feedbackMessage != null) {
+			    System.out.println();
+			    ConsoleUI.displayWrappedText(feedbackMessage);
+			}
 			System.out.println();
 			System.out.println("[1] Encerrar sem salvar");
 			System.out.println("[0] Voltar");
@@ -35,7 +41,7 @@ public final class ExitConfirmationMenu {
 				return false;
 			}
 
-			default -> System.out.println("Opção inválida.");
+			default -> feedbackMessage = "Opção inválida.";
 			}
 		}
 	}

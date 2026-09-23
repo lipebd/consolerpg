@@ -135,7 +135,7 @@ public final class CityTransportMenu {
 
 	    if (feedbackMessage != null) {
 	        System.out.println();
-	        System.out.println(feedbackMessage);
+	        ConsoleUI.displayWrappedText(feedbackMessage);
 	    }
 
 	    System.out.println();
@@ -145,13 +145,18 @@ public final class CityTransportMenu {
 
 	private boolean confirmTravel(CityTransportDefinition destinationDefinition) {
 		Scenario destination = scenarioCatalog.getById(destinationDefinition.getDestinationScenarioId());
-		ConsoleUI.clearScreen();
+		String feedbackMessage = null;
+
 		while (true) {
+		    ConsoleUI.clearScreen();
 			System.out.println(
 					"\nViajar para " + destination.getName() + " por "
 							+ GameCurrency.format(destinationDefinition.getPrice()) + "?"
 			);
-
+			if (feedbackMessage != null) {
+			    System.out.println();
+			    ConsoleUI.displayWrappedText(feedbackMessage);
+			}
 			System.out.println();
 			System.out.println("[1] Confirmar");
 			System.out.println("[0] Cancelar");
@@ -168,7 +173,7 @@ public final class CityTransportMenu {
 				return false;
 			}
 
-			default -> System.out.println("Opção inválida.");
+			default -> feedbackMessage = "Opção inválida.";
 			}
 		}
 	}

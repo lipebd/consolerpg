@@ -305,7 +305,7 @@ public class Battle {
 		System.out.println("Rank: " + analyzedEnemy.getRank());
 
 		System.out.println();
-		System.out.println(analyzedEnemy.getDescription());
+		ConsoleUI.displayWrappedText(analyzedEnemy.getDescription());
 
 		System.out.println();
 		System.out

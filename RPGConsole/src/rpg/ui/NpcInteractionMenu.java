@@ -29,7 +29,7 @@ public final class NpcInteractionMenu {
                 locationDefinition, "Narrative location definition cannot be null.");
         Objects.requireNonNull(npcDefinition, "NPC definition cannot be null.");
         Objects.requireNonNull(questTitles, "Quest titles cannot be null.");
-
+        String feedbackMessage = null;
         while (true) {
             ConsoleUI.clearScreen();
             System.out.println("[" + cityName.trim().toUpperCase() + "]");
@@ -48,8 +48,10 @@ public final class NpcInteractionMenu {
             int talkOption = questTitles.size() + 1;
 
             System.out.println("[" + talkOption + "] Conversar");
-
-            System.out.println();
+            if (feedbackMessage != null) {
+                System.out.println();
+                ConsoleUI.displayWrappedText(feedbackMessage);
+            }
             System.out.println("[0] Voltar");
             System.out.print("> ");
 
@@ -70,12 +72,12 @@ public final class NpcInteractionMenu {
                     return Selection.talk();
                 }
 
-                System.out.println("Interação inválida.");
-            } catch (NumberFormatException exception) {
-                System.out.println("Digite o número de uma interação.");
-            }
-        }
-    }
+				feedbackMessage = "Interação inválida.";
+			} catch (NumberFormatException exception) {
+				feedbackMessage = "Digite o número de uma interação.";
+			}
+		}
+	}
 
     public enum Action {
         QUEST,

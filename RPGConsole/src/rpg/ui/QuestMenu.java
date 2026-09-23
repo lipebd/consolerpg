@@ -60,12 +60,16 @@ public final class QuestMenu {
 
             if (feedbackMessage != null) {
                 System.out.println();
-                System.out.println(feedbackMessage);
+                ConsoleUI.displayWrappedText(feedbackMessage);
             }
 
             System.out.println();
             System.out.println("[1] Missões ativas");
             System.out.println("[2] Missões concluídas");
+            if (feedbackMessage != null) {
+                System.out.println();
+                ConsoleUI.displayWrappedText(feedbackMessage);
+            }
             System.out.println();
             System.out.println("[0] Voltar");
             System.out.print("> ");
@@ -124,84 +128,75 @@ public final class QuestMenu {
         }
     }
 
-    private Optional<QuestDefinition> selectQuest(
-            String heading, List<QuestDefinition> quests, String emptyMessage) {
-        Objects.requireNonNull(heading, "Quest-list heading cannot be null.");
-        Objects.requireNonNull(quests, "Quest list cannot be null.");
-        Objects.requireNonNull(emptyMessage, "Empty quest-list message cannot be null.");
+	private Optional<QuestDefinition> selectQuest(String heading, List<QuestDefinition> quests, String emptyMessage) {
+		Objects.requireNonNull(heading, "Quest-list heading cannot be null.");
+		Objects.requireNonNull(quests, "Quest list cannot be null.");
+		Objects.requireNonNull(emptyMessage, "Empty quest-list message cannot be null.");
+		String feedbackMessage = null;
+		while (true) {
+			ConsoleUI.clearScreen();
 
-        ConsoleUI.clearScreen();
+			System.out.println("[" + heading + "]");
+			System.out.println();
 
-        System.out.println("[" + heading + "]");
-        System.out.println();
+			if (quests.isEmpty()) {
+				ConsoleUI.displayWrappedText(emptyMessage);
+			} else {
+				for (int index = 0; index < quests.size(); index++) {
+					System.out.println("[" + (index + 1) + "] " + quests.get(index).getTitle());
+				}
+			}
 
-        if (quests.isEmpty()) {
-            System.out.println(emptyMessage);
-        } else {
-            for (int index = 0; index < quests.size(); index++) {
-                System.out.println("[" + (index + 1) + "] " + quests.get(index).getTitle());
-            }
-        }
+			if (feedbackMessage != null) {
+				System.out.println();
+				ConsoleUI.displayWrappedText(feedbackMessage);
+			}
 
-        System.out.println();
-        System.out.println("[0] Voltar");
+			System.out.println();
+			System.out.println("[0] Voltar");
+			System.out.print("> ");
 
-        while (true) {
-            System.out.print("> ");
+			String choice = consoleInput.readTrimmedLine();
 
-            String choice = consoleInput.readTrimmedLine();
+			if (choice.equals("0")) {
+				return Optional.empty();
+			}
 
-            if (choice.equals("0")) {
-                return Optional.empty();
-            }
+			try {
+				int selectedIndex = Integer.parseInt(choice) - 1;
 
-            try {
-                int selectedIndex = Integer.parseInt(choice) - 1;
+				if (selectedIndex < 0 || selectedIndex >= quests.size()) {
+					feedbackMessage = "Missão inválida.";
+					continue;
+				}
 
-                if (selectedIndex < 0 || selectedIndex >= quests.size()) {
-                    System.out.println("Missão inválida.");
-                    continue;
-                }
+				return Optional.of(quests.get(selectedIndex));
+			} catch (NumberFormatException exception) {
+				feedbackMessage = "Digite o número de uma missão.";
+			}
+		}
+	}
 
-                return Optional.of(quests.get(selectedIndex));
+	private void openActiveQuest(QuestDefinition questDefinition) {
+		String feedbackMessage = null;
+		while (questProgress.getStatus(questDefinition.getId()) == QuestStatus.ACTIVE) {
+			QuestStepDefinition currentStep = questProgress.getCurrentStep(questDefinition.getId()).orElseThrow(
+					() -> new IllegalStateException(
+							"Active quest is missing its current step: " + questDefinition.getId()
+					)
+			);
 
-            } catch (NumberFormatException exception) {
-                System.out.println("Digite o número de uma missão.");
-            }
-        }
-    }
+			String questDescription = NarrativeTextProcessor.resolve(questDefinition.getDescription(), party);
 
-    private void openActiveQuest(QuestDefinition questDefinition) {
-        while (questProgress.getStatus(questDefinition.getId()) == QuestStatus.ACTIVE) {
-            QuestStepDefinition currentStep =
-                    questProgress
-                            .getCurrentStep(questDefinition.getId())
-                            .orElseThrow(
-                                    () ->
-                                            new IllegalStateException(
-                                                    "Active quest is missing its current step: "
-                                                            + questDefinition.getId()));
+			String stepDescription = NarrativeTextProcessor.resolve(currentStep.getDescription(), party);
 
-            String questDescription =
-                    NarrativeTextProcessor.resolve(questDefinition.getDescription(), party);
+			List<String> objectiveTexts = currentStep.getObjectives().stream()
+					.map(objective -> NarrativeTextProcessor.resolve(objective.getText(), party)).toList();
 
-            String stepDescription =
-                    NarrativeTextProcessor.resolve(currentStep.getDescription(), party);
+			List<String> rewardSummaries = rewardSummaryFormatter
+					.format(rewardCatalog.getByQuestId(questDefinition.getId()));
 
-            List<String> objectiveTexts =
-                    currentStep.getObjectives().stream()
-                            .map(
-                                    objective ->
-                                            NarrativeTextProcessor.resolve(
-                                                    objective.getText(), party))
-                            .toList();
-
-            List<String> rewardSummaries =
-                    rewardSummaryFormatter.format(
-                            rewardCatalog.getByQuestId(questDefinition.getId()));
-
-            boolean canRetryCompletion =
-                    questProgressCoordinator.canRetryQuestCompletion(questDefinition.getId());
+			boolean canRetryCompletion = questProgressCoordinator.canRetryQuestCompletion(questDefinition.getId());
 
             ConsoleUI.clearScreen();
 
@@ -227,33 +222,36 @@ public final class QuestMenu {
             System.out.println("Recompensas:");
 
             displayRewards(rewardSummaries);
-
             System.out.println();
 
             if (canRetryCompletion) {
                 System.out.println("[1] Concluir missão");
             }
 
-            System.out.println("[0] Voltar");
-
-            while (true) {
-                System.out.print("> ");
-
-                String choice = consoleInput.readTrimmedLine();
-
-                if (choice.equals("0")) {
-                    return;
-                }
-
-                if (choice.equals("1") && canRetryCompletion) {
-                    questProgressCoordinator.retryQuestCompletionAndDisplay(
-                            questDefinition.getId());
-
-                    break;
-                }
-
-                System.out.println("Opção inválida.");
+            if (feedbackMessage != null) {
+                System.out.println();
+                ConsoleUI.displayWrappedText(feedbackMessage);
             }
+
+            System.out.println();
+            System.out.println("[0] Voltar");
+            System.out.print("> ");
+            String choice = consoleInput.readTrimmedLine();
+
+            if (choice.equals("0")) {
+                return;
+            }
+
+            if (choice.equals("1") && canRetryCompletion) {
+                feedbackMessage = null;
+
+                questProgressCoordinator.retryQuestCompletionAndDisplay(
+                        questDefinition.getId());
+
+                continue;
+            }
+
+            feedbackMessage = "Opção inválida.";
         }
     }
 
@@ -270,45 +268,43 @@ public final class QuestMenu {
                     questProgress.getObjectiveProgress(questDefinition.getId(), objective.getId());
 
             String objectiveLine =
-                    "- "
-                            + objectiveTexts.get(index)
+                    objectiveTexts.get(index)
                             + " ("
                             + currentQuantity
                             + "/"
                             + objective.getRequiredQuantity()
                             + ")";
 
-            ConsoleUI.displayWrappedText(objectiveLine);
+            ConsoleUI.displayWrappedText(objectiveLine, "- ");
         }
     }
 
-    private static void displayRewards(List<String> rewardSummaries) {
-        if (rewardSummaries.isEmpty()) {
-            System.out.println("- Nenhuma recompensa material.");
-            return;
-        }
+	private static void displayRewards(List<String> rewardSummaries) {
+		if (rewardSummaries.isEmpty()) {
+			System.out.println("- Nenhuma recompensa material.");
+			return;
+		}
 
-        for (String rewardSummary : rewardSummaries) {
-            System.out.println("- " + rewardSummary);
-        }
-    }
+		for (String rewardSummary : rewardSummaries) {
+			ConsoleUI.displayWrappedText(rewardSummary, "- ");
+		}
+	}
 
-    private void displayCompletedQuest(QuestDefinition questDefinition) {
-        String resolvedDescription =
-                NarrativeTextProcessor.resolve(questDefinition.getDescription(), party);
+	private void displayCompletedQuest(QuestDefinition questDefinition) {
+		String resolvedDescription = NarrativeTextProcessor.resolve(questDefinition.getDescription(), party);
 
-        ConsoleUI.clearScreen();
+		ConsoleUI.clearScreen();
 
-        System.out.println("[MISSÃO CONCLUÍDA]");
-        System.out.println();
-        System.out.println(questDefinition.getTitle());
-        System.out.println();
+		System.out.println("[MISSÃO CONCLUÍDA]");
+		System.out.println();
+		System.out.println(questDefinition.getTitle());
+		System.out.println();
 
-        ConsoleUI.displayWrappedText(resolvedDescription);
+		ConsoleUI.displayWrappedText(resolvedDescription);
 
-        System.out.println();
-        System.out.print("[Enter] Voltar");
+		System.out.println();
+		System.out.print("[Enter] Voltar");
 
-        consoleInput.readLine();
-    }
+		consoleInput.readLine();
+	}
 }

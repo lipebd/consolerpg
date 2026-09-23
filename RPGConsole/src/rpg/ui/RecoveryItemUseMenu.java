@@ -87,50 +87,109 @@ public final class RecoveryItemUseMenu {
 		return true;
 	}
 
-	private void displayRecoveryResult(PlayableCharacter target, RecoveryItemUseResult result) {
+	private void displayRecoveryResult(
+			PlayableCharacter target,
+			RecoveryItemUseResult result
+	) {
 		if (result.getRevivedHp() > 0) {
-			System.out.println(target.getName() + " foi revivido com " + result.getRevivedHp() + " de HP.");
+			ConsoleUI.displayWrappedText(
+					target.getName()
+							+ " foi revivido com "
+							+ result.getRevivedHp()
+							+ " de HP."
+			);
 		}
 
 		if (result.getRecoveredHp() > 0) {
-			System.out.println(target.getName() + " recuperou " + result.getRecoveredHp() + " de HP. HP atual: "
-					+ target.getCurrentHp() + "/" + target.getMaxHp() + ".");
+			ConsoleUI.displayWrappedText(
+					target.getName()
+							+ " recuperou "
+							+ result.getRecoveredHp()
+							+ " de HP. HP atual: "
+							+ target.getCurrentHp()
+							+ "/"
+							+ target.getMaxHp()
+							+ "."
+			);
 		}
 
 		if (result.getRecoveredMp() > 0) {
-			System.out.println(target.getName() + " recuperou " + result.getRecoveredMp() + " de MP. MP atual: "
-					+ target.getCurrentMp() + "/" + target.getMaxMp() + ".");
+			ConsoleUI.displayWrappedText(
+					target.getName()
+							+ " recuperou "
+							+ result.getRecoveredMp()
+							+ " de MP. MP atual: "
+							+ target.getCurrentMp()
+							+ "/"
+							+ target.getMaxMp()
+							+ "."
+			);
 		}
 
 		if (result.getRecoveredSp() > 0) {
-			System.out.println(target.getName() + " recuperou " + result.getRecoveredSp() + " de SP. SP atual: "
-					+ target.getCurrentSp() + "/" + target.getMaxSp() + ".");
+			ConsoleUI.displayWrappedText(
+					target.getName()
+							+ " recuperou "
+							+ result.getRecoveredSp()
+							+ " de SP. SP atual: "
+							+ target.getCurrentSp()
+							+ "/"
+							+ target.getMaxSp()
+							+ "."
+			);
 		}
 
 		if (result.purifiedStatusEffects()) {
-			System.out.println(target.getName() + " teve seus efeitos negativos removidos.");
+			ConsoleUI.displayWrappedText(
+					target.getName()
+							+ " teve seus efeitos negativos removidos."
+			);
 		}
 	}
 
-	private void displayItemUse(PlayableCharacter actingCharacter, PlayableCharacter target,
-			RecoveryItem recoveryItem) {
+	private void displayItemUse(
+			PlayableCharacter actingCharacter,
+			PlayableCharacter target,
+			RecoveryItem recoveryItem
+	) {
 		if (actingCharacter == null || actingCharacter == target) {
-			System.out.println(target.getName() + " usou " + recoveryItem.getName() + ".");
+			ConsoleUI.displayWrappedText(
+					target.getName()
+							+ " usou "
+							+ recoveryItem.getName()
+							+ "."
+			);
 
 			return;
 		}
 
-		System.out.println(
-				actingCharacter.getName() + " usou " + recoveryItem.getName() + " em " + target.getName() + ".");
+		ConsoleUI.displayWrappedText(
+				actingCharacter.getName()
+						+ " usou "
+						+ recoveryItem.getName()
+						+ " em "
+						+ target.getName()
+						+ "."
+		);
 	}
 
-	private void displayGroupItemUse(PlayableCharacter actingCharacter, RecoveryItem recoveryItem) {
+	private void displayGroupItemUse(
+			PlayableCharacter actingCharacter,
+			RecoveryItem recoveryItem
+	) {
 		if (actingCharacter == null) {
-			System.out.println("O grupo usou " + recoveryItem.getName() + ".");
+			ConsoleUI.displayWrappedText(
+					"O grupo usou " + recoveryItem.getName() + "."
+			);
 
 			return;
 		}
 
-		System.out.println(actingCharacter.getName() + " usou " + recoveryItem.getName() + " no grupo.");
+		ConsoleUI.displayWrappedText(
+				actingCharacter.getName()
+						+ " usou "
+						+ recoveryItem.getName()
+						+ " no grupo."
+		);
 	}
 }

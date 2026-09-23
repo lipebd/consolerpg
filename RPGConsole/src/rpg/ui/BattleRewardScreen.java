@@ -73,11 +73,20 @@ public final class BattleRewardScreen {
 		System.out.println("\nLimites atingidos:");
 
 		if (discardedGold > 0) {
-			System.out.println("  GOLD descartado: " + GameCurrency.format(discardedGold));
+			ConsoleUI.displayWrappedText(
+					"GOLD descartado: " + GameCurrency.format(discardedGold),
+					"  "
+			);
 		}
 
 		for (Map.Entry<Item, Integer> entry : discardedItems.entrySet()) {
-			System.out.println("  Item descartado: " + entry.getKey().getName() + " x" + entry.getValue());
+			ConsoleUI.displayWrappedText(
+					"Item descartado: "
+							+ entry.getKey().getName()
+							+ " x"
+							+ entry.getValue(),
+					"  "
+			);
 		}
 	}
 
@@ -147,14 +156,23 @@ public final class BattleRewardScreen {
 
 			String levelWord = levelsGained == 1 ? "nível" : "níveis";
 
-			String message = "- " + result.getCharacter().getName() + " subiu " + levelsGained + " " + levelWord + "! ["
-					+ result.getPreviousLevel() + " -> " + result.getCurrentLevel() + "]";
+			String message =
+					result.getCharacter().getName()
+							+ " subiu "
+							+ levelsGained
+							+ " "
+							+ levelWord
+							+ "! ["
+							+ result.getPreviousLevel()
+							+ " -> "
+							+ result.getCurrentLevel()
+							+ "]";
 
 			if (result.wereResourcesRestored()) {
 				message += " | HP/MP/SP restaurados";
 			}
 
-			System.out.println(message);
+			ConsoleUI.displayWrappedText(message, "- ");
 
 			displayNaturalStatGrowth(result);
 			displayNewlyUnlockedSkills(result);
@@ -191,12 +209,21 @@ public final class BattleRewardScreen {
 		String skillNames = String.join(" | ", newlyUnlockedSkills.stream().map(SkillDefinition::getName).toList());
 
 		if (newlyUnlockedSkills.size() == 1) {
-			System.out.println("  " + characterName + " aprendeu " + skillNames + "!");
+			ConsoleUI.displayWrappedText(
+					characterName + " aprendeu " + skillNames + "!",
+					"  "
+			);
 
 			return;
 		}
 
-		System.out.println("  " + characterName + " aprendeu novas habilidades: " + skillNames + ".");
+		ConsoleUI.displayWrappedText(
+				characterName
+						+ " aprendeu novas habilidades: "
+						+ skillNames
+						+ ".",
+				"  "
+		);
 	}
 
 	private String formatGrowth(String label, int previousValue, int currentValue) {

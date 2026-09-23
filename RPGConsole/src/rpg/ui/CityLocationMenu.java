@@ -19,7 +19,7 @@ public final class CityLocationMenu {
 		if (locationNames.isEmpty()) {
 			throw new IllegalArgumentException("City location names cannot be empty.");
 		}
-
+		String feedbackMessage = null;
 		while (true) {
 			ConsoleUI.clearScreen();
 			System.out.println("[" + cityName.toUpperCase() + "]");
@@ -30,7 +30,10 @@ public final class CityLocationMenu {
 						"[" + (index + 1) + "] " + locationNames.get(index)
 				);
 			}
-
+			if (feedbackMessage != null) {
+			    System.out.println();
+			    ConsoleUI.displayWrappedText(feedbackMessage);
+			}
 			System.out.println();
 			System.out.println("[0] Voltar");
 			System.out.print("> ");
@@ -45,14 +48,14 @@ public final class CityLocationMenu {
 				int selectedIndex = Integer.parseInt(choice) - 1;
 
 				if (selectedIndex < 0 || selectedIndex >= locationNames.size()) {
-					System.out.println("Local inválido.");
+					feedbackMessage = "Local inválido.";
 					continue;
 				}
 
 				return OptionalInt.of(selectedIndex);
 
 			} catch (NumberFormatException exception) {
-				System.out.println("Digite o número de um local.");
+				feedbackMessage = "Digite o número da opção desejada.";
 			}
 		}
 	}

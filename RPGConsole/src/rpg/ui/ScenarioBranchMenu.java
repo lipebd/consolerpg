@@ -37,7 +37,7 @@ public final class ScenarioBranchMenu {
 				String marker =
 				        markedDestinationScenarioIds.contains(
 				                branch.getDestinationScenarioId())
-				                ? "\\u001B[33m[!]\\u001B[0m "
+				                ? "\u001B[33m[!]\u001B[0m "
 				                : "";
 
 				System.out.println(

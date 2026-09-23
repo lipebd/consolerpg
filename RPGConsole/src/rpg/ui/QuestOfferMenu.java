@@ -18,7 +18,7 @@ public final class QuestOfferMenu {
         Objects.requireNonNull(headerLines, "Quest offer header lines cannot be null.");
 
         Objects.requireNonNull(questDefinition, "Quest definition cannot be null.");
-
+        String feedbackMessage = null;
         while (true) {
             ConsoleUI.clearScreen();
 
@@ -32,6 +32,11 @@ public final class QuestOfferMenu {
             System.out.println();
             System.out.println("[1] Aceitar");
             System.out.println("[2] Recusar");
+            if (feedbackMessage != null) {
+                System.out.println();
+                ConsoleUI.displayWrappedText(feedbackMessage);
+            }
+
             System.out.print("> ");
 
             String choice = consoleInput.readTrimmedLine();
@@ -45,7 +50,7 @@ public final class QuestOfferMenu {
                     return Selection.DECLINE;
                 }
 
-                default -> System.out.println("Escolha inválida.");
+                default -> feedbackMessage = "Escolha inválida.";
             }
         }
     }

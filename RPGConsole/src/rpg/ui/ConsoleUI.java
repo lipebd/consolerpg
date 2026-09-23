@@ -1,13 +1,16 @@
 package rpg.ui;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 // Provides shared console presentation utilities.
 public final class ConsoleUI {
 
 	private static final int ACTION_MENU_COLUMN_WIDTH = 25;
 	private static final int TEXT_COLUMN_WIDTH = 75;
+	private static final Pattern ANSI_ESCAPE_PATTERN = Pattern.compile("\u001B\\[[0-9;]*m");
 
 	private ConsoleUI() {
 	}
@@ -36,8 +39,7 @@ public final class ConsoleUI {
 			if (index == lastIndex - 1) {
 				System.out.println(option);
 			} else {
-				String visibleOption = option.replaceAll("\u001B\\[[0-9;]*m", "");
-				int padding = Math.max(0, ACTION_MENU_COLUMN_WIDTH - visibleOption.length());
+				int padding = Math.max(0, ACTION_MENU_COLUMN_WIDTH - getVisibleLength(option));
 
 				System.out.print(option + " ".repeat(padding));
 			}
@@ -75,54 +77,76 @@ public final class ConsoleUI {
 	}
 
 	public static void displayWrappedText(String text) {
-	    Objects.requireNonNull(
-	            text,
-	            "Displayed text cannot be null.");
-
-	    String[] paragraphs = text.split("\n", -1);
-
-	    for (String paragraph : paragraphs) {
-	        if (paragraph.isBlank()) {
-	            System.out.println();
-	            continue;
-	        }
-
-	        displayWrappedParagraph(paragraph);
-	    }
+		displayWrappedText(text, "");
 	}
 
-	private static void displayWrappedParagraph(String paragraph) {
-	    String[] words = paragraph.trim().split("\\s+");
-	    StringBuilder currentLine = new StringBuilder();
+	public static void displayWrappedText(String text, String linePrefix) {
+		for (String line : wrapText(text, linePrefix)) {
+			System.out.println(line);
+		}
+	}
 
-	    for (String word : words) {
-	        if (currentLine.isEmpty()) {
-	            currentLine.append(word);
-	            continue;
-	        }
+	static List<String> wrapText(String text) {
+		return wrapText(text, "");
+	}
 
-	        int resultingLength =
-	                currentLine.codePointCount(
-	                        0,
-	                        currentLine.length())
-	                        + 1
-	                        + word.codePointCount(
-	                                0,
-	                                word.length());
+	private static List<String> wrapText(String text, String linePrefix) {
+		Objects.requireNonNull(text, "Displayed text cannot be null.");
+		Objects.requireNonNull(linePrefix, "Line prefix cannot be null.");
 
-	        if (resultingLength <= TEXT_COLUMN_WIDTH) {
-	            currentLine.append(' ').append(word);
-	            continue;
-	        }
+		int availableWidth = TEXT_COLUMN_WIDTH - getVisibleLength(linePrefix);
 
-	        System.out.println(currentLine);
-	        currentLine.setLength(0);
-	        currentLine.append(word);
-	    }
+		if (availableWidth <= 0) {
+			throw new IllegalArgumentException("Line prefix must leave visible space for text.");
+		}
 
-	    if (!currentLine.isEmpty()) {
-	        System.out.println(currentLine);
-	    }
+		List<String> wrappedLines = new ArrayList<>();
+		String[] paragraphs = text.split("\n", -1);
+
+		for (String paragraph : paragraphs) {
+			if (paragraph.isBlank()) {
+				wrappedLines.add("");
+				continue;
+			}
+
+			appendWrappedParagraph(wrappedLines, paragraph, linePrefix, availableWidth);
+		}
+
+		return List.copyOf(wrappedLines);
+	}
+
+	private static void
+			appendWrappedParagraph(List<String> wrappedLines, String paragraph, String linePrefix, int availableWidth) {
+		String[] words = paragraph.trim().split("\\s+");
+		StringBuilder currentLine = new StringBuilder();
+
+		for (String word : words) {
+			if (currentLine.isEmpty()) {
+				currentLine.append(word);
+				continue;
+			}
+
+			int resultingLength = getVisibleLength(currentLine.toString()) + 1 + getVisibleLength(word);
+
+			if (resultingLength <= availableWidth) {
+				currentLine.append(' ').append(word);
+				continue;
+			}
+
+			wrappedLines.add(linePrefix + currentLine);
+			currentLine.setLength(0);
+			currentLine.append(word);
+		}
+
+		if (!currentLine.isEmpty()) {
+			wrappedLines.add(linePrefix + currentLine);
+		}
+	}
+
+	private static int getVisibleLength(String text) {
+		String visibleText = ANSI_ESCAPE_PATTERN.matcher(text).replaceAll("");
+
+		return visibleText.codePointCount(0, visibleText.length());
 	}
 
 }

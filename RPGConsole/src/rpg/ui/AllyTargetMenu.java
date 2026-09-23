@@ -62,7 +62,7 @@ public final class AllyTargetMenu {
 			String emptyMessage
 	) {
 		if (availableMembers.isEmpty()) {
-			System.out.println(emptyMessage);
+			ConsoleUI.displayWrappedText(emptyMessage);
 			return Optional.empty();
 		}
 

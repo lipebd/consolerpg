@@ -24,38 +24,38 @@ public final class PartyRescueScreen {
 		if (rescueCost < 0) {
 			throw new IllegalArgumentException("Rescue cost cannot be negative.");
 		}
+		ConsoleUI.clearScreen();
+		System.out.println("[DERROTA]");
 
-		System.out.println("\n[DERROTA]");
+		System.out.println("\nPressione ENTER para continuar...");
 
-		System.out.println("\n" + defeatedScenario.getRescueDescription());
+		System.out.print("> ");
+		consoleInput.readLine();
+		ConsoleUI.displayWrappedText(defeatedScenario.getRescueDescription());
 
-		System.out.println("\nDestino do resgate: " + rescueDestination.getName());
+		System.out.println();
+		System.out.println("Destino: " + rescueDestination.getName());
 
 		displayRestorationMessage(party);
 
 		System.out.println("Custo do resgate e dos cuidados: " + GameCurrency.format(rescueCost));
-
-		waitForContinue();
+		System.out.println();
+		System.out.println("Pressione ENTER para continuar...");
+		System.out.print("> ");
+		consoleInput.readLine();
 	}
 
 	private void displayRestorationMessage(Party party) {
+		System.out.println();
+
 		if (party.size() == 1) {
-			System.out.println(
-					"\n" + party.getLeader().getName() + " foi resgatado e teve suas forças completamente restauradas."
+			ConsoleUI.displayWrappedText(
+					party.getLeader().getName() + " foi resgatado e teve suas saúde restabelecida."
 			);
 
 			return;
 		}
 
-		System.out.println(
-				"\nTodos os integrantes do grupo foram resgatados e tiveram suas forças completamente restauradas."
-		);
-	}
-
-	private void waitForContinue() {
-		System.out.println("\nPressione ENTER para continuar...");
-
-		System.out.print("> ");
-		consoleInput.readLine();
+		ConsoleUI.displayWrappedText("Todos os integrantes foram resgatados e tiveram a saúde restabelecida.");
 	}
 }

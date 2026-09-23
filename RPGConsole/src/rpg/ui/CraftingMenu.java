@@ -120,19 +120,16 @@ public final class CraftingMenu {
 						+ crafterDefinition.getName().toUpperCase(Locale.ROOT)
 						+ "]"
 		);
-
 		System.out.println();
-		System.out.println(crafterDefinition.getDescription());
-
-		if (feedbackMessage != null) {
-			System.out.println();
-			System.out.println(feedbackMessage);
-		}
-
+		ConsoleUI.displayWrappedText(crafterDefinition.getDescription());
 		System.out.println();
 		System.out.println("Receitas disponíveis:");
 
 		for (int index = 0; index < recipes.size(); index++) {
+			if (feedbackMessage != null) {
+			    System.out.println();
+			    ConsoleUI.displayWrappedText(feedbackMessage);
+			}
 			System.out.println(
 					"["
 							+ (index + 1)
@@ -148,9 +145,10 @@ public final class CraftingMenu {
 
 	private String openRecipe(
 			CraftingRecipeDefinition recipeDefinition) {
-		ConsoleUI.clearScreen();
+
+		String feedbackMessage = null;
 		while (true) {
-			displayRecipe(recipeDefinition);
+			displayRecipe(recipeDefinition, feedbackMessage);
 
 			String choice = consoleInput.readTrimmedLine();
 
@@ -175,13 +173,15 @@ public final class CraftingMenu {
 				return null;
 			}
 
-			default -> System.out.println("Opção inválida.");
+			default -> feedbackMessage = "Opção inválida.";
 			}
 		}
 	}
 
 	private void displayRecipe(
-			CraftingRecipeDefinition recipeDefinition) {
+	        CraftingRecipeDefinition recipeDefinition,
+	        String feedbackMessage
+	) {
 		Item outputItem =
 				itemCatalog.getById(recipeDefinition.getOutputItemId());
 		ConsoleUI.clearScreen();
@@ -192,7 +192,7 @@ public final class CraftingMenu {
 		);
 
 		System.out.println();
-		System.out.println(recipeDefinition.getDescription());
+		ConsoleUI.displayWrappedText(recipeDefinition.getDescription());
 
 		System.out.println();
 		System.out.println("Produz:");
@@ -222,6 +222,12 @@ public final class CraftingMenu {
 
 		System.out.println();
 		System.out.println("[1] Fabricar");
+		if (feedbackMessage != null) {
+		    System.out.println();
+		    ConsoleUI.displayWrappedText(feedbackMessage);
+		}
+
+		System.out.println();
 		System.out.println("[0] Voltar");
 		System.out.print("> ");
 	}
@@ -229,7 +235,6 @@ public final class CraftingMenu {
 	private String getCraftingFeedback(
 			CraftingResult result,
 			CraftingRecipeDefinition recipeDefinition) {
-		ConsoleUI.clearScreen();
 		return switch (result.getOutcome()) {
 		case SUCCESS ->
 			"Você fabricou "

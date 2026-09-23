@@ -143,7 +143,7 @@ public final class BattleItemMenu {
 			System.out.println("\n[" + recoveryItem.getName().toUpperCase(Locale.ROOT) + "]");
 
 			System.out.println();
-			System.out.println(recoveryItem.getDescription());
+			ConsoleUI.displayWrappedText(recoveryItem.getDescription());
 
 			System.out.println();
 			System.out.println("Categoria: " + recoveryItem.getCategory());

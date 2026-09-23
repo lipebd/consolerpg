@@ -50,7 +50,7 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.world.rewards` | External exploration reward pools, validation and weighted selection | `ExplorationRewardEntry`, `ExplorationRewardCatalog`, `ExplorationRewardLoader`, `ExplorationRewardGenerator`, `ExplorationReward`, `ExplorationRewardType` |
 | `rpg.world.travel` | External directed-route definitions, loading and runtime unlock progress | `TravelRouteDefinition`, `TravelCatalog`, `TravelRouteLoader`, `TravelProgress` |
 | `rpg.world.transport` | External paid city-transport definitions, loading and destination lookup | `CityTransportDefinition`, `CityTransportCatalog`, `CityTransportLoader` |
-| `rpg.ui` | Console menus, character creation, navigation, dialogue presentation, quest interaction, target selection, shared formatters and information screens | `TitleScreen`, `CharacterCreationMenu`, `PartyRescueScreen`, `CombatScenarioMenu`, `CityMenu`, `CityLocationMenu`, `NarrativeLocationMenu`, `NpcInteractionMenu`, `DialoguePresenter`, `QuestOfferMenu`, `QuestProgressPresenter`, `QuestRewardSummaryFormatter`, `InventoryMenu`, `EquipmentMenu`, `ShopMenu`, `AllyRecruitmentMenu`, `ClassPathTransitionFailurePresenter` |
+| `rpg.ui` | Console input, centralized wrapping and clearing, menus, character creation, navigation, dialogue and quest presentation, target selection, shared formatters and information screens | `ConsoleUI`, `ConsoleInput`, `TitleScreen`, `CharacterCreationMenu`, `PartyRescueScreen`, `CombatScenarioMenu`, `CityMenu`, `InventoryMenu`, `EquipmentMenu`, `ShopMenu`, `CraftingMenu`, `DialoguePresenter`, `QuestMenu`, `QuestProgressPresenter` |
 
 ## Application initialization
 
@@ -1367,6 +1367,14 @@ The UI package contains console-specific behavior:
 - Asking for confirmations.
 - Waiting for the player to continue.
 
+`ConsoleUI` owns shared console-level presentation behavior. Automatic wrapping uses a fixed width of 75 visible columns. ANSI escape sequences do not consume visible width, and the same internal visible-length rule is reused by wrapping and aligned action rows. Explicit line breaks remain authored paragraph or structural boundaries, consecutive intentional blank lines are preserved, and an isolated word wider than the available width remains intact.
+
+Wrapped output may receive a stable prefix such as indentation or a list marker. The prefix is preserved on every automatically wrapped line and after every explicit line break. The wrapping calculation remains reusable inside `rpg.ui` so later animated dialogue output can consume the same resolved lines instead of implementing another wrapping algorithm.
+
+Headings, options, prompts, blank lines, separators, status values, columns and tables remain under direct `print`, `println` or `printf` control. Iterative standalone screens retain feedback as render state and redraw in the order of clearing, headings, content, primary actions, feedback, return action and prompt. Valid navigation clears obsolete feedback before opening or returning from a nested screen.
+
+`ConsoleUI.clearScreen()` owns the cursor movement, terminal clearing and flush required to apply the clear command. Ordinary screens do not scatter additional explicit flush calls. Timed dialogue, battle and transition output may define their own later presentation contracts.
+
 Important UI components include:
 
 - `CombatScenarioMenu`
@@ -1427,8 +1435,6 @@ Important UI components include:
 `PartyRescueScreen` receives already resolved rescue information from `World`. It does not calculate costs, spend gold, restore characters, discover scenarios or change the current scenario.
 
 `World` selects the appropriate menu according to the runtime scenario type. Combat actions are built incrementally from exploration progress, available branches, unlocked routes and paid-transport availability, then displayed by `CombatScenarioMenu`. City actions are built from functional locations, unlocked exits and paid-transport availability, then displayed by `CityMenu`. Both menus preserve continuous numbering, omit unavailable actions and separate action groups through whitespace.
-
-Narrative-location navigation remains iterative. `NarrativeLocationMenu` displays the city and location headers, visible NPCs and the empty-location message. `NpcInteractionMenu` displays the same contextual headers, the selected NPC's identity and description, currently available quest interactions in stable quest-catalog order and the permanent `Conversar` option after them.
 
 `DialoguePresenter` resolves every speaker and placeholder before displaying the first utterance. This prevents a later invalid line from interrupting a dialogue after partial presentation or after a related mutation. Each utterance advances only after Enter. Narrative-location dialogues include city and location headers, while the presenter remains reusable for dialogues initiated outside those locations.
 
@@ -1555,9 +1561,9 @@ The following implementations remain intentionally temporary:
 - Enemy actions currently use basic attacks; enemy skill selection can reuse the skill executor later but is outside the current scope.
 - The first recruitment composes with the level-7 class-path ceremony. Later recruitments remain narrative events and will reuse the generic recruitment components without repeating the ceremony.
 - Non-empty quest, flag and candidate restart verification remains pending canonical Part 10 content; the implemented version-3 schema and empty-narrative restart baseline are complete.
-- Narrative text uses automatic wrapping, while older map, enemy, item and other description screens retain their existing presentation until the post-V6 interface review.
+- `CityMenu`, `CombatScenarioMenu` and `ScenarioBranchMenu` still depend on location context rendered by `World`. Their complete redraw and the location-aware epic-encounter heading remain scheduled for the V7 location-heading pass.
 - `Battle` remains large and may later be divided into more focused action services.
 - Permanent skill-scroll items, skills and curated enemy drops remain deferred until their draft effects receive the required combat mechanics and final content review. Scroll-skill preservation across class transition is structurally implemented but cannot yet be exercised with canonical content.
 - Only the first ceremony-composed recruitment currently has runtime orchestration. Although `quest_recruitments.txt` structurally accepts up to three definitions, second- and third-ally records must wait for their narrative recruitment dispatcher.
 
-These limitations are tracked in `V6_ROADMAP.md` and should be replaced incrementally instead of through one large rewrite.
+These limitations are tracked in the active roadmap or later-version planning and should be replaced incrementally instead of through one large rewrite.

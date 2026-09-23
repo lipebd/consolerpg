@@ -28,11 +28,16 @@ public final class PartyStatusMenu {
 	}
 
 	public void open() {
+		String feedbackMessage = null;
 		while (true) {
+			ConsoleUI.clearScreen();
+
 			List<PlayableCharacter> members = party.getMembers();
-
 			displayPartyStatus(members);
-
+			if (feedbackMessage != null) {
+			    System.out.println();
+			    ConsoleUI.displayWrappedText(feedbackMessage);
+			}
 			System.out.println("\n[0] Voltar");
 			System.out.print("> ");
 
@@ -46,17 +51,19 @@ public final class PartyStatusMenu {
 				int selectedIndex = Integer.parseInt(choice) - 1;
 
 				if (selectedIndex < 0 || selectedIndex >= members.size()) {
-					System.out.println("Integrante inválido.");
-
+					feedbackMessage = "Integrante inválido.";
 					continue;
 				}
 
-				PlayableCharacter selectedCharacter = members.get(selectedIndex);
+				feedbackMessage = null;
+
+				PlayableCharacter selectedCharacter =
+				        members.get(selectedIndex);
 
 				characterStatusMenu.open(selectedCharacter);
 
 			} catch (NumberFormatException exception) {
-				System.out.println("Digite o número de um integrante.");
+				feedbackMessage = "Digite o número de um integrante.";
 			}
 		}
 	}

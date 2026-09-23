@@ -68,69 +68,63 @@ public final class QuestProgressPresenter {
         consoleInput.readLine();
     }
 
-    private void displayUpdates(List<QuestProgressUpdate> updates) {
-        for (QuestProgressUpdate update : updates) {
-            QuestDefinition questDefinition = questCatalog.getById(update.getQuestId());
+	private void displayUpdates(List<QuestProgressUpdate> updates) {
+		for (QuestProgressUpdate update : updates) {
+			QuestDefinition questDefinition = questCatalog.getById(update.getQuestId());
 
-            switch (update.getUpdateType()) {
-                case OBJECTIVE_PROGRESS ->
-                        System.out.println(
-                                questDefinition.getTitle()
-                                        + ": "
-                                        + update.getCurrentQuantity()
-                                        + "/"
-                                        + update.getRequiredQuantity()
-                                        + ".");
+			switch (update.getUpdateType()) {
+			case OBJECTIVE_PROGRESS -> ConsoleUI.displayWrappedText(
+					questDefinition.getTitle() + ": " + update.getCurrentQuantity() + "/" + update.getRequiredQuantity()
+							+ "."
+			);
 
-                case OBJECTIVE_COMPLETED ->
-                        System.out.println(questDefinition.getTitle() + ": objetivo concluído.");
+			case OBJECTIVE_COMPLETED ->
+				ConsoleUI.displayWrappedText(questDefinition.getTitle() + ": objetivo concluído.");
 
-                case STEP_COMPLETED -> {
-                    QuestStepDefinition stepDefinition = getStep(questDefinition, update.getStep());
+			case STEP_COMPLETED -> {
+				QuestStepDefinition stepDefinition = getStep(questDefinition, update.getStep());
 
-                    System.out.println(
-                            questDefinition.getTitle()
-                                    + ": etapa concluída — "
-                                    + stepDefinition.getTitle()
-                                    + ".");
-                }
+				ConsoleUI.displayWrappedText(
+						questDefinition.getTitle() + ": etapa concluída — " + stepDefinition.getTitle() + "."
+				);
+			}
 
-                case QUEST_COMPLETED ->
-                        System.out.println("Quest concluída: " + questDefinition.getTitle() + ".");
-            }
-        }
+			case QUEST_COMPLETED ->
+				ConsoleUI.displayWrappedText("Quest concluída: " + questDefinition.getTitle() + ".");
+			}
+		}
 
-        if (!updates.isEmpty()) {
-            System.out.println();
-        }
-    }
+		if (!updates.isEmpty()) {
+			System.out.println();
+		}
+	}
 
-    private static void displayEffects(
-            List<String> effectDisplayTexts) {
-        if (effectDisplayTexts.isEmpty()) {
-            return;
-        }
+	private static void displayEffects(
+			List<String> effectDisplayTexts) {
+		if (effectDisplayTexts.isEmpty()) {
+			return;
+		}
 
-        for (String displayText : effectDisplayTexts) {
-            System.out.println("- " + displayText);
-        }
+		for (String displayText : effectDisplayTexts) {
+			ConsoleUI.displayWrappedText(displayText, "- ");
+		}
 
-        System.out.println();
-    }
+		System.out.println();
+	}
 
-    private void displayFailures(List<QuestCompletionFailure> failures) {
-        if (failures.isEmpty()) {
-            return;
-        }
+	private void displayFailures(List<QuestCompletionFailure> failures) {
+		if (failures.isEmpty()) {
+			return;
+		}
 
-        System.out.println("Não foi possível concluir:");
+		System.out.println("Não foi possível concluir:");
 
-        for (QuestCompletionFailure failure : failures) {
-            System.out.println("- " + describeFailure(failure));
-        }
+		for (QuestCompletionFailure failure : failures) {
+			ConsoleUI.displayWrappedText(describeFailure(failure), "- ");
+		}
 
-        System.out.println();
-    }
+		System.out.println();
+	}
 
     private String describeFailure(QuestCompletionFailure failure) {
         return switch (failure.getFailureType()) {
@@ -168,32 +162,31 @@ public final class QuestProgressPresenter {
         };
     }
 
-    private void displayCompletedQuestRewards(List<QuestProgressUpdate> updates) {
-        for (QuestProgressUpdate update : updates) {
-            if (update.getUpdateType() != QuestProgressUpdateType.QUEST_COMPLETED) {
-                continue;
-            }
+	private void displayCompletedQuestRewards(List<QuestProgressUpdate> updates) {
+		for (QuestProgressUpdate update : updates) {
+			if (update.getUpdateType() != QuestProgressUpdateType.QUEST_COMPLETED) {
+				continue;
+			}
 
-            QuestDefinition questDefinition = questCatalog.getById(update.getQuestId());
+			QuestDefinition questDefinition = questCatalog.getById(update.getQuestId());
 
-            List<QuestRewardDefinition> rewards =
-                    rewardCatalog.getByQuestId(questDefinition.getId());
+			List<QuestRewardDefinition> rewards = rewardCatalog.getByQuestId(questDefinition.getId());
 
-            System.out.println("Recompensas — " + questDefinition.getTitle() + ":");
+			System.out.println("Recompensas — " + questDefinition.getTitle() + ":");
 
-            List<String> rewardSummaries = rewardSummaryFormatter.format(rewards);
+			List<String> rewardSummaries = rewardSummaryFormatter.format(rewards);
 
-            if (rewardSummaries.isEmpty()) {
-                System.out.println("- Nenhuma recompensa material.");
-            } else {
-                for (String rewardSummary : rewardSummaries) {
-                    System.out.println("- " + rewardSummary);
-                }
-            }
+			if (rewardSummaries.isEmpty()) {
+				System.out.println("- Nenhuma recompensa material.");
+			} else {
+				for (String rewardSummary : rewardSummaries) {
+					ConsoleUI.displayWrappedText(rewardSummary, "- ");
+				}
+			}
 
-            System.out.println();
-        }
-    }
+			System.out.println();
+		}
+	}
 
     private static boolean containsQuestCompletion(QuestProgressResult result) {
         for (QuestProgressUpdate update : result.getUpdates()) {

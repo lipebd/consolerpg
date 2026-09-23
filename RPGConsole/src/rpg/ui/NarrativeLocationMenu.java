@@ -9,83 +9,81 @@ import rpg.narrative.NarrativeLocationDefinition;
 // Displays one narrative location and its currently visible NPCs.
 public final class NarrativeLocationMenu {
 
-    private final ConsoleInput consoleInput;
+	private final ConsoleInput consoleInput;
 
-    public NarrativeLocationMenu(ConsoleInput consoleInput) {
-        this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
-    }
+	public NarrativeLocationMenu(ConsoleInput consoleInput) {
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
+	}
 
-    public OptionalInt selectNpc(
-            String cityName,
-            NarrativeLocationDefinition locationDefinition,
-            List<String> npcLabels) {
-        if (cityName == null || cityName.isBlank()) {
-            throw new IllegalArgumentException("City name cannot be empty.");
-        }
-        Objects.requireNonNull(locationDefinition, "Narrative location definition cannot be null.");
+	public OptionalInt
+			selectNpc(String cityName, NarrativeLocationDefinition locationDefinition, List<String> npcLabels) {
+		if (cityName == null || cityName.isBlank()) {
+			throw new IllegalArgumentException("City name cannot be empty.");
+		}
+		Objects.requireNonNull(locationDefinition, "Narrative location definition cannot be null.");
 
-        Objects.requireNonNull(npcLabels, "NPC labels cannot be null.");
+		Objects.requireNonNull(npcLabels, "NPC labels cannot be null.");
 
-        if (npcLabels.isEmpty()) {
-            displayEmptyLocation(cityName, locationDefinition);
-            return OptionalInt.empty();
-        }
+		if (npcLabels.isEmpty()) {
+			displayEmptyLocation(cityName, locationDefinition);
+			return OptionalInt.empty();
+		}
+		String feedbackMessage = null;
+		while (true) {
+			ConsoleUI.clearScreen();
 
-        while (true) {
-            ConsoleUI.clearScreen();
+			displayLocationHeader(cityName, locationDefinition);
 
-            displayLocationHeader(cityName, locationDefinition);
+			for (int index = 0; index < npcLabels.size(); index++) {
+				System.out.println("[" + (index + 1) + "] " + npcLabels.get(index));
+			}
+			if (feedbackMessage != null) {
+				System.out.println();
+				ConsoleUI.displayWrappedText(feedbackMessage);
+			}
+			System.out.println();
+			System.out.println("[0] Voltar");
+			System.out.print("> ");
 
-            for (int index = 0; index < npcLabels.size(); index++) {
-                System.out.println("[" + (index + 1) + "] " + npcLabels.get(index));
-            }
+			String choice = consoleInput.readTrimmedLine();
 
-            System.out.println();
-            System.out.println("[0] Voltar");
-            System.out.print("> ");
+			if (choice.equals("0")) {
+				return OptionalInt.empty();
+			}
 
-            String choice = consoleInput.readTrimmedLine();
+			try {
+				int selectedIndex = Integer.parseInt(choice) - 1;
 
-            if (choice.equals("0")) {
-                return OptionalInt.empty();
-            }
+				if (selectedIndex < 0 || selectedIndex >= npcLabels.size()) {
+					feedbackMessage = "Opção inválida.";
+					continue;
+				}
 
-            try {
-                int selectedIndex = Integer.parseInt(choice) - 1;
+				return OptionalInt.of(selectedIndex);
+			} catch (NumberFormatException exception) {
+				feedbackMessage = "Digite o número da opção desejada.";
+			}
+		}
+	}
 
-                if (selectedIndex < 0 || selectedIndex >= npcLabels.size()) {
-                    System.out.println("Pessoa inválida.");
-                    continue;
-                }
+	private void displayEmptyLocation(String cityName, NarrativeLocationDefinition locationDefinition) {
+		ConsoleUI.clearScreen();
 
-                return OptionalInt.of(selectedIndex);
-            } catch (NumberFormatException exception) {
-                System.out.println("Digite o número de uma pessoa.");
-            }
-        }
-    }
+		displayLocationHeader(cityName, locationDefinition);
 
-    private void displayEmptyLocation(
-            String cityName, NarrativeLocationDefinition locationDefinition) {
-        ConsoleUI.clearScreen();
+		System.out.println("Não há ninguém aqui.");
+		System.out.println();
+		System.out.print("[Enter] Voltar");
 
-        displayLocationHeader(cityName, locationDefinition);
+		consoleInput.readLine();
+	}
 
-        System.out.println("Não há ninguém aqui.");
-        System.out.println();
-        System.out.print("[Enter] Voltar");
+	private static void displayLocationHeader(String cityName, NarrativeLocationDefinition locationDefinition) {
+		System.out.println("[" + cityName.trim().toUpperCase() + "]");
+		System.out.println("[" + locationDefinition.getName().toUpperCase() + "]");
+		System.out.println();
 
-        consoleInput.readLine();
-    }
-
-    private static void displayLocationHeader(
-            String cityName, NarrativeLocationDefinition locationDefinition) {
-        System.out.println("[" + cityName.trim().toUpperCase() + "]");
-        System.out.println("[" + locationDefinition.getName().toUpperCase() + "]");
-        System.out.println();
-
-        ConsoleUI.displayWrappedText(
-                locationDefinition.getDescription());
-        System.out.println();
-    }
+		ConsoleUI.displayWrappedText(locationDefinition.getDescription());
+		System.out.println();
+	}
 }

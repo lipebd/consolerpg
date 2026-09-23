@@ -25,33 +25,31 @@ public final class ShopMenu {
 
 	private static final int ITEMS_PER_PAGE = 8;
 	private static final int PRICE_WIDTH = 14;
-
 	private final QuestProgressCoordinator questProgressCoordinator;
 	private final WorldClock worldClock;
 	private final Party party;
 	private final ConsoleInput consoleInput;
 	private final ShopTransactionService transactionService;
 
-    public ShopMenu(
-            Party party,
-            ConsoleInput consoleInput,
-            WorldClock worldClock,
-            QuestProgressCoordinator questProgressCoordinator) {
-        this.party = Objects.requireNonNull(party, "Party cannot be null.");
-        this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
-        this.worldClock = Objects.requireNonNull(worldClock, "World clock cannot be null.");
-        this.questProgressCoordinator =
-                Objects.requireNonNull(
-                        questProgressCoordinator, "Quest progress coordinator cannot be null.");
+	public ShopMenu(
+			Party party,
+			ConsoleInput consoleInput,
+			WorldClock worldClock,
+			QuestProgressCoordinator questProgressCoordinator
+	) {
+		this.party = Objects.requireNonNull(party, "Party cannot be null.");
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
+		this.worldClock = Objects.requireNonNull(worldClock, "World clock cannot be null.");
+		this.questProgressCoordinator = Objects
+				.requireNonNull(questProgressCoordinator, "Quest progress coordinator cannot be null.");
 
-        this.transactionService = new ShopTransactionService(this.party);
-    }
+		this.transactionService = new ShopTransactionService(this.party);
+	}
 
 	public void open(ShopState shopState) {
 		Objects.requireNonNull(shopState, "Shop state cannot be null.");
 
 		String feedbackMessage = null;
-
 		while (true) {
 			displayMainMenu(shopState, feedbackMessage);
 
@@ -84,26 +82,24 @@ public final class ShopMenu {
 		System.out.println(WorldTimeFormatter.formatCurrentTime(worldClock));
 		System.out.println("Próxima reposição: " + WorldTimeFormatter.formatNextRestockingTime(worldClock));
 		System.out.println();
-		System.out.println(shopState.getDefinition().getDescription());
+		ConsoleUI.displayWrappedText(shopState.getDefinition().getDescription());
 
 		System.out.println();
 		System.out.println(GameCurrency.getName() + " disponível: " + GameCurrency.format(party.getGold()));
 
-		if (feedbackMessage != null) {
-			System.out.println();
-			System.out.println(feedbackMessage);
-		}
-
 		System.out.println();
 		System.out.println("[1] Comprar");
 		System.out.println("[2] Vender");
+		if (feedbackMessage != null) {
+			System.out.println();
+			ConsoleUI.displayWrappedText(feedbackMessage);
+		}
 		System.out.println();
 		System.out.println("[0] Voltar");
 		System.out.print("> ");
 	}
 
 	private void openPurchaseOffers(ShopState shopState) {
-		ConsoleUI.clearScreen();
 		int currentPage = 0;
 		String feedbackMessage = null;
 
@@ -178,20 +174,19 @@ public final class ShopMenu {
 					continue;
 				}
 
-                ShopPurchaseResult purchaseResult =
-                        transactionService.purchase(shopState, selectedOffer, quantity);
+				ShopPurchaseResult purchaseResult = transactionService.purchase(shopState, selectedOffer, quantity);
 
-                if (purchaseResult == ShopPurchaseResult.SUCCESS) {
-                    Item purchasedItem = selectedOffer.getStockEntry().getItem();
+				if (purchaseResult == ShopPurchaseResult.SUCCESS) {
+					Item purchasedItem = selectedOffer.getStockEntry().getItem();
 
-                    QuestProgressEvent itemEvent =
-                            new QuestProgressEvent(
-                                    QuestProgressEventType.ITEM_OBTAINED,
-                                    Optional.of(purchasedItem.getId()),
-                                    quantity);
+					QuestProgressEvent itemEvent = new QuestProgressEvent(
+							QuestProgressEventType.ITEM_OBTAINED,
+							Optional.of(purchasedItem.getId()),
+							quantity
+					);
 
-                    questProgressCoordinator.processAndDisplay(List.of(itemEvent));
-                }
+					questProgressCoordinator.processAndDisplay(List.of(itemEvent));
+				}
 
 				feedbackMessage = getPurchaseFeedback(purchaseResult);
 
@@ -202,7 +197,6 @@ public final class ShopMenu {
 	}
 
 	private OptionalInt selectPurchaseQuantity(ShopOfferState offerState) {
-		ConsoleUI.clearScreen();
 		int availableQuantity = offerState.getRemainingStock();
 
 		if (availableQuantity == 1) {
@@ -210,9 +204,10 @@ public final class ShopMenu {
 		}
 
 		Item item = offerState.getStockEntry().getItem();
-
+		String feedbackMessage = null;
 		while (true) {
-			System.out.println("\n[QUANTIDADE]");
+			ConsoleUI.clearScreen();
+			System.out.println("[QUANTIDADE]");
 
 			System.out.println();
 			System.out.println(item.getName());
@@ -221,6 +216,12 @@ public final class ShopMenu {
 
 			System.out.println();
 			System.out.println("Digite a quantidade que deseja comprar.");
+			if (feedbackMessage != null) {
+				System.out.println();
+				ConsoleUI.displayWrappedText(feedbackMessage);
+			}
+
+			System.out.println();
 			System.out.println("[0] Cancelar");
 			System.out.print("> ");
 
@@ -234,14 +235,14 @@ public final class ShopMenu {
 				int quantity = Integer.parseInt(choice);
 
 				if (quantity < 1 || quantity > availableQuantity) {
-					System.out.println("Quantidade inválida.");
+					feedbackMessage = "Quantidade inválida.";
 					continue;
 				}
 
 				return OptionalInt.of(quantity);
 
 			} catch (NumberFormatException exception) {
-				System.out.println("Digite uma quantidade válida.");
+				feedbackMessage = "Digite uma quantidade válida.";
 			}
 		}
 	}
@@ -250,15 +251,16 @@ public final class ShopMenu {
 		Item item = offerState.getStockEntry().getItem();
 
 		int unitPrice = offerState.getStockEntry().getFinalShopSalePrice();
-
+		String feedbackMessage = null;
 		while (true) {
-			System.out.println("\n[CONFIRMAR COMPRA]");
+			ConsoleUI.clearScreen();
+			System.out.println("[CONFIRMAR COMPRA]");
 
 			System.out.println();
 			System.out.println("[" + item.getName().toUpperCase(Locale.ROOT) + "]");
 
 			System.out.println();
-			System.out.println(item.getDescription());
+			ConsoleUI.displayWrappedText(item.getDescription());
 
 			System.out.println();
 			System.out.println("Quantidade: " + quantity);
@@ -267,6 +269,13 @@ public final class ShopMenu {
 
 			System.out.println();
 			System.out.println("[1] Confirmar");
+
+			if (feedbackMessage != null) {
+				System.out.println();
+				ConsoleUI.displayWrappedText(feedbackMessage);
+			}
+
+			System.out.println();
 			System.out.println("[0] Cancelar");
 			System.out.print("> ");
 
@@ -281,7 +290,7 @@ public final class ShopMenu {
 				return false;
 			}
 
-			default -> System.out.println("Opção inválida.");
+			default -> feedbackMessage = "Opção inválida.";
 			}
 		}
 	}
@@ -313,9 +322,9 @@ public final class ShopMenu {
 				ItemCategory.MATERIAL,
 				ItemCategory.SKILL_SCROLL
 		);
-
+		String feedbackMessage = null;
 		while (true) {
-			displaySaleCategoryMenu(categories);
+			displaySaleCategoryMenu(categories, feedbackMessage);
 
 			String choice = consoleInput.readTrimmedLine();
 
@@ -327,26 +336,32 @@ public final class ShopMenu {
 				int selectedIndex = Integer.parseInt(choice) - 1;
 
 				if (selectedIndex < 0 || selectedIndex >= categories.size()) {
-					System.out.println("Categoria inválida.");
+					feedbackMessage = "Categoria inválida.";
 					continue;
 				}
 
+				feedbackMessage = null;
 				openSaleCategory(categories.get(selectedIndex));
 
 			} catch (NumberFormatException exception) {
-				System.out.println("Digite o número de uma categoria.");
+				feedbackMessage = "Digite o número de uma categoria.";
 			}
 		}
 	}
 
-	private void displaySaleCategoryMenu(List<ItemCategory> categories) {
-		System.out.println("\n[VENDER]");
+	private void displaySaleCategoryMenu(List<ItemCategory> categories, String feedbackMessage) {
+		ConsoleUI.clearScreen();
+		System.out.println("[VENDER]");
 
 		System.out.println();
 		System.out.println("Escolha uma categoria:");
 
 		for (int index = 0; index < categories.size(); index++) {
 			System.out.println("[" + (index + 1) + "] " + getCategoryDisplayName(categories.get(index)));
+		}
+		if (feedbackMessage != null) {
+			System.out.println();
+			ConsoleUI.displayWrappedText(feedbackMessage);
 		}
 
 		System.out.println();
@@ -453,9 +468,10 @@ public final class ShopMenu {
 		if (ownedQuantity == 1) {
 			return OptionalInt.of(1);
 		}
-
+		String feedbackMessage = null;
 		while (true) {
-			System.out.println("\n[QUANTIDADE]");
+			ConsoleUI.clearScreen();
+			System.out.println("[QUANTIDADE]");
 
 			System.out.println();
 			System.out.println(item.getName());
@@ -464,6 +480,12 @@ public final class ShopMenu {
 
 			System.out.println();
 			System.out.println("Digite a quantidade que deseja vender.");
+			if (feedbackMessage != null) {
+				System.out.println();
+				ConsoleUI.displayWrappedText(feedbackMessage);
+			}
+
+			System.out.println();
 			System.out.println("[0] Cancelar");
 			System.out.print("> ");
 
@@ -477,37 +499,44 @@ public final class ShopMenu {
 				int quantity = Integer.parseInt(choice);
 
 				if (quantity < 1 || quantity > ownedQuantity) {
-					System.out.println("Quantidade inválida.");
+					feedbackMessage = "Quantidade inválida.";
 					continue;
 				}
 
 				return OptionalInt.of(quantity);
 
 			} catch (NumberFormatException exception) {
-				System.out.println("Digite uma quantidade válida.");
+				feedbackMessage = "Digite uma quantidade válida.";
 			}
 		}
 	}
 
 	private boolean confirmSale(Item item, int quantity, int totalValue) {
 		int unitPrice = item.getShopPurchasePrice();
-
+		String feedbackMessage = null;
 		while (true) {
-			System.out.println("\n[CONFIRMAR VENDA]");
+			ConsoleUI.clearScreen();
+			System.out.println("[CONFIRMAR VENDA]");
 
 			System.out.println();
 			System.out.println("[" + item.getName().toUpperCase(Locale.ROOT) + "]");
 
 			System.out.println();
-			System.out.println(item.getDescription());
+			ConsoleUI.displayWrappedText(item.getDescription());
 
 			System.out.println();
 			System.out.println("Quantidade: " + quantity);
 			System.out.println("Preço unitário: " + GameCurrency.format(unitPrice));
 			System.out.println("Total: " + GameCurrency.format(totalValue));
-
 			System.out.println();
 			System.out.println("[1] Confirmar");
+
+			if (feedbackMessage != null) {
+				System.out.println();
+				ConsoleUI.displayWrappedText(feedbackMessage);
+			}
+
+			System.out.println();
 			System.out.println("[0] Cancelar");
 			System.out.print("> ");
 
@@ -522,7 +551,7 @@ public final class ShopMenu {
 				return false;
 			}
 
-			default -> System.out.println("Opção inválida.");
+			default -> feedbackMessage = "Opção inválida.";
 			}
 		}
 	}
@@ -561,6 +590,7 @@ public final class ShopMenu {
 			int totalPages,
 			String feedbackMessage
 	) {
+		ConsoleUI.clearScreen();
 		System.out.println(
 				"\n[" + getCategoryDisplayName(category).toUpperCase(Locale.ROOT) + " — PÁGINA " + (currentPage + 1)
 						+ "/" + totalPages + "]"
@@ -604,6 +634,8 @@ public final class ShopMenu {
 			);
 		}
 
+		System.out.println();
+
 		if (currentPage > 0) {
 			System.out.println("[A] Página anterior");
 		}
@@ -614,7 +646,7 @@ public final class ShopMenu {
 
 		if (feedbackMessage != null) {
 			System.out.println();
-			System.out.println(feedbackMessage);
+			ConsoleUI.displayWrappedText(feedbackMessage);
 		}
 
 		System.out.println();
@@ -624,13 +656,13 @@ public final class ShopMenu {
 
 	private void displayEmptySaleCategory(ItemCategory category, String feedbackMessage) {
 		while (true) {
-			System.out.println("\n[" + getCategoryDisplayName(category).toUpperCase(Locale.ROOT) + "]");
-
+			ConsoleUI.clearScreen();
+			System.out.println("[" + getCategoryDisplayName(category).toUpperCase(Locale.ROOT) + "]");
 			System.out.println();
 			System.out.println("Você não possui itens vendáveis nesta categoria.");
 			if (feedbackMessage != null) {
 				System.out.println();
-				System.out.println(feedbackMessage);
+				ConsoleUI.displayWrappedText(feedbackMessage);
 			}
 
 			System.out.println();
@@ -643,7 +675,7 @@ public final class ShopMenu {
 				return;
 			}
 
-			System.out.println("Opção inválida.");
+			feedbackMessage = "Opção inválida.";
 		}
 	}
 
@@ -683,7 +715,8 @@ public final class ShopMenu {
 			int totalPages,
 			String feedbackMessage
 	) {
-		System.out.println("\n[COMPRAR — PÁGINA " + (currentPage + 1) + "/" + totalPages + "]");
+		ConsoleUI.clearScreen();
+		System.out.println("[COMPRAR — PÁGINA " + (currentPage + 1) + "/" + totalPages + "]");
 
 		System.out.println();
 		System.out.println("Selecione um item para comprar:");
@@ -722,6 +755,7 @@ public final class ShopMenu {
 					"--"
 			);
 		}
+		System.out.println();
 
 		if (currentPage > 0) {
 			System.out.println("[A] Página anterior");
@@ -733,7 +767,7 @@ public final class ShopMenu {
 
 		if (feedbackMessage != null) {
 			System.out.println();
-			System.out.println(feedbackMessage);
+			ConsoleUI.displayWrappedText(feedbackMessage);
 		}
 
 		System.out.println();
@@ -743,15 +777,15 @@ public final class ShopMenu {
 
 	private void displayEmptyPurchaseList(String feedbackMessage) {
 		while (true) {
-			System.out.println("\n[COMPRAR]");
+			ConsoleUI.clearScreen();
+			System.out.println("[COMPRAR]");
 
 			System.out.println();
 			System.out.println("Não há itens disponíveis para compra.");
 			if (feedbackMessage != null) {
 				System.out.println();
-				System.out.println(feedbackMessage);
+				ConsoleUI.displayWrappedText(feedbackMessage);
 			}
-
 			System.out.println();
 			System.out.println("[0] Voltar à loja");
 			System.out.print("> ");
@@ -762,7 +796,7 @@ public final class ShopMenu {
 				return;
 			}
 
-			System.out.println("Opção inválida.");
+			feedbackMessage = "Opção inválida.";
 		}
 	}
 }

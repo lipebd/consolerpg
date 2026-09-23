@@ -140,7 +140,7 @@ import rpg.world.travel.TravelRouteLoader;
 
 // Starts the game and controls its initial execution.
 public class Main {
-    private static final String DEVELOPMENT_PARTY_ARGUMENT = "--dev-party";
+    private static final String DEVELOPMENT_PARTY_ARGUMENT = "-dev-party";
 
 	public static void main(String[] args) {
 		try {

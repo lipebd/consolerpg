@@ -57,7 +57,7 @@ public final class InnMenu {
 		ConsoleUI.clearScreen();
 		System.out.println("\n[" + innDefinition.getName().toUpperCase(Locale.ROOT) + "]");
 
-		System.out.println(innDefinition.getDescription());
+		ConsoleUI.displayWrappedText(innDefinition.getDescription());
 
 		String stayPriceLabel = "Estadia do grupo:";
 		String availableGoldLabel = GameCurrency.getName() + " disponível:";
@@ -68,7 +68,7 @@ public final class InnMenu {
 
 		if (feedbackMessage != null) {
 			System.out.println();
-			System.out.println(feedbackMessage);
+			ConsoleUI.displayWrappedText(feedbackMessage);
 		}
 
 		System.out.println();
@@ -102,6 +102,7 @@ public final class InnMenu {
 	}
 
 	private boolean confirmStay(int price) {
+		String feedbackMessage = null;
 		while (true) {
 			ConsoleUI.clearScreen();
 			System.out.println("\nConfirmar estadia por " + GameCurrency.format(price) + "?");
@@ -109,6 +110,11 @@ public final class InnMenu {
 			System.out.println();
 			System.out.println("[1] Confirmar");
 			System.out.println("[0] Cancelar");
+			if (feedbackMessage != null) {
+			    System.out.println();
+			    ConsoleUI.displayWrappedText(feedbackMessage);
+			}
+
 			System.out.print("> ");
 
 			String choice = consoleInput.readTrimmedLine();
@@ -122,7 +128,7 @@ public final class InnMenu {
 				return false;
 			}
 
-			default -> System.out.println("Opção inválida.");
+			default -> feedbackMessage = "Opção inválida.";
 			}
 		}
 	}

@@ -40,14 +40,14 @@ public final class InventoryMenu {
 
 	public boolean open() {
 		List<ItemCategory> categories = List.of(ItemCategory.values());
-
+		String feedbackMessage = null;
 		while (true) {
 			ConsoleUI.clearScreen();
 			System.out.println("[INVENTÁRIO]");
 			System.out.println();
 			System.out.println(GameCurrency.getName() + ": " + GameCurrency.format(party.getGold()));
 
-			displayCategoryMenu(categories);
+			displayCategoryMenu(categories, feedbackMessage);
 
 			String choice = consoleInput.readTrimmedLine();
 
@@ -59,9 +59,11 @@ public final class InventoryMenu {
 				int selectedIndex = Integer.parseInt(choice) - 1;
 
 				if (selectedIndex < 0 || selectedIndex >= categories.size()) {
-					System.out.println("Categoria inválida.");
+					feedbackMessage = "Categoria inválida.";
 					continue;
 				}
+
+				feedbackMessage = null;
 
 				ItemCategory selectedCategory = categories.get(selectedIndex);
 
@@ -72,17 +74,24 @@ public final class InventoryMenu {
 				}
 
 			} catch (NumberFormatException exception) {
-				System.out.println("Digite o número de uma categoria.");
+				feedbackMessage = "Digite o número de uma categoria.";
 			}
 		}
 	}
 
-	private void displayCategoryMenu(List<ItemCategory> categories) {
+	private void displayCategoryMenu(
+	        List<ItemCategory> categories,
+	        String feedbackMessage
+	) {
 		System.out.println();
 		System.out.println("Escolha uma categoria:\n");
 
 		for (int index = 0; index < categories.size(); index++) {
 			System.out.println("[" + (index + 1) + "] " + getCategoryDisplayName(categories.get(index)));
+		}
+		if (feedbackMessage != null) {
+		    System.out.println();
+		    ConsoleUI.displayWrappedText(feedbackMessage);
 		}
 		System.out.println();
 		System.out.println("[0] Fechar inventário");
@@ -100,6 +109,7 @@ public final class InventoryMenu {
 
 		int currentPage = 0;
 
+		String feedbackMessage = null;
 		while (true) {
 			int totalPages = (entries.size() + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE;
 
@@ -109,7 +119,15 @@ public final class InventoryMenu {
 
 			int lastIndex = Math.min(firstIndex + ITEMS_PER_PAGE, entries.size());
 
-			displayItemPage(category, entries, firstIndex, lastIndex, currentPage, totalPages);
+			displayItemPage(
+			        category,
+			        entries,
+			        firstIndex,
+			        lastIndex,
+			        currentPage,
+			        totalPages,
+			        feedbackMessage
+			);
 
 			String choice = consoleInput.readTrimmedLine();
 
@@ -118,15 +136,15 @@ public final class InventoryMenu {
 			}
 
 			if (choice.equalsIgnoreCase("P") && currentPage < totalPages - 1) {
-				currentPage++;
-
-				continue;
+			    feedbackMessage = null;
+			    currentPage++;
+			    continue;
 			}
 
 			if (choice.equalsIgnoreCase("A") && currentPage > 0) {
-				currentPage--;
-
-				continue;
+			    feedbackMessage = null;
+			    currentPage--;
+			    continue;
 			}
 
 			try {
@@ -135,12 +153,14 @@ public final class InventoryMenu {
 				int pageSize = lastIndex - firstIndex;
 
 				if (selectedIndex < 0 || selectedIndex >= pageSize) {
-					System.out.println("Item inválido.");
-
+					feedbackMessage = "Item inválido.";
 					continue;
 				}
 
-				Map.Entry<Item, Integer> entry = entries.get(firstIndex + selectedIndex);
+				feedbackMessage = null;
+
+				Map.Entry<Item, Integer> entry =
+				        entries.get(firstIndex + selectedIndex);
 
 				boolean inventoryChanged = openDetails(entry.getKey(), entry.getValue());
 
@@ -170,19 +190,23 @@ public final class InventoryMenu {
 					return false;
 				}
 			} catch (NumberFormatException exception) {
-				System.out.println("Comando inválido.");
+				feedbackMessage = "Comando inválido.";
 			}
 		}
 	}
 
 	private void openEmptyCategory(ItemCategory category) {
+		String feedbackMessage = null;
 		while (true) {
 			ConsoleUI.clearScreen();
 			System.out.println("[" + getCategoryDisplayName(category).toUpperCase(Locale.ROOT) + "]");
 
 			System.out.println();
 			System.out.println("Você não possui itens nesta categoria.");
-
+			if (feedbackMessage != null) {
+			    System.out.println();
+			    ConsoleUI.displayWrappedText(feedbackMessage);
+			}
 			System.out.println();
 			System.out.println("[0] Voltar");
 			System.out.print("> ");
@@ -193,7 +217,7 @@ public final class InventoryMenu {
 				return;
 			}
 
-			System.out.println("Opção inválida.");
+			feedbackMessage = "Opção inválida.";
 		}
 	}
 
@@ -203,7 +227,8 @@ public final class InventoryMenu {
 			int firstIndex,
 			int lastIndex,
 			int currentPage,
-			int totalPages
+			int totalPages,
+			String feedbackMessage
 	) {
 		ConsoleUI.clearScreen();
 		System.out.println(
@@ -244,6 +269,10 @@ public final class InventoryMenu {
 		if (currentPage < totalPages - 1) {
 			System.out.println("[P] Próxima página");
 		}
+		if (feedbackMessage != null) {
+		    System.out.println();
+		    ConsoleUI.displayWrappedText(feedbackMessage);
+		}
 		System.out.println();
 		System.out.println("[0] Voltar");
 		System.out.print("> ");
@@ -256,12 +285,13 @@ public final class InventoryMenu {
 		if (item instanceof SkillScroll skillScroll) {
 			return openSkillScrollDetails(skillScroll);
 		}
+		String feedbackMessage = null;
 		while (true) {
 			ConsoleUI.clearScreen();
 			System.out.println("[" + item.getName().toUpperCase(Locale.ROOT) + "]");
 
 			System.out.println();
-			System.out.println(item.getDescription());
+			ConsoleUI.displayWrappedText(item.getDescription());
 
 			System.out.println();
 			System.out.println("Categoria: " + item.getCategory());
@@ -269,18 +299,23 @@ public final class InventoryMenu {
 			System.out.println("Quantidade: " + quantity);
 
 			if (item instanceof RecoveryItem recoveryItem) {
-				System.out.println("Alvo: " + recoveryItem.getTargetType());
-
-				System.out.println("Efeitos: " + ItemMenuFormatter.getRecoveryEffectSummary(recoveryItem));
-
-				System.out.println();
-				System.out.println("[1] Usar");
-				System.out.println("[0] Voltar");
-			} else {
-				System.out.println();
-				System.out.println("[0] Voltar");
+			    System.out.println("Alvo: " + recoveryItem.getTargetType());
+			    System.out.println(
+			            "Efeitos: " + ItemMenuFormatter.getRecoveryEffectSummary(recoveryItem));
 			}
 
+			if (feedbackMessage != null) {
+			    System.out.println();
+			    ConsoleUI.displayWrappedText(feedbackMessage);
+			}
+
+			System.out.println();
+
+			if (item instanceof RecoveryItem) {
+			    System.out.println("[1] Usar");
+			}
+
+			System.out.println("[0] Voltar");
 			System.out.print("> ");
 
 			String choice = consoleInput.readLine();
@@ -293,13 +328,13 @@ public final class InventoryMenu {
 				return recoveryItemUseMenu.use(recoveryItem, null);
 			}
 
-			System.out.println("Opção inválida.");
+			feedbackMessage = "Opção inválida.";
 		}
 	}
 
 	private boolean openSkillScrollDetails(SkillScroll skillScroll) {
 		Optional<PlayableCharacter> compatibleCharacter = skillScrollUseMenu.findCompatibleCharacter(skillScroll);
-
+		String feedbackMessage = null;
 		while (true) {
 			ConsoleUI.clearScreen();
 			System.out.println("[PERGAMINHO DE HABILIDADE]");
@@ -309,12 +344,22 @@ public final class InventoryMenu {
 
 			System.out.println();
 			if (compatibleCharacter.isPresent()) {
-				System.out.println("Aprendiz: " + compatibleCharacter.get().getName());
-				System.out.println();
-				System.out.println("[1] Aprender");
+			    System.out.println(
+			            "Aprendiz: " + compatibleCharacter.get().getName());
 			} else {
-				System.out.println("Nenhum membro do grupo pode aprender esta habilidade.");
-				System.out.println();
+			    ConsoleUI.displayWrappedText(
+			            "Nenhum membro do grupo pode aprender esta habilidade.");
+			}
+
+			if (feedbackMessage != null) {
+			    System.out.println();
+			    ConsoleUI.displayWrappedText(feedbackMessage);
+			}
+
+			System.out.println();
+
+			if (compatibleCharacter.isPresent()) {
+			    System.out.println("[1] Aprender");
 			}
 
 			System.out.println("[0] Voltar");
@@ -330,7 +375,7 @@ public final class InventoryMenu {
 				return skillScrollUseMenu.use(skillScroll);
 			}
 
-			System.out.println("Opção inválida.");
+			feedbackMessage = "Opção inválida.";
 		}
 	}
 

@@ -23,19 +23,26 @@ public final class CampaignSelectionMenu {
 
 	public Selection select(CampaignLoadResult loadResult) {
 		Objects.requireNonNull(loadResult, "Campaign load result cannot be null.");
-
+		String feedbackMessage = null;
 		while (true) {
+			ConsoleUI.clearScreen();
+
 			displayCampaignState(loadResult);
+
+			if (feedbackMessage != null) {
+			    System.out.println();
+			    ConsoleUI.displayWrappedText(feedbackMessage);
+			}
 
 			boolean canContinue = loadResult.isSuccess();
 
 			if (canContinue) {
 				System.out.println();
 				System.out.println("[1] Continuar");
-				System.out.println("[2] Novo Jogo");
+				System.out.println("[2] Nova Campanha");
 			} else {
 				System.out.println();
-				System.out.println("[1] Novo Jogo");
+				System.out.println("[1] Nova Campanha");
 			}
 
 			System.out.print("> ");
@@ -49,21 +56,22 @@ public final class CampaignSelectionMenu {
 			boolean selectedNewGame = canContinue ? choice.equals("2") : choice.equals("1");
 
 			if (selectedNewGame) {
-				if (loadResult.getStatus() == CampaignLoadStatus.SAVE_NOT_FOUND || confirmNewGame()) {
-					return Selection.NEW_GAME;
-				}
+			    feedbackMessage = null;
 
-				ConsoleUI.clearScreen();
-				continue;
+			    if (loadResult.getStatus() == CampaignLoadStatus.SAVE_NOT_FOUND
+			            || confirmNewGame()) {
+			        return Selection.NEW_GAME;
+			    }
+
+			    continue;
 			}
 
-			System.out.println("Opção inválida.");
+			feedbackMessage = "Opção inválida.";
 		}
 	}
 
 	private void displayCampaignState(CampaignLoadResult loadResult) {
-		System.out.println("[RPGCONSOLE]");
-		System.out.println("[CAMPANHA]");
+		System.out.println("[RPGCONSOLE - CONTINUAR]");
 
 		switch (loadResult.getStatus()) {
 		case SUCCESS -> displayCampaignSummary(loadResult.getRestoredCampaign().orElseThrow());
@@ -100,15 +108,18 @@ public final class CampaignSelectionMenu {
 	}
 
 	private boolean confirmNewGame() {
+		String feedbackMessage = null;
 		while (true) {
 			ConsoleUI.clearScreen();
-			System.out.println("[RPGCONSOLE]");
-			System.out.println("[NOVO JOGO]");
+			System.out.println("[RPGCONSOLE - NOVA CAMPANHA]");
 
 			System.out.println();
 			System.out.println("A campanha salva atual continuará preservada.");
 			System.out.println("Ela só será substituída quando o novo jogo for salvo com sucesso.");
-
+			if (feedbackMessage != null) {
+			    System.out.println();
+			    ConsoleUI.displayWrappedText(feedbackMessage);
+			}
 			System.out.println();
 			System.out.println("[1] Confirmar");
 			System.out.println("[0] Voltar");
@@ -125,7 +136,7 @@ public final class CampaignSelectionMenu {
 				return false;
 			}
 
-			default -> System.out.println("Opção inválida.");
+			default -> feedbackMessage = "Opção inválida.";
 			}
 		}
 	}

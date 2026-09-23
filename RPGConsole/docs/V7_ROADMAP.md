@@ -1,6 +1,6 @@
 # RPGConsole V7 Roadmap
 
-> **General scope checklist:** The release boundary and order below are proposed for approval. Each part receives its detailed behavior and implementation decisions when that part begins. A checked box means the described work has been implemented and verified, except in the explicitly study-only part.
+> **Approved general scope checklist:** The release boundary and implementation order below are frozen. Each part receives its detailed behavior and implementation decisions when that part begins. A checked box means the described work has been implemented and verified, except in the explicitly study-only part.
 
 ## Release goal
 
@@ -12,11 +12,39 @@ The checklist fixes **what belongs to V7**, not every rule for implementing it. 
 
 ## 1. Shared text and screen transitions
 
-* [ ] Use the existing `ConsoleUI` text-wrapping behavior for player-facing prose and feedback throughout the UI and `World`/`Battle` presentation paths.
-* [ ] Keep intentional paragraph breaks in external text; remove manual line breaks used solely to fit a long sentence within the screen width.
-* [ ] Preserve the layout of numbered options, aligned columns, tables and prompts while wrapping prose around them.
-* [ ] Audit screen-clearing and flushing order so a transition does not erase its own heading or content.
-* [ ] Verify representative long text, intentional paragraphs and one aligned menu after the change.
+### Frozen text-wrapping contract
+
+* [x] Keep text wrapping owned by `ConsoleUI` with a fixed visible width of 75 characters.
+* [x] Route player-facing prose and feedback whose length may vary through the shared wrapping behavior throughout the UI and the presentation paths in `World` and `Battle`.
+* [x] Keep headings, numbered options, prompts, blank lines, separators, status values, aligned columns and tables under direct `print`, `println` or `printf` control.
+* [x] Preserve explicit line breaks as authored paragraph or structural breaks; remove manual line breaks used only to fit a sentence within the screen width.
+* [x] Preserve consecutive intentional blank lines.
+* [x] Keep a single word longer than the available width intact on its own line without hyphenation or truncation.
+* [x] Calculate wrapping and alignment from visible text width, ignoring ANSI escape sequences through one shared internal rule in `ConsoleUI`.
+* [x] Support a stable line prefix for wrapped descriptions that require indentation, including current route and scenario-branch descriptions.
+* [x] Preserve the prefix on every automatically wrapped line and every explicit line after the first.
+* [x] Keep the wrapping algorithm reusable by later animated output; dialogue animation remains deferred to Part 4.
+
+### Frozen clearing and flushing contract
+
+* [x] Keep `ConsoleUI.clearScreen()` responsible for moving the cursor, clearing the screen and flushing the clear command.
+* [x] Present ordinary screens in the order `clearScreen` → headings → content → actions and prompt.
+* [x] Correct existing clear operations that erase a heading or execute between a heading and its intended content.
+* [x] Do not scatter additional explicit flush calls through ordinary screens; gradual dialogue, battle and transition output is handled in Parts 4, 5 and 7.
+
+### Part boundary and verification
+
+* [x] Keep location-heading standardization, dialogue geometry and animation, battle-screen reconstruction, animated travel/saving transitions, and broad text-polish work in their later approved parts.
+* [x] Verify one long text without an explicit break, one text with intentional paragraphs, one ANSI-colored text, one indented description, one aligned menu and one corrected clear/flush transition.
+* [x] Update only the documentation affected by the implemented behavior after the part is tested and approved.
+
+> **Part 1 closed on 2026-09-23.**
+>
+> `ConsoleUI` now owns wrapping at 75 visible columns, ANSI-insensitive width calculation, stable wrapped prefixes and screen clearing with its required flush. Variable player-facing prose and feedback were migrated across the existing UI and the presentation paths in `World` and `Battle`.
+>
+> Iterative standalone screens now redraw through the stable order of clearing, headings, content, primary actions, feedback, return action and prompt. Invalid input no longer disappears during the following clear or produces a growing screen log. Existing menus were reused and reorganized without adding another UI class.
+>
+> `CityMenu`, `CombatScenarioMenu` and `ScenarioBranchMenu` remain coupled to context currently printed by `World`; their complete redraw is carried into Part 2 together with location-heading composition. Part 2 will also provide the location context required for the final epic-encounter heading. `ClassPathTieMenu` intentionally retains its one-time narrative rendering so invalid input does not replay timed pauses.
 
 ## 2. Consistent location headings
 

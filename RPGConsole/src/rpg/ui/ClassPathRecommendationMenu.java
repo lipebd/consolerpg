@@ -44,7 +44,7 @@ public final class ClassPathRecommendationMenu {
 
             if (feedbackMessage != null) {
                 System.out.println();
-                System.out.println(feedbackMessage);
+                ConsoleUI.displayWrappedText(feedbackMessage);
             }
 
             System.out.println();

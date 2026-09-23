@@ -24,12 +24,25 @@ public final class CharacterStatusMenu {
 
 	public void open(PlayableCharacter character) {
 		Objects.requireNonNull(character, "Playable character cannot be null.");
-
+		String feedbackMessage = null;
 		while (true) {
+			ConsoleUI.clearScreen();
 			displayCharacterStatus(character);
+			if (feedbackMessage != null) {
+			    System.out.println();
+			    ConsoleUI.displayWrappedText(feedbackMessage);
+			}
+			System.out.println();
+			System.out.println("[1] Habilidades");
+			System.out.println("[2] Equipamentos");
 
-			System.out.println("\n[0] Voltar | [1] Habilidades | [2] Equipamentos");
+			if (feedbackMessage != null) {
+			    System.out.println();
+			    ConsoleUI.displayWrappedText(feedbackMessage);
+			}
 
+			System.out.println();
+			System.out.println("[0] Voltar");
 			System.out.print("> ");
 
 			String choice = consoleInput.readLine();
@@ -39,17 +52,23 @@ public final class CharacterStatusMenu {
 				return;
 			}
 
-			case "1" -> displaySkills(character);
+			case "1" -> {
+			    feedbackMessage = null;
+			    displaySkills(character);
+			}
 
-			case "2" -> equipmentMenu.openForCharacter(character);
+			case "2" -> {
+			    feedbackMessage = null;
+			    equipmentMenu.openForCharacter(character);
+			}
 
-			default -> System.out.println("Opção inválida.");
+			default -> feedbackMessage = "Opção inválida.";
 			}
 		}
 	}
 
 	private void displayCharacterStatus(PlayableCharacter character) {
-		System.out.println("\n[" + character.getName().toUpperCase() + "]");
+		System.out.println("\n[" + character.getName().toUpperCase() + " - STATUS]");
 		System.out.println();
 		if (!character.isAlive()) {
 			System.out.println("Estado: DERROTADO");
@@ -80,70 +99,89 @@ public final class CharacterStatusMenu {
 	private void displaySkills(PlayableCharacter character) {
 		List<SkillDefinition> skills = character.getUnlockedSkillDefinitions();
 
+		String feedbackMessage = null;
+
 		while (true) {
-			System.out.println("\n[HABILIDADES DE " + character.getName().toUpperCase() + "]\n");
+			ConsoleUI.clearScreen();
+			System.out.println("[" + character.getName().toUpperCase() + " - HABILIDADES]");
+
+			System.out.println();
 
 			if (skills.isEmpty()) {
 				System.out.println("Nenhuma habilidade aprendida.");
+			} else {
+				for (int index = 0; index < skills.size(); index++) {
+					SkillDefinition skill = skills.get(index);
 
-				waitForBack();
-
-				return;
+					System.out.println(
+							"[" + (index + 1) + "] " + skill.getName() + " [Nv. " + skill.getLevelRequirement() + "]"
+					);
+				}
 			}
 
-			for (int index = 0; index < skills.size(); index++) {
-				SkillDefinition skill = skills.get(index);
-
-				System.out.println(
-						"[" + (index + 1) + "] " + skill.getName() + " [Nv. " + skill.getLevelRequirement() + "]"
-				);
+			if (feedbackMessage != null) {
+				System.out.println();
+				ConsoleUI.displayWrappedText(feedbackMessage);
 			}
 
-			System.out.println("\n[0] Voltar");
+			System.out.println();
+			System.out.println("[0] Voltar");
 			System.out.print("> ");
 
 			String choice = consoleInput.readLine();
 
 			if (choice.equals("0")) {
 				return;
+			}
+
+			if (skills.isEmpty()) {
+				feedbackMessage = "Opção inválida.";
+				continue;
 			}
 
 			try {
 				int selectedIndex = Integer.parseInt(choice) - 1;
 
 				if (selectedIndex < 0 || selectedIndex >= skills.size()) {
-
-					System.out.println("Habilidade inválida.");
-
+					feedbackMessage = "Habilidade inválida.";
 					continue;
 				}
 
-				displaySkillDetails(skills.get(selectedIndex));
+				feedbackMessage = null;
+				displaySkillDetails(skills.get(selectedIndex), character);
 			} catch (NumberFormatException exception) {
-				System.out.println("Opção inválida.");
+				feedbackMessage = "Opção inválida.";
 			}
 		}
 	}
 
-	private void displaySkillDetails(SkillDefinition skill) {
-		System.out.println("\n" + SkillDetailFormatter.formatDetails(skill));
+	private void displaySkillDetails(SkillDefinition skill, PlayableCharacter character) {
+		System.out.println("[" + character.getName().toUpperCase() + " - HABILIDADES]");
+		System.out.println();
+		String feedbackMessage = null;
 
-		waitForBack();
-	}
+	    while (true) {
+	        ConsoleUI.clearScreen();
+	        System.out.println(
+	                SkillDetailFormatter.formatDetails(skill));
 
-	private void waitForBack() {
-		while (true) {
-			System.out.println("\n[0] Voltar");
-			System.out.print("> ");
+	        if (feedbackMessage != null) {
+	            System.out.println();
+	            ConsoleUI.displayWrappedText(feedbackMessage);
+	        }
 
-			String choice = consoleInput.readLine();
+	        System.out.println();
+	        System.out.println("[0] Voltar");
+	        System.out.print("> ");
 
-			if (choice.equals("0")) {
-				return;
-			}
+	        String choice = consoleInput.readLine();
 
-			System.out.println("Opção inválida.");
-		}
+	        if (choice.equals("0")) {
+	            return;
+	        }
+
+	        feedbackMessage = "Opção inválida.";
+	    }
 	}
 
 	private String formatExperience(PlayableCharacter character) {

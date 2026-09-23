@@ -50,25 +50,25 @@ public final class SkillScrollUseMenu {
 
 		return switch (result) {
 		case LEARNED -> {
-			System.out.println(character.getName() + " aprendeu " + skillDefinition.getName() + "!");
+			ConsoleUI.displayWrappedText(character.getName() + " aprendeu " + skillDefinition.getName() + "!");
 			ConsoleUI.pause(1000, consoleInput);
 			yield true;
 		}
 
 		case ALREADY_LEARNED -> {
-			System.out.println(character.getName() + " já sabe usar " + skillDefinition.getName() + ".");
+			ConsoleUI.displayWrappedText(character.getName() + " já sabe usar " + skillDefinition.getName() + ".");
 			ConsoleUI.pause(1000, consoleInput);
 			yield false;
 		}
 
 		case INCOMPATIBLE_CLASS -> {
-			System.out.println(character.getName() + " não pertence à classe exigida pelo pergaminho.");
+			ConsoleUI.displayWrappedText(character.getName() + " não pertence à classe exigida pelo pergaminho.");
 			ConsoleUI.pause(1000, consoleInput);
 			yield false;
 		}
 
 		case LEVEL_TOO_LOW -> {
-			System.out.println(
+			ConsoleUI.displayWrappedText(
 					character.getName() + " precisa alcançar o nível " + skillDefinition.getLevelRequirement()
 							+ " para aprender esta habilidade."
 			);
@@ -97,9 +97,13 @@ public final class SkillScrollUseMenu {
 			throw new IllegalStateException("Validated scroll-skill replacement failed: " + result);
 		}
 
-		System.out.println(
-				character.getName() + " esqueceu " + replacedSkill.getName() + " e aprendeu "
-						+ skillScroll.getSkillDefinition().getName() + "!"
+		ConsoleUI.displayWrappedText(
+				character.getName()
+						+ " esqueceu "
+						+ replacedSkill.getName()
+						+ " e aprendeu "
+						+ skillScroll.getSkillDefinition().getName()
+						+ "!"
 		);
 		ConsoleUI.pause(1000, consoleInput);
 		return true;
@@ -108,8 +112,14 @@ public final class SkillScrollUseMenu {
 	private Optional<SkillDefinition> selectReplacement(PlayableCharacter character, SkillScroll skillScroll) {
 		List<SkillDefinition> learnedScrollSkills = character.getLearnedScrollSkillDefinitions();
 
+		String feedbackMessage = null;
 		while (true) {
-			displayReplacementMenu(character, skillScroll, learnedScrollSkills);
+			displayReplacementMenu(
+			        character,
+			        skillScroll,
+			        learnedScrollSkills,
+			        feedbackMessage
+			);
 
 			String choice = consoleInput.readTrimmedLine();
 
@@ -121,18 +131,20 @@ public final class SkillScrollUseMenu {
 				int selectedIndex = Integer.parseInt(choice) - 1;
 
 				if (selectedIndex < 0 || selectedIndex >= learnedScrollSkills.size()) {
-					System.out.println("Habilidade inválida.");
-
+					feedbackMessage = "Habilidade inválida.";
 					continue;
 				}
 
-				SkillDefinition selectedSkill = learnedScrollSkills.get(selectedIndex);
+				feedbackMessage = null;
+
+				SkillDefinition selectedSkill =
+				        learnedScrollSkills.get(selectedIndex);
 
 				if (confirmReplacement(selectedSkill, skillScroll)) {
 					return Optional.of(selectedSkill);
 				}
 			} catch (NumberFormatException exception) {
-				System.out.println("Comando inválido.");
+				feedbackMessage = "Comando inválido.";
 			}
 		}
 	}
@@ -140,30 +152,42 @@ public final class SkillScrollUseMenu {
 	private void displayReplacementMenu(
 			PlayableCharacter character,
 			SkillScroll skillScroll,
-			List<SkillDefinition> learnedScrollSkills
+			List<SkillDefinition> learnedScrollSkills,
+			String feedbackMessage
 	) {
+		ConsoleUI.clearScreen();
 		System.out.println();
 		System.out.println("[LIMITE DE HABILIDADES]");
 
 		System.out.println();
-		System.out.println(character.getName() + " já aprendeu o máximo de duas habilidades de pergaminho.");
+		ConsoleUI.displayWrappedText(
+				character.getName()
+						+ " já aprendeu o máximo de duas habilidades de pergaminho."
+		);
 		ConsoleUI.pause(1000, consoleInput);
-		System.out.println(
-				"Escolha uma habilidade para substituir por " + skillScroll.getSkillDefinition().getName() + ":"
+		ConsoleUI.displayWrappedText(
+				"Escolha uma habilidade para substituir por "
+						+ skillScroll.getSkillDefinition().getName()
+						+ ":"
 		);
 		System.out.println();
 
 		for (int index = 0; index < learnedScrollSkills.size(); index++) {
 			System.out.println("[" + (index + 1) + "] " + learnedScrollSkills.get(index).getName());
 		}
-
+		if (feedbackMessage != null) {
+		    System.out.println();
+		    ConsoleUI.displayWrappedText(feedbackMessage);
+		}
 		System.out.println();
 		System.out.println("[0] Cancelar");
 		System.out.print("> ");
 	}
 
 	private boolean confirmReplacement(SkillDefinition replacedSkill, SkillScroll skillScroll) {
+		String feedbackMessage = null;
 		while (true) {
+			ConsoleUI.clearScreen();
 			System.out.println();
 			System.out.println("[CONFIRMAR SUBSTITUIÇÃO]");
 
@@ -173,7 +197,10 @@ public final class SkillScrollUseMenu {
 
 			System.out.println();
 			System.out.println("Essa ação é irreversível.");
-
+			if (feedbackMessage != null) {
+			    System.out.println();
+			    ConsoleUI.displayWrappedText(feedbackMessage);
+			}
 			System.out.println();
 			System.out.println("[1] Confirmar");
 			System.out.println("[0] Voltar");
@@ -189,7 +216,7 @@ public final class SkillScrollUseMenu {
 				return false;
 			}
 
-			System.out.println("Opção inválida.");
+			feedbackMessage = "Opção inválida.";
 		}
 	}
 
