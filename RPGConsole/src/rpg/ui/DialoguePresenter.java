@@ -16,6 +16,9 @@ import rpg.recruitment.RecruitmentCandidateStateCatalog;
 // Presents external linear dialogues one utterance at a time.
 public final class DialoguePresenter {
 
+	private static final int DIALOGUE_LINES_PER_PAGE = 2;
+	private static final long CHARACTER_DELAY_MILLIS = 25;
+
 	private final RecruitmentCandidateStateCatalog candidateStateCatalog;
 	private final ConsoleInput consoleInput;
 	private final DialogueCatalog dialogueCatalog;
@@ -89,9 +92,68 @@ public final class DialoguePresenter {
 		};
 	}
 
-	private void displayLine(RenderedDialogueLine renderedLine, String headingContext, String headingQualifier) {
-		ConsoleUI.clearScreen();
+	private void displayLine(
+			RenderedDialogueLine renderedLine,
+			String headingContext,
+			String headingQualifier
+	) {
+		List<String> wrappedLines = ConsoleUI.wrapText(renderedLine.text());
 
+		for (int start = 0; start < wrappedLines.size(); start += DIALOGUE_LINES_PER_PAGE) {
+			int end = Math.min(start + DIALOGUE_LINES_PER_PAGE, wrappedLines.size());
+
+			displayPage(
+					renderedLine.speakerName(),
+					wrappedLines.subList(start, end),
+					headingContext,
+					headingQualifier
+			);
+		}
+	}
+
+	private void
+			displayPage(String speakerName, List<String> pageLines, String headingContext, String headingQualifier) {
+		ConsoleUI.clearScreen();
+		displayPageHeading(speakerName, headingContext, headingQualifier);
+
+		consoleInput.discardPendingInput();
+
+		boolean animationInterrupted = false;
+
+		for (int row = 0; row < DIALOGUE_LINES_PER_PAGE; row++) {
+			String line = row < pageLines.size() ? pageLines.get(row) : "";
+
+			if (animateLine(line)) {
+				animationInterrupted = true;
+				break;
+			}
+		}
+
+		if (animationInterrupted) {
+			// Remove the terminal's echoed Enter and redraw the complete page.
+			ConsoleUI.clearScreen();
+			displayPageHeading(speakerName, headingContext, headingQualifier);
+
+			for (int row = 0; row < DIALOGUE_LINES_PER_PAGE; row++) {
+				System.out.println(row < pageLines.size() ? pageLines.get(row) : "");
+			}
+		}
+
+		// Narrator text starts higher; this keeps the prompt at the same height.
+		if (speakerName == null) {
+			System.out.println();
+			System.out.println();
+		}
+
+		System.out.println();
+		System.out.print("[Enter] Continuar");
+		System.out.flush();
+
+		consoleInput.discardPendingInput();
+		consoleInput.readLine();
+	}
+
+	private static void displayPageHeading(String speakerName, String headingContext, String headingQualifier) {
 		if (headingQualifier == null) {
 			ConsoleUI.displayHeading(headingContext);
 		} else {
@@ -100,17 +162,28 @@ public final class DialoguePresenter {
 
 		System.out.println();
 
-		if (renderedLine.speakerName() != null) {
-			System.out.println(renderedLine.speakerName());
+		if (speakerName != null) {
+			System.out.println(speakerName);
 			System.out.println();
 		}
+	}
 
-		ConsoleUI.displayWrappedText(renderedLine.text());
+	private boolean animateLine(String line) {
+		for (int offset = 0; offset < line.length();) {
+			int codePoint = line.codePointAt(offset);
+
+			System.out.print(new String(Character.toChars(codePoint)));
+			System.out.flush();
+
+			if (consoleInput.pollLine(CHARACTER_DELAY_MILLIS).isPresent()) {
+				return true;
+			}
+
+			offset += Character.charCount(codePoint);
+		}
 
 		System.out.println();
-		System.out.print("[Enter] Continuar");
-
-		consoleInput.readLine();
+		return false;
 	}
 
 	private record RenderedDialogueLine(String speakerName, String text) {

@@ -10,6 +10,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 // Provides centralized UTF-8 console input operations.
 public final class ConsoleInput {
@@ -73,6 +75,32 @@ public final class ConsoleInput {
 
 	public String readTrimmedLine() {
 		return readLine().trim();
+	}
+
+	public Optional<String> pollLine(long timeoutMillis) {
+		if (timeoutMillis < 0) {
+			throw new IllegalArgumentException("Input timeout cannot be negative.");
+		}
+
+		InputResult result;
+
+		try {
+			result = pendingInputs.poll(timeoutMillis, TimeUnit.MILLISECONDS);
+		} catch (InterruptedException exception) {
+			Thread.currentThread().interrupt();
+
+			throw new IllegalStateException("Console input waiting was interrupted.", exception);
+		}
+
+		if (result == null) {
+			return Optional.empty();
+		}
+
+		if (result.failure() != null) {
+			throw result.failure();
+		}
+
+		return Optional.ofNullable(result.line());
 	}
 
 	public void discardPendingInput() {

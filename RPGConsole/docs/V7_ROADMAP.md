@@ -121,11 +121,11 @@ The checklist fixes **what belongs to V7**, not every rule for implementing it. 
 
 ## 4. Dialogue presentation
 
-* [ ] Keep dialogue screens at a stable height with a space for up to three wrapped text lines per spoken segment, plus consistent spacing around headings, speaker and action prompt.
-* [ ] Decide how dialogue longer than that space is presented without truncating or losing text.
-* [ ] Animate dialogue text one character at a time while preserving accents, symbols, manual paragraph breaks and wrapping.
-* [ ] Define the behavior of Enter during and after animation so dialogue advances predictably and does not accidentally skip a segment.
-* [ ] Verify narrator and named-speaker segments, short and long segments, and the transition between consecutive segments.
+* [x] Keep dialogue screens at a stable height with space for two wrapped text lines per page and consistent spacing around heading, speaker and action prompt.
+* [x] Present longer utterances across consecutive two-line pages without truncating text or changing speakers.
+* [x] Animate dialogue one Unicode code point at a time, preserving accents, symbols, manual paragraph breaks and shared wrapping.
+* [x] Make Enter during animation reveal the complete current page; require another Enter to advance to the next page or utterance.
+* [x] Verify narrator and named-speaker segments, short and long segments, and transitions between consecutive pages and utterances.
 
 ## 5. Battle screen and action feedback
 
