@@ -2,7 +2,6 @@ package rpg.ui;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -278,43 +277,72 @@ public final class InventoryMenu {
 		if (isEquipmentCategory(item.getCategory())) {
 			return equipmentMenu.openForItem(item);
 		}
+
 		if (item instanceof SkillScroll skillScroll) {
 			return openSkillScrollDetails(skillScroll);
 		}
+
+		List<String> descriptionLines = ConsoleUI.wrapText(item.getDescription());
+		int currentPage = 0;
 		String feedbackMessage = null;
+
 		while (true) {
 			ConsoleUI.clearScreen();
-			ConsoleUI.displayHeading(item.getName());
+			ConsoleUI.displayHeading("Inventário", "Itens");
 
 			System.out.println();
-			ConsoleUI.displayWrappedText(item.getDescription());
-
-			System.out.println();
-			System.out.println("Categoria: " + item.getCategory());
-
-			System.out.println("Quantidade: " + quantity);
+			System.out.println(item.getName());
+			System.out.println("Categoria: " + item.getCategory().getDisplayName());
 
 			if (item instanceof RecoveryItem recoveryItem) {
-			    System.out.println("Alvo: " + recoveryItem.getTargetType());
-			    System.out.println(
-			            "Efeitos: " + ItemMenuFormatter.getRecoveryEffectSummary(recoveryItem));
-			}
-
-			if (feedbackMessage != null) {
-			    System.out.println();
-			    ConsoleUI.displayWrappedText(feedbackMessage);
+				System.out.println("Alvo: " + recoveryItem.getTargetType().getDisplayName());
+				System.out.println("Efeitos:");
+				ConsoleUI.displayWrappedText(ItemMenuFormatter.getRecoveryEffectSummary(recoveryItem));
+			} else {
+				System.out.println();
+				System.out.println();
+				System.out.println();
 			}
 
 			System.out.println();
 
-			if (item instanceof RecoveryItem) {
-			    System.out.println("[1] Usar");
+			int firstLine = currentPage * 3;
+			int lastLine = Math.min(firstLine + 3, descriptionLines.size());
+
+			for (int index = firstLine; index < lastLine; index++) {
+				System.out.println(descriptionLines.get(index));
 			}
 
-			System.out.println("[0] Voltar");
+			for (int index = lastLine - firstLine; index < 3; index++) {
+				System.out.println();
+			}
+
+			System.out.println();
+			System.out.println();
+			System.out.println("Quantidade: " + quantity);
+			System.out.println(feedbackMessage == null ? "" : feedbackMessage);
+
+			StringBuilder options = new StringBuilder();
+
+			if (item instanceof RecoveryItem) {
+				options.append("[1] Usar    ");
+			}
+
+			options.append("[0] Voltar");
+
+			if (currentPage > 0) {
+				options.append("    [A] Anterior");
+			}
+
+			if (lastLine < descriptionLines.size()) {
+				options.append("    [P] Próxima");
+			}
+
+			System.out.println(options);
 			System.out.print("> ");
 
-			String choice = consoleInput.readLine();
+			String choice = consoleInput.readTrimmedLine();
+			feedbackMessage = null;
 
 			if (choice.equals("0")) {
 				return false;
@@ -324,44 +352,72 @@ public final class InventoryMenu {
 				return recoveryItemUseMenu.use(recoveryItem, null);
 			}
 
+			if (choice.equalsIgnoreCase("A") && currentPage > 0) {
+				currentPage--;
+				continue;
+			}
+
+			if (choice.equalsIgnoreCase("P") && lastLine < descriptionLines.size()) {
+				currentPage++;
+				continue;
+			}
+
 			feedbackMessage = "Opção inválida.";
 		}
 	}
 
 	private boolean openSkillScrollDetails(SkillScroll skillScroll) {
 		Optional<PlayableCharacter> compatibleCharacter = skillScrollUseMenu.findCompatibleCharacter(skillScroll);
+
+		List<String> detailLines = ConsoleUI.wrapText(
+				SkillDetailFormatter.formatDetails(skillScroll.getSkillDefinition()).replace("\r\n", "\n")
+						.replace('\r', '\n')
+		);
+
+		int currentPage = 0;
 		String feedbackMessage = null;
+
 		while (true) {
 			ConsoleUI.clearScreen();
 			ConsoleUI.displayHeading("Pergaminho de habilidade");
-
 			System.out.println();
-			System.out.println(SkillDetailFormatter.formatDetails(skillScroll.getSkillDefinition()));
 
-			System.out.println();
-			if (compatibleCharacter.isPresent()) {
-			    System.out.println(
-			            "Aprendiz: " + compatibleCharacter.get().getName());
-			} else {
-			    ConsoleUI.displayWrappedText(
-			            "Nenhum membro do grupo pode aprender esta habilidade.");
+			int firstLine = currentPage * 9;
+			int lastLine = Math.min(firstLine + 9, detailLines.size());
+
+			for (int index = firstLine; index < lastLine; index++) {
+				System.out.println(detailLines.get(index));
 			}
 
-			if (feedbackMessage != null) {
-			    System.out.println();
-			    ConsoleUI.displayWrappedText(feedbackMessage);
+			for (int index = lastLine - firstLine; index < 9; index++) {
+				System.out.println();
 			}
 
 			System.out.println();
 
-			if (compatibleCharacter.isPresent()) {
-			    System.out.println("[1] Aprender");
+			System.out.println(
+					compatibleCharacter.map(character -> "Aprendiz: " + character.getName())
+							.orElse("Nenhum membro do grupo pode aprender esta habilidade.")
+			);
+
+			System.out.println(feedbackMessage == null ? "" : feedbackMessage);
+			System.out.println(compatibleCharacter.isPresent() ? "[1] Aprender" : "");
+
+			StringBuilder options = new StringBuilder("[0] Voltar");
+
+			if (currentPage > 0) {
+				options.append("    [A] Anterior");
 			}
 
-			System.out.println("[0] Voltar");
+			if (lastLine < detailLines.size()) {
+				options.append("    [P] Próxima");
+			}
+
+			System.out.println(options);
 			System.out.print("> ");
 
 			String choice = consoleInput.readTrimmedLine();
+			feedbackMessage = null;
 
 			if (choice.equals("0")) {
 				return false;
@@ -369,6 +425,16 @@ public final class InventoryMenu {
 
 			if (choice.equals("1") && compatibleCharacter.isPresent()) {
 				return skillScrollUseMenu.use(skillScroll);
+			}
+
+			if (choice.equalsIgnoreCase("A") && currentPage > 0) {
+				currentPage--;
+				continue;
+			}
+
+			if (choice.equalsIgnoreCase("P") && lastLine < detailLines.size()) {
+				currentPage++;
+				continue;
 			}
 
 			feedbackMessage = "Opção inválida.";

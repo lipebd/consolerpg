@@ -1,5 +1,6 @@
 package rpg.ui;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -15,7 +16,8 @@ import rpg.skills.SkillDefinition;
 // Displays the rewards obtained after a battle victory.
 public final class BattleRewardScreen {
 
-	private static final int MAXIMUM_REWARD_LINE_LENGTH = 100;
+	private static final int CONTENT_LINES_PER_PAGE = 12;
+
 	private final ConsoleInput consoleInput;
 
 	public BattleRewardScreen(ConsoleInput consoleInput) {
@@ -23,21 +25,48 @@ public final class BattleRewardScreen {
 	}
 
 	public void show(BattleRewards rewards) {
-		ConsoleUI.clearScreen();
 		Objects.requireNonNull(rewards, "Battle rewards cannot be null.");
-		ConsoleUI.displayHeading("Resultado da Batalha");
 
-		displayRewardModifiers(rewards);
-		displayRewardSummary(rewards);
-		displayDiscardedRewards(rewards);
-		displayLevelProgress(rewards);
+		List<String> summaryLines = buildSummaryLines(rewards);
+		List<String> progressionLines = buildProgressionLines(rewards);
+		boolean hasProgression = !progressionLines.isEmpty();
 
-		waitForContinue();
+		displayPages("Resultado da Batalha", summaryLines, hasProgression ? "Ver evolução" : "Continuar");
+
+		if (hasProgression) {
+			displayPages("Resultado da Batalha - Evolução", progressionLines, "Continuar");
+		}
 	}
 
-	private void displayRewardModifiers(BattleRewards rewards) {
-		BattleRewardModifiers modifiers = rewards.getRewardModifiers();
+	private List<String> buildSummaryLines(BattleRewards rewards) {
+		List<String> lines = new ArrayList<>();
 
+		lines.add("Recompensas:");
+		lines.add("  EXP:   +" + rewards.getGlobalExperience());
+		lines.add("  " + GameCurrency.getName() + ":  +" + GameCurrency.format(rewards.getGold()));
+
+		addRewardModifiers(lines, rewards.getRewardModifiers());
+		addCollectedItems(lines, rewards.getCollectedItems());
+
+		lines.add("");
+		lines.add("Grupo:");
+
+		for (CharacterProgressionResult result : rewards.getCharacterProgressionResults()) {
+			String levels = result.getLevelsGained() > 0 ? result.getPreviousLevel() + " → " + result.getCurrentLevel()
+					: Integer.toString(result.getCurrentLevel());
+
+			String entry = result.getCharacter().getName() + "  Nv " + levels + " | EXP +"
+					+ result.getExperienceReceived();
+
+			lines.addAll(ConsoleUI.wrapText(entry, "  "));
+		}
+
+		addDiscardedRewards(lines, rewards);
+
+		return lines;
+	}
+
+	private void addRewardModifiers(List<String> lines, BattleRewardModifiers modifiers) {
 		String summary = RewardModifierFormatter.formatSummary(
 				modifiers.getTemporaryExperienceModifierPercent(),
 				modifiers.getExperienceVictoriesRemainingAfterReward(),
@@ -48,21 +77,26 @@ public final class BattleRewardScreen {
 		);
 
 		if (!summary.isEmpty()) {
-			System.out.println(summary);
+			lines.addAll(ConsoleUI.wrapText(summary, "  "));
 		}
 	}
 
-	private void displayRewardSummary(BattleRewards rewards) {
-		System.out.println("\nRecompensas:");
+	private void addCollectedItems(List<String> lines, Map<Item, Integer> collectedItems) {
+		if (collectedItems.isEmpty()) {
+			lines.add("  Itens: Nenhum");
+			return;
+		}
 
-		System.out.printf("  %-7s+%d%n", "EXP:", rewards.getGlobalExperience());
+		String items = String.join(
+				", ",
+				collectedItems.entrySet().stream().map(entry -> entry.getKey().getName() + " x" + entry.getValue())
+						.toList()
+		);
 
-		System.out.printf("  %-7s+%s%n", GameCurrency.getName() + ":", GameCurrency.format(rewards.getGold()));
-
-		displayCollectedItems(rewards.getCollectedItems());
+		lines.addAll(ConsoleUI.wrapText("Itens: " + items, "  "));
 	}
 
-	private void displayDiscardedRewards(BattleRewards rewards) {
+	private void addDiscardedRewards(List<String> lines, BattleRewards rewards) {
 		int discardedGold = rewards.getDiscardedGold();
 		Map<Item, Integer> discardedItems = rewards.getDiscardedItems();
 
@@ -70,174 +104,111 @@ public final class BattleRewardScreen {
 			return;
 		}
 
-		System.out.println("\nLimites atingidos:");
+		lines.add("");
+		lines.add("Limites atingidos:");
 
 		if (discardedGold > 0) {
-			ConsoleUI.displayWrappedText(
-					"GOLD descartado: " + GameCurrency.format(discardedGold),
-					"  "
+			lines.addAll(
+					ConsoleUI.wrapText(
+							GameCurrency.getName() + " descartado: " + GameCurrency.format(discardedGold),
+							"  "
+					)
 			);
 		}
 
 		for (Map.Entry<Item, Integer> entry : discardedItems.entrySet()) {
-			ConsoleUI.displayWrappedText(
-					"Item descartado: "
-							+ entry.getKey().getName()
-							+ " x"
-							+ entry.getValue(),
-					"  "
+			lines.addAll(
+					ConsoleUI.wrapText("Item descartado: " + entry.getKey().getName() + " x" + entry.getValue(), "  ")
 			);
 		}
 	}
 
-	private void displayCollectedItems(Map<Item, Integer> collectedItems) {
-		String linePrefix = "  Itens: ";
-		String continuationPrefix = " ".repeat(linePrefix.length());
+	private List<String> buildProgressionLines(BattleRewards rewards) {
+		List<String> lines = new ArrayList<>();
 
-		if (collectedItems.isEmpty()) {
-			System.out.println(linePrefix + "Nenhum");
-
-			return;
-		}
-
-		StringBuilder currentLine = new StringBuilder(linePrefix);
-
-		for (Map.Entry<Item, Integer> entry : collectedItems.entrySet()) {
-			String formattedItem = entry.getKey().getName() + " x" + entry.getValue();
-
-			boolean alreadyHasItem = currentLine.length() > linePrefix.length();
-
-			String separator = alreadyHasItem ? ", " : "";
-
-			boolean exceedsLineLength = currentLine.length() + separator.length()
-					+ formattedItem.length() > MAXIMUM_REWARD_LINE_LENGTH;
-
-			if (alreadyHasItem && exceedsLineLength) {
-				System.out.println(currentLine + ",");
-
-				currentLine = new StringBuilder(continuationPrefix);
-
-				currentLine.append(formattedItem);
-
+		for (CharacterProgressionResult result : rewards.getCharacterProgressionResults()) {
+			if (result.getLevelsGained() <= 0) {
 				continue;
 			}
 
-			currentLine.append(separator).append(formattedItem);
-		}
-
-		System.out.println(currentLine);
-	}
-
-	private void displayLevelProgress(BattleRewards rewards) {
-		List<CharacterProgressionResult> results = rewards.getCharacterProgressionResults();
-
-		boolean hasLevelUp = results.stream().anyMatch(result -> result.getLevelsGained() > 0);
-
-		if (!hasLevelUp) {
-			return;
-		}
-
-		System.out.println("\nProgressão:");
-
-		boolean firstDisplayedCharacter = true;
-
-		for (CharacterProgressionResult result : results) {
-			int levelsGained = result.getLevelsGained();
-
-			if (levelsGained <= 0) {
-				continue;
-			}
-
-			if (!firstDisplayedCharacter) {
-				System.out.println();
-			}
-
-			firstDisplayedCharacter = false;
-
-			String levelWord = levelsGained == 1 ? "nível" : "níveis";
-
-			String message =
-					result.getCharacter().getName()
-							+ " subiu "
-							+ levelsGained
-							+ " "
-							+ levelWord
-							+ "! ["
-							+ result.getPreviousLevel()
-							+ " -> "
-							+ result.getCurrentLevel()
-							+ "]";
+			String characterLine = result.getCharacter().getName() + "  Nv " + result.getPreviousLevel() + " → "
+					+ result.getCurrentLevel();
 
 			if (result.wereResourcesRestored()) {
-				message += " | HP/MP/SP restaurados";
+				characterLine += " | HP/MP/SP restaurados";
 			}
 
-			ConsoleUI.displayWrappedText(message, "- ");
+			lines.addAll(ConsoleUI.wrapText(characterLine));
 
-			displayNaturalStatGrowth(result);
-			displayNewlyUnlockedSkills(result);
-		}
-	}
+			CharacterStats previous = result.getPreviousNaturalStats();
+			CharacterStats current = result.getCurrentNaturalStats();
 
-	private void displayNaturalStatGrowth(CharacterProgressionResult result) {
-		CharacterStats previousStats = result.getPreviousNaturalStats();
-
-		CharacterStats currentStats = result.getCurrentNaturalStats();
-
-		System.out.println(
-				"  [" + formatGrowth("HP", previousStats.getMaxHp(), currentStats.getMaxHp()) + " | "
-						+ formatGrowth("MP", previousStats.getMaxMp(), currentStats.getMaxMp()) + " | "
-						+ formatGrowth("SP", previousStats.getMaxSp(), currentStats.getMaxSp()) + " | "
-						+ formatGrowth("ATK", previousStats.getAttack(), currentStats.getAttack()) + " | "
-						+ formatGrowth("DEF", previousStats.getDefense(), currentStats.getDefense()) + " | "
-						+ formatGrowth("MAG", previousStats.getMagic(), currentStats.getMagic()) + " | "
-						+ formatGrowth("RES", previousStats.getResistance(), currentStats.getResistance()) + " | "
-						+ formatGrowth("VEL", previousStats.getSpeed(), currentStats.getSpeed()) + " | "
-						+ formatGrowth("LCK", previousStats.getLuck(), currentStats.getLuck()) + "]"
-		);
-	}
-
-	private void displayNewlyUnlockedSkills(CharacterProgressionResult result) {
-		List<SkillDefinition> newlyUnlockedSkills = result.getNewlyUnlockedSkillDefinitions();
-
-		if (newlyUnlockedSkills.isEmpty()) {
-			return;
-		}
-
-		String characterName = result.getCharacter().getName();
-
-		String skillNames = String.join(" | ", newlyUnlockedSkills.stream().map(SkillDefinition::getName).toList());
-
-		if (newlyUnlockedSkills.size() == 1) {
-			ConsoleUI.displayWrappedText(
-					characterName + " aprendeu " + skillNames + "!",
-					"  "
+			lines.addAll(
+					ConsoleUI.wrapText(
+							formatGrowth("HP", previous.getMaxHp(), current.getMaxHp()) + "  "
+									+ formatGrowth("MP", previous.getMaxMp(), current.getMaxMp()) + "  "
+									+ formatGrowth("SP", previous.getMaxSp(), current.getMaxSp()),
+							"  "
+					)
 			);
 
-			return;
+			lines.addAll(
+					ConsoleUI.wrapText(
+							formatGrowth("ATK", previous.getAttack(), current.getAttack()) + "  "
+									+ formatGrowth("DEF", previous.getDefense(), current.getDefense()) + "  "
+									+ formatGrowth("MAG", previous.getMagic(), current.getMagic()) + "  "
+									+ formatGrowth("RES", previous.getResistance(), current.getResistance()) + "  "
+									+ formatGrowth("VEL", previous.getSpeed(), current.getSpeed()) + "  "
+									+ formatGrowth("LCK", previous.getLuck(), current.getLuck()),
+							"  "
+					)
+			);
+
+			List<SkillDefinition> newSkills = result.getNewlyUnlockedSkillDefinitions();
+
+			if (!newSkills.isEmpty()) {
+				String skillNames = String.join(", ", newSkills.stream().map(SkillDefinition::getName).toList());
+
+				lines.addAll(ConsoleUI.wrapText("Aprendeu: " + skillNames, "  "));
+			}
 		}
 
-		ConsoleUI.displayWrappedText(
-				characterName
-						+ " aprendeu novas habilidades: "
-						+ skillNames
-						+ ".",
-				"  "
-		);
+		return lines;
 	}
 
 	private String formatGrowth(String label, int previousValue, int currentValue) {
 		int growth = currentValue - previousValue;
+		String value = growth >= 0 ? "+" + growth : Integer.toString(growth);
 
-		String formattedGrowth = growth >= 0 ? "+" + growth : Integer.toString(growth);
-
-		return label + " " + formattedGrowth;
+		return label + " " + value;
 	}
 
-	private void waitForContinue() {
-		System.out.println("\nPressione ENTER para continuar...");
+	private void displayPages(String heading, List<String> content, String finalAction) {
+		int pageCount = Math.max(1, (content.size() + CONTENT_LINES_PER_PAGE - 1) / CONTENT_LINES_PER_PAGE);
 
-		System.out.print("> ");
-		consoleInput.readLine();
+		for (int page = 0; page < pageCount; page++) {
+			ConsoleUI.clearScreen();
+			ConsoleUI.displayHeading(heading);
+			System.out.println();
+
+			int firstLine = page * CONTENT_LINES_PER_PAGE;
+			int lastLine = Math.min(firstLine + CONTENT_LINES_PER_PAGE, content.size());
+
+			for (int index = firstLine; index < lastLine; index++) {
+				System.out.println(content.get(index));
+			}
+
+			for (int index = lastLine - firstLine; index < CONTENT_LINES_PER_PAGE; index++) {
+				System.out.println();
+			}
+
+			System.out.println();
+
+			String action = page < pageCount - 1 ? "Próxima página" : finalAction;
+
+			System.out.println("[ENTER] " + action);
+			System.out.print("> ");
+			consoleInput.readLine();
+		}
 	}
 }

@@ -973,6 +973,8 @@ Parts 1 through 5 are implemented and tested:
 - Battle target selection marks eligible enemies and allies directly in the panel. Battle item use and skill results return their messages to battle presentation.
 - The tactical menu provides resource and effect overviews, an effect legend, dedicated enemy analysis and a preview of remaining actions.
 - Normal, boss and epic battles have contextual headings. `BattleScreen` presents the entry animation separately from ordinary panel redraws.
+- Out-of-battle consumable and skill-scroll details use fixed-height pages; ally selection shows resources in a dedicated fixed-height screen.
+- Victory rewards use a fixed-height summary followed by level-growth details only when a character levels up, with extra pages only when content exceeds the available space.
 
 ## Current limitations and temporary implementations
 

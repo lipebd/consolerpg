@@ -1,7 +1,6 @@
 package rpg.ui;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -75,29 +74,41 @@ public final class AllyTargetMenu {
 			return Optional.of(availableMembers.get(0));
 		}
 
-		int nameColumnWidth = availableMembers.stream().mapToInt(member -> member.getName().length()).max().orElse(0);
-		String rowFormat = "[%d] %-" + nameColumnWidth + "s | %s%n";
 		String feedbackMessage = null;
 
 		while (true) {
 			if (battleDisplay != null) {
 				battleDisplay.accept(availableMembers, feedbackMessage);
 			} else {
-				System.out.println("\n[" + menuTitle.toUpperCase(Locale.ROOT) + "]");
+				ConsoleUI.clearScreen();
+				ConsoleUI.displayHeading(menuTitle);
+
 				System.out.println();
 				System.out.println(prompt);
 				System.out.println();
 
-				for (int index = 0; index < availableMembers.size(); index++) {
+				for (int index = 0; index < Party.MAXIMUM_SIZE; index++) {
+					if (index >= availableMembers.size()) {
+						System.out.println();
+						System.out.println();
+						continue;
+					}
+
 					PlayableCharacter member = availableMembers.get(index);
 					String condition = member.isAlive() ? "HP: " + member.getCurrentHp() + "/" + member.getMaxHp()
 							: "DERROTADO";
 
-					System.out.printf(rowFormat, index + 1, member.getName(), condition);
+					System.out.printf("[%d] %-16s | %s%n", index + 1, member.getName(), condition);
+					System.out.println(
+							"    MP: " + member.getCurrentMp() + "/" + member.getMaxMp() + " | SP: "
+									+ member.getCurrentSp() + "/" + member.getMaxSp()
+					);
 				}
 
 				System.out.println();
+				System.out.println();
 				System.out.println("[0] Voltar");
+				System.out.println(feedbackMessage == null ? "" : feedbackMessage);
 				System.out.print("> ");
 			}
 
@@ -112,21 +123,13 @@ public final class AllyTargetMenu {
 				int selectedIndex = Integer.parseInt(choice) - 1;
 
 				if (selectedIndex < 0 || selectedIndex >= availableMembers.size()) {
-					if (battleDisplay == null) {
-						System.out.println("Aliado inválido.");
-					} else {
-						feedbackMessage = "Aliado inválido.";
-					}
+					feedbackMessage = "Aliado inválido.";
 					continue;
 				}
 
 				return Optional.of(availableMembers.get(selectedIndex));
 			} catch (NumberFormatException exception) {
-				if (battleDisplay == null) {
-					System.out.println("Comando inválido.");
-				} else {
-					feedbackMessage = "Comando inválido.";
-				}
+				feedbackMessage = "Comando inválido.";
 			}
 		}
 	}

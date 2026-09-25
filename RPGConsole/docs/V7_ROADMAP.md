@@ -145,7 +145,7 @@ The checklist fixes **what belongs to V7**, not every rule for implementing it. 
 >
 > Action results appear in the battle panel's message area. Battle item use and skill results use that presentation instead of printing below their menus. Battle item lists, item details and the tactical screens redraw with fixed height and inline feedback. Tactical status has resource and effect views plus a legend; enemy analysis has its own screen; turn order previews the next five actions and reports any remaining actions.
 >
-> Normal, boss and epic battles use the corresponding contextual headings. A brief battle-entry animation replaces the old text introduction. This animation alone positions the cursor directly; battle panels and menus continue to redraw normally.
+> Normal, boss and epic battles use the corresponding contextual headings. A brief battle-entry animation replaces the old text introduction. This animation alone positions the cursor directly; battle panels and menus continue to redraw normally. The victory screen now separates the reward summary from conditional level-growth details and paginates exceptional overflow. The adjacent out-of-battle item details and ally selection were aligned to the same 17-line presentation contract after Part 5's main battle commit.
 
 ## 6. Skill presentation and focused correction
 

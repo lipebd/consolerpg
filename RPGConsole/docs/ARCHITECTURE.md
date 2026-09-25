@@ -554,7 +554,7 @@ The battle system is divided into the following responsibilities:
 - `CharacterProgressionResult`
   - Stores one ally's EXP, levels, natural-stat snapshots, newly unlocked skills and resource-restoration result.
 - `BattleRewardScreen`
-  - Displays party progression and collected rewards.
+  - Displays a fixed-height victory summary with rewards and individual EXP, followed by level-growth details only when someone levels up; exceptional overflow is paginated.
 
 Current battle flow:
 

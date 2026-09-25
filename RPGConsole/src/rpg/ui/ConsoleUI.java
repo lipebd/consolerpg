@@ -112,7 +112,7 @@ public final class ConsoleUI {
 		return wrapText(text, "");
 	}
 
-	private static List<String> wrapText(String text, String linePrefix) {
+	static List<String> wrapText(String text, String linePrefix) {
 		return wrapText(text, linePrefix, TEXT_COLUMN_WIDTH);
 	}
 
