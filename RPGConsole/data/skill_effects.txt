@@ -4,128 +4,104 @@
 # -------------------------------------------------------------
 investida;1;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;5;;;;;;NONE;
 investida;2;PRIMARY;RECOIL_DAMAGE;SELF;;50;;;;25;;NONE;
-
 quebra_armadura;1;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;10;;;;;;NONE;
 quebra_armadura;2;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ENEMY;;;DEF;-1;2;;;NONE;
-
+golpe_experiente;1;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;30;;;;;;NONE;
+golpe_experiente;2;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ENEMY;;;DEF;-2;2;;;NONE;
 grito_de_guerra;1;POST_ACTION;ATTRIBUTE_STAGE;SELF;;;ATK;1;2;;;NONE;
 grito_de_guerra;2;POST_ACTION;ATTRIBUTE_STAGE;SELF;;;DEF;1;2;;;NONE;
 grito_de_guerra;3;POST_ACTION;ATTRIBUTE_STAGE;SELF;;;RES;1;2;;;NONE;
-
 perseveranca;1;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;20;;;;;;NONE;
 perseveranca;2;POST_ACTION;HP_RECOVERY;SELF;;20;ATK;;;;;NONE;
-
-golpe_experiente;1;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;20;;;;;;NONE;
-golpe_experiente;2;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ENEMY;;;DEF;-2;2;;;NONE;
-golpe_experiente;3;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ENEMY;;;RES;-2;2;;;NONE;
-
-lenda_viva;1;PRE_ACTION;ATTRIBUTE_STAGE;SELF;;;ATK;1;2;;;NONE;
-lenda_viva;2;PRE_ACTION;ATTRIBUTE_STAGE;SELF;;;DEF;1;2;;;NONE;
-lenda_viva;3;PRE_ACTION;ATTRIBUTE_STAGE;SELF;;;MAG;1;2;;;NONE;
-lenda_viva;4;PRE_ACTION;ATTRIBUTE_STAGE;SELF;;;RES;1;2;;;NONE;
-lenda_viva;5;PRE_ACTION;ATTRIBUTE_STAGE;SELF;;;VEL;1;;;;NONE;
-lenda_viva;6;PRE_ACTION;ATTRIBUTE_STAGE;SELF;;;LCK;1;2;;;NONE;
-lenda_viva;7;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;30;;;;;;NONE;
-
+lenda_viva;1;PRE_ACTION;ATTRIBUTE_STAGE;SELF;;;ATK;3;2;;;NONE;
+lenda_viva;2;PRE_ACTION;ATTRIBUTE_STAGE;SELF;;;DEF;3;2;;;NONE;
+lenda_viva;3;PRE_ACTION;ATTRIBUTE_STAGE;SELF;;;RES;3;2;;;NONE;
+lenda_viva;7;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;50;;;;;;NONE;
 # -------------------------------------------------------------
 # Druida
 # -------------------------------------------------------------
 abraco_da_floresta;1;PRIMARY;HP_RECOVERY;SINGLE_ALLY;;30;MAG;;;;;NONE;
 abraco_da_floresta;2;PRIMARY;PURIFICATION;SINGLE_ALLY;;;;;;;;NONE;
-
 raizes_asfixiantes;1;PRIMARY;DAMAGE;ALL_ENEMIES;MAGICAL;15;;;;;;NONE;
 raizes_asfixiantes;2;PRIMARY;ATTRIBUTE_STAGE;ALL_ENEMIES;;;VEL;-2;;;;NONE;
-
-pele_de_arvore;1;PRIMARY;ATTRIBUTE_STAGE;SELF;;;DEF;3;3;;;NONE;
-
-postura_do_predador;1;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;50;;;;;;NONE;
-postura_do_predador;2;PRIMARY;ATTRIBUTE_STAGE;SELF;;;ATK;2;2;;;NONE;
-
+pele_de_arvore;1;PRIMARY;HP_RECOVERY;SELF;;50;MAG;;;;;NONE;
+pele_de_arvore;1;POST_ACTION;ATTRIBUTE_STAGE;SELF;;;DEF;3;3;;;NONE;
+postura_do_predador;1;PRE_ACTION;ATTRIBUTE_STAGE;SELF;;;ATK;2;2;;;NONE;
+postura_do_predador;2;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;70;;;;;;NONE;
 # -------------------------------------------------------------
-# Quebramagos
+# Quebramagos;""
 # -------------------------------------------------------------
 quebra_manto;1;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;15;;;;;;NONE;
 quebra_manto;2;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ENEMY;;;DEF;-1;2;;;NONE;
-
-golpe_de_ruptura;1;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;25;;;;;;NONE;
-
+golpe_de_ruptura;1;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;45;;;;;;NONE;
 distorcao_ancestral;1;PRIMARY;SPECIAL_STATE;SINGLE_ENEMY;;;;;;;DISTORTED_ATTRIBUTES;NONE;
-
 avatar_da_conquista;1;PRE_ACTION;ATTRIBUTE_STAGE;SELF;;;ATK;2;2;;;NONE;
-avatar_da_conquista;2;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;35;;;;;;NONE;
+avatar_da_conquista;2;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;40;;;;;;NONE;
 avatar_da_conquista;3;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ENEMY;;;DEF;-2;2;;;NONE;
-
 # -------------------------------------------------------------
 # Espectro
 # -------------------------------------------------------------
 lamina_das_sombras;1;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;15;;;;;;NONE;
 lamina_das_sombras;2;PRIMARY;ATTRIBUTE_STAGE;SELF;;;VEL;1;;;;NONE;
-
 chamado_dos_ecos;1;PRIMARY;HP_RECOVERY;ALL_BUT_SELF;;100;MAG;;;;;NONE;
 chamado_dos_ecos;2;PRIMARY;ATTRIBUTE_STAGE;ALL_BUT_SELF;;;DEF;2;2;;;NONE;
 chamado_dos_ecos;3;PRIMARY;ATTRIBUTE_STAGE;ALL_BUT_SELF;;;RES;2;2;;;NONE;
-
-poco_de_desespero;1;PRIMARY;DAMAGE;ALL_ENEMIES;MAGICAL;20;;;;;;NONE;
+poco_de_desespero;1;PRIMARY;DAMAGE;ALL_ENEMIES;MAGICAL;35;;;;;;NONE;
 poco_de_desespero;2;PRIMARY;ATTRIBUTE_STAGE;ALL_ENEMIES;;;ATK;-1;3;;;NONE;
 poco_de_desespero;3;PRIMARY;ATTRIBUTE_STAGE;ALL_ENEMIES;;;DEF;-1;3;;;NONE;
 poco_de_desespero;4;PRIMARY;ATTRIBUTE_STAGE;ALL_ENEMIES;;;MAG;-1;3;;;NONE;
 poco_de_desespero;5;PRIMARY;ATTRIBUTE_STAGE;ALL_ENEMIES;;;RES;-1;3;;;NONE;
-
-veu_da_extincao;1;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;35;;;;;;NONE;
+poco_de_desespero;6;PRIMARY;ATTRIBUTE_STAGE;ALL_ENEMIES;;;ATK;-1;3;;;TARGET_HP_AT_MOST_PERCENT;50
+poco_de_desespero;7;PRIMARY;ATTRIBUTE_STAGE;ALL_ENEMIES;;;DEF;-1;3;;;TARGET_HP_AT_MOST_PERCENT;50
+poco_de_desespero;8;PRIMARY;ATTRIBUTE_STAGE;ALL_ENEMIES;;;MAG;-1;3;;;TARGET_HP_AT_MOST_PERCENT;50
+poco_de_desespero;9;PRIMARY;ATTRIBUTE_STAGE;ALL_ENEMIES;;;RES;-1;3;;;TARGET_HP_AT_MOST_PERCENT;50
+veu_da_extincao;1;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;50;;;;;;NONE;
 veu_da_extincao;2;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ENEMY;;;RES;-3;2;;;NONE;
-
+veu_da_extincao;3;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ENEMY;;;LCK;-3;2;;;TARGET_HP_AT_MOST_PERCENT;99
 # -------------------------------------------------------------
 # Atirador
 # -------------------------------------------------------------
 saque_relampago;1;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;15;;;;;;NONE;
 saque_relampago;2;PRIMARY;ATTRIBUTE_STAGE;SELF;;;VEL;1;;;;NONE;
-
 fogo_de_supressao;1;PRIMARY;DAMAGE;ALL_ENEMIES;PHYSICAL;20;;;;;;NONE;
 fogo_de_supressao;2;PRIMARY;ATTRIBUTE_STAGE;ALL_ENEMIES;;;ATK;-1;2;;;NONE;
-
 pulso_incapacitante;1;PRIMARY;DAMAGE;SINGLE_ENEMY;MAGICAL;35;;;;;;NONE;
 pulso_incapacitante;2;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ENEMY;;;VEL;-3;;;;NONE;
-
 calculo_terminal;1;PRE_ACTION;DAMAGE_POWER_MODIFIER;SINGLE_ENEMY;;50;;;;;;TARGET_HP_AT_MOST_PERCENT;30
 calculo_terminal;2;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;40;;;;;;NONE;
-
+calculo_terminal;3;POST_ACTION;ATTRIBUTE_STAGE;SINGLE_ENEMY;;;DEF;-2;2;;;NONE;
 # -------------------------------------------------------------
 # Metamorfo
 # -------------------------------------------------------------
 modificacao_parcial;1;PRIMARY;DAMAGE;SINGLE_ENEMY;MAGICAL;15;;;;;;NONE;
 modificacao_parcial;2;PRIMARY;ATTRIBUTE_STAGE;SELF;;;MAG;1;2;;;NONE;
 modificacao_parcial;3;PRIMARY;ATTRIBUTE_STAGE;SELF;;;LCK;1;2;;;NONE;
-
 adaptacao;1;PRIMARY;ATTRIBUTE_STAGE;SELF;;;DEF;2;3;;;NONE;
 adaptacao;2;PRIMARY;ATTRIBUTE_STAGE;SELF;;;RES;2;3;;;NONE;
 adaptacao;3;PRIMARY;ATTRIBUTE_STAGE;SELF;;;DEF;1;3;;;SELF_HP_AT_MOST_PERCENT;20
 adaptacao;4;PRIMARY;ATTRIBUTE_STAGE;SELF;;;RES;1;3;;;SELF_HP_AT_MOST_PERCENT;20
-
-subjugamento;1;PRIMARY;DAMAGE;SINGLE_ENEMY;MAGICAL;20;;;;;;NONE;
+subjugamento;1;PRIMARY;DAMAGE;SINGLE_ENEMY;MAGICAL;30;;;;;;NONE;
 subjugamento;2;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ENEMY;;;ATK;-2;3;;;NONE;
 subjugamento;3;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ENEMY;;;MAG;-2;3;;;NONE;
-subjugamento;4;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ENEMY;;;DEF;-1;3;;;TARGET_HP_AT_MOST_PERCENT;30
-subjugamento;5;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ENEMY;;;RES;-1;3;;;TARGET_HP_AT_MOST_PERCENT;30
-
+subjugamento;4;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ENEMY;;;DEF;-2;3;;;TARGET_HP_AT_MOST_PERCENT;30
+subjugamento;5;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ENEMY;;;RES;-2;3;;;TARGET_HP_AT_MOST_PERCENT;30
 transfiguracao;1;PRE_ACTION;ATTRIBUTE_STAGE;SELF;;;LCK;3;3;;;NONE;
-transfiguracao;2;PRIMARY;DAMAGE;ALL_ENEMIES;MAGICAL;35;;;;;;NONE;
-transfiguracao;3;PRIMARY;ATTRIBUTE_STAGE;SELF;;;MAG;3;3;;;NONE;
-transfiguracao;4;PRIMARY;ATTRIBUTE_STAGE;SELF;;;VEL;3;;;;NONE;
-transfiguracao;5;PRIMARY;ATTRIBUTE_STAGE;SELF;;;DEF;-2;3;;;NONE;
-transfiguracao;6;PRIMARY;ATTRIBUTE_STAGE;SELF;;;RES;-2;3;;;NONE;
-
+transfiguracao;2;PRIMARY;DAMAGE;ALL_ENEMIES;MAGICAL;40;;;;;;NONE;
+transfiguracao;3;POST_ACTION;ATTRIBUTE_STAGE;SELF;;;MAG;3;3;;;NONE;
+transfiguracao;4;POST_ACTION;ATTRIBUTE_STAGE;SELF;;;VEL;3;;;;NONE;
+transfiguracao;5;POST_ACTION;ATTRIBUTE_STAGE;SELF;;;DEF;-2;3;;;NONE;
+transfiguracao;6;POST_ACTION;ATTRIBUTE_STAGE;SELF;;;RES;-2;3;;;NONE;
 # -------------------------------------------------------------
 # Bardo
 # -------------------------------------------------------------
 sussurros_dissonantes;1;PRIMARY;DAMAGE;SINGLE_ENEMY;MAGICAL;15;;;;;;NONE;
-sussurros_dissonantes;2;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ENEMY;;;LCK;-1;1;;;NONE;
-
+sussurros_dissonantes;2;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ENEMY;;;LCK;-1;2;;;NONE;
 inspiracao_do_bardo;1;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ALLY;;;ATK;1;2;;;NONE;
 inspiracao_do_bardo;2;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ALLY;;;MAG;1;2;;;NONE;
-inspiracao_do_bardo;3;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ALLY;;;VEL;1;;;;NONE;
-inspiracao_do_bardo;4;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ALLY;;;LCK;1;2;;;NONE;
-
+inspiracao_do_bardo;3;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ALLY;;;LCK;1;2;;;NONE;
+inspiracao_do_bardo;4;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ALLY;;;VEL;1;;;;NONE;
+inspiracao_do_bardo;5;PRIMARY;ATTRIBUTE_STAGE;SELF;;;VEL;1;;;;NONE;
 palavra_curativa;1;PRIMARY;HP_RECOVERY;ALL_ALLIES;;35;MAG;;;;;NONE;
-
 onda_trovejante;1;PRIMARY;DAMAGE;ALL_ENEMIES;PHYSICAL;50;;;;;;NONE;
-onda_trovejante;2;PRIMARY;ATTRIBUTE_STAGE;ALL_ENEMIES;;;DEF;-2;1;;;NONE;
+onda_trovejante;2;PRIMARY;ATTRIBUTE_STAGE;ALL_ENEMIES;;;VEL;-2;;;;NONE;
+onda_trovejante;3;PRIMARY;ATTRIBUTE_STAGE;ALL_ALLIES;;;VEL;2;;;;NONE;
