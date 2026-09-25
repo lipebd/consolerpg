@@ -98,13 +98,14 @@ public final class CityTransportMenu {
 	}
 
 	private void displayMenu(
-			String sourceScenarioName,
-			List<CityTransportDefinition> destinations,
-			int destinationSlotCount,
-			Set<String> markedDestinationScenarioIds,
-			String feedbackMessage
+	        String sourceScenarioName,
+	        List<CityTransportDefinition> destinations,
+	        int destinationSlotCount,
+	        Set<String> markedDestinationScenarioIds,
+	        String feedbackMessage
 	) {
-		ConsoleUI.displayHeading(sourceScenarioName, "Viagem");
+	    ConsoleUI.clearScreen();
+	    ConsoleUI.displayHeading(sourceScenarioName, "Viagem");
 
 		System.out.println();
 		System.out.println("Aonde deseja ir?");

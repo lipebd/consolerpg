@@ -1,6 +1,5 @@
 package rpg.ui;
 
-import java.util.List;
 import java.util.Objects;
 
 import rpg.quests.QuestDefinition;

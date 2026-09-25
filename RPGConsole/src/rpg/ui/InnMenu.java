@@ -1,12 +1,11 @@
 package rpg.ui;
 
-import java.util.Locale;
 import java.util.Objects;
 
+import rpg.GameCurrency;
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
 import rpg.world.inns.InnDefinition;
-import rpg.GameCurrency;
 
 // Displays an INN and controls the party-resting flow.
 public final class InnMenu {

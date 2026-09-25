@@ -8,9 +8,9 @@ import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 // Provides centralized UTF-8 console input operations.

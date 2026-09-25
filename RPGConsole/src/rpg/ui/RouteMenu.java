@@ -35,11 +35,13 @@ public final class RouteMenu {
 			return Optional.empty();
 		}
 		String feedbackMessage = null;
-		while (true) {
-			ConsoleUI.displayHeading(sourceScenarioName, "Rotas");
 
-			System.out.println();
-			System.out.println("Aonde deseja ir?");
+		while (true) {
+		    ConsoleUI.clearScreen();
+		    ConsoleUI.displayHeading(sourceScenarioName, "Rotas");
+
+		    System.out.println();
+		    System.out.println("Aonde deseja ir?");
 
 			for (int index = 0; index < routes.size(); index++) {
 				TravelRouteDefinition route = routes.get(index);

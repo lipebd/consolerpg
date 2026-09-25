@@ -52,7 +52,7 @@ public final class RewardModifierFormatter {
 			int victoriesRemaining,
 			boolean hasTemporaryModifier
 	) {
-		if (modifierPercent <= 0) {
+		if (modifierPercent < 0) {
 			return;
 		}
 

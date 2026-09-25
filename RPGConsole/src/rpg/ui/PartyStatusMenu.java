@@ -34,11 +34,11 @@ public final class PartyStatusMenu {
 
 			List<PlayableCharacter> members = party.getMembers();
 			displayPartyStatus(members);
+			System.out.println();
 			if (feedbackMessage != null) {
-			    System.out.println();
-			    ConsoleUI.displayWrappedText(feedbackMessage);
-			}
-			System.out.println("\n[0] Voltar");
+				ConsoleUI.displayWrappedText(feedbackMessage);
+			} else {System.out.println();}
+			System.out.println("[0] Voltar");
 			System.out.print("> ");
 
 			String choice = consoleInput.readLine();
@@ -57,8 +57,7 @@ public final class PartyStatusMenu {
 
 				feedbackMessage = null;
 
-				PlayableCharacter selectedCharacter =
-				        members.get(selectedIndex);
+				PlayableCharacter selectedCharacter = members.get(selectedIndex);
 
 				characterStatusMenu.open(selectedCharacter);
 
@@ -71,56 +70,57 @@ public final class PartyStatusMenu {
 	private void displayPartyStatus(List<PlayableCharacter> members) {
 		ConsoleUI.displayHeading("Status");
 		System.out.println();
-		int nameWidth = party.getMembers().stream().mapToInt(currentMember -> currentMember.getName().length()).max().orElse(1);
+		int nameWidth = party.getMembers().stream().mapToInt(currentMember -> currentMember.getName().length()).max()
+				.orElse(1);
 		int levelWidth = party.getMembers().stream()
 				.mapToInt(currentMember -> String.valueOf(currentMember.getLevel()).length()).max().orElse(1);
 		int hpWidth = party.getMembers().stream()
 				.mapToInt(currentMember -> (currentMember.getCurrentHp() + "/" + currentMember.getMaxHp()).length())
-				.max()
-				.orElse(1);
+				.max().orElse(1);
 		int mpWidth = party.getMembers().stream()
 				.mapToInt(currentMember -> (currentMember.getCurrentMp() + "/" + currentMember.getMaxMp()).length())
-				.max()
-				.orElse(1);
+				.max().orElse(1);
 		for (int index = 0; index < members.size(); index++) {
 
 			PlayableCharacter member = members.get(index);
 
 			displayMemberSummary(member, index + 1, nameWidth, levelWidth, hpWidth, mpWidth);
 		}
-
-		System.out.println("\n" + GameCurrency.getName() + ": " + GameCurrency.format(party.getGold()));
+		System.out.println();
+		System.out.println(GameCurrency.getName() + ": " + GameCurrency.format(party.getGold()));
 
 		displayRewardModifiers();
 	}
 
-private void displayMemberSummary(
-                PlayableCharacter member,
-                int optionNumber,
-                int nameWidth,
-                int levelWidth,
-                int hpWidth,
-                int mpWidth
-) {
-        String memberLabel = String.format("%-" + nameWidth + "s", member.getName()) + " [" + member.getPlayableClassDefinition().getSymbol() + "]";
-        String rowFormat = "[%d] %s%n    %s%n";
+	private void displayMemberSummary(
+			PlayableCharacter member,
+			int optionNumber,
+			int nameWidth,
+			int levelWidth,
+			int hpWidth,
+			int mpWidth
+	) {
+		String memberLabel = String.format("%-" + nameWidth + "s", member.getName()) + " ["
+				+ member.getPlayableClassDefinition().getSymbol() + "]";
+		String rowFormat = "[%d] %s%n    %s%n";
 
-        if (!member.isAlive()) {
-                System.out.printf(rowFormat, optionNumber, memberLabel, "DERROTADO");
+		if (!member.isAlive()) {
+			System.out.printf(rowFormat, optionNumber, memberLabel, "DERROTADO");
 
-                return;
-        }
+			return;
+		}
 
-        String status = String.format(
-                        "Nv. %-" + levelWidth + "s | HP: %-" + hpWidth + "s | MP: %-" + mpWidth + "s | SP: %s",
-                        member.getLevel(),
-                        member.getCurrentHp() + "/" + member.getMaxHp(),
-                        member.getCurrentMp() + "/" + member.getMaxMp(),
-                        member.getCurrentSp() + "/" + member.getMaxSp()
-        );
+		String status = String.format(
+				"Nv. %-" + levelWidth + "s | HP: %-" + hpWidth + "s | MP: %-" + mpWidth + "s | SP: %s",
+				member.getLevel(),
+				member.getCurrentHp() + "/" + member.getMaxHp(),
+				member.getCurrentMp() + "/" + member.getMaxMp(),
+				member.getCurrentSp() + "/" + member.getMaxSp()
+		);
 
-        System.out.printf(rowFormat, optionNumber, memberLabel, status);
-}
+		System.out.printf(rowFormat, optionNumber, memberLabel, status);
+	}
+
 	private void displayRewardModifiers() {
 		PartyRewardModifierState modifierState = party.getRewardModifierState();
 
@@ -135,9 +135,6 @@ private void displayMemberSummary(
 				modifierState.getGoldVictoriesRemaining(),
 				modifierState.hasActiveGoldModifier()
 		);
-
-		if (!summary.isEmpty()) {
-			System.out.println(summary);
-		}
+		System.out.println(summary);
 	}
 }

@@ -2,15 +2,14 @@ package rpg.ui;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
-import rpg.quests.QuestProgressEvent;
-import rpg.quests.QuestProgressEventType;
 import rpg.characters.Party;
 import rpg.items.Item;
 import rpg.items.ItemCatalog;
+import rpg.quests.QuestProgressEvent;
+import rpg.quests.QuestProgressEventType;
 import rpg.world.crafting.CrafterDefinition;
 import rpg.world.crafting.CraftingMaterial;
 import rpg.world.crafting.CraftingRecipeCatalog;
