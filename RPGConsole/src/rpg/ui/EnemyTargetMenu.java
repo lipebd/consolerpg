@@ -1,29 +1,44 @@
 package rpg.ui;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
+import rpg.battle.BattleType;
 import rpg.battle.EnemyBattleGroup;
 import rpg.battle.EnemyBattleSlot;
+import rpg.characters.Party;
 
 // Displays the living enemies and allows target selection.
 public final class EnemyTargetMenu {
 
-	private static final String DEFAULT_MENU_TITLE = "Selecionar alvo";
+	private static final String DEFAULT_MENU_TITLE = "Escolha o alvo:";
 
 	private final ConsoleInput consoleInput;
+	private final BattleScreen battleScreen;
+	private final Party party;
+	private final String scenarioName;
+	private final BattleType battleType;
 
-	public EnemyTargetMenu(ConsoleInput consoleInput) {
+	public EnemyTargetMenu(
+			ConsoleInput consoleInput,
+			BattleScreen battleScreen,
+			Party party,
+			String scenarioName,
+			BattleType battleType
+	) {
 		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
+		this.battleScreen = Objects.requireNonNull(battleScreen, "Battle screen cannot be null.");
+		this.party = Objects.requireNonNull(party, "Party cannot be null.");
+		this.scenarioName = Objects.requireNonNull(scenarioName, "Scenario name cannot be null.");
+		this.battleType = Objects.requireNonNull(battleType, "Battle type cannot be null.");
 	}
 
-	public Optional<EnemyBattleSlot> selectTarget(EnemyBattleGroup enemyGroup) {
-		return selectTarget(enemyGroup, DEFAULT_MENU_TITLE);
+	public Optional<EnemyBattleSlot> selectTarget(EnemyBattleGroup enemyGroup, int roundNumber) {
+		return selectTarget(enemyGroup, DEFAULT_MENU_TITLE, roundNumber);
 	}
 
-	public Optional<EnemyBattleSlot> selectTarget(EnemyBattleGroup enemyGroup, String menuTitle) {
+	public Optional<EnemyBattleSlot> selectTarget(EnemyBattleGroup enemyGroup, String menuTitle, int roundNumber) {
 		Objects.requireNonNull(enemyGroup, "Enemy battle group cannot be null.");
 
 		if (menuTitle == null || menuTitle.isBlank()) {
@@ -40,30 +55,19 @@ public final class EnemyTargetMenu {
 			return Optional.of(livingTargets.get(0));
 		}
 
-		int nameColumnWidth = livingTargets.stream().mapToInt(slot -> slot.getDisplayName().length()).max().orElse(0);
+		String feedbackMessage = null;
 
 		while (true) {
-			System.out.println("\n[" + menuTitle.toUpperCase(Locale.ROOT) + "]");
-
-			System.out.println();
-			System.out.println("Escolha o alvo:");
-			System.out.println();
-
-			for (int index = 0; index < livingTargets.size(); index++) {
-				EnemyBattleSlot slot = livingTargets.get(index);
-
-				System.out.printf(
-						"[%d] %-" + nameColumnWidth + "s | HP: %d/%d%n",
-						index + 1,
-						slot.getDisplayName(),
-						slot.getEnemy().getCurrentHp(),
-						slot.getEnemy().getMaxHp()
-				);
-			}
-
-			System.out.println();
-			System.out.println("[0] Voltar");
-			System.out.print("> ");
+			battleScreen.displayEnemyTargetSelection(
+					scenarioName,
+					battleType,
+					enemyGroup,
+					party,
+					roundNumber,
+					menuTitle,
+					feedbackMessage
+			);
+			feedbackMessage = null;
 
 			String choice = consoleInput.readTrimmedLine();
 
@@ -75,13 +79,13 @@ public final class EnemyTargetMenu {
 				int selectedIndex = Integer.parseInt(choice) - 1;
 
 				if (selectedIndex < 0 || selectedIndex >= livingTargets.size()) {
-					System.out.println("Alvo inválido.");
+					feedbackMessage = "Alvo inválido.";
 					continue;
 				}
 
 				return Optional.of(livingTargets.get(selectedIndex));
 			} catch (NumberFormatException exception) {
-				System.out.println("Comando inválido.");
+				feedbackMessage = "Comando inválido.";
 			}
 		}
 	}

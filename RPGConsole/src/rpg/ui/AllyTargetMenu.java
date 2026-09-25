@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
@@ -25,7 +26,8 @@ public final class AllyTargetMenu {
 				party.getLivingMembers(),
 				"Selecionar aliado",
 				"Escolha um aliado:",
-				"Não há aliados vivos disponíveis."
+				"Não há aliados vivos disponíveis.",
+				null
 		);
 	}
 
@@ -36,7 +38,8 @@ public final class AllyTargetMenu {
 				party.getDefeatedMembers(),
 				"Reviver aliado",
 				"Escolha um aliado para reviver:",
-				"Não há aliados derrotados para reviver."
+				"Não há aliados derrotados para reviver.",
+				null
 		);
 	}
 
@@ -51,7 +54,8 @@ public final class AllyTargetMenu {
 				availableMembers,
 				"Selecionar aliado",
 				"Escolha um aliado:",
-				"Nenhum aliado pode ser afetado por este item."
+				"Nenhum aliado pode ser afetado por este item.",
+				null
 		);
 	}
 
@@ -59,7 +63,8 @@ public final class AllyTargetMenu {
 			List<PlayableCharacter> availableMembers,
 			String menuTitle,
 			String prompt,
-			String emptyMessage
+			String emptyMessage,
+			BiConsumer<List<PlayableCharacter>, String> battleDisplay
 	) {
 		if (availableMembers.isEmpty()) {
 			ConsoleUI.displayWrappedText(emptyMessage);
@@ -71,34 +76,32 @@ public final class AllyTargetMenu {
 		}
 
 		int nameColumnWidth = availableMembers.stream().mapToInt(member -> member.getName().length()).max().orElse(0);
-
 		String rowFormat = "[%d] %-" + nameColumnWidth + "s | %s%n";
+		String feedbackMessage = null;
 
 		while (true) {
-			System.out.println("\n[" + menuTitle.toUpperCase(Locale.ROOT) + "]");
+			if (battleDisplay != null) {
+				battleDisplay.accept(availableMembers, feedbackMessage);
+			} else {
+				System.out.println("\n[" + menuTitle.toUpperCase(Locale.ROOT) + "]");
+				System.out.println();
+				System.out.println(prompt);
+				System.out.println();
 
-			System.out.println();
-			System.out.println(prompt);
-			System.out.println();
+				for (int index = 0; index < availableMembers.size(); index++) {
+					PlayableCharacter member = availableMembers.get(index);
+					String condition = member.isAlive() ? "HP: " + member.getCurrentHp() + "/" + member.getMaxHp()
+							: "DERROTADO";
 
-			for (int index = 0; index < availableMembers.size(); index++) {
-				PlayableCharacter member = availableMembers.get(index);
-
-				String condition;
-
-				if (member.isAlive()) {
-					condition = "HP: " + member.getCurrentHp() + "/" + member.getMaxHp();
-				} else {
-					condition = "DERROTADO";
+					System.out.printf(rowFormat, index + 1, member.getName(), condition);
 				}
 
-				System.out.printf(rowFormat, index + 1, member.getName(), condition);
+				System.out.println();
+				System.out.println("[0] Voltar");
+				System.out.print("> ");
 			}
 
-			System.out.println();
-			System.out.println("[0] Voltar");
-			System.out.print("> ");
-
+			feedbackMessage = null;
 			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
@@ -109,14 +112,68 @@ public final class AllyTargetMenu {
 				int selectedIndex = Integer.parseInt(choice) - 1;
 
 				if (selectedIndex < 0 || selectedIndex >= availableMembers.size()) {
-					System.out.println("Aliado inválido.");
+					if (battleDisplay == null) {
+						System.out.println("Aliado inválido.");
+					} else {
+						feedbackMessage = "Aliado inválido.";
+					}
 					continue;
 				}
 
 				return Optional.of(availableMembers.get(selectedIndex));
 			} catch (NumberFormatException exception) {
-				System.out.println("Comando inválido.");
+				if (battleDisplay == null) {
+					System.out.println("Comando inválido.");
+				} else {
+					feedbackMessage = "Comando inválido.";
+				}
 			}
 		}
+	}
+
+	public Optional<PlayableCharacter>
+			selectLivingBattleTarget(Party party, BiConsumer<List<PlayableCharacter>, String> display) {
+		Objects.requireNonNull(party, "Party cannot be null.");
+
+		return selectTarget(
+				party.getLivingMembers(),
+				"Selecionar aliado",
+				"Escolha um aliado:",
+				"Não há aliados vivos disponíveis.",
+				display
+		);
+	}
+
+	public Optional<PlayableCharacter>
+			selectDefeatedBattleTarget(Party party, BiConsumer<List<PlayableCharacter>, String> display) {
+		Objects.requireNonNull(party, "Party cannot be null.");
+
+		return selectTarget(
+				party.getDefeatedMembers(),
+				"Reviver aliado",
+				"Escolha um aliado para reviver:",
+				"Não há aliados derrotados para reviver.",
+				display
+		);
+	}
+
+	public Optional<PlayableCharacter> selectRecoveryBattleTarget(
+			Party party,
+			RecoveryItem recoveryItem,
+			BiConsumer<List<PlayableCharacter>, String> display
+	) {
+		Objects.requireNonNull(party, "Party cannot be null.");
+		Objects.requireNonNull(recoveryItem, "Recovery item cannot be null.");
+		Objects.requireNonNull(display, "Target display cannot be null.");
+
+		List<PlayableCharacter> availableMembers = party.getMembers().stream().filter(recoveryItem::canAffect).toList();
+
+		return selectTarget(
+				availableMembers,
+				"Selecionar aliado",
+				"Escolha um aliado:",
+				"Nenhum aliado pode ser afetado por este item.",
+				display
+		);
 	}
 }

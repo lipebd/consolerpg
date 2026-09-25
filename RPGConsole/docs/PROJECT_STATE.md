@@ -2,15 +2,15 @@
 
 ## Current version
 
-V5 is complete and preserved as the current released version.
+V6 is complete and preserved as the current released version.
 
 Current stage:
 
-`V6 quest-system implementation — Parts 1 through 9 completed; Part 10's first five quests implemented and tested in the project; documentation and portable release remain pending`
+`V7 polish — Parts 1 through 5 implemented and tested; later parts and the portable V7 release remain pending`
 
 Current Git branch:
 
-`feature/v6-quests`
+`feature/v7-polish`
 
 Preserved release tags:
 
@@ -19,6 +19,7 @@ Preserved release tags:
 * `v3.0.0`
 * `v4.0.0`
 * `v5.0.0`
+* `v6.0.0`
 
 ## Project objective
 
@@ -104,7 +105,7 @@ Runtime `Enemy` instances retain their canonical definition ID, allowing battle 
 - `RouteMenu` supports multiple unlocked adjacent destinations.
 - Adjacent travel from combat scenarios remains locked until exploration is complete.
 - Bree, Verdes Ermos and Gruta de Relamparrocha are connected.
-- Scenario descriptions are displayed when entering a map and after returning from battle.
+- Scenario descriptions are displayed on scenario entry; returning from a battle in the same scenario does not reactivate them.
 
 ### Dungeon progression
 
@@ -199,7 +200,7 @@ V2 introduced healing and revival as single-purpose hardcoded skill fields. V4 r
 - Additional actions are distributed through decreasing initiative scores.
 - Defeated future entries are skipped.
 - The current and next participants are displayed.
-- The `Round` action displays up to five queue entries without consuming an action.
+- `Tática` → `Ordem` previews up to five remaining actions without consuming the current action.
 
 ### Battle escape
 
@@ -958,6 +959,21 @@ Part 8 representative testing covered header-only startup; candidate creation at
 
 Part 9 added immutable quest, flag and candidate snapshots; strict version-3 property serialization and deserialization; explicit version-2 incompatibility; domain-local quest and candidate restorers; complete narrative-state injection through `RestoredCampaign`; and cross-state validation for quest steps, objective counters, flags, candidates, party membership, distinct classes and the first ceremony transaction. The encrypted outer container, AES-GCM behavior and atomic file replacement remain unchanged.
 
+## V7 interface polish
+
+Parts 1 through 5 are implemented and tested:
+
+- Shared prose wrapping uses 75 visible columns, respects authored line breaks and ignores ANSI color codes when measuring text.
+- Console clearing and ordinary screen headings are centralized in `ConsoleUI`.
+- World, location and functional screens use consistent contextual headings and iterative feedback.
+- Inventory, equipment, status and character-creation presentation received focused layout and navigation updates.
+- Dialogue presents two lines per page with Unicode-aware character animation. Enter reveals the current page before a subsequent Enter advances.
+- Battle uses a fixed participant panel for up to three enemies and four allies, with resources, compact effects, defeated participants and bounded name display.
+- Action results replace the battle action menu with paged messages inside the panel; a participant reaching zero HP receives explicit feedback when combat continues.
+- Battle target selection marks eligible enemies and allies directly in the panel. Battle item use and skill results return their messages to battle presentation.
+- The tactical menu provides resource and effect overviews, an effect legend, dedicated enemy analysis and a preview of remaining actions.
+- Normal, boss and epic battles have contextual headings. `BattleScreen` presents the entry animation separately from ordinary panel redraws.
+
 ## Current limitations and temporary implementations
 
 - Permanent skill-scroll content and curated scroll drops remain absent while the draft skills await required combat mechanics and final content review.
@@ -977,11 +993,11 @@ Part 9 added immutable quest, flag and candidate snapshots; strict version-3 pro
 
 ## Current next step
 
-V5 remains the latest packaged release as `v5.0.0`. V6 development continues on `feature/v6-quests`.
+V6 is the latest packaged release as `v6.0.0`. V7 development continues on `feature/v7-polish`.
 
-Parts 1 through 9 are implemented, including the version-3 campaign save format for quest progress, permanent flags and recruitment candidates. Part 10 contains the first five canonical quests and the reusable technical integration required by their progression. All five quests have been played through in the project, including the class-path ceremony and first-ally recruitment.
+Parts 1 through 5 are implemented and tested. Battle-screen and tactical-menu work is complete. Parts 6 through 9 and the final V7 verification, packaging and release remain pending.
 
-Current closure work is to finish the V6 documentation and content-author guide, review the complete five-quest progression and regressions, then build and verify the portable Windows package. The V6 release has not yet been packaged or tagged.
+The general inventory screen outside battle still needs the previously identified flush and incomplete-screen correction. Animated presentation of exploration messages remains a separate future block.
 
 ## Important conventions
 

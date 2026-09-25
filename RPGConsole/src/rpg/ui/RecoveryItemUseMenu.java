@@ -4,37 +4,59 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.List;
+import java.util.function.BiConsumer;
 
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
 import rpg.items.RecoveryItem;
 import rpg.items.RecoveryItemTargetType;
 import rpg.items.RecoveryItemUseResult;
+import java.util.function.Consumer;
 
 // Controls recovery item targeting, execution and result display.
 public final class RecoveryItemUseMenu {
 
+	private final Consumer<String> messageOutput;
 	private final Party party;
 	private final AllyTargetMenu allyTargetMenu;
 
 	public RecoveryItemUseMenu(Party party, ConsoleInput consoleInput) {
-		this.party = Objects.requireNonNull(party, "Party cannot be null.");
+		this(party, consoleInput, ConsoleUI::displayWrappedText);
+	}
 
+	public RecoveryItemUseMenu(Party party, ConsoleInput consoleInput, Consumer<String> messageOutput) {
+		this.party = Objects.requireNonNull(party, "Party cannot be null.");
+		this.messageOutput = Objects.requireNonNull(messageOutput, "Message output cannot be null.");
 		this.allyTargetMenu = new AllyTargetMenu(consoleInput);
 	}
 
 	public boolean use(RecoveryItem recoveryItem, PlayableCharacter actingCharacter) {
+		return use(recoveryItem, actingCharacter, null);
+	}
+
+	public boolean use(
+			RecoveryItem recoveryItem,
+			PlayableCharacter actingCharacter,
+			BiConsumer<List<PlayableCharacter>, String> targetDisplay
+	) {
 		Objects.requireNonNull(recoveryItem, "Recovery item cannot be null.");
 
 		if (recoveryItem.getTargetType() == RecoveryItemTargetType.SINGLE_ALLY) {
-			return useSingleTargetItem(recoveryItem, actingCharacter);
+			return useSingleTargetItem(recoveryItem, actingCharacter, targetDisplay);
 		}
 
 		return useGroupItem(recoveryItem, actingCharacter);
 	}
 
-	private boolean useSingleTargetItem(RecoveryItem recoveryItem, PlayableCharacter actingCharacter) {
-		Optional<PlayableCharacter> selectedTarget = allyTargetMenu.selectRecoveryTarget(party, recoveryItem);
+	private boolean useSingleTargetItem(
+			RecoveryItem recoveryItem,
+			PlayableCharacter actingCharacter,
+			BiConsumer<List<PlayableCharacter>, String> targetDisplay
+	) {
+		Optional<PlayableCharacter> selectedTarget = targetDisplay == null
+				? allyTargetMenu.selectRecoveryTarget(party, recoveryItem)
+				: allyTargetMenu.selectRecoveryBattleTarget(party, recoveryItem, targetDisplay);
 
 		if (selectedTarget.isEmpty()) {
 			return false;
@@ -87,109 +109,57 @@ public final class RecoveryItemUseMenu {
 		return true;
 	}
 
-	private void displayRecoveryResult(
-			PlayableCharacter target,
-			RecoveryItemUseResult result
-	) {
+	private void displayRecoveryResult(PlayableCharacter target, RecoveryItemUseResult result) {
 		if (result.getRevivedHp() > 0) {
-			ConsoleUI.displayWrappedText(
-					target.getName()
-							+ " foi revivido com "
-							+ result.getRevivedHp()
-							+ " de HP."
-			);
+			messageOutput.accept(target.getName() + " foi revivido com " + result.getRevivedHp() + " de HP.");
 		}
 
 		if (result.getRecoveredHp() > 0) {
-			ConsoleUI.displayWrappedText(
-					target.getName()
-							+ " recuperou "
-							+ result.getRecoveredHp()
-							+ " de HP. HP atual: "
-							+ target.getCurrentHp()
-							+ "/"
-							+ target.getMaxHp()
-							+ "."
+			messageOutput.accept(
+					target.getName() + " recuperou " + result.getRecoveredHp() + " de HP. HP atual: "
+							+ target.getCurrentHp() + "/" + target.getMaxHp() + "."
 			);
 		}
 
 		if (result.getRecoveredMp() > 0) {
-			ConsoleUI.displayWrappedText(
-					target.getName()
-							+ " recuperou "
-							+ result.getRecoveredMp()
-							+ " de MP. MP atual: "
-							+ target.getCurrentMp()
-							+ "/"
-							+ target.getMaxMp()
-							+ "."
+			messageOutput.accept(
+					target.getName() + " recuperou " + result.getRecoveredMp() + " de MP. MP atual: "
+							+ target.getCurrentMp() + "/" + target.getMaxMp() + "."
 			);
 		}
 
 		if (result.getRecoveredSp() > 0) {
-			ConsoleUI.displayWrappedText(
-					target.getName()
-							+ " recuperou "
-							+ result.getRecoveredSp()
-							+ " de SP. SP atual: "
-							+ target.getCurrentSp()
-							+ "/"
-							+ target.getMaxSp()
-							+ "."
+			messageOutput.accept(
+					target.getName() + " recuperou " + result.getRecoveredSp() + " de SP. SP atual: "
+							+ target.getCurrentSp() + "/" + target.getMaxSp() + "."
 			);
 		}
 
 		if (result.purifiedStatusEffects()) {
-			ConsoleUI.displayWrappedText(
-					target.getName()
-							+ " teve seus efeitos negativos removidos."
-			);
+			messageOutput.accept(target.getName() + " teve seus efeitos negativos removidos.");
 		}
 	}
 
-	private void displayItemUse(
-			PlayableCharacter actingCharacter,
-			PlayableCharacter target,
-			RecoveryItem recoveryItem
-	) {
+	private void
+			displayItemUse(PlayableCharacter actingCharacter, PlayableCharacter target, RecoveryItem recoveryItem) {
 		if (actingCharacter == null || actingCharacter == target) {
-			ConsoleUI.displayWrappedText(
-					target.getName()
-							+ " usou "
-							+ recoveryItem.getName()
-							+ "."
-			);
+			messageOutput.accept(target.getName() + " usou " + recoveryItem.getName() + ".");
 
 			return;
 		}
 
-		ConsoleUI.displayWrappedText(
-				actingCharacter.getName()
-						+ " usou "
-						+ recoveryItem.getName()
-						+ " em "
-						+ target.getName()
-						+ "."
+		messageOutput.accept(
+				actingCharacter.getName() + " usou " + recoveryItem.getName() + " em " + target.getName() + "."
 		);
 	}
 
-	private void displayGroupItemUse(
-			PlayableCharacter actingCharacter,
-			RecoveryItem recoveryItem
-	) {
+	private void displayGroupItemUse(PlayableCharacter actingCharacter, RecoveryItem recoveryItem) {
 		if (actingCharacter == null) {
-			ConsoleUI.displayWrappedText(
-					"O grupo usou " + recoveryItem.getName() + "."
-			);
+			messageOutput.accept("O grupo usou " + recoveryItem.getName() + ".");
 
 			return;
 		}
 
-		ConsoleUI.displayWrappedText(
-				actingCharacter.getName()
-						+ " usou "
-						+ recoveryItem.getName()
-						+ " no grupo."
-		);
+		messageOutput.accept(actingCharacter.getName() + " usou " + recoveryItem.getName() + " no grupo.");
 	}
 }

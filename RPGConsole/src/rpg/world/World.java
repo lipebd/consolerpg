@@ -11,6 +11,7 @@ import java.util.Set;
 
 import rpg.GameCurrency;
 import rpg.battle.BattleCoordinator;
+import rpg.battle.BattleType;
 import rpg.battle.BattleResult;
 import rpg.battle.rewards.BattleRewardService;
 import rpg.characters.Party;
@@ -1457,7 +1458,7 @@ public class World {
 			return true;
 		}
 
-		return startEncounter(selectedDefinitions) != BattleResult.DEFEAT;
+		return startEncounter(selectedDefinitions, BattleType.NORMAL) != BattleResult.DEFEAT;
 	}
 
 	private boolean executeExplorationEvent(ExplorationEventType eventType, int position, boolean specialArea) {
@@ -1615,7 +1616,7 @@ public class World {
 			return true;
 		}
 
-        BattleResult result = startEncounter(epicDefinitions);
+		BattleResult result = startEncounter(epicDefinitions, BattleType.EPIC);
 
         if (result == BattleResult.VICTORY) {
             dungeonProgress.recordEpicVictory(dungeon.getId(), worldClock.getElapsedHours());
@@ -1641,12 +1642,16 @@ public class World {
 		explorationSession.markComplete();
 	}
 
-	private BattleResult startEncounter(List<EnemyDefinition> enemyDefinitions) {
+	private BattleResult startEncounter(
+			List<EnemyDefinition> enemyDefinitions,
+			BattleType battleType
+	) {
 		if (!(currentScenario instanceof CombatScenario combatScenario)) {
 			throw new IllegalStateException("A battle can only start inside a combat scenario.");
 		}
 
-		BattleResult result = battleCoordinator.start(enemyDefinitions, combatScenario);
+		BattleResult result =
+				battleCoordinator.start(enemyDefinitions, combatScenario, battleType);
 
 		if (result == BattleResult.VICTORY || result == BattleResult.DEFEAT) {
 			advanceWorldTime(HOURS_PER_FINISHED_BATTLE);
@@ -1880,7 +1885,7 @@ public class World {
 			System.out.println("- " + bossDefinition.getName());
 		}
 
-		BattleResult result = startEncounter(bossDefinitions);
+		BattleResult result = startEncounter(bossDefinitions, BattleType.BOSS);
 
 		if (result == BattleResult.VICTORY) {
 			long elapsedHours = worldClock.getElapsedHours();

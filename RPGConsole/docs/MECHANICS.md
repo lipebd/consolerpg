@@ -100,7 +100,7 @@ Vez de Passavento!
 A seguir: Bardo
 ```
 
-Playable characters can inspect the current round through the `Rodada` battle action.
+Playable characters can inspect the current round through `Tática` → `Ordem` without consuming an action.
 
 The detailed round screen:
 
@@ -112,6 +112,7 @@ The detailed round screen:
 - Displays up to five upcoming actions.
 - Displays the number of additional hidden actions.
 - Does not predict the following round.
+- Numbers the following round immediately after the last visible action when no actions are hidden.
 
 The following round is not predicted because its order may change due to defeats, revives, Speed modifiers and a new random tie result.
 

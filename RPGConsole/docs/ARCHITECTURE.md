@@ -26,7 +26,7 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.characters` | Character state, name validation and selection, playable-character level boundaries, natural and equipment-modified attributes, equipped slots, party ownership and enemy ranks | `GameCharacter`, `CharacterStats`, `CharacterEquipment`, `PlayableCharacter`, `PlayableCharacterLevelRules`, `Party`, `Enemy`, `EnemyRank`, `CharacterNameRules`, `CharacterNameCatalog`, `CharacterNameLoader`, `CharacterNameSelector` |
 | `rpg.classes` | Immutable playable-class definitions, symbols, external loading, lookup and natural-growth calculation | `PlayableClassDefinition`, `PlayableClassLoader`, `PlayableClassCatalog`, `CharacterGrowthCalculator` |
 | `rpg.development` | Isolated configurable party construction for development runs | `DevelopmentPartyFactory` |
-| `rpg.battle` | Battle coordination, skill execution and centralized combat calculations | `Battle`, `BattleResult`, `BattleCoordinator`, `SkillExecutor`, `SkillExecution`, `SkillExecutionContext`, `SkillEffectResult`, `DamageType`, `DamageCalculator`, `RecoveryCalculator`, `EffectResistanceCalculator`, `EnemyBattleGroup`, `BattleTurnOrder`, `BattleEscapeService` |
+| `rpg.battle` | Battle coordination, skill execution and centralized combat calculations | `Battle`, `BattleResult`, `BattleCoordinator`, `SkillExecutor`, `SkillExecution`, `SkillExecutionContext`, `SkillEffectResult`, `DamageType`, `DamageCalculator`, `RecoveryCalculator`, `EffectResistanceCalculator`, `EnemyBattleGroup`, `BattleTurnOrder`, `BattleEscapeService`, `BattleType` |
 | `rpg.battle.rewards` | Reward calculation, temporary and equipment modifiers, immutable reward snapshots and individual progression results | `BattleRewardService`, `RewardCalculator`, `PartyRewardModifierState`, `BattleRewardModifiers`, `BattleRewards`, `CharacterProgressionResult` |
 | `rpg.effects` | Mutable combat-effect state and reusable attribute-stage rules | `CombatEffectState`, `AttributeStageState`, `AttributeStageRules`, `SpecialBattleStateType` |
 | `rpg.skills` | Immutable skill and component definitions, external loading and closed skill vocabularies | `SkillDefinition`, `SkillEffectDefinition`, `SkillLoader`, `SkillCatalog`, `SkillTargetType`, `SkillEffectType`, `SkillExecutionPhase`, `SkillConditionType` |
@@ -50,7 +50,7 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.world.rewards` | External exploration reward pools, validation and weighted selection | `ExplorationRewardEntry`, `ExplorationRewardCatalog`, `ExplorationRewardLoader`, `ExplorationRewardGenerator`, `ExplorationReward`, `ExplorationRewardType` |
 | `rpg.world.travel` | External directed-route definitions, loading and runtime unlock progress | `TravelRouteDefinition`, `TravelCatalog`, `TravelRouteLoader`, `TravelProgress` |
 | `rpg.world.transport` | External paid city-transport definitions, loading and destination lookup | `CityTransportDefinition`, `CityTransportCatalog`, `CityTransportLoader` |
-| `rpg.ui` | Console input, centralized wrapping, heading composition and clearing, menus, character creation, navigation, dialogue and quest presentation, target selection, shared formatters and information screens | `ConsoleUI`, `ConsoleInput`, `TitleScreen`, `CharacterCreationMenu`, `PartyRescueScreen`, `CombatScenarioMenu`, `CityMenu`, `InventoryMenu`, `EquipmentMenu`, `ShopMenu`, `CraftingMenu`, `DialoguePresenter`, `QuestMenu`, `QuestProgressPresenter` |
+| `rpg.ui` | Console input, centralized wrapping, heading composition and clearing, menus, character creation, navigation, dialogue and quest presentation, target selection, shared formatters and information screens | `ConsoleUI`, `ConsoleInput`, `TitleScreen`, `CharacterCreationMenu`, `PartyRescueScreen`, `CombatScenarioMenu`, `CityMenu`, `InventoryMenu`, `EquipmentMenu`, `ShopMenu`, `CraftingMenu`, `DialoguePresenter`, `QuestMenu`, `QuestProgressPresenter`, `BattleScreen`, `CombatEffectFormatter` |
 
 ## Application initialization
 
@@ -502,9 +502,15 @@ Exploration rewards are repeatable and remain independent from the individual dr
 The battle system is divided into the following responsibilities:
 
 - `Battle`
-  - Coordinates the battle lifecycle, target selection, presentation and character actions.
+  - Coordinates the battle lifecycle, character actions, target-selection requests and results; delegates battle screens and menu input to `rpg.ui`.
 - `BattleCoordinator`
-  - Creates runtime enemies, starts battles and grants victory rewards.
+  - Creates runtime enemies, receives the normal, boss or epic battle type, starts battles and grants victory rewards.
+- `BattleType`
+  - Identifies a normal, boss or epic battle for contextual presentation.
+- `BattleScreen`
+  - Draws the battle introduction animation, participant panel, action-message area, tactical status views and enemy-analysis screen.
+- `CombatEffectFormatter`
+  - Formats compact panel effects, tactical effect counts and the two-line attribute-stage overview.
 - `SkillExecutor`
   - Evaluates component conditions and applicability, performs trigger and resistance tests and delegates each applied operation to its single domain owner.
 - `SkillExecution`
@@ -532,7 +538,7 @@ The battle system is divided into the following responsibilities:
 - `BattleTurnOrder`
   - Tracks the current queue position and skips defeated entries.
 - `BattleTurnOrderScreen`
-  - Displays the current and upcoming actions.
+  - Displays a fixed-height preview of up to five remaining actions, reports hidden actions and redraws feedback without consuming a turn.
 - `BattleEscapeService`
   - Calculates the two-stage flee attempt.
 - `EscapeAttemptResult`
@@ -577,6 +583,12 @@ BattleRewards
         ↓
 BattleRewardScreen
 ```
+
+Battle presentation uses contextual headings for normal, boss and epic encounters. The participant panel keeps up to three enemy slots and four ally slots visible, including defeated participants, resources and compact active effects. Enemy names are truncated to preserve column width.
+
+Battle actions replace the action menu with paged messages inside the panel. Target-selection menus draw yellow numbered indicators in eligible participants' existing panel positions. `BattleItemMenu` keeps its consumable-only list and detail screens separate from the general inventory, while `RecoveryItemUseMenu` retains the shared item-use rules and sends battle results back for presentation in the panel.
+
+The tactical menu opens fixed-height resource and effect overviews, an effect legend, a dedicated enemy-analysis screen and the remaining-action preview. These screens retain feedback within their redraws. The battle-entry animation is the isolated use of direct cursor positioning; battle panels and menus use ordinary screen redraws.
 
 ## Enemy battle groups
 
@@ -1433,6 +1445,8 @@ Important UI components include:
 - `QuestProgressCoordinator`
 - `QuestProgressPresenter`
 - `QuestRewardSummaryFormatter`
+- `BattleScreen`
+- `CombatEffectFormatter`
 
 `CharacterCreationMenu` controls manual or random protagonist naming, name changes, cancellation and confirmation. It does not create partial character state: the confirmed name returns to `Main`, which constructs the protagonist and `Party`. Its class presentation reuses `PlayableClassDetailFormatter` so initial creation and later class-path selection cannot diverge.
 
@@ -1575,7 +1589,6 @@ The following implementations remain intentionally temporary:
 - Enemy actions currently use basic attacks; enemy skill selection can reuse the skill executor later but is outside the current scope.
 - The first recruitment composes with the level-7 class-path ceremony. Later recruitments remain narrative events and will reuse the generic recruitment components without repeating the ceremony.
 - Non-empty quest, flag and candidate restart verification remains pending canonical Part 10 content; the implemented version-3 schema and empty-narrative restart baseline are complete.
-- `Battle` and battle-specific menus retain their legacy headings until the complete V7 battle-screen reconstruction. The contextual `[MAP - BATALHA]` heading will be introduced with that lifecycle instead of through an intermediate presentation change.
 - `Battle` remains large and may later be divided into more focused action services.
 - Permanent skill-scroll items, skills and curated enemy drops remain deferred until their draft effects receive the required combat mechanics and final content review. Scroll-skill preservation across class transition is structurally implemented but cannot yet be exercised with canonical content.
 - Only the first ceremony-composed recruitment currently has runtime orchestration. Although `quest_recruitments.txt` structurally accepts up to three definitions, second- and third-ally records must wait for their narrative recruitment dispatcher.

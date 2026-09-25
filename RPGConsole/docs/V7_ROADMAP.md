@@ -129,15 +129,23 @@ The checklist fixes **what belongs to V7**, not every rule for implementing it. 
 
 ## 5. Battle screen and action feedback
 
-* [ ] Keep the current enemy and party HP details visible and consistent while battle actions and their outcomes are presented.
-* [ ] Show an explicit defeat message when a participant reaches zero HP while the battle continues.
-* [ ] Replace the action menu with the current action's messages during resolution instead of extending a running log below it.
-* [ ] Reuse the existing battle-status formatting and coordinate redraw/flush behavior without a separate cursor-positioning mechanism.
-* [ ] Review the presentation and input responsibilities currently inside `Battle.java`; move them to `rpg.ui` only where the battle-screen changes give the extracted code a clear responsibility and avoid duplicating existing menus or formatters.
-* [ ] Show active buffs and debuffs on the attack target-selection screen.
-* [ ] Identify which effect was resisted in resistance feedback.
-* [ ] Suppress the player-facing message for an effect that did not trigger, without changing the effect's rules or resource/turn consumption.
-* [ ] Verify one continuing battle with a defeated enemy or ally, multi-effect skill output, target selection and the final battle result.
+* [x] Keep enemy and party HP details visible and consistent while battle actions and their outcomes are presented.
+* [x] Show an explicit defeat message when a participant reaches zero HP while the battle continues.
+* [x] Replace the action menu with the current action's messages during resolution instead of extending a running log below it.
+* [x] Reuse battle-status formatting and coordinate panel redraw/flush behavior without cursor positioning in battle panels and menus. Keep cursor positioning confined to the battle-entry animation.
+* [x] Move battle presentation and input responsibilities to the existing `rpg.ui` screens and menus where appropriate, while `Battle.java` coordinates actions and results.
+* [x] Show active buffs and debuffs on the attack target-selection screen.
+* [x] Identify which effect was resisted in resistance feedback.
+* [x] Suppress the player-facing message for an effect that did not trigger, without changing the effect's rules or resource/turn consumption.
+* [x] Verify a continuing battle with a defeated enemy or ally, multi-effect skill output, target selection and the final battle result.
+
+> **Part 5 closed on 2026-09-25.**
+>
+> The battle panel shows up to three enemies and four allies with fixed-width columns, resource values and compact effect summaries. Enemy names are truncated to preserve the panel width. During target selection, eligible enemies or allies receive yellow numbered indicators in their existing panel positions; cancelling selection returns without reporting an invalid target.
+>
+> Action results appear in the battle panel's message area. Battle item use and skill results use that presentation instead of printing below their menus. Battle item lists, item details and the tactical screens redraw with fixed height and inline feedback. Tactical status has resource and effect views plus a legend; enemy analysis has its own screen; turn order previews the next five actions and reports any remaining actions.
+>
+> Normal, boss and epic battles use the corresponding contextual headings. A brief battle-entry animation replaces the old text introduction. This animation alone positions the cursor directly; battle panels and menus continue to redraw normally.
 
 ## 6. Skill presentation and focused correction
 
