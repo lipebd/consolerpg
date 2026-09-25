@@ -166,6 +166,8 @@ Rules:
 - `armorWeight` must be `LIGHT`, `MEDIUM` or `HEAVY`.
 - Descriptions cannot be empty.
 - Literal `\n` sequences in descriptions are converted into line breaks.
+- Player-facing descriptions of `ATTRIBUTE_STAGE` effects use one `↑` or `↓` per stage for each affected attribute, such as `ATK↑↑` or `DEF↓`. This is an editorial convention for the description field, not a loader validation rule.
+- Descriptions keep effect conditions and durations explicit. VEL stage descriptions identify that the change is pending for the next round.
 - Invalid definitions report the source file, line and relevant class ID during initialization.
 
 Loading flow:

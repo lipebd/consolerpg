@@ -89,6 +89,41 @@ public class PlayableCharacter extends GameCharacter {
 		return List.copyOf(learnedSkillDefinitions);
 	}
 
+	public List<Optional<SkillDefinition>> getSkillSlots() {
+		List<Optional<SkillDefinition>> slots = new ArrayList<>(6);
+		List<SkillDefinition> learnedSkills = getUnlockedSkillDefinitions();
+
+		for (SkillDefinition skill : learnedSkills) {
+			if (!skill.isScrollSkill()) {
+				slots.add(Optional.of(skill));
+			}
+		}
+
+		if (slots.size() > 4) {
+			throw new IllegalStateException("A character cannot have more than four natural skill slots.");
+		}
+
+		while (slots.size() < 4) {
+			slots.add(Optional.empty());
+		}
+
+		for (SkillDefinition skill : learnedSkills) {
+			if (skill.isScrollSkill()) {
+				slots.add(Optional.of(skill));
+			}
+		}
+
+		if (slots.size() > 6) {
+			throw new IllegalStateException("A character cannot have more than two scroll skill slots.");
+		}
+
+		while (slots.size() < 6) {
+			slots.add(Optional.empty());
+		}
+
+		return List.copyOf(slots);
+	}
+
 	public SkillLearningResult learnSkill(SkillDefinition skillDefinition) {
 		Objects.requireNonNull(skillDefinition, "Skill definition cannot be null.");
 

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Locale;
 
 import rpg.battle.BattleType;
@@ -312,29 +313,39 @@ public final class BattleScreen {
 			EnemyBattleGroup enemyGroup,
 			Party party,
 			PlayableCharacter actingCharacter,
-			List<SkillDefinition> skills,
+			List<Optional<SkillDefinition>> skills,
 			String feedbackMessage
 	) {
 		displayPanel(scenarioName, battleType, enemyGroup, party);
 		System.out.println();
 		System.out.println("Habilidades de " + actingCharacter.getName());
-		for (int first = 0; first < skills.size(); first += 3) {
-			int end = Math.min(first + 3, skills.size());
-			StringBuilder row = new StringBuilder();
+		for (int row = 0; row < 2; row++) {
+		    StringBuilder rowText = new StringBuilder();
 
-			for (int index = first; index < end; index++) {
-				String option = "[" + (index + 1) + "] " + skills.get(index).getName();
+		    for (int column = 0; column < 3; column++) {
+		        int index = column * 2 + row;
+		        Optional<SkillDefinition> slot = skills.get(index);
+		        String option = "    --";
 
-				row.append(option);
+		        if (slot.isPresent()) {
+		            String name = slot.get().getName();
 
-				if (index < end - 1) {
-					int padding = Math.max(1, 25 - ConsoleUI.getVisibleLength(option));
+		            if (name.length() > 21) {
+		                name = name.substring(0, 20) + "…";
+		            }
 
-					row.append(" ".repeat(padding));
-				}
-			}
+		            option = "[" + (index + 1) + "] " + name;
+		        }
 
-			System.out.println(row);
+		        rowText.append(option);
+
+		        if (column < 2) {
+		            int padding = Math.max(1, 26 - ConsoleUI.getVisibleLength(option));
+		            rowText.append(" ".repeat(padding));
+		        }
+		    }
+
+		    System.out.println(rowText);
 		}
 
 		String returnOption = "[0] Voltar";

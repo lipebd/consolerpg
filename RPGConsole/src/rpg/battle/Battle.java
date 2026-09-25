@@ -314,7 +314,7 @@ public class Battle {
 	}
 
 	private boolean executeSkillMenu(PlayableCharacter actingCharacter) {
-		List<SkillDefinition> skills = actingCharacter.getUnlockedSkillDefinitions();
+		List<Optional<SkillDefinition>> skills = actingCharacter.getSkillSlots();
 
 		String feedbackMessage = null;
 
@@ -339,12 +339,12 @@ public class Battle {
 			try {
 				int selectedIndex = Integer.parseInt(choice) - 1;
 
-				if (selectedIndex < 0 || selectedIndex >= skills.size()) {
-					feedbackMessage = "Habilidade inválida.";
-					continue;
+				if (selectedIndex < 0 || selectedIndex >= skills.size() || skills.get(selectedIndex).isEmpty()) {
+				    feedbackMessage = "Habilidade inválida.";
+				    continue;
 				}
 
-				SkillDefinition selectedSkill = skills.get(selectedIndex);
+				SkillDefinition selectedSkill = skills.get(selectedIndex).orElseThrow();
 
 				if (!battleScreen.confirmSkillUse(scenarioName, battleType, enemyGroup, party, selectedSkill)) {
 					continue;

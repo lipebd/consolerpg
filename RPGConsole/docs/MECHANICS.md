@@ -964,7 +964,11 @@ Previously learned scroll skills are preserved across the protagonist's class tr
 
 ### Skill-detail presentation
 
-Available skills are first displayed as a compact selectable list. Selecting one opens a shared detail sheet containing:
+Character status and battle selection display six fixed skill positions: four for learned natural skills and two for learned scroll skills. Empty positions remain visible and cannot be selected. The beginner Flagelo uses the same six-position layout even though its natural roster contains only two skills. Learned scroll skills follow their learning order in positions 5 and 6.
+
+Battle selection displays the positions in two rows ordered by column: `1 3 5 / 2 4 6`. Names that exceed the available menu width are abbreviated there; the complete name remains available in the skill details.
+
+Selecting a learned skill opens a shared detail sheet containing:
 
 - Level requirement.
 - Main type.
@@ -973,13 +977,17 @@ Available skills are first displayed as a compact selectable list. Selecting one
 - MP and SP cost.
 - External narrative description.
 
+In character status, the sheet uses shared text wrapping and fixed 17-line pages, including a line reserved for invalid-input feedback. Longer descriptions continue on subsequent pages.
+
 For `LEVEL` skills, the displayed level is the automatic learning level. For `SCROLL` skills, it is the minimum level required to use the linked scroll.
 
-The first displayable component in `PRIMARY` defines the summary type, power and action target. If a future valid skill has no displayable `PRIMARY` component, the first displayable component in execution order is used as a fallback. Secondary effects remain part of the narrative description and do not replace the main classification.
+The first displayable component in `PRIMARY` defines the summary type, power and action target. If a valid skill has no displayable `PRIMARY` component, the first displayable component in execution order is used as a fallback. Secondary effects remain part of the narrative description and do not replace the main classification.
+
+Skill descriptions show temporary attribute changes as repeated stage arrows: one `↑` or `↓` per stage for each affected attribute. Conditions and durations remain explicit; VEL descriptions identify their effect on the next round. These arrows describe stage changes, not fixed additions to natural attribute points.
 
 Power is the component's base power, not the final damage or recovery amount after attributes, defenses and other battle calculations. Narrative descriptions must therefore avoid promising a fixed final value when the result is scaled at runtime.
 
-`CharacterStatusMenu` and battle confirmation use the same `SkillDetailFormatter` output so that technical and narrative information cannot diverge between those interfaces.
+`CharacterStatusMenu` and battle confirmation reuse `SkillDetailFormatter` so technical details cannot diverge between those interfaces.
 
 ## Level-up resource restoration
 

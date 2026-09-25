@@ -2,6 +2,7 @@ package rpg.ui;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
@@ -28,20 +29,13 @@ public final class CharacterStatusMenu {
 		while (true) {
 			ConsoleUI.clearScreen();
 			displayCharacterStatus(character);
-			if (feedbackMessage != null) {
-			    System.out.println();
-			    ConsoleUI.displayWrappedText(feedbackMessage);
-			}
+
 			System.out.println();
 			System.out.println("[1] Habilidades");
 			System.out.println("[2] Equipamentos");
-
 			if (feedbackMessage != null) {
-			    System.out.println();
-			    ConsoleUI.displayWrappedText(feedbackMessage);
-			}
-
-			System.out.println();
+				ConsoleUI.displayWrappedText(feedbackMessage);
+			} else {System.out.println();}
 			System.out.println("[0] Voltar");
 			System.out.print("> ");
 
@@ -68,13 +62,11 @@ public final class CharacterStatusMenu {
 	}
 
 	private void displayCharacterStatus(PlayableCharacter character) {
-		ConsoleUI.displayHeading(
-		        character.getName(),
-		        "Status");
+		String nameSituation = "Nome: " + character.getName() + (character.isAlive() ? " | DERROTADO" : "");
+		
+		ConsoleUI.displayHeading("Status");
 		System.out.println();
-		if (!character.isAlive()) {
-			System.out.println("Estado: DERROTADO");
-		}
+		System.out.println(nameSituation);
 
 		System.out.println("Classe: " + character.getPlayableClassDefinition().getSymbol() + " " + character.getPlayableClassDefinition().getName());
 
@@ -99,7 +91,7 @@ public final class CharacterStatusMenu {
 	}
 
 	private void displaySkills(PlayableCharacter character) {
-		List<SkillDefinition> skills = character.getUnlockedSkillDefinitions();
+		List<Optional<SkillDefinition>> skills = character.getSkillSlots();
 
 		String feedbackMessage = null;
 
@@ -110,16 +102,18 @@ public final class CharacterStatusMenu {
 			        "Habilidades");
 			System.out.println();
 
-			if (skills.isEmpty()) {
-				System.out.println("Nenhuma habilidade aprendida.");
-			} else {
-				for (int index = 0; index < skills.size(); index++) {
-					SkillDefinition skill = skills.get(index);
+			for (int index = 0; index < skills.size(); index++) {
+			    Optional<SkillDefinition> skill = skills.get(index);
 
-					System.out.println(
-							"[" + (index + 1) + "] " + skill.getName() + " [Nv. " + skill.getLevelRequirement() + "]"
-					);
-				}
+			    if (skill.isPresent()) {
+			        SkillDefinition definition = skill.get();
+			        System.out.println(
+			                "[" + (index + 1) + "] " + definition.getName()
+			                        + " [Nv. " + definition.getLevelRequirement() + "]"
+			        );
+			    } else {
+			        System.out.println("    --");
+			    }
 			}
 
 			if (feedbackMessage != null) {
@@ -137,53 +131,81 @@ public final class CharacterStatusMenu {
 				return;
 			}
 
-			if (skills.isEmpty()) {
-				feedbackMessage = "Opção inválida.";
-				continue;
-			}
-
 			try {
 				int selectedIndex = Integer.parseInt(choice) - 1;
-
-				if (selectedIndex < 0 || selectedIndex >= skills.size()) {
-					feedbackMessage = "Habilidade inválida.";
-					continue;
+				if (selectedIndex < 0 || selectedIndex >= skills.size() || skills.get(selectedIndex).isEmpty()) {
+				    feedbackMessage = "Habilidade inválida.";
+				    continue;
 				}
 
 				feedbackMessage = null;
-				displaySkillDetails(skills.get(selectedIndex), character);
+				displaySkillDetails(skills.get(selectedIndex).orElseThrow());
 			} catch (NumberFormatException exception) {
 				feedbackMessage = "Opção inválida.";
 			}
 		}
 	}
 
-	private void displaySkillDetails(SkillDefinition skill, PlayableCharacter character) {
+	private void displaySkillDetails(SkillDefinition skill) {
+		List<String> detailLines = ConsoleUI.wrapText(SkillDetailFormatter.formatDetails(skill));
+		final int contentLinesPerPage = 12;
+		int pageCount = Math.max(1, (detailLines.size() + contentLinesPerPage - 1) / contentLinesPerPage);
+		int page = 0;
 		String feedbackMessage = null;
 
-	    while (true) {
-	        ConsoleUI.clearScreen();
-	        ConsoleUI.displayHeading("Habilidade");
-	        System.out.println();
-	        System.out.println(SkillDetailFormatter.formatDetails(skill));
+		while (true) {
+			ConsoleUI.clearScreen();
+			ConsoleUI.displayHeading("Habilidade");
+			System.out.println();
 
-	        if (feedbackMessage != null) {
-	            System.out.println();
-	            ConsoleUI.displayWrappedText(feedbackMessage);
-	        }
+			int firstLine = page * contentLinesPerPage;
 
-	        System.out.println();
-	        System.out.println("[0] Voltar");
-	        System.out.print("> ");
+			for (int offset = 0; offset < contentLinesPerPage; offset++) {
+				int lineIndex = firstLine + offset;
+				System.out.println(lineIndex < detailLines.size() ? detailLines.get(lineIndex) : "");
+			}
 
-	        String choice = consoleInput.readLine();
+			// Linha 15: sempre reservada para feedback.
+			System.out.println(feedbackMessage == null ? "" : feedbackMessage);
 
-	        if (choice.equals("0")) {
-	            return;
-	        }
+			StringBuilder options = new StringBuilder("[0] Voltar");
 
-	        feedbackMessage = "Opção inválida.";
-	    }
+			if (page > 0) {
+				options.append("  [A] Anterior");
+			}
+
+			if (page + 1 < pageCount) {
+				options.append("  [P] Próxima");
+			}
+
+			System.out.println(options);
+			System.out.print("> ");
+
+			String choice = consoleInput.readTrimmedLine().toUpperCase(java.util.Locale.ROOT);
+
+			switch (choice) {
+			case "0" -> {
+				return;
+			}
+			case "A" -> {
+				if (page > 0) {
+					page--;
+					feedbackMessage = null;
+				} else {
+					feedbackMessage = "Opção inválida.";
+				}
+			}
+			case "P" -> {
+				if (page + 1 < pageCount) {
+					page++;
+					feedbackMessage = null;
+				} else {
+					feedbackMessage = "Opção inválida.";
+				}
+			}
+			default -> feedbackMessage = "Opção inválida.";
+			}
+		}
 	}
 
 	private String formatExperience(PlayableCharacter character) {

@@ -149,14 +149,20 @@ The checklist fixes **what belongs to V7**, not every rule for implementing it. 
 
 ## 6. Skill presentation and focused correction
 
-* [ ] Display empty skill slots alongside learned and automatically acquired skills instead of a list containing only unlocked skills.
-* [ ] Show attribute-stage changes in skill descriptions as stage arrows, so `VEL +1` is not mistaken for one attribute point.
-* [ ] Diagnose and correct the observed behavior of Grito de Guerra after its expected and actual outcomes are pinned down.
-* [ ] Verify a character with unfilled slots, a character with learned scroll skills, a stage-modifying skill and Grito de Guerra.
+* [x] Display six fixed skill slots in character status and battle selection: four natural slots and two scroll slots. Keep empty slots visible and non-selectable.
+* [x] Present skill attribute-stage changes with repeated arrows in their descriptions, preserving conditions, durations and next-round VEL timing.
+* [x] Record the previously corrected Grito de Guerra behavior: its effects execute in `POST_ACTION`, and a skill does not require a `PRIMARY` component.
+* [x] Verify empty slots, a scroll skill learned through the inventory, stage descriptions and the already corrected Grito de Guerra.
+
+> **Part 6 closed on 2026-09-25.**
+>
+> `PlayableCharacter` supplies six stable optional positions. Character status lists them in numerical order; battle selection groups them by column as `1 3 5 / 2 4 6`. Empty positions cannot be selected. Battle selection abbreviates names longer than its available width while preserving complete names in skill details.
+>
+> The character-status skill sheet uses shared text wrapping and fixed 17-line pages, with a reserved line for invalid-input feedback. Skill descriptions use one `↑` or `↓` per attribute stage. A temporary Bardo scroll was learned through the normal inventory flow and displayed in slot 5 in status and battle; its data definitions were removed after verification. Grito de Guerra had already been corrected before this part.
 
 ## 7. Travel, saving and text polish
 
-* [ ] Add a brief transition during travel that communicates movement without changing travel cost, destination or world-state rules.
+* [ ] Add a brief transition during travel and exploration that communicates movement without changing travel cost, destination or world-state rules.
 * [ ] Add a brief saving transition without changing when a save succeeds, fails or becomes persistent.
 * [ ] Review player-facing dash usage and remove accidental string concatenations such as `"texto" + "texto"` in the touched presentation paths.
 * [ ] Verify travel cancellation and completion, successful saving and saving failure, and the resulting screens.

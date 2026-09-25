@@ -508,7 +508,7 @@ The battle system is divided into the following responsibilities:
 - `BattleType`
   - Identifies a normal, boss or epic battle for contextual presentation.
 - `BattleScreen`
-  - Draws the battle introduction animation, participant panel, action-message area, tactical status views and enemy-analysis screen.
+  - Draws the battle introduction animation, participant panel, action-message area, tactical status views and enemy-analysis screen. Skill selection displays six fixed positions in two rows, ordered by column as `1 3 5 / 2 4 6`; empty positions are non-selectable, and long names are abbreviated only in this menu.
 - `CombatEffectFormatter`
   - Formats compact panel effects, tactical effect counts and the two-line attribute-stage overview.
 - `SkillExecutor`
@@ -650,7 +650,7 @@ Skill content is split between two external files and two immutable definition t
 - `LEVEL` skills, which are learned automatically when their configured level requirement is reached.
 - `SCROLL` skills, whose configured level is a minimum requirement and which must be learned explicitly from an item.
 
-`PlayableCharacter` stores learned skills through stable IDs while continuing to reference the unique definitions owned by `SkillCatalog`. Automatically available skills are learned during character construction and after level gains. Available skills are displayed with non-scroll skills first, followed by learned scroll skills in learning order.
+`PlayableCharacter` stores learned skills through stable IDs while continuing to reference the unique definitions owned by `SkillCatalog`. Automatically available skills are learned during character construction and after level gains. `getSkillSlots()` exposes six stable optional positions: four for learned natural skills in class order and two for learned scroll skills in learning order. Unoccupied positions remain empty; the method does not reveal future skills.
 
 A character may learn at most two `SCROLL` skills. Once both slots are occupied, a new scroll skill can replace only another learned `SCROLL` skill; `LEVEL` skills cannot be replaced through this flow.
 
@@ -1494,7 +1494,7 @@ Important UI components include:
 
 `PartyStatusMenu` displays a compact two-line overview of one to four allies, including each complete character name, class symbol, level and current resources. It also displays the shared party currency, active temporary EXP modifier and total effective party gold modifier.
 
-`CharacterStatusMenu` displays one character's complete name, class symbol and class name, detailed resources, equipment-modified attributes, progression, total effective EXP modifier, currently learned natural and scroll skills and access to equipment slots.
+`CharacterStatusMenu` displays one character's complete name, class symbol and class name, detailed resources, equipment-modified attributes, progression, total effective EXP modifier and access to equipment slots. Its skill list shows all six positions, including non-selectable empty ones. Selecting a learned skill opens a fixed 17-line sheet that wraps and paginates the shared `SkillDetailFormatter` output, reserving one line for input feedback.
 
 `EquipmentMenu` supports equipping from an inventory item and managing a selected character's three slots. It filters incompatible choices, confirms change-only stat and attack differences and delegates mutations to `EquipmentService`.
 

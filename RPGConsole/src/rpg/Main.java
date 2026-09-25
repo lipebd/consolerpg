@@ -140,7 +140,7 @@ import rpg.world.travel.TravelRouteLoader;
 
 // Starts the game and controls its initial execution.
 public class Main {
-    private static final String DEVELOPMENT_PARTY_ARGUMENT = "-dev-party";
+    private static final String DEVELOPMENT_PARTY_ARGUMENT = "--dev-party";
 
 	public static void main(String[] args) {
 		try {
@@ -535,9 +535,13 @@ public class Main {
 			WorldClock worldClock;
 
 			if (usesDevelopmentParty(args)) {
-                DevelopmentPartyFactory developmentPartyFactory =
-                        new DevelopmentPartyFactory(
-                                playableClassCatalog, skillCatalog, characterGrowthCalculator);
+				DevelopmentPartyFactory developmentPartyFactory =
+				        new DevelopmentPartyFactory(
+				                playableClassCatalog,
+				                skillCatalog,
+				                itemCatalog,
+				                characterGrowthCalculator
+				        );
 
 				party = developmentPartyFactory.create();
 				currentScenario = scenarioCatalog.getById("bree");

@@ -6,7 +6,7 @@ V6 is complete and preserved as the current released version.
 
 Current stage:
 
-`V7 polish — Parts 1 through 5 implemented and tested; later parts and the portable V7 release remain pending`
+`V7 polish — Parts 1 through 6 implemented and tested; later parts and the portable V7 release remain pending`
 
 Current Git branch:
 
@@ -692,7 +692,7 @@ The initial character-creation block is complete.
 - The confirmed protagonist becomes the first member and leader of the new `Party`.
 - `Main` no longer contains a hardcoded normal party.
 - The `--dev-party` argument bypasses normal creation and delegates to `DevelopmentPartyFactory`.
-- `DevelopmentPartyFactory` supports one to four configured members with distinct classes, positive levels, fully restored resources, configurable initial gold and optional temporary reward modifiers.
+- `DevelopmentPartyFactory` supports one to four configured members with distinct classes, positive levels, fully restored resources, configurable initial gold and optional temporary reward modifiers. An optional development-only skill-scroll grant remains disabled by default; temporary scroll definitions are not part of the current game data.
 - Every playable class defines one visible Unicode symbol for compact interface identification.
 - `PartyStatusMenu` displays complete names and symbols in a two-line layout.
 - `CharacterStatusMenu` displays the complete character name together with the class symbol and name.
@@ -961,7 +961,7 @@ Part 9 added immutable quest, flag and candidate snapshots; strict version-3 pro
 
 ## V7 interface polish
 
-Parts 1 through 5 are implemented and tested:
+Parts 1 through 6 are implemented and tested:
 
 - Shared prose wrapping uses 75 visible columns, respects authored line breaks and ignores ANSI color codes when measuring text.
 - Console clearing and ordinary screen headings are centralized in `ConsoleUI`.
@@ -975,6 +975,8 @@ Parts 1 through 5 are implemented and tested:
 - Normal, boss and epic battles have contextual headings. `BattleScreen` presents the entry animation separately from ordinary panel redraws.
 - Out-of-battle consumable and skill-scroll details use fixed-height pages; ally selection shows resources in a dedicated fixed-height screen.
 - Victory rewards use a fixed-height summary followed by level-growth details only when a character levels up, with extra pages only when content exceeds the available space.
+- Character status and battle selection show four natural and two scroll skill positions, including non-selectable empty slots. Battle selection groups positions by column and abbreviates long names only in that menu.
+- Character-status skill details use shared wrapping and fixed 17-line pages with reserved feedback. Skill descriptions consistently show attribute stages as repeated arrows.
 
 ## Current limitations and temporary implementations
 
@@ -997,7 +999,7 @@ Parts 1 through 5 are implemented and tested:
 
 V6 is the latest packaged release as `v6.0.0`. V7 development continues on `feature/v7-polish`.
 
-Parts 1 through 5 are implemented and tested. Battle-screen and tactical-menu work is complete. Parts 6 through 9 and the final V7 verification, packaging and release remain pending.
+Parts 1 through 6 are implemented and tested. Skill-slot presentation, skill-detail pagination and attribute-stage description notation are complete. Part 7 is next; Parts 8 and 9 and the final V7 verification, packaging and release remain pending.
 
 The general inventory screen outside battle still needs the previously identified flush and incomplete-screen correction. Animated presentation of exploration messages remains a separate future block.
 
