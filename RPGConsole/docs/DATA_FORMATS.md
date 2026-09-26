@@ -490,13 +490,17 @@ Recovery item behavior is loaded from:
 Header:
 
 ```text
-# itemId;targetType;hpRecovery;mpRecovery;spRecovery;reviveHpRecovery;purifiesStatusEffects
+# itemId;targetType;hpRecovery;mpRecovery;spRecovery;reviveHpRecovery;purifiesStatusEffects;attribute;stages;duration
 ```
 
-Example:
+Examples:
 
 ```text
-meruma;SINGLE_ALLY;25;0;0;0;false
+meruma;SINGLE_ALLY;25;0;0;0;false;;;
+gole_de_vida;SINGLE_ALLY;100%;0;0;0;false;;;
+marola;SINGLE_ALLY;0;0;0;0;false;ATK;1;1
+pocao_da_celeridade;SINGLE_ALLY;0;0;0;0;false;VEL;3;
+pocao_da_normalizacao_sorrateira;SINGLE_ALLY;0;0;0;0;VEL,LCK;;;
 ```
 
 Rules:
@@ -504,16 +508,19 @@ Rules:
 - `itemId` must reference an item defined in `items.txt`.
 - The referenced base item must use the `CONSUMABLE` category.
 - The same item cannot have more than one recovery definition.
-- Recovery values cannot be negative.
+- The HP, MP, SP and revival fields accept a non-negative fixed integer or a percentage from `1%` to `100%`. A fixed `0` means that component is absent.
+- Percentages use the target's corresponding maximum resource; revival percentages use maximum HP. Fractional results are rounded up.
+- Recovery is capped by the resource missing from the target; `100%` therefore fills it completely.
 - A recovery item must have at least one effective component.
-- An effective component is positive HP, MP, SP or revival recovery, or enabled purification.
+- An effective component is positive HP, MP, SP or revival recovery; a nonempty purification set; or a valid positive attribute-stage effect.
+- `purifiesStatusEffects` accepts `false` for none, `true` for all six attributes, or a comma-separated list such as `ATK,MAG`. Only listed negative stages are removed; positive stages remain untouched. Duplicate or unknown attributes are invalid.
+- `attribute`, `stages` and `duration` are all empty when no stage effect is defined.
+- A stage effect targets `SINGLE_ALLY`, defines one of the six attributes and uses `stages` from `1` to `3`. Non-VEL effects require a positive `duration`; VEL requires an empty `duration` because its stages are pending for the next turn-order calculation.
+- Attribute-stage items can be used only during battle. Their stage effect is applied after the acting character finishes the consumed turn. Recovery and purification components take effect during item use.
 - `targetType` must be `SINGLE_ALLY` or `ALL_ALLIES`.
 - Revival is applied before ordinary HP recovery, allowing both components to affect a defeated ally.
 - Group effects are evaluated independently for every eligible party member.
 - The item is consumed only when at least one component affects at least one target.
-- Purification removes eligible negative attribute states at runtime.
-
-Definition composition and runtime flow:
 
 Definition composition and runtime flow:
 
@@ -531,9 +538,25 @@ SkillCatalog
 
 `RecoveryItemDefinition` contains only the specialized recovery behavior.
 
-`ItemFactory` receives the base definition and the available specialized catalogs. A matching recovery definition creates `RecoveryItem`; a matching skill-scroll definition creates `SkillScroll`; items without specialized runtime behavior become `BasicItem`. The same item cannot receive both recovery and skill-scroll specialization.
+`ItemFactory` receives the base definition and the available specialized catalogs. A matching recovery definition creates `RecoveryItem`; a matching skill-scroll definition creates `SkillScroll`; a matching reward-modifier definition in `reward_modifier_items.txt` creates `RewardModifierItem`; items without specialized runtime behavior become `BasicItem`. The same item cannot receive more then one specialization, between recovery, skill-scroll and reward-modifier.
 
 `ItemCatalog` stores the resulting runtime items and resolves the stable IDs referenced by enemy drops, exploration events and inventories.
+
+## Reward modifier item definitions
+
+Temporary party reward items are defined in `data/reward_modifier_items.txt`:
+
+```text
+# itemId;experiencePercent;goldPercent;rewardedVictories
+pocao_da_ascensao;50;0;15
+pocao_da_prosperidade;0;50;15
+pocao_do_sucesso;25;25;15
+```
+
+- `itemId` must reference a `CONSUMABLE` item in `items.txt`, and IDs cannot be repeated in this file.
+- EXP and GOLD percentages are non-negative integers; at least one must be positive. `0` means the item does not grant that modifier.
+- `rewardedVictories` must be positive. Each active modifier loses one remaining victory only when a battle grants rewards.
+- These definitions create `RewardModifierItem` objects. They do not use recovery targets or fields in `recovery_items.txt`.
 
 ## Skill-scroll definitions
 

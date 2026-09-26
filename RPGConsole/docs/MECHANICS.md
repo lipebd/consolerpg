@@ -747,17 +747,24 @@ A recovery item definition must contain at least one effective component.
 
 Recovery effects follow these rules:
 
-- `SINGLE_ALLY` allows one eligible party member to be selected.
+- `SINGLE_ALLY` affects one selected party member. Outside battle, every party member appears in the target menu; choosing someone the item cannot affect shows feedback and keeps the menu open.
 - `ALL_ALLIES` evaluates every eligible party member independently.
 - Revival is applied before ordinary HP recovery.
+- HP, MP, SP and revival amounts may be fixed values or percentages of the target's corresponding maximum resource. Percentage results are rounded up; actual recovery cannot exceed the missing amount.
 - A combined revival and HP recovery item may therefore revive a defeated ally and then restore additional HP.
 - Ordinary HP, MP and SP recovery affect only living characters.
 - A component that cannot change the target produces no effect.
 - A group item is consumed only when at least one party member is affected.
 - An individual item is consumed only when its selected target is affected.
 - The result records the effects actually produced instead of inferring them from the item definition.
+- Selective purification of negative attribute stages.
+- A positive attribute-stage effect during battle.
 
-Purification removes eligible negative attribute states. If no selected target has an eligible negative state or another applicable recovery component, the item is not consumed.
+Outside battle, single-target recovery always requires target selection, and whole-party recovery requires confirmation. Cancelling or attempting an ineffective use preserves the item. A successful use displays the affected party members and animated result messages, then returns to the refreshed inventory list.
+
+Purification may target a configured subset of ATK, DEF, MAG, RES, VEL and LCK. It removes only existing negative stages in that subset; positive stages and unlisted attributes remain untouched. If no selected target has an eligible negative stage or another applicable component, the item is not consumed.
+
+Attribute fruits and potions apply +1 or +3 positive stages to one living ally during battle. ATK, DEF, MAG, RES and LCK stages last for the configured number of the affected character's consumed turns; VEL remains pending until the next turn-order calculation. An item stage is applied after the acting character's current turn reduces existing durations. Applicability accounts for a stage on that same character expiring during this reduction. If no component can produce an effect, the item and the acting character's action are preserved.
 
 ## Skill scrolls
 
@@ -847,6 +854,14 @@ An equipped trinket may provide:
 - A party-wide GOLD percentage.
 
 All equipped GOLD bonuses in the party are added together. An individual EXP bonus is never shared with other characters. Equipment percentages and active temporary percentages combine additively before a single reward rounding.
+
+### Temporary reward potions
+
+Ascensão grants party EXP +50%, Prosperidade grants party GOLD +50%, and Sucesso grants both +25%. They are used outside battle and last for 15 rewarded victories. The inventory requests confirmation before consuming a potion.
+
+The party has one temporary EXP slot and one temporary GOLD slot. A potion cannot replace an active modifier in a slot it needs. Sucesso checks both slots before activation: if either is occupied, neither bonus changes and the item is preserved. Cancelling also preserves the item.
+
+Temporary party bonuses add to applicable equipment bonuses before reward rounding. An equipped EXP bonus affects only its wearer, so party members can receive different final EXP amounts. Equipped GOLD bonuses contribute to the shared party GOLD result. Rewarded victories reduce active durations after their rewards are calculated; escape and defeat do not reduce them.
 
 ## Battle rewards
 

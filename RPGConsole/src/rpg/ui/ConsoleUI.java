@@ -71,18 +71,24 @@ public final class ConsoleUI {
 		}
 	}
 
-	static void animateLine(String line, long characterDelayMillis) {
+	static boolean animateLine(String line, long characterDelayMillis, ConsoleInput consoleInput) {
 		Objects.requireNonNull(line, "Animated line cannot be null.");
+		Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 
 		for (int offset = 0; offset < line.length();) {
 			int codePoint = line.codePointAt(offset);
 
 			System.out.print(new String(Character.toChars(codePoint)));
 			System.out.flush();
-			pause(characterDelayMillis);
+
+			if (consoleInput.pollLine(characterDelayMillis).isPresent()) {
+				return true;
+			}
 
 			offset += Character.charCount(codePoint);
 		}
+
+		return false;
 	}
 
 	public static void displayIgnoredEndOfInput() {

@@ -1,7 +1,6 @@
 package rpg.battle;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -14,6 +13,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
+import rpg.items.RecoveryItem;
 import rpg.characters.CharacterAttribute;
 import rpg.characters.Enemy;
 import rpg.characters.GameCharacter;
@@ -59,6 +59,8 @@ public class Battle {
 	private final DamageCalculator damageCalculator;
 	private final SkillExecutor skillExecutor;
 	private SkillExecution pendingPostActionExecution;
+	private RecoveryItem pendingPostActionItem;
+	private PlayableCharacter pendingPostActionTarget;
 	private boolean partyFled;
 	private final BattleItemMenu battleItemMenu;
 
@@ -102,7 +104,8 @@ public class Battle {
 						"Escolha o aliado:",
 						targets,
 						feedback
-				)
+				),
+				this::schedulePostActionItemStage
 		);
 		this.allyTargetMenu = new AllyTargetMenu(consoleInput);
 		this.turnOrderGenerator = new BattleTurnOrderGenerator(random);
@@ -482,6 +485,8 @@ public class Battle {
 				ConsoleUI.pause(PACING_PAUSE_MILLISECONDS, consoleInput);
 			}
 			pendingPostActionExecution = null;
+			pendingPostActionItem = null;
+			pendingPostActionTarget = null;
 			executeTurn(actingEntry);
 
 			actingEntry.getCharacter().finishConsumedTurn();
@@ -495,6 +500,21 @@ public class Battle {
 					displayActionMessages(postActionMessages);
 				}
 				updateFinishingCharacter(pendingPostActionExecution);
+			}
+
+			if (pendingPostActionItem != null) {
+			    if (!pendingPostActionItem.applyAttributeStage(
+			            pendingPostActionTarget)) {
+			        throw new IllegalStateException(
+			                "Scheduled item stage did not affect its target.");
+			    }
+
+			    displayActionMessages(List.of(
+			            getAttributeDisplayName(
+			                    pendingPostActionItem.getStageAttribute())
+			                    + " de " + pendingPostActionTarget.getName()
+			                    + " aumentou."
+			    ));
 			}
 
 			ConsoleUI.pause(PACING_PAUSE_MILLISECONDS, consoleInput);
@@ -870,5 +890,10 @@ public class Battle {
 
 			feedbackMessage = "Opção inválida.";
 		}
+	}
+
+	private void schedulePostActionItemStage(RecoveryItem item, PlayableCharacter target) {
+		pendingPostActionItem = item;
+		pendingPostActionTarget = target;
 	}
 }

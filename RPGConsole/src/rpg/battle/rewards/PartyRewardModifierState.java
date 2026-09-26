@@ -10,27 +10,35 @@ public final class PartyRewardModifierState {
 	private int goldVictoriesRemaining;
 
 	public boolean activateExperienceModifier(int modifierPercent, int rewardedVictories) {
-		validateActivation(modifierPercent, rewardedVictories);
-
-		if (hasActiveExperienceModifier()) {
-			return false;
-		}
-
-		experienceModifierPercent = modifierPercent;
-		experienceVictoriesRemaining = rewardedVictories;
-
-		return true;
+		return activateModifiers(modifierPercent, 0, rewardedVictories);
 	}
 
 	public boolean activateGoldModifier(int modifierPercent, int rewardedVictories) {
-		validateActivation(modifierPercent, rewardedVictories);
+		return activateModifiers(0, modifierPercent, rewardedVictories);
+	}
 
-		if (hasActiveGoldModifier()) {
+	public boolean activateModifiers(int experiencePercent, int goldPercent, int rewardedVictories) {
+		if (experiencePercent < 0 || goldPercent < 0 || (experiencePercent == 0 && goldPercent == 0)) {
+			throw new IllegalArgumentException("At least one reward modifier must be positive.");
+		}
+
+		if (rewardedVictories < 1) {
+			throw new IllegalArgumentException("Rewarded victories must be positive.");
+		}
+
+		if ((experiencePercent > 0 && hasActiveExperienceModifier()) || (goldPercent > 0 && hasActiveGoldModifier())) {
 			return false;
 		}
 
-		goldModifierPercent = modifierPercent;
-		goldVictoriesRemaining = rewardedVictories;
+		if (experiencePercent > 0) {
+			experienceModifierPercent = experiencePercent;
+			experienceVictoriesRemaining = rewardedVictories;
+		}
+
+		if (goldPercent > 0) {
+			goldModifierPercent = goldPercent;
+			goldVictoriesRemaining = rewardedVictories;
+		}
 
 		return true;
 	}
@@ -77,13 +85,4 @@ public final class PartyRewardModifierState {
 		return goldVictoriesRemaining;
 	}
 
-	private void validateActivation(int modifierPercent, int rewardedVictories) {
-		if (modifierPercent <= 0) {
-			throw new IllegalArgumentException("Reward modifier percentage must be positive.");
-		}
-
-		if (rewardedVictories <= 0) {
-			throw new IllegalArgumentException("Reward modifier duration must be positive.");
-		}
-	}
 }

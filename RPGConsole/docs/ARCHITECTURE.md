@@ -760,6 +760,8 @@ Status -> character -> equipment slot -> inventory item -> confirmation
 
 `BattleRewardModifiers` is an immutable snapshot of the modifiers used for one victory. It preserves the applied percentages and post-reward remaining durations for presentation even after the mutable party state advances.
 
+Its shared activation method checks every requested modifier slot before changing either one. The existing single-modifier activation methods delegate to it, while battle reward calculation and victory countdown continue to use the same state.
+
 EXP is granted individually to every party member.
 
 Gold and items are granted once to `Party`.
@@ -1480,7 +1482,7 @@ Important UI components include:
 
 `RouteMenu` selects among unlocked adjacent routes and receives only the destination scenario IDs that should display a quest marker. `CityTransportMenu` receives the same presentation-only destination set while separately displaying configured discovered cities, validating affordability, requesting confirmation and controlling payment before returning the selected paid destination. Neither menu inspects quest definitions or progress directly.
 
-`InventoryMenu` controls the general inventory flow outside battle. It displays every item category in deterministic enum order, keeps empty categories selectable, reports an empty category only after it is selected, paginates non-empty contents and opens contextual item details. Recovery items may be used, equipment items may open the shared equipment flow and skill scrolls may teach their linked skill to the unique compatible party member. Empty inventory screens remain open until the player explicitly returns or closes the inventory.
+`InventoryMenu` controls the general inventory flow outside battle. It displays every item category in deterministic enum order, keeps empty categories selectable, reports an empty category only after it is selected, paginates non-empty contents and opens contextual item details. Consumable pages display up to nine items and refresh after successful use. Recovery-item feedback remains on the current screen when use fails; successful use opens the result presentation before returning to the updated list. Equipment items may open the shared equipment flow, and skill scrolls may teach their linked skill to the unique compatible party member. Empty inventory screens remain open until the player explicitly returns or closes the inventory.
 
 `ShopMenu` is shared by fixed city shops and exploration merchants. It displays the configured shop identity and party gold, lists active purchase offers with deterministic pagination, organizes owned sellable items by category and keeps the shop open until the player explicitly leaves.
 
@@ -1488,7 +1490,11 @@ Important UI components include:
 
 `BattleItemMenu` is a separate battle-specific flow. It lists only items that can currently be used in battle and reports success only when an item produces an effect.
 
-`RecoveryItemUseMenu` contains the shared recovery-item execution flow, including target selection, effect application and conditional consumption. This prevents the general and battle menus from duplicating item-use rules.
+`RecoveryItemUseMenu` coordinates recovery-item execution and conditional consumption for both inventory and battle. `AllyTargetMenu` presents out-of-battle ally selection, whole-party confirmation and the animated recovery result. Battle target selection and result messages continue through the battle presentation flow. These menus share item-use rules without duplicating effect execution.
+
+`RecoveryItemDefinition` also stores an optional immutable set of purification attributes and one optional positive-stage effect using the `attribute`, `stages` and `duration` fields. `RecoveryItem` checks whether the configured purification or stage can affect the target. Purification uses the selected attributes through `GameCharacter` and `CombatEffectState`; the existing all-attribute method remains available to skills. During battle, `RecoveryItemUseMenu` consumes an effective item and passes a pending stage to `Battle` through `BattleItemMenu`. `Battle` applies that stage after `finishConsumedTurn()`, using the same character stage methods as skills.
+
+`RecoveryItemDefinition.RecoveryAmount` represents either a fixed amount or a percentage of the target's maximum resource; the definition resolves it before `RecoveryItem` applies recovery or revival.
 
 `SkillScrollUseMenu` resolves the unique party member whose class matches a scroll, reports learning restrictions and controls cancelled or confirmed scroll-skill replacement. Domain mutation and conditional consumption remain delegated to `PlayableCharacter` and `SkillScrollService`.
 
@@ -1511,6 +1517,8 @@ Important UI components include:
 `ConsoleInput` decodes input explicitly as UTF-8 and uses one daemon reader thread with an internal blocking queue. This allows timed UI pauses to discard complete commands entered while the game is not accepting actions. On Windows, it reads through `CONIN$` so an accidental `Ctrl+Z` can be ignored without terminating the campaign; other environments fall back to `System.in`.
 
 `ConsoleUI.pause(long, ConsoleInput)` marks the complete pause interval as input-discarding time. Characters may still be echoed by the native terminal, but discarded commands never become actions in a later menu.
+
+`ConsoleUI.animateLine` supplies the interruptible character animation shared by battle messages and the out-of-battle item result.
 
 ## Currency presentation
 
@@ -1585,7 +1593,7 @@ Version-3 restoration validates active objective structure and counters against 
 
 The following implementations remain intentionally temporary:
 
-- Reward-modifier potions are deferred. Their future item behavior will activate the existing `PartyRewardModifierState` rather than duplicate reward calculation or duration state.
+- `RewardModifierItemLoader` validates `data/reward_modifier_items.txt` against base consumable definitions and returns immutable definitions indexed by item ID. `ItemFactory` creates `RewardModifierItem` for those IDs and rejects overlapping item specializations. The item delegates atomic EXP/GOLD activation to `PartyRewardModifierState` and is consumed only after successful activation. `InventoryMenu` owns the cancellable confirmation, blocked-slot feedback and brief success presentation; `BattleItemMenu` does not list these outside-battle items.
 - `character_names.txt` currently contains only temporary entries pending creative-team curation.
 - Playable-class definitions, natural class growth and the complete approved 30-skill class-progression roster are integrated; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy actions currently use basic attacks; enemy skill selection can reuse the skill executor later but is outside the current scope.

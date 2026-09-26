@@ -1,0 +1,4 @@
+# itemId;experiencePercent;goldPercent;rewardedVictories
+pocao_da_ascensao;50;0;15
+pocao_da_prosperidade;0;50;15
+pocao_do_sucesso;25;25;15

@@ -1,6 +1,7 @@
 package rpg.characters;
 
 import java.util.Objects;
+import java.util.Set;
 
 import rpg.effects.AttributeStageRules;
 import rpg.effects.CombatEffectState;
@@ -313,6 +314,10 @@ public abstract class GameCharacter {
 
 	public boolean hasNegativeAttributeStates() {
 		return combatEffectState.hasNegativeStates();
+	}
+
+	public boolean purifyNegativeAttributeStates(Set<CharacterAttribute> attributes) {
+	    return combatEffectState.purifyNegativeStates(attributes);
 	}
 
 	public boolean purifyNegativeAttributeStates() {

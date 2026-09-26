@@ -1,8 +1,10 @@
 package rpg.effects;
 
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import rpg.characters.CharacterAttribute;
 
@@ -68,14 +70,19 @@ public final class CombatEffectState {
 	}
 
 	public boolean purifyAllNegativeStates() {
-		boolean changed = false;
+	    return purifyNegativeStates(EnumSet.allOf(CharacterAttribute.class));
+	}
 
-		for (AttributeStageState state : attributeStates.values()) {
+	public boolean purifyNegativeStates(Set<CharacterAttribute> attributes) {
+	    Objects.requireNonNull(attributes, "Purification attributes cannot be null.");
 
-			changed |= state.clearNegative();
-		}
+	    boolean changed = false;
 
-		return changed;
+	    for (CharacterAttribute attribute : attributes) {
+	        changed |= getState(attribute).clearNegative();
+	    }
+
+	    return changed;
 	}
 
 	public boolean dissipateAllPositiveStates() {

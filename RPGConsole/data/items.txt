@@ -1,11 +1,14 @@
 # id;category;playerTradable;baseShopSalePrice;shopPurchasePrice;name;description
-# Consumíveis
+# Consumíveis - Rcuperação de Recurso
 meruma;CONSUMABLE;true;20;6;Merumã;Uma fruta que recupera 25 pontos de HP.
 jumbuco;CONSUMABLE;true;60;18;Jumbuco;Uma fruta robusta que recupera 75 pontos de HP.
 pocao_de_meruma;CONSUMABLE;true;80;24;Poção de Merumã;Uma poção de vida menor que recupera 100 pontos de HP.
 pocao_de_jumbuco;CONSUMABLE;true;240;72;Poção de Jumbuco;Uma poção de vida que recupera 300 pontos de HP.
 pocao_concentrada_de_fruta;CONSUMABLE;true;400;120;Poção Concentrada de Fruta;Uma poção de vida concentrada que recupera 500 pontos de HP.
 gota_de_vida;CONSUMABLE;true;560;168;Gota de Vida;Uma poderosa poção que recupera 700 pontos de HP.
+gole_de_vida;CONSUMABLE;true;;;Gole de Vida;Recupera todo o HP de um aliado vivo.
+elixir_da_segunda_chance;CONSUMABLE;true;;;Elixir da Segunda Chance;Revive um aliado derrotado com metade do HP máximo.
+elixir_maximo_da_segunda_chance;CONSUMABLE;true;;;Elixir Máximo da Segunda Chance;Revive um aliado derrotado com todo o HP.
 aramao;CONSUMABLE;true;25;8;Aramão;Uma fruta que recupera 25 pontos de MP.
 poranjo;CONSUMABLE;true;25;8;Poranjo;Uma fruta que recupera 25 pontos de SP.
 pocao_de_aramao;CONSUMABLE;true;50;15;Poção de Aramão;Uma poção de mana menor que recupera 50 pontos de MP.
@@ -14,7 +17,30 @@ pocao_concentrada_de_aramao;CONSUMABLE;true;200;60;Poção Concentrada de Aramã
 pocao_concentrada_de_poranjo;CONSUMABLE;true;200;60;Poção Concentrada de Poranjo;Uma poção de stamina maior que recupera 200 pontos de SP.
 pocao_de_frutas_da_montanha;CONSUMABLE;true;150;45;Poção de Frutas da Montanha;Uma poção de recurso que recupera 75 pontos de MP e 75 pontos de SP.
 pocao_concentrada_de_frutas_da_montanha;CONSUMABLE;true;300;90;Poção Concentrada de Frutas da Montanha;Uma poção de recurso concentrada que recupera 150 pontos de MP e 150 pontos de SP.
-
+gole_de_energia;CONSUMABLE;true;;;Gole de Energia;Recupera todo o MP de um aliado vivo.
+gole_de_folego;CONSUMABLE;true;;;Gole de Fôlego;Recupera todo o SP de um aliado vivo.
+# Consumíveis - Purificação
+pocao_da_normalizacao_belica;CONSUMABLE;true;;;Poção da Normalização Bélica;Remove estágios negativos de ATK e MAG de um aliado.
+pocao_da_normalizacao_guardia;CONSUMABLE;true;;;Poção da Normalização Guardiã;Remove estágios negativos de DEF e RES de um aliado.
+pocao_da_normalizacao_sorrateira;CONSUMABLE;true;;;Poção da Normalização Sorrateira;Remove estágios negativos de VEL e LCK de um aliado.
+pocao_da_normalizacao_total;CONSUMABLE;true;;;Poção da Normalização Total;Remove estágios negativos dos seis atributos de um aliado.
+# Consumíveis - Bônus de Atributo
+marola;CONSUMABLE;true;;;Marola;Concede ATK↑ a um aliado pelo próximo turno.
+ampo;CONSUMABLE;true;;;Ampo;Concede DEF↑ a um aliado pelo próximo turno.
+litilo;CONSUMABLE;true;;;Litilo;Concede MAG↑ a um aliado pelo próximo turno.
+clarameijo;CONSUMABLE;true;;;Clarameijo;Concede RES↑ a um aliado pelo próximo turno.
+mentocila;CONSUMABLE;true;;;Mentocila;Concede VEL↑ a um aliado no próximo cálculo de rodada.
+abacaluz;CONSUMABLE;true;;;Abacaluz;Concede LCK↑ a um aliado pelo próximo turno.
+pocao_da_furia;CONSUMABLE;true;;;Poção da Fúria;Concede ATK↑↑↑ a um aliado pelo próximo turno.
+pocao_da_fortaleza;CONSUMABLE;true;;;Poção da Fortaleza;Concede DEF↑↑↑ a um aliado pelo próximo turno.
+pocao_da_sabedoria;CONSUMABLE;true;;;Poção da Sabedoria;Concede MAG↑↑↑ a um aliado pelo próximo turno.
+pocao_da_insubmissao;CONSUMABLE;true;;;Poção da Insubmissão;Concede RES↑↑↑ a um aliado pelo próximo turno.
+pocao_da_celeridade;CONSUMABLE;true;;;Poção da Celeridade;Concede VEL↑↑↑ a um aliado no próximo cálculo de rodada.
+pocao_da_fortuna;CONSUMABLE;true;;;Poção da Fortuna;Concede LCK↑↑↑ a um aliado pelo próximo turno.
+# Consumíveis - Bônus de Multiplicadores
+pocao_da_ascensao;CONSUMABLE;true;;;Poção da Ascensão;Aumenta em 50% a EXP recebida nas próximas 15 vitórias recompensadas.
+pocao_da_prosperidade;CONSUMABLE;true;;;Poção da Prosperidade;Aumenta em 50% o GOLD recebido nas próximas 15 vitórias recompensadas.
+pocao_do_sucesso;CONSUMABLE;true;;;Poção do Sucesso;Aumenta em 25% a EXP e o GOLD recebidos nas próximas 15 vitórias recompensadas.
 # Materiais
 pelo_lupino;MATERIAL;true;;15;Pelo Lupino;Um tufo espesso de pelo obtido de um Lobermo.
 madeira;MATERIAL;true;10;5;Madeira;Um material resistente obtido de árvores e construções.
@@ -22,10 +48,8 @@ ferro;MATERIAL;true;50;20;Ferro;Um metal resistente obtido principalmente em min
 essencia_transformacao_amalgama;MATERIAL;false;;;Essência da Transformação;Uma substância instável extraída de um Goblin Amálgama. Sua forma parece mudar quando não está sendo observada.
 fragmento_energia_residual;MATERIAL;false;;;Fragmento de Energia Residual;Um componente retirado das criaturas mecânicas das Minas do Além-Túmulo. Ainda pulsa com uma energia difícil de identificar.
 meruma_dourada;MATERIAL;false;;;Merumã Dourada;Uma fruta dourada raríssima. Utilizada pelos Alquimistas em tratamentos das mais diversas doenças.
-
 # Itens Chave
 poema_do_papai;KEY_ITEM;false;;;Poema do Papai;Um pequeno poema escrito pelo seu pai. Suas palavras lembram que sempre existe um caminho de volta para casa.
-
 # Armas
 adaga_improvisada;WEAPON;false;;;Adaga Improvisada;Uma lâmina simples e desgastada, adequada para golpes rápidos.
 adaga_comum;WEAPON;false;;;Adaga Comum;Uma adaga equilibrada e confiável para combates próximos.
@@ -94,7 +118,6 @@ codice_hermetico;WEAPON;false;;;Códice Hermético;Um volume selado cujos teorem
 livro_das_mil_vozes;WEAPON;false;;;Livro das Mil Vozes;Um tomo inquietante cujas páginas parecem recitar palavras em coro.
 evangelho_do_abismo;WEAPON;false;;;Evangelho do Abismo;Um livro proibido que descreve verdades encontradas além da realidade.
 o_livro_inacabado;WEAPON;false;;;O Livro Inacabado;Um grimório lendário cuja última página continua escrevendo a si mesma.
-
 # Armaduras
 vestes_comuns;ARMOR;false;;;Vestes Comuns;Vestes leves que oferecem proteção básica sem limitar os movimentos.
 vestes_reforcadas;ARMOR;false;;;Vestes Reforçadas;Vestes leves reforçadas para resistir melhor aos perigos da estrada.
@@ -121,7 +144,6 @@ tunica_das_estacoes;ARMOR;false;;;Túnica das Estações;Uma túnica viva que ma
 jaqueta_do_falcao;ARMOR;false;;;Jaqueta do Falcão;Uma jaqueta aerodinâmica criada para reagir antes que o perigo consiga se aproximar.
 panoplia_do_invicto;ARMOR;false;;;Panóplia do Invicto;Uma armadura colossal marcada pela determinação daqueles que se recusaram a cair.
 cota_do_silencio;ARMOR;false;;;Cota do Silêncio;Uma armadura austera capaz de sufocar o estrondo das forças mágicas ao redor.
-
 # Berloques
 anel_arcano;TRINKET;false;;;Anel Arcano;Um pequeno anel impregnado com energia capaz de fortalecer a resistência mágica.
 trevo_ressecado;TRINKET;false;;;Trevo Ressecado;Um trevo antigo que preserva uma parcela improvável de sua boa sorte.

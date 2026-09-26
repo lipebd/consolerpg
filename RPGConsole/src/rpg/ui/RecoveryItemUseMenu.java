@@ -36,27 +36,52 @@ public final class RecoveryItemUseMenu {
 	}
 
 	public boolean use(
-			RecoveryItem recoveryItem,
-			PlayableCharacter actingCharacter,
-			BiConsumer<List<PlayableCharacter>, String> targetDisplay
+	        RecoveryItem recoveryItem,
+	        PlayableCharacter actingCharacter,
+	        BiConsumer<List<PlayableCharacter>, String> targetDisplay
 	) {
-		Objects.requireNonNull(recoveryItem, "Recovery item cannot be null.");
+	    return use(recoveryItem, actingCharacter, targetDisplay, null);
+	}
 
-		if (recoveryItem.getTargetType() == RecoveryItemTargetType.SINGLE_ALLY) {
-			return useSingleTargetItem(recoveryItem, actingCharacter, targetDisplay);
-		}
+	public boolean use(
+	        RecoveryItem recoveryItem,
+	        PlayableCharacter actingCharacter,
+	        BiConsumer<List<PlayableCharacter>, String> targetDisplay,
+	        BiConsumer<RecoveryItem, PlayableCharacter> postActionStage
+	) {
+	    Objects.requireNonNull(recoveryItem, "Recovery item cannot be null.");
 
-		return useGroupItem(recoveryItem, actingCharacter);
+	    if (recoveryItem.hasAttributeStage()
+	            && targetDisplay == null) {
+	        messageOutput.accept("Este item só pode ser usado em batalha.");
+	        return false;
+	    }
+
+	    if (recoveryItem.getTargetType() == RecoveryItemTargetType.SINGLE_ALLY) {
+	        return useSingleTargetItem(
+	                recoveryItem, actingCharacter, targetDisplay,
+	                postActionStage);
+	    }
+
+	    return useGroupItem(recoveryItem, actingCharacter, targetDisplay == null);
 	}
 
 	private boolean useSingleTargetItem(
 			RecoveryItem recoveryItem,
 			PlayableCharacter actingCharacter,
-			BiConsumer<List<PlayableCharacter>, String> targetDisplay
+			BiConsumer<List<PlayableCharacter>, String> targetDisplay,
+			BiConsumer<RecoveryItem, PlayableCharacter> postActionStage
 	) {
+		if (targetDisplay != null && party.getMembers().stream().noneMatch(
+				member -> recoveryItem.canAffect(member) || recoveryItem.canApplyAttributeStage(member, actingCharacter)
+		)) {
+			messageOutput.accept("Nenhum aliado pode ser afetado por este item.");
+			return false;
+		}
+
 		Optional<PlayableCharacter> selectedTarget = targetDisplay == null
 				? allyTargetMenu.selectRecoveryTarget(party, recoveryItem)
-				: allyTargetMenu.selectRecoveryBattleTarget(party, recoveryItem, targetDisplay);
+				: allyTargetMenu.selectRecoveryBattleTarget(party, recoveryItem, targetDisplay, actingCharacter);
 
 		if (selectedTarget.isEmpty()) {
 			return false;
@@ -64,24 +89,32 @@ public final class RecoveryItemUseMenu {
 
 		PlayableCharacter target = selectedTarget.get();
 
+		boolean stageWillApply = postActionStage != null
+				&& recoveryItem.canApplyAttributeStage(target, actingCharacter);
+
 		RecoveryItemUseResult result = recoveryItem.use(target);
 
-		if (!result.hasAnyEffect()) {
-			System.out.println("O item não produziu nenhum efeito.");
-
+		if (!result.hasAnyEffect() && !stageWillApply) {
+			messageOutput.accept("O item não produziu nenhum efeito.");
 			return false;
 		}
 
 		party.getInventory().removeItem(recoveryItem, 1);
 
 		displayItemUse(actingCharacter, target, recoveryItem);
-
 		displayRecoveryResult(target, result);
+
+		if (stageWillApply) {
+			postActionStage.accept(recoveryItem, target);
+		}
 
 		return true;
 	}
 
-	private boolean useGroupItem(RecoveryItem recoveryItem, PlayableCharacter actingCharacter) {
+	private boolean useGroupItem(RecoveryItem recoveryItem, PlayableCharacter actingCharacter, boolean outsideBattle) {
+		if (outsideBattle && !allyTargetMenu.confirmGroupRecoveryUse(party, recoveryItem)) {
+			return false;
+		}
 		Map<PlayableCharacter, RecoveryItemUseResult> results = new LinkedHashMap<>();
 
 		for (PlayableCharacter member : party.getMembers()) {
@@ -93,7 +126,7 @@ public final class RecoveryItemUseMenu {
 		}
 
 		if (results.isEmpty()) {
-			System.out.println("O item não produziu nenhum efeito.");
+			messageOutput.accept("O item não produziu nenhum efeito.");
 
 			return false;
 		}
@@ -136,7 +169,7 @@ public final class RecoveryItemUseMenu {
 		}
 
 		if (result.purifiedStatusEffects()) {
-			messageOutput.accept(target.getName() + " teve seus efeitos negativos removidos.");
+			messageOutput.accept(target.getName() + " teve efeitos negativos de atributos removidos.");
 		}
 	}
 

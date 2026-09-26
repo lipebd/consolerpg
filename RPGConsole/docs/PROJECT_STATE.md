@@ -6,7 +6,7 @@ V6 is complete and preserved as the current released version.
 
 Current stage:
 
-`V7 polish — Parts 1 through 6 implemented and tested; later parts and the portable V7 release remain pending`
+`V7 polish — Parts 1 through 7 complete. Recovery, revival, selective normalization, attribute-stage and temporary EXP/GOLD reward items are implemented and tested. Remaining V7 work pending`
 
 Current Git branch:
 
@@ -441,6 +441,9 @@ The current recovery-item model supports:
 - Single-ally targeting.
 - Whole-party targeting.
 - Purification of active negative attribute states.
+- Fixed or maximum-resource percentage amounts for HP, MP, SP and revival.
+- Selective purification of negative ATK, DEF, MAG, RES, VEL and LCK stages.
+- Battle-only +1 and +3 positive attribute-stage fruits and potions, applied after the acting character's consumed turn.
 
 Revival is applied before ordinary HP recovery. Items are removed only when at least one configured component produces an effect.
 
@@ -492,14 +495,14 @@ The general inventory and battle item selection use separate menus.
 - Reports an empty category only after it is selected.
 - Keeps empty inventory navigation open until an explicit back or close command.
 - Uses deterministic item ordering.
-- Paginates lists with eight item rows per page.
+- Paginates lists with nine item rows per page.
 - Keeps list height stable on partially filled pages.
 - Truncates long names only in list views.
 - Opens a details screen before offering a contextual action.
 
 `BattleItemMenu` lists only consumables that can currently be used during battle.
 
-`RecoveryItemUseMenu` centralizes target selection, effect application, result display and conditional item removal for both contexts.
+`RecoveryItemUseMenu` coordinates effect application and conditional item removal in inventory and battle. `AllyTargetMenu` handles out-of-battle target selection, group confirmation and animated result presentation. Ineffective uses show feedback without consuming the item; successful uses return to the refreshed consumable list.
 
 `SkillScrollUseMenu` resolves the unique class-compatible learner, reports unavailable learning, handles the two-slot replacement flow and delegates successful mutation and consumption to `SkillScrollService`.
 
@@ -650,6 +653,9 @@ The equipment block is complete and contains 67 weapons, 25 armors and 22 trinke
 - Character status displays total individual M.EXP.
 - Party status and battle rewards display temporary global M.EXP and total effective M.GOLD.
 - Battle rewards intentionally do not list every ally's individual M.EXP, preserving readability for a four-member party.
+- Ascensão, Prosperidade and Sucesso are outside-battle consumables loaded from `reward_modifier_items.txt`; they grant +50% EXP, +50% GOLD or +25% to both for 15 rewarded victories.
+- Activation never replaces an occupied modifier slot. Sucesso activates both slots atomically or preserves the item and both existing states.
+- The inventory confirms use, reports a blocked slot on the item sheet and returns to the refreshed consumable list after success.
 
 ## Character attributes
 
@@ -978,7 +984,9 @@ Parts 1 through 6 are implemented and tested:
 - Character status and battle selection show four natural and two scroll skill positions, including non-selectable empty slots. Battle selection groups positions by column and abbreviates long names only in that menu.
 - Character-status skill details use shared wrapping and fixed 17-line pages with reserved feedback. Skill descriptions consistently show attribute stages as repeated arrows.
 
-Part 7 travel, exploration and INN-saving presentation has been implemented and visually verified. Route and branch menus resolve destination names from scenario IDs; route, branch and paid-transport descriptions animate after valid selection. Exploration results animate within the stable combat-scenario layout, and Enter can reveal complete travel, exploration and battle-message screens without terminal echo. Saving presents its animation and actual success or failure inside the INN screen. The Part 7 dash and string-concatenation review remains pending.
+Part 7 travel, exploration, INN-saving and battle-message presentation is complete and visually verified. Route and branch menus resolve destination names from scenario IDs; route, branch and paid-transport descriptions animate after valid selection. Exploration results animate within the stable combat-scenario layout. Enter reveals complete travel, exploration and battle-message screens without terminal echo. Saving presents its animation and actual success or failure inside the INN screen.
+
+The first Part 8 block adds fixed or percentage-based recovery and revival items. Out-of-battle single-target use requests an ally, group use requests confirmation, and unsuccessful attempts preserve the item. Successful results animate and return to the refreshed inventory. The recovery and revival paths were tested, including cancellation and ineffective group use. Recovery, revival, selective normalization and attribute-stage items are implemented and tested. Persistent EXP/GOLD bonus items and additional skill effects remain pending.
 
 ## Current limitations and temporary implementations
 
@@ -999,7 +1007,7 @@ Part 7 travel, exploration and INN-saving presentation has been implemented and 
 
 ## Current next step
 
-V6 is the latest packaged release as `v6.0.0`. V7 development continues on `feature/v7-polish`.
+V6 is the latest packaged release as `v6.0.0`. V7 development continues on `feature/v7-polish`. Parts 1 through 7 are complete. The recovery and revival item block of Part 8 is implemented and tested; attribute items, normalization items, persistent battle-reward bonuses and skill effects remain pending. Part 9 and final V7 verification, packaging and release also remain pending.
 
 Parts 1 through 6 are complete. Part 7 travel, exploration, saving and battle-message interruption have been implemented and tested; its text-polish review remains before closure. Parts 8 and 9 and the final V7 verification, packaging and release remain pending.
 

@@ -3,6 +3,7 @@ package rpg;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 
@@ -38,6 +39,8 @@ import rpg.items.ItemFactory;
 import rpg.items.ItemLoader;
 import rpg.items.RecoveryItemDefinitionCatalog;
 import rpg.items.RecoveryItemLoader;
+import rpg.items.RewardModifierItemDefinition;
+import rpg.items.RewardModifierItemLoader;
 import rpg.items.SkillScrollDefinitionCatalog;
 import rpg.items.SkillScrollLoader;
 import rpg.items.equipment.EquipmentCatalog;
@@ -159,6 +162,7 @@ public class Main {
 			SkillScrollDefinitionCatalog skillScrollDefinitionCatalog;
 			EquipmentCatalog equipmentCatalog;
 			EquipmentService equipmentService;
+			Map<String, RewardModifierItemDefinition> rewardModifierDefinitions;
 
 			CrafterCatalog crafterCatalog;
 			CraftingRecipeCatalog craftingRecipeCatalog;
@@ -239,6 +243,14 @@ public class Main {
 								Path.of("data", "recovery_items.txt"),
 								itemDefinitionCatalog);
 
+				RewardModifierItemLoader rewardModifierItemLoader =
+				        new RewardModifierItemLoader();
+
+				rewardModifierDefinitions = rewardModifierItemLoader.load(
+				        Path.of("data", "reward_modifier_items.txt"),
+				        itemDefinitionCatalog
+				);
+
 				SkillScrollLoader skillScrollLoader = new SkillScrollLoader();
 				skillScrollDefinitionCatalog =
 						skillScrollLoader.load(
@@ -279,6 +291,7 @@ public class Main {
 							itemFactory.create(
 									definition,
 									recoveryItemDefinitionCatalog,
+									rewardModifierDefinitions,
 									skillScrollDefinitionCatalog,
 									skillCatalog);
 					itemCatalog.register(item);

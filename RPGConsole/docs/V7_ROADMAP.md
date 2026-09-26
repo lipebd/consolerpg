@@ -160,12 +160,14 @@ The checklist fixes **what belongs to V7**, not every rule for implementing it. 
 >
 > The character-status skill sheet uses shared text wrapping and fixed 17-line pages, with a reserved line for invalid-input feedback. Skill descriptions use one `↑` or `↓` per attribute stage. A temporary Bardo scroll was learned through the normal inventory flow and displayed in slot 5 in status and battle; its data definitions were removed after verification. Grito de Guerra had already been corrected before this part.
 
+## 7. Travel, exploration and saving transitions
+
 * [x] Add a brief transition during travel and exploration that communicates movement without changing travel cost, destination or world-state rules.
 * [x] Add a brief saving transition without changing when a save succeeds, fails or becomes persistent.
 * [x] Review player-facing dash usage and remove accidental string concatenations such as `"texto" + "texto"` in the touched presentation paths.
 * [x] Verify travel cancellation and completion, successful saving and saving failure, and the resulting screens.
 
-> **Part 7 presentation verified on 2026-09-26; text polish pending.**
+> **Part 7 closed on 2026-09-26.**
 >
 > Exploration narration and its result animate within the combat-scenario screen before the actions appear. The exploration position shown during narration belongs to the event being resolved; the next menu redraw shows the advanced position. City descriptions use a bounded preview and `[M] Mais`; combat scenarios retain a three-line message area and offer the complete map description separately. These root screens respect the 77-column, 17-line terminal boundary.
 >
@@ -174,6 +176,28 @@ The checklist fixes **what belongs to V7**, not every rule for implementing it. 
 > Saving remains inside the INN screen. Its options give way to an animated message, the actual save result and `aperte ENTER para continuar`. A failed save returns to the INN even when the player selected `Salvar e encerrar`. Battle action messages now also accept Enter during animation and redraw the complete final three-line message window.
 
 ## 8. Additional consumable and skill effects
+
+### Frozen item contract (2026-09-26)
+
+* Existing fixed recovery values remain valid. The existing HP, MP, SP and revival fields in `recovery_items.txt` also accept a percentage suffix, such as `100%` or `50%`, calculated from the target's corresponding maximum resource and rounded up. No additional recovery columns are required. Recovery only consumes the item when at least one effect occurs; a defeated target requires revival before ordinary HP recovery.
+* Implement the proposed full HP, MP and SP consumables and the 50%/100% HP revival consumables. Define their base item records and balance values when populating the data; the original planning tables do not contain approved prices.
+* Attribute fruits and potions apply +1 or +3 existing attribute stages to one ally during battle only. Apply them after the user's consumed-turn duration reduction, as for `POST_ACTION` skill components. Ordinary stages use the existing affected-character turn lifecycle; VEL remains pending for the next turn-order calculation. An application that changes no stage or duration does not consume an item or action. Use three explicit `attribute`, `stages` and `duration` columns in `recovery_items.txt`, matching the skill-effect data convention. VEL leaves `duration` empty. The existing recovery and purification components act during item use; attribute stages apply after the acting character finishes the consumed turn.
+* Normalization items specify the subset of negative attribute stages to clear in external data. Existing `false` means none and `true` means all; permit explicit attribute lists without another column when implementing this family. Add Sorrateira for VEL/LCK and include all six attributes in Total. Unlisted attributes remain untouched; an item with no eligible negative state is ineffective.
+* Outside-battle reward potions activate the existing separate party EXP and GOLD modifiers for 15 rewarded victories. Ascensão grants EXP +50%, Prosperidade GOLD +50%, and Sucesso grants EXP and GOLD +25% each. An active modifier of the same type blocks activation and item consumption. Sucesso requires both modifier slots free and applies both effects together or neither. Preserve existing save/load behavior for the modifier state.
+* Furtividade and Invisibilidade remain undecided for V7 pending a group decision. If selected, they affect only random normal battles, not epic or boss encounters; their duration and exact event-conversion behavior must be approved before implementation. Do not mark them implemented as part of the other item families.
+* Discuss and freeze additional skill-effect choices after the item work. Reuse the existing effect semantics and external fields whenever they represent the same rule.
+
+> **Recovery and revival items completed and verified on 2026-09-26.**
+>
+> The existing recovery fields accept fixed values or percentages of the target's maximum HP, MP or SP, rounded up. Full-resource and 50%/100% revival items are available. Outside battle, single-target use always requests an ally and group use requests confirmation. Ineffective attempts preserve the item and show feedback on the current screen. Successful use displays an animated result and returns to the refreshed inventory. Item and target screens follow the 17-line layout; consumable pages show up to nine items.
+>
+> **Attribute and normalization items implemented and verified on 2026-09-26.**
+>
+> Six attribute fruits and six attribute potions apply the existing positive-stage rules during battle. Single-target stage applicability accounts for the acting character's imminent duration reduction; VEL remains pending for the next turn-order calculation. Ineffective use preserves the item and the action. Four normalization potions purify configured subsets of negative stages, including VEL and LCK; `false`, `true` and explicit attribute lists share the existing purification field. Inventory pagination was corrected for pages containing more than nine consumables.
+>
+> **EXP/GOLD reward potions implemented and verified on 2026-09-26.**
+>
+> Ascensão, Prosperidade and Sucesso activate the existing party reward modifiers for 15 rewarded victories. Item use occurs outside battle through a cancellable confirmation on the item sheet. An active modifier blocks another potion that needs the same slot without consuming it; Sucesso checks both slots before changing either one. Successful use refreshes the consumable list. Reward calculation, victory countdown and saved modifier state continue to use the existing systems.
 
 * [ ] Select the specific additional consumable effects for V7 and freeze their rules before implementing them.
 * [ ] Select the specific additional skill effects for V7 and freeze their rules before implementing them.

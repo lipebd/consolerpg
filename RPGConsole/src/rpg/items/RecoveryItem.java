@@ -1,5 +1,8 @@
 package rpg.items;
 
+import java.util.Set;
+
+import rpg.characters.CharacterAttribute;
 import rpg.characters.PlayableCharacter;
 
 // Represents an item with one or more recovery effects.
@@ -31,13 +34,17 @@ public final class RecoveryItem extends Item {
 		}
 
 		if (!target.isAlive()) {
-			return getReviveHpRecovery() > 0;
+			return recoveryDefinition.resolveReviveHpRecovery(target.getMaxHp()) > 0;
 		}
 
-		return (getHpRecovery() > 0 && target.getCurrentHp() < target.getMaxHp())
-				|| (getMpRecovery() > 0 && target.getCurrentMp() < target.getMaxMp())
-				|| (getSpRecovery() > 0 && target.getCurrentSp() < target.getMaxSp())
-				|| (purifiesStatusEffects() && target.hasNegativeAttributeStates());
+		return (recoveryDefinition.resolveHpRecovery(target.getMaxHp()) > 0
+				&& target.getCurrentHp() < target.getMaxHp())
+				|| (recoveryDefinition.resolveMpRecovery(target.getMaxMp()) > 0
+						&& target.getCurrentMp() < target.getMaxMp())
+				|| (recoveryDefinition.resolveSpRecovery(target.getMaxSp()) > 0
+						&& target.getCurrentSp() < target.getMaxSp())
+				|| recoveryDefinition.getPurificationAttributes().stream()
+						.anyMatch(attribute -> target.getNegativeAttributeStages(attribute) > 0);
 	}
 
 	public RecoveryItemUseResult use(PlayableCharacter target) {
@@ -51,22 +58,78 @@ public final class RecoveryItem extends Item {
 		int recoveredSp = 0;
 
 		if (!target.isAlive()) {
-			revivedHp = target.revive(getReviveHpRecovery());
+			revivedHp = target.revive(recoveryDefinition.resolveReviveHpRecovery(target.getMaxHp()));
 
 			if (revivedHp == 0) {
 				return new RecoveryItemUseResult(0, 0, 0, 0, false);
 			}
 		}
 
-		recoveredHp = target.recoverHp(getHpRecovery());
+		recoveredHp = target.recoverHp(recoveryDefinition.resolveHpRecovery(target.getMaxHp()));
 
-		recoveredMp = target.recoverMp(getMpRecovery());
+		recoveredMp = target.recoverMp(recoveryDefinition.resolveMpRecovery(target.getMaxMp()));
 
-		recoveredSp = target.recoverSp(getSpRecovery());
+		recoveredSp = target.recoverSp(recoveryDefinition.resolveSpRecovery(target.getMaxSp()));
 
-		boolean purifiedStatusEffects = purifiesStatusEffects() && target.purifyNegativeAttributeStates();
+		boolean purifiedStatusEffects = purifiesStatusEffects()
+				&& target.purifyNegativeAttributeStates(recoveryDefinition.getPurificationAttributes());
 
 		return new RecoveryItemUseResult(revivedHp, recoveredHp, recoveredMp, recoveredSp, purifiedStatusEffects);
+	}
+
+	public boolean hasAttributeStage() {
+		return recoveryDefinition.getAttribute() != null;
+	}
+
+	public boolean canApplyAttributeStage(PlayableCharacter target, PlayableCharacter actingCharacter) {
+		if (!hasAttributeStage() || target == null || !target.isAlive()) {
+			return false;
+		}
+
+		CharacterAttribute attribute = recoveryDefinition.getAttribute();
+		int positiveStages = target.getPositiveAttributeStages(attribute);
+
+		if (attribute == CharacterAttribute.VEL) {
+			return positiveStages < 3;
+		}
+
+		int remainingTurns = target.getPositiveAttributeRemainingTurns(attribute);
+
+		if (target == actingCharacter && remainingTurns == 1) {
+			positiveStages = 0;
+			remainingTurns = 0;
+		} else if (target == actingCharacter && remainingTurns > 1) {
+			remainingTurns--;
+		}
+
+		return positiveStages < 3 || remainingTurns < recoveryDefinition.getDuration();
+	}
+
+	public boolean applyAttributeStage(PlayableCharacter target) {
+		if (!hasAttributeStage() || target == null || !target.isAlive()) {
+			return false;
+		}
+
+		CharacterAttribute attribute = recoveryDefinition.getAttribute();
+		int stages = recoveryDefinition.getStages();
+
+		if (attribute == CharacterAttribute.VEL) {
+			return target.applyPendingSpeedStages(stages);
+		}
+
+		return target.applyTimedAttributeStages(attribute, stages, recoveryDefinition.getDuration());
+	}
+
+	public int getStageCount() {
+	    return recoveryDefinition.getStages();
+	}
+
+	public Integer getStageDuration() {
+	    return recoveryDefinition.getDuration();
+	}
+
+	public CharacterAttribute getStageAttribute() {
+	    return recoveryDefinition.getAttribute();
 	}
 
 	public RecoveryItemTargetType getTargetType() {
@@ -89,7 +152,27 @@ public final class RecoveryItem extends Item {
 		return recoveryDefinition.getReviveHpRecovery();
 	}
 
+	public int getHpRecoveryPercent() {
+		return recoveryDefinition.getHpRecoveryPercent();
+	}
+
+	public int getMpRecoveryPercent() {
+		return recoveryDefinition.getMpRecoveryPercent();
+	}
+
+	public int getSpRecoveryPercent() {
+		return recoveryDefinition.getSpRecoveryPercent();
+	}
+
+	public int getReviveHpRecoveryPercent() {
+		return recoveryDefinition.getReviveHpRecoveryPercent();
+	}
+
 	public boolean purifiesStatusEffects() {
 		return recoveryDefinition.purifiesStatusEffects();
+	}
+
+	public Set<CharacterAttribute> getPurificationAttributes() {
+		return recoveryDefinition.getPurificationAttributes();
 	}
 }

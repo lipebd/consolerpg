@@ -1,5 +1,7 @@
 package rpg.items;
 
+import java.util.Map;
+
 import rpg.skills.SkillCatalog;
 import rpg.skills.SkillDefinition;
 
@@ -9,6 +11,7 @@ public final class ItemFactory {
 	public Item create(
 			ItemDefinition itemDefinition,
 			RecoveryItemDefinitionCatalog recoveryItemDefinitionCatalog,
+			Map<String, RewardModifierItemDefinition> rewardModifierDefinitions,
 			SkillScrollDefinitionCatalog skillScrollDefinitionCatalog,
 			SkillCatalog skillCatalog
 	) {
@@ -30,17 +33,23 @@ public final class ItemFactory {
 
 		String itemId = itemDefinition.getId();
 
+		boolean isRewardModifierItem = rewardModifierDefinitions.containsKey(itemId);
 		boolean isRecoveryItem = recoveryItemDefinitionCatalog.containsItemId(itemId);
 		boolean isSkillScroll = skillScrollDefinitionCatalog.containsItemId(itemId);
 
-		if (isRecoveryItem && isSkillScroll) {
+		int specializationCount = (isRecoveryItem ? 1 : 0) + (isRewardModifierItem ? 1 : 0) + (isSkillScroll ? 1 : 0);
+
+		if (specializationCount > 1) {
 			throw new IllegalArgumentException("Item cannot define multiple specialized item types: " + itemId);
 		}
-
 		if (isRecoveryItem) {
 			RecoveryItemDefinition recoveryDefinition = recoveryItemDefinitionCatalog.getByItemId(itemId);
 
 			return new RecoveryItem(itemDefinition, recoveryDefinition);
+		}
+
+		if (isRewardModifierItem) {
+			return new RewardModifierItem(itemDefinition, rewardModifierDefinitions.get(itemId));
 		}
 
 		if (isSkillScroll) {

@@ -18,9 +18,10 @@ import rpg.items.RecoveryItem;
 // Displays and uses items available during battle.
 public final class BattleItemMenu {
 
-	private static final int ITEMS_PER_PAGE = 8;
+	private static final int ITEMS_PER_PAGE = 9;
 	private static final int DESCRIPTION_LINES_PER_PAGE = 3;
 
+	private final BiConsumer<RecoveryItem, PlayableCharacter> postActionStage;
 	private final BiConsumer<List<PlayableCharacter>, String> targetDisplay;
 	private final BattleScreen battleScreen;
 	private final String scenarioName;
@@ -36,7 +37,8 @@ public final class BattleItemMenu {
 			String scenarioName,
 			BattleType battleType,
 			Consumer<List<String>> battleMessageDisplay,
-			BiConsumer<List<PlayableCharacter>, String> targetDisplay
+			BiConsumer<List<PlayableCharacter>, String> targetDisplay,
+			BiConsumer<RecoveryItem, PlayableCharacter> postActionStage
 	) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
 		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
@@ -46,6 +48,8 @@ public final class BattleItemMenu {
 		this.battleMessageDisplay = Objects
 				.requireNonNull(battleMessageDisplay, "Battle message display cannot be null.");
 		this.targetDisplay = Objects.requireNonNull(targetDisplay, "Target display cannot be null.");
+		this.postActionStage = Objects.requireNonNull(
+		        postActionStage, "Post-action item stage cannot be null.");
 	}
 
 	public boolean open(PlayableCharacter actingCharacter) {
@@ -127,10 +131,8 @@ public final class BattleItemMenu {
 			String feedbackMessage
 	) {
 		battleScreen.displayItemHeading(scenarioName, battleType);
-
 		System.out.println();
 		System.out.println("Página " + (currentPage + 1) + "/" + totalPages);
-		System.out.println();
 		System.out.println(ItemMenuFormatter.formatItemTableHeader());
 		for (int index = firstIndex; index < lastIndex; index++) {
 			Map.Entry<Item, Integer> entry = entries.get(index);
@@ -143,10 +145,7 @@ public final class BattleItemMenu {
 		for (int index = lastIndex - firstIndex; index < ITEMS_PER_PAGE; index++) {
 			System.out.println(ItemMenuFormatter.formatEmptyItemTableRow());
 		}
-
-		System.out.println();
-
-		StringBuilder navigation = new StringBuilder("[0] Voltar");
+		StringBuilder navigation = new StringBuilder("");
 		if (currentPage > 0) {
 			navigation.append("    [A] Anterior");
 		}
@@ -154,8 +153,8 @@ public final class BattleItemMenu {
 			navigation.append("    [P] Próxima");
 		}
 		System.out.println(navigation);
-
 		System.out.println(feedbackMessage == null ? "" : feedbackMessage);
+		System.out.println("[0] Voltar");
 		System.out.print("> ");
 	}
 
@@ -210,7 +209,8 @@ public final class BattleItemMenu {
 				List<String> messages = new ArrayList<>();
 				RecoveryItemUseMenu useMenu = new RecoveryItemUseMenu(party, consoleInput, messages::add);
 
-				boolean itemUsed = useMenu.use(recoveryItem, actingCharacter, targetDisplay);
+				boolean itemUsed = useMenu.use(
+				        recoveryItem, actingCharacter, targetDisplay, postActionStage);
 
 				if (itemUsed) {
 					battleMessageDisplay.accept(messages);

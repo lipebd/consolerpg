@@ -278,19 +278,11 @@ public final class BattleScreen {
 
 			String line = lines.get(index);
 
-			for (int offset = 0; offset < line.length();) {
-				int codePoint = line.codePointAt(offset);
-
-				System.out.print(new String(Character.toChars(codePoint)));
-				System.out.flush();
-
-				if (consoleInput.pollLine(MESSAGE_CHARACTER_DELAY_MILLIS).isPresent()) {
-					interrupted = true;
-					break;
-				}
-
-				offset += Character.charCount(codePoint);
-			}
+			interrupted = ConsoleUI.animateLine(
+			        line,
+			        MESSAGE_CHARACTER_DELAY_MILLIS,
+			        consoleInput
+			);
 
 			if (!interrupted) {
 				System.out.println();
