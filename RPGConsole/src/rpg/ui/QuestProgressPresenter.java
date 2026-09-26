@@ -84,7 +84,7 @@ public final class QuestProgressPresenter {
 				QuestStepDefinition stepDefinition = getStep(questDefinition, update.getStep());
 
 				ConsoleUI.displayWrappedText(
-						questDefinition.getTitle() + ": etapa concluída — " + stepDefinition.getTitle() + "."
+						questDefinition.getTitle() + ": etapa concluída - " + stepDefinition.getTitle() + "."
 				);
 			}
 
@@ -171,7 +171,7 @@ public final class QuestProgressPresenter {
 
 			List<QuestRewardDefinition> rewards = rewardCatalog.getByQuestId(questDefinition.getId());
 
-			System.out.println("Recompensas — " + questDefinition.getTitle() + ":");
+			System.out.println("Recompensas - " + questDefinition.getTitle() + ":");
 
 			List<String> rewardSummaries = rewardSummaryFormatter.format(rewards);
 

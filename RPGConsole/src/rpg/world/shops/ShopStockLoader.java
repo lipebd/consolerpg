@@ -143,8 +143,7 @@ public final class ShopStockLoader {
 			if (shopPurchasePrice != null
 					&& shopPurchasePrice > lowestShopSalePrice) {
 				throw new IllegalArgumentException(
-						"Shop purchase price cannot exceed the lowest "
-								+ "shop sale price for item: " + item.getId()
+						"Shop purchase price cannot exceed the lowest shop sale price for item: " + item.getId()
 				);
 			}
 		}

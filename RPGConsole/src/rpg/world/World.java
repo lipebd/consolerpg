@@ -170,6 +170,8 @@ public class World {
 	private final ClassPathRecruitmentService classPathRecruitmentService;
 	private final AllyRecruitmentMenu allyRecruitmentMenu;
 	private final ClassPathTransitionFailurePresenter classPathTransitionFailurePresenter;
+	private int firstAnimatedExplorationMessageIndex = -1;
+	private int narratedExplorationPosition = -1;
 
 	private final ItemCatalog itemCatalog;
 	private final CrafterCatalog crafterCatalog;
@@ -358,8 +360,8 @@ public class World {
         // User interface
         this.epicEncounterMenu = new EpicEncounterMenu(consoleInput);
         this.combatScenarioMenu = new CombatScenarioMenu(consoleInput, this.worldClock);
-        this.routeMenu = new RouteMenu(consoleInput, this.travelProgress);
-        this.scenarioBranchMenu = new ScenarioBranchMenu(consoleInput);
+		this.routeMenu = new RouteMenu(consoleInput, this.travelProgress, this.scenarioCatalog);
+        this.scenarioBranchMenu = new ScenarioBranchMenu(consoleInput, this.scenarioCatalog);
         EquipmentMenu equipmentMenu =
                 new EquipmentMenu(
                         this.party,
@@ -448,15 +450,6 @@ public class World {
 		}
 	}
 
-	private boolean consumeScenarioDescriptionDisplay() {
-		boolean displayDescription =
-				shouldDisplayScenarioDescription;
-
-		shouldDisplayScenarioDescription = false;
-
-		return displayDescription;
-	}
-
 	private void executePendingQuestTransport() {
 	    Optional<String> pendingDestination =
 	            questTransportState.consume();
@@ -532,7 +525,6 @@ public class World {
 				cityMenu.selectAction(
 						city.getName(),
 						city.getDescription(),
-						consumeScenarioDescriptionDisplay(),
 						availableActions,
 						getMarkedCityActions(city, availableActions)
 				);
@@ -805,29 +797,25 @@ public class World {
     }
 
 	private void executeInnMenu(City city, InnDefinition innDefinition) {
-        while (running) {
+		while (running) {
 			InnMenu.Selection selection = innMenu.open(city.getName(), innDefinition);
 
-            if (selection == InnMenu.Selection.BACK) {
-                return;
-            }
+			if (selection == InnMenu.Selection.BACK) {
+				return;
+			}
 
-            CampaignSaveResult saveResult = saveCampaign(innDefinition);
+			innMenu.displaySaving(city.getName(), innDefinition);
 
-            if (!saveResult.isSuccess()) {
-                displaySaveFailure(saveResult);
-                continue;
-            }
+			CampaignSaveResult saveResult = saveCampaign(innDefinition);
 
-            System.out.println();
-            System.out.println("Campanha salva com sucesso.");
+			innMenu.displaySaveResult(city.getName(), innDefinition, saveResult);
 
-            if (selection == InnMenu.Selection.SAVE_AND_EXIT) {
-                terminateGame();
-                return;
-            }
-        }
-    }
+			if (saveResult.isSuccess() && selection == InnMenu.Selection.SAVE_AND_EXIT) {
+				terminateGame();
+				return;
+			}
+		}
+	}
 
 	private CampaignSaveResult saveCampaign(InnDefinition innDefinition) {
 		if (!currentScenario.getId().equals(innDefinition.getScenarioId())) {
@@ -898,22 +886,28 @@ public class World {
 						&& isDungeonBossAvailable(dungeon);
 
 		List<String> explorationMessages =
-				consumeExplorationMessages();
+				getExplorationMessages();
 
-		Optional<CombatScenarioAction> selectedAction =
-				combatScenarioMenu.selectAction(
-						combatScenario.getName(),
-						combatScenario.getDescription(),
-						explorationSession,
-						consumeScenarioDescriptionDisplay(),
-						dungeonBossObstacleVisible,
-						party.size(),
-						explorationMessages,
-						availableActions,
-						getMarkedCombatScenarioActions(
-								availableActions
-						)
-				);
+		int firstAnimatedMessageIndex = firstAnimatedExplorationMessageIndex;
+		int narratedPosition =
+		        firstAnimatedMessageIndex >= 0 ? narratedExplorationPosition : -1;
+
+		firstAnimatedExplorationMessageIndex = -1;
+		narratedExplorationPosition = -1;
+
+		Optional<CombatScenarioAction> selectedAction = combatScenarioMenu.selectAction(
+				combatScenario.getName(),
+				combatScenario.getDescription(),
+				explorationSession,
+				shouldDisplayScenarioDescription,
+				dungeonBossObstacleVisible,
+				party.size(),
+				explorationMessages,
+				availableActions,
+				getMarkedCombatScenarioActions(availableActions),
+				firstAnimatedMessageIndex,
+				narratedPosition
+		);
 
 		if (selectedAction.isEmpty()) {
 			requestExitWithoutSaving();
@@ -1392,6 +1386,11 @@ public class World {
 			return;
 		}
 
+		shouldDisplayScenarioDescription = false;
+		pendingExplorationMessages.clear();
+		firstAnimatedExplorationMessageIndex = -1;
+		narratedExplorationPosition = explorationSession.getCurrentPosition();
+
 		if (currentScenario instanceof Dungeon dungeon && explorationSession.isAtFinalPosition()) {
 			DungeonBossAccess bossAccess = getDungeonBossAccess(dungeon);
 
@@ -1431,8 +1430,9 @@ public class World {
 		advanceOrCompleteExploration();
 
 		if (explorationSession.isComplete()) {
-            System.out.println(
-                    "\nVocê chegou ao fim da exploração de " + currentScenario.getName() + "!");
+			queueExplorationMessage(
+			        "Você chegou ao fim da exploração de "
+			                + currentScenario.getName() + "!");
 		}
 	}
 
@@ -1454,11 +1454,35 @@ public class World {
 
 		if (selectedDefinitions.isEmpty()) {
 			queueExplorationMessage("Nenhum inimigo foi encontrado nesta região.");
-
+			firstAnimatedExplorationMessageIndex = 0;
 			return true;
 		}
 
-		return startEncounter(selectedDefinitions, BattleType.NORMAL) != BattleResult.DEFEAT;
+		queueExplorationMessage("Inimigos se aproximam!");
+
+		combatScenarioMenu.displayExplorationEncounter(
+		        currentScenario.getName(),
+		        explorationSession,
+		        List.copyOf(pendingExplorationMessages)
+		);
+
+		BattleResult result = startEncounter(selectedDefinitions, BattleType.NORMAL);
+		queueExplorationBattleOutcome(result);
+		return result != BattleResult.DEFEAT;
+	}
+
+	private void queueExplorationBattleOutcome(BattleResult result) {
+		switch (result) {
+		case VICTORY -> queueExplorationMessage("Com os inimigos derrotados, você segue adiante.");
+		case FLED -> queueExplorationMessage("Depois de escapar dos inimigos, você segue adiante.");
+		case DEFEAT -> {
+			// The existing rescue flow presents the defeat.
+		}
+		}
+
+		if (result != BattleResult.DEFEAT) {
+			firstAnimatedExplorationMessageIndex = pendingExplorationMessages.size() - 1;
+		}
 	}
 
 	private boolean executeExplorationEvent(ExplorationEventType eventType, int position, boolean specialArea) {
@@ -1467,15 +1491,21 @@ public class World {
 			return startRandomEncounter(position, specialArea);
 		}
 
-		case REWARD -> executeRewardEvent(specialArea);
-
 		case MERCHANT -> executeMerchantEvent();
 
 		case EPIC_ENCOUNTER -> {
 			return executeEpicEncounter();
 		}
 
-		case NOTHING -> queueExplorationMessage("Você explorou os arredores, mas não encontrou nada.");
+		case REWARD -> {
+			executeRewardEvent(specialArea);
+			firstAnimatedExplorationMessageIndex = 0;
+		}
+
+		case NOTHING -> {
+			queueExplorationMessage("Você explorou os arredores, mas não encontrou nada.");
+			firstAnimatedExplorationMessageIndex = 0;
+		}
 		}
 
 		return true;
@@ -1549,11 +1579,17 @@ public class World {
 		explorationSession.markMerchantEncountered();
 
 		ShopState merchantState = selectExplorationMerchant();
+		queueExplorationMessage("Você encontra " + merchantState.getDefinition().getName() + ".");
 
-		shopMenu.open(
+		combatScenarioMenu.displayExplorationEncounter(
 				currentScenario.getName(),
-				merchantState
+				explorationSession,
+				List.copyOf(pendingExplorationMessages)
 		);
+		shopMenu.open(currentScenario.getName(), merchantState);
+		queueExplorationMessage("Você se despede do mercador e retoma a exploração.");
+
+		firstAnimatedExplorationMessageIndex = pendingExplorationMessages.size() - 1;
 	}
 
 	private ShopState selectExplorationMerchant() {
@@ -1605,24 +1641,32 @@ public class World {
 
 		explorationSession.markEpicEncounterOffered();
 
-        List<EnemyDefinition> epicDefinitions =
-                resolveEnemyDefinitions(dungeon.getDungeonSettings().getEpicEnemyIds());
+		List<EnemyDefinition> epicDefinitions = resolveEnemyDefinitions(dungeon.getDungeonSettings().getEpicEnemyIds());
+
+		queueExplorationMessage("Uma presença poderosa surge no caminho.");
+
+		combatScenarioMenu.displayExplorationEncounter(
+				currentScenario.getName(),
+				explorationSession,
+				List.copyOf(pendingExplorationMessages)
+		);
 
 		boolean accepted = epicEncounterMenu.confirmEncounter(currentScenario.getName(), epicDefinitions);
 
 		if (!accepted) {
 			queueExplorationMessage("Você decidiu evitar o confronto.");
-
+			firstAnimatedExplorationMessageIndex = pendingExplorationMessages.size() - 1;
 			return true;
 		}
 
 		BattleResult result = startEncounter(epicDefinitions, BattleType.EPIC);
 
-        if (result == BattleResult.VICTORY) {
-            dungeonProgress.recordEpicVictory(dungeon.getId(), worldClock.getElapsedHours());
-        }
+		if (result == BattleResult.VICTORY) {
+			dungeonProgress.recordEpicVictory(dungeon.getId(), worldClock.getElapsedHours());
+		}
 
-        return result != BattleResult.DEFEAT;
+		queueExplorationBattleOutcome(result);
+		return result != BattleResult.DEFEAT;
 	}
 
 	private List<EnemyDefinition> resolveEnemyDefinitions(List<String> enemyIds) {
@@ -1704,19 +1748,14 @@ public class World {
                 scenarioCatalog.getById(destinationDefinition.getDestinationScenarioId());
 
 		changeScenario(destination);
-
-		System.out.println();
-		ConsoleUI.displayWrappedText(
-				destinationDefinition.getTravelDescription()
-		);
 	}
 
 	private void executeRouteMenu() {
 		if (currentScenario instanceof CombatScenario
-				&& (explorationSession == null || !explorationSession.isComplete())) {
-			queueExplorationMessage("Você permanece diante do caminho bloqueado.");
-
-			return;
+		        && (explorationSession == null || !explorationSession.isComplete())) {
+		    pendingExplorationMessages.clear();
+		    queueExplorationMessage("Você permanece diante do caminho bloqueado.");
+		    return;
 		}
 
 		Optional<TravelRouteDefinition> selectedRoute =
@@ -1816,6 +1855,8 @@ public class World {
 	private void changeScenario(Scenario destination, int startingPosition) {
 		currentScenario = destination;
 		pendingExplorationMessages.clear();
+		firstAnimatedExplorationMessageIndex = -1;
+		narratedExplorationPosition = -1;
 		worldProgress.discover(destination.getId());
 
 		if (destination instanceof CombatScenario combatScenario) {
@@ -1855,7 +1896,6 @@ public class World {
 		);
 
 		Scenario destination = scenarioCatalog.getById(gateDefinition.getBlockedDestinationScenarioId());
-
 		changeScenario(destination);
 	}
 
@@ -2073,12 +2113,7 @@ public class World {
 		pendingExplorationMessages.add(message);
 	}
 
-	private List<String> consumeExplorationMessages() {
-		List<String> messages =
-				List.copyOf(pendingExplorationMessages);
-
-		pendingExplorationMessages.clear();
-
-		return messages;
+	private List<String> getExplorationMessages() {
+	    return List.copyOf(pendingExplorationMessages);
 	}
 }

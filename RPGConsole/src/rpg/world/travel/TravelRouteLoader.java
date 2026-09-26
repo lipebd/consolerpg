@@ -66,8 +66,7 @@ public final class TravelRouteLoader {
 
 		if (destinationDefinition.getType() == ScenarioType.CITY) {
 			if (!destinationPositionValue.isEmpty()) {
-				throw new IllegalArgumentException("Travel destination exploration position "
-						+ "must be empty for city: " + destinationScenarioId);
+				throw new IllegalArgumentException("Travel destination exploration position must be empty for city: " + destinationScenarioId);
 			}
 
 			return new TravelRouteDefinition(id, sourceScenarioId, destinationScenarioId, initiallyUnlocked,
@@ -75,8 +74,7 @@ public final class TravelRouteLoader {
 		}
 
 		if (destinationPositionValue.isEmpty()) {
-			throw new IllegalArgumentException("Travel destination exploration position "
-					+ "is required for combat scenario: " + destinationScenarioId);
+			throw new IllegalArgumentException("Travel destination exploration position is required for combat scenario: " + destinationScenarioId);
 		}
 
 		int destinationExplorationPosition = parseInteger(destinationPositionValue,

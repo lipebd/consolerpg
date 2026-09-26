@@ -167,8 +167,7 @@ public final class ClassPathLoader {
 
         if (classPathCatalog.getAll().size() != expectedPathCount) {
             throw new IllegalArgumentException(
-                    "Class path count must match every non-beginner playable class. "
-                            + "Expected "
+                    "Class path count must match every non-beginner playable class. Expected "
                             + expectedPathCount
                             + " but found "
                             + classPathCatalog.getAll().size()

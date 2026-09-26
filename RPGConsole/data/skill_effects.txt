@@ -25,7 +25,7 @@ abraco_da_floresta;2;PRIMARY;PURIFICATION;SINGLE_ALLY;;;;;;;;NONE;
 raizes_asfixiantes;1;PRIMARY;DAMAGE;ALL_ENEMIES;MAGICAL;15;;;;;;NONE;
 raizes_asfixiantes;2;PRIMARY;ATTRIBUTE_STAGE;ALL_ENEMIES;;;VEL;-2;;;;NONE;
 pele_de_arvore;1;PRIMARY;HP_RECOVERY;SELF;;50;MAG;;;;;NONE;
-pele_de_arvore;1;POST_ACTION;ATTRIBUTE_STAGE;SELF;;;DEF;3;3;;;NONE;
+pele_de_arvore;2;POST_ACTION;ATTRIBUTE_STAGE;SELF;;;DEF;3;3;;;NONE;
 postura_do_predador;1;PRE_ACTION;ATTRIBUTE_STAGE;SELF;;;ATK;2;2;;;NONE;
 postura_do_predador;2;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;70;;;;;;NONE;
 # -------------------------------------------------------------

@@ -795,7 +795,7 @@ A route must be registered separately for each permitted direction. `TravelProgr
 - Incomplete combat scenarios keep adjacent routes unavailable.
 - Cities expose unlocked adjacent routes as exits.
 
-`RouteMenu` receives the currently available route definitions and returns the selected `TravelRouteDefinition`. It does not resolve destinations or change world state.
+`RouteMenu` uses `ScenarioCatalog` to derive each destination's current display name, shows it after the configured passage name and presents the selected route description through `ConsoleUI.displayScenarioTransition(...)`. It returns the selected `TravelRouteDefinition` without changing world state. `ScenarioBranchMenu` follows the same presentation rule for fixed branches. Cancellation does not start a transition.
 
 `World` resolves the destination through `ScenarioCatalog`. When the destination is a combat scenario, the route also determines the initial exploration position. City destinations do not use exploration positions.
 
@@ -831,7 +831,7 @@ The loader validates that every destination references an existing `CITY`, that 
 - deducts gold only after all validations and confirmation succeed;
 - returns the selected `CityTransportDefinition` without changing the scenario.
 
-`World` resolves the selected destination through `ScenarioCatalog`, changes directly to that city and displays the definition's travel description.
+After confirmation and payment, `CityTransportMenu` resolves the selected destination and presents the configured travel description through the shared scenario transition. `World` then changes to the returned destination. Cancellation and insufficient funds preserve gold and do not start the transition.
 
 Paid city transport is available from cities, fields and dungeons, including incomplete combat-scenario exploration, but never during battle. Leaving an incomplete exploration discards its current `ExplorationSession`. Permanent party and world state already obtained remains unchanged. Entering that combat scenario again creates a fresh exploration session from the position defined by the route used to return.
 
@@ -950,6 +950,8 @@ data/inns.txt
     -> InnMenu
 ```
 
+`World` remains responsible for creating and saving the campaign snapshot. `InnMenu` reuses the INN heading, description and price presentation while showing the saving animation and the returned `CampaignSaveResult`. The result screen waits for Enter before returning to the INN or completing a successful `Salvar e encerrar`. A failed save never exits the game.
+
 `InnCatalog` resolves INNs by stable ID and by city scenario ID and rejects multiple definitions for the same city. After loading, `InnLoader` verifies that every registered city has an INN; together, these rules guarantee exactly one INN per city.
 
 `InnMenu` owns the iterative resting interaction and uses the shared `Party` instance. It validates whether rest is necessary and affordable, requests confirmation, charges shared gold and delegates complete restoration to `Party.fullyRestoreMembers()`.
@@ -960,7 +962,7 @@ data/inns.txt
 
 `shouldDisplayScenarioDescription` means that the next opening of the root scenario menu includes the scenario description. `World` activates it for campaign initialization, restoration and successful scenario changes, then consumes it when preparing the next root menu. The captured value remains active through invalid-input redraws inside that menu call, but returning from a nested functional screen or a same-scenario battle does not reactivate it.
 
-Exploration narration is independent from the scenario-description lifecycle. `World` queues resolved exploration messages, and `CombatScenarioMenu` consumes and displays them on the following root screen after the world time and before the action prompt. This prevents messages from being erased by the next screen clear while keeping domain resolution outside the UI.
+Exploration narration is independent from the scenario-description lifecycle. `World` resolves the event and supplies its messages to `CombatScenarioMenu`, which animates the narration and result in a bounded three-line area before displaying actions. During narration, the displayed exploration position identifies the event being resolved; a later menu redraw presents the advanced position. The menu retains its heading, clock and fixed-height layout, and Enter reveals the complete final message window without leaving terminal echo. `BattleScreen` uses the same final-redraw behavior when Enter interrupts animated action messages.
 
 Current shop data and runtime flow:
 

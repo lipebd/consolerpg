@@ -75,6 +75,9 @@ public final class CityTransportMenu {
 
 				CityTransportDefinition selectedDestination = destinations.get(selectedIndex);
 
+				Scenario destination =
+				        scenarioCatalog.getById(selectedDestination.getDestinationScenarioId());
+
 				if (party.getGold() < selectedDestination.getPrice()) {
 					feedbackMessage = "As moedas do grupo não são suficientes para realizar esta viagem.";
 					continue;
@@ -88,6 +91,13 @@ public final class CityTransportMenu {
 				if (!party.spendGold(selectedDestination.getPrice())) {
 					throw new IllegalStateException("Party gold changed before city transport payment.");
 				}
+
+				ConsoleUI.displayScenarioTransition(
+				        sourceScenarioName,
+				        destination.getName(),
+				        selectedDestination.getTravelDescription(),
+				        consoleInput
+				);
 
 				return Optional.of(selectedDestination);
 

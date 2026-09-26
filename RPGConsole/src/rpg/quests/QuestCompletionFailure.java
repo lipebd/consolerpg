@@ -36,8 +36,7 @@ public final class QuestCompletionFailure {
 
         if (availableQuantity < 0 || availableQuantity >= requiredQuantity) {
             throw new IllegalArgumentException(
-                    "Quest completion failure available quantity must be "
-                            + "nonnegative and lower than the required quantity.");
+                    "Quest completion failure available quantity must be nonnegative and lower than the required quantity.");
         }
 
         this.failureType = failureType;

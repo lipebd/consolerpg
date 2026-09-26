@@ -6,6 +6,7 @@ import rpg.GameCurrency;
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
 import rpg.world.inns.InnDefinition;
+import rpg.persistence.CampaignSaveResult;
 
 // Displays an INN and controls the party-resting flow.
 public final class InnMenu {
@@ -54,27 +55,29 @@ public final class InnMenu {
 		BACK, SAVE_AND_CONTINUE, SAVE_AND_EXIT
 	}
 
+	private void displayInnDetails(String cityName, InnDefinition innDefinition) {
+		ConsoleUI.clearScreen();
+		ConsoleUI.displayHeading(cityName, innDefinition.getName());
+
+		System.out.println();
+		ConsoleUI.displayWrappedText(innDefinition.getDescription());
+
+		String stayPriceLabel = "Estadia do grupo:";
+		String availableGoldLabel = GameCurrency.getName() + " disponível:";
+		int labelWidth = Math.max(stayPriceLabel.length(), availableGoldLabel.length()) + 1;
+
+		System.out.printf("\n%-" + labelWidth + "s%s%n",
+				stayPriceLabel, GameCurrency.format(innDefinition.getPrice()));
+		System.out.printf("%-" + labelWidth + "s%s%n",
+				availableGoldLabel, GameCurrency.format(party.getGold()));
+	}
+
 	private void displayInn(
 			String cityName,
 			InnDefinition innDefinition,
 			String feedbackMessage
 	) {
-		ConsoleUI.clearScreen();
-		ConsoleUI.displayHeading(
-				cityName,
-				innDefinition.getName()
-		);
-
-		System.out.println();
-		ConsoleUI.displayWrappedText(
-				innDefinition.getDescription()
-		);
-		String stayPriceLabel = "Estadia do grupo:";
-		String availableGoldLabel = GameCurrency.getName() + " disponível:";
-		int labelWidth = Math.max(stayPriceLabel.length(), availableGoldLabel.length()) + 1;
-
-		System.out.printf("\n%-" + labelWidth + "s%s%n", stayPriceLabel, GameCurrency.format(innDefinition.getPrice()));
-		System.out.printf("%-" + labelWidth + "s%s%n", availableGoldLabel, GameCurrency.format(party.getGold()));
+		displayInnDetails(cityName, innDefinition);
 		System.out.println();
 		System.out.println("[1] Descansar");
 		System.out.println("[2] Salvar e continuar");
@@ -111,6 +114,60 @@ public final class InnMenu {
 		party.fullyRestoreMembers();
 
 		return "Após uma noite de descanso, todos despertam com as forças completamente renovadas.";
+	}
+
+	public void displaySaving(String cityName, InnDefinition innDefinition) {
+		String message = "O livro mágico da pousada registra sua jornada sozinho...";
+		boolean interrupted = false;
+
+		consoleInput.discardPendingInput();
+		displayInnDetails(cityName, innDefinition);
+		System.out.println();
+
+		for (int offset = 0; offset < message.length();) {
+			int codePoint = message.codePointAt(offset);
+
+			System.out.print(new String(Character.toChars(codePoint)));
+			System.out.flush();
+
+			if (consoleInput.pollLine(35).isPresent()) {
+				interrupted = true;
+				break;
+			}
+
+			offset += Character.charCount(codePoint);
+		}
+
+		if (interrupted) {
+			// Remove o Enter exibido pelo terminal e apresenta a frase completa.
+			displayInnDetails(cityName, innDefinition);
+			System.out.println();
+			System.out.println(message);
+		} else {
+			System.out.println();
+			consoleInput.pollLine(1200);
+		}
+
+		consoleInput.discardPendingInput();
+	}
+
+	public void displaySaveResult(String cityName, InnDefinition innDefinition, CampaignSaveResult saveResult) {
+		String resultMessage = switch (saveResult) {
+		case SUCCESS -> "Campanha registrada com sucesso.";
+		case ENCODING_FAILED -> "Não foi possível preparar os dados da campanha para salvar.";
+		case FILE_WRITE_FAILED -> "Não foi possível registrar a campanha.";
+		};
+
+		consoleInput.discardPendingInput();
+		displayInnDetails(cityName, innDefinition);
+
+		System.out.println();
+		System.out.println("O livro mágico da pousada registra sua jornada sozinho...");
+		System.out.println();
+		ConsoleUI.displayWrappedText(resultMessage);
+		System.out.println();
+		System.out.print("aperte ENTER para continuar");
+		consoleInput.readLine();
 	}
 
 	private boolean confirmStay(String cityName, InnDefinition innDefinition) {

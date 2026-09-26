@@ -45,8 +45,7 @@ public final class ClassPathRecruitmentPreparation {
 
 		if (plan.isPresent() == hasFailures) {
 			throw new IllegalArgumentException(
-					"Class path recruitment preparation must contain "
-							+ "either one plan or failures."
+					"Class path recruitment preparation must contain either one plan or failures."
 			);
 		}
 	}

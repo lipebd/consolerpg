@@ -213,8 +213,7 @@ public final class ClassPathQuestionnaireLoader {
                         draft.physicalLine,
                         draft.sourceLine,
                         new IllegalArgumentException(
-                                "Class path question orders must start at 1 "
-                                        + "and be consecutive. Expected "
+                                "Class path question orders must start at 1 and be consecutive. Expected "
                                         + expectedOrder
                                         + " but found "
                                         + draft.order
@@ -236,8 +235,7 @@ public final class ClassPathQuestionnaireLoader {
                         draft.physicalLine,
                         draft.sourceLine,
                         new IllegalArgumentException(
-                                "Class path answer orders must start at 1 "
-                                        + "and be consecutive for "
+                                "Class path answer orders must start at 1 and be consecutive for "
                                         + questionId
                                         + ". Expected "
                                         + expectedOrder
@@ -258,8 +256,7 @@ public final class ClassPathQuestionnaireLoader {
         if (!normalizedValue.matches(ID_PATTERN)) {
             throw new IllegalArgumentException(
                     fieldName
-                            + " must use lowercase letters, numbers "
-                            + "and single underscores: "
+                            + " must use lowercase letters, numbers and single underscores: "
                             + normalizedValue);
         }
 

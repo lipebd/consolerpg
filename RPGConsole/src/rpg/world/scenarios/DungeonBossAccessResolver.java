@@ -76,7 +76,7 @@ public final class DungeonBossAccessResolver {
 		}
 
 		return gateCatalog.findByDungeonId(dungeon.getId()).orElseThrow(
-				() -> new IllegalStateException("Dungeon does not have a registered " + "boss gate: " + dungeon.getId())
+				() -> new IllegalStateException("Dungeon does not have a registered boss gate: " + dungeon.getId())
 		);
 	}
 

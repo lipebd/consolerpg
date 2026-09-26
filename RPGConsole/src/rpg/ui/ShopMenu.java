@@ -603,7 +603,7 @@ public final class ShopMenu {
 	) {
 		ConsoleUI.clearScreen();
 		System.out.println(
-				"\n[" + getCategoryDisplayName(category).toUpperCase(Locale.ROOT) + " — PÁGINA " + (currentPage + 1)
+				"\n[" + getCategoryDisplayName(category).toUpperCase(Locale.ROOT) + " - PÁGINA " + (currentPage + 1)
 						+ "/" + totalPages + "]"
 		);
 
@@ -727,7 +727,7 @@ public final class ShopMenu {
 			String feedbackMessage
 	) {
 		ConsoleUI.clearScreen();
-		System.out.println("[COMPRAR — PÁGINA " + (currentPage + 1) + "/" + totalPages + "]");
+		System.out.println("[COMPRAR - PÁGINA " + (currentPage + 1) + "/" + totalPages + "]");
 
 		System.out.println();
 		System.out.println("Selecione um item para comprar:");

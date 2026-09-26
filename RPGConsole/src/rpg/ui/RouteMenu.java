@@ -5,6 +5,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import rpg.world.scenarios.ScenarioCatalog;
 import rpg.world.travel.TravelProgress;
 import rpg.world.travel.TravelRouteDefinition;
 
@@ -13,22 +14,18 @@ public final class RouteMenu {
 
 	private final ConsoleInput consoleInput;
 	private final TravelProgress travelProgress;
+	private final ScenarioCatalog scenarioCatalog;
 
-	public RouteMenu(
-            ConsoleInput consoleInput,
-            TravelProgress travelProgress) {
-    this.consoleInput = consoleInput;
-    this.travelProgress = travelProgress;
-}
+	public RouteMenu(ConsoleInput consoleInput, TravelProgress travelProgress, ScenarioCatalog scenarioCatalog) {
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
+		this.travelProgress = Objects.requireNonNull(travelProgress, "Travel progress cannot be null.");
+		this.scenarioCatalog = Objects.requireNonNull(scenarioCatalog, "Scenario catalog cannot be null.");
+	}
 
-	public Optional<TravelRouteDefinition> open(
-			String sourceScenarioId,
-			String sourceScenarioName,
-			Set<String> markedDestinationScenarioIds
-	) {
-        Objects.requireNonNull(
-                markedDestinationScenarioIds, "Marked destination scenario IDs cannot be null.");
-        List<TravelRouteDefinition> routes = travelProgress.getUnlockedRoutesFrom(sourceScenarioId);
+	public Optional<TravelRouteDefinition>
+			open(String sourceScenarioId, String sourceScenarioName, Set<String> markedDestinationScenarioIds) {
+		Objects.requireNonNull(markedDestinationScenarioIds, "Marked destination scenario IDs cannot be null.");
+		List<TravelRouteDefinition> routes = travelProgress.getUnlockedRoutesFrom(sourceScenarioId);
 
 		if (routes.isEmpty()) {
 			System.out.println("\nNão há destinos possíveis.");
@@ -37,30 +34,27 @@ public final class RouteMenu {
 		String feedbackMessage = null;
 
 		while (true) {
-		    ConsoleUI.clearScreen();
-		    ConsoleUI.displayHeading(sourceScenarioName, "Rotas");
+			ConsoleUI.clearScreen();
+			ConsoleUI.displayHeading(sourceScenarioName, "Rotas");
 
-		    System.out.println();
-		    System.out.println("Aonde deseja ir?");
-
+			System.out.println();
+			System.out.println("Aonde deseja ir?");
+			System.out.println();
 			for (int index = 0; index < routes.size(); index++) {
 				TravelRouteDefinition route = routes.get(index);
 
-				String marker =
-				        markedDestinationScenarioIds.contains(route.getDestinationScenarioId())
-				                ? "\u001B[33m[!]\u001B[0m "
-				                : "";
+				String marker = markedDestinationScenarioIds.contains(route.getDestinationScenarioId())
+						? "\u001B[33m[!]\u001B[0m "
+						: "";
 
-				System.out.println(
-				        "[" + (index + 1) + "] " + marker + route.getDisplayName());
+				String destinationName = scenarioCatalog.getById(route.getDestinationScenarioId()).getName();
 
-				ConsoleUI.displayWrappedText(route.getDescription(), "    ");
+				String label = route.getDisplayName() + ": " + destinationName;
+
+				System.out.println("[" + (index + 1) + "] " + marker + label);
 			}
-            if (feedbackMessage != null) {
-                System.out.println();
-                ConsoleUI.displayWrappedText(feedbackMessage);
-            }
-            System.out.println();
+			System.out.println();
+			System.out.println(feedbackMessage == null ? "" : feedbackMessage);
 			System.out.println("[0] Voltar");
 			System.out.print("> ");
 
@@ -79,7 +73,12 @@ public final class RouteMenu {
 				}
 
 				TravelRouteDefinition selectedRoute = routes.get(selectedIndex);
-
+				ConsoleUI.displayScenarioTransition(
+				        sourceScenarioName,
+				        scenarioCatalog.getById(selectedRoute.getDestinationScenarioId()).getName(),
+				        selectedRoute.getDescription(),
+				        consoleInput
+				);
 				return Optional.of(selectedRoute);
 
 			} catch (NumberFormatException exception) {

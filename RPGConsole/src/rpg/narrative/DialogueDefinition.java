@@ -39,8 +39,7 @@ public final class DialogueDefinition {
 
             if (lineDefinition.getLine() != expectedLine) {
                 throw new IllegalArgumentException(
-                        "Dialogue lines must start at 1 and be consecutive. "
-                                + "Expected line "
+                        "Dialogue lines must start at 1 and be consecutive. Expected line "
                                 + expectedLine
                                 + " but found "
                                 + lineDefinition.getLine()

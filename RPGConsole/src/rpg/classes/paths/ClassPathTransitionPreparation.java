@@ -24,8 +24,7 @@ public final class ClassPathTransitionPreparation {
 
         if (plan.isPresent() == !this.failures.isEmpty()) {
             throw new IllegalArgumentException(
-                    "Class path transition preparation must contain either "
-                            + "one plan or failures.");
+                    "Class path transition preparation must contain either one plan or failures.");
         }
     }
 

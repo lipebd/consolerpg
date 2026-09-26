@@ -33,6 +33,6 @@ public final class WorldTimeFormatter {
 	private static String format(long day, int hourOfDay) {
 		String periodSymbol = hourOfDay >= DAY_START_HOUR && hourOfDay < NIGHT_START_HOUR ? SUN_SYMBOL : MOON_SYMBOL;
 
-		return String.format("Dia %d — %02d:00 %s" , day, hourOfDay, periodSymbol);
+		return String.format("Dia %d - %02d:00 %s" , day, hourOfDay, periodSymbol);
 	}
 }

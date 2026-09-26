@@ -36,8 +36,7 @@ public final class EncounterEntry {
 
         if (maxPosition < minPosition) {
             throw new IllegalArgumentException(
-                    "Maximum encounter position cannot be lower "
-                    + "than the minimum position."
+                    "Maximum encounter position cannot be lower than the minimum position."
             );
         }
 

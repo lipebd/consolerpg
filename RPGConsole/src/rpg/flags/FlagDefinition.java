@@ -22,8 +22,7 @@ public final class FlagDefinition {
 
         if (!normalizedValue.matches(ID_PATTERN)) {
             throw new IllegalArgumentException(
-                    "Flag ID must use lowercase letters, numbers and "
-                            + "single underscores: "
+                    "Flag ID must use lowercase letters, numbers and single underscores: "
                             + normalizedValue);
         }
 

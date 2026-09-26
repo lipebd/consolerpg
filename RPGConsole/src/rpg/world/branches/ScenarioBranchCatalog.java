@@ -56,8 +56,7 @@ public final class ScenarioBranchCatalog {
 			if (existingBranch.getDestinationScenarioId().equals(
 					branchDefinition.getDestinationScenarioId())) {
 				throw new IllegalArgumentException(
-						"Scenario branch destination is already "
-								+ "registered at source position: "
+						"Scenario branch destination is already registered at source position: "
 								+ sourceScenarioId + ", position "
 								+ explorationPosition);
 			}

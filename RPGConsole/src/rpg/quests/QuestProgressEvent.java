@@ -44,8 +44,7 @@ public final class QuestProgressEvent {
 
         if (!normalizedTargetId.matches(ID_PATTERN)) {
             throw new IllegalArgumentException(
-                    "Quest progress event target ID must use lowercase "
-                            + "letters, numbers and single underscores: "
+                    "Quest progress event target ID must use lowercase letters, numbers and single underscores: "
                             + normalizedTargetId);
         }
 

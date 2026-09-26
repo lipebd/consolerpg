@@ -229,7 +229,7 @@ public final class BattleScreen {
 		displayPanel(scenarioName, battleType, enemyGroup, party);
 
 		System.out.println();
-		System.out.println("Rodada " + roundNumber + ": Vez de " + actingName + "!" + "    A seguir: " + nextName);
+		System.out.println("Rodada " + roundNumber + ": Vez de " + actingName + "!    A seguir: " + nextName);
 
 		System.out.println(feedbackMessage == null ? "" : feedbackMessage);
 		System.out.printf("%-15s%-15s%s%n", "[1] Atacar", "[2] Defender", "[3] Especial");
@@ -261,50 +261,59 @@ public final class BattleScreen {
 			lines.addAll(ConsoleUI.wrapText(message, "", messageWidth));
 		}
 
-		consoleInput.beginDiscardingInput();
+		consoleInput.discardPendingInput();
+		boolean interrupted = false;
 
-		try {
-			for (int index = 0; index < lines.size(); index++) {
-				displayPanel(scenarioName, battleType, enemyGroup, party);
-				System.out.println();
+		for (int index = 0; index < lines.size() && !interrupted; index++) {
+			displayPanel(scenarioName, battleType, enemyGroup, party);
+			System.out.println();
 
-				int firstVisible = Math.max(0, index - MESSAGE_WINDOW_LINES + 1);
+			int firstVisible = Math.max(0, index - MESSAGE_WINDOW_LINES + 1);
 
-				for (int previous = firstVisible; previous < index; previous++) {
-					System.out.println(
-							(previous == firstVisible ? roundPrefix : continuationPrefix) + lines.get(previous)
-					);
+			for (int previous = firstVisible; previous < index; previous++) {
+				System.out.println((previous == firstVisible ? roundPrefix : continuationPrefix) + lines.get(previous));
+			}
+
+			System.out.print(index == firstVisible ? roundPrefix : continuationPrefix);
+
+			String line = lines.get(index);
+
+			for (int offset = 0; offset < line.length();) {
+				int codePoint = line.codePointAt(offset);
+
+				System.out.print(new String(Character.toChars(codePoint)));
+				System.out.flush();
+
+				if (consoleInput.pollLine(MESSAGE_CHARACTER_DELAY_MILLIS).isPresent()) {
+					interrupted = true;
+					break;
 				}
 
-				System.out.print(index == firstVisible ? roundPrefix : continuationPrefix);
-
-				animateMessageLine(lines.get(index));
-				System.out.println();
-
-				ConsoleUI.pause(MESSAGE_LINE_PAUSE_MILLIS);
+				offset += Character.charCount(codePoint);
 			}
 
-			int visibleLines = Math.min(lines.size(), MESSAGE_WINDOW_LINES);
-
-			for (int index = visibleLines; index < MESSAGE_WINDOW_LINES; index++) {
+			if (!interrupted) {
 				System.out.println();
+				interrupted = consoleInput.pollLine(MESSAGE_LINE_PAUSE_MILLIS).isPresent();
 			}
-		} finally {
-			consoleInput.endDiscardingInput();
 		}
-	}
 
-	private static void animateMessageLine(String line) {
-		for (int offset = 0; offset < line.length();) {
-			int codePoint = line.codePointAt(offset);
+		// O terminal pode ter exibido o Enter: redesenha o estado final completo.
+		consoleInput.discardPendingInput();
+		displayPanel(scenarioName, battleType, enemyGroup, party);
+		System.out.println();
 
-			System.out.print(new String(Character.toChars(codePoint)));
-			System.out.flush();
+		int firstVisible = Math.max(0, lines.size() - MESSAGE_WINDOW_LINES);
 
-			ConsoleUI.pause(MESSAGE_CHARACTER_DELAY_MILLIS);
-
-			offset += Character.charCount(codePoint);
+		for (int index = firstVisible; index < lines.size(); index++) {
+			System.out.println((index == firstVisible ? roundPrefix : continuationPrefix) + lines.get(index));
 		}
+
+		for (int index = lines.size() - firstVisible; index < MESSAGE_WINDOW_LINES; index++) {
+			System.out.println();
+		}
+
+		consoleInput.discardPendingInput();
 	}
 
 	public void displaySkillSelection(

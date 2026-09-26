@@ -80,8 +80,7 @@ public final class ScenarioBranchLoader {
 
 		if (sourceDefinition.getType() == ScenarioType.CITY) {
 			throw new IllegalArgumentException(
-					"Scenario branch source must be "
-							+ "a combat scenario: "
+					"Scenario branch source must be a combat scenario: "
 							+ sourceScenarioId);
 		}
 
@@ -95,8 +94,7 @@ public final class ScenarioBranchLoader {
 
 		if (explorationPosition > explorationLength) {
 			throw new IllegalArgumentException(
-					"Scenario branch position exceeds "
-							+ "exploration length: "
+					"Scenario branch position exceeds exploration length: "
 							+ sourceScenarioId
 							+ ", position "
 							+ explorationPosition
@@ -107,8 +105,7 @@ public final class ScenarioBranchLoader {
 		if (sourceDefinition.getType() == ScenarioType.DUNGEON
 				&& explorationPosition == explorationLength) {
 			throw new IllegalArgumentException(
-					"A scenario branch cannot use the final "
-							+ "dungeon position: "
+					"A scenario branch cannot use the final dungeon position: "
 							+ sourceScenarioId
 							+ ", position "
 							+ explorationPosition);

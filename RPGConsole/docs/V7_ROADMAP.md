@@ -160,12 +160,18 @@ The checklist fixes **what belongs to V7**, not every rule for implementing it. 
 >
 > The character-status skill sheet uses shared text wrapping and fixed 17-line pages, with a reserved line for invalid-input feedback. Skill descriptions use one `↑` or `↓` per attribute stage. A temporary Bardo scroll was learned through the normal inventory flow and displayed in slot 5 in status and battle; its data definitions were removed after verification. Grito de Guerra had already been corrected before this part.
 
-## 7. Travel, saving and text polish
+* [x] Add a brief transition during travel and exploration that communicates movement without changing travel cost, destination or world-state rules.
+* [x] Add a brief saving transition without changing when a save succeeds, fails or becomes persistent.
+* [x] Review player-facing dash usage and remove accidental string concatenations such as `"texto" + "texto"` in the touched presentation paths.
+* [x] Verify travel cancellation and completion, successful saving and saving failure, and the resulting screens.
 
-* [ ] Add a brief transition during travel and exploration that communicates movement without changing travel cost, destination or world-state rules.
-* [ ] Add a brief saving transition without changing when a save succeeds, fails or becomes persistent.
-* [ ] Review player-facing dash usage and remove accidental string concatenations such as `"texto" + "texto"` in the touched presentation paths.
-* [ ] Verify travel cancellation and completion, successful saving and saving failure, and the resulting screens.
+> **Part 7 presentation verified on 2026-09-26; text polish pending.**
+>
+> Exploration narration and its result animate within the combat-scenario screen before the actions appear. The exploration position shown during narration belongs to the event being resolved; the next menu redraw shows the advanced position. City descriptions use a bounded preview and `[M] Mais`; combat scenarios retain a three-line message area and offer the complete map description separately. These root screens respect the 77-column, 17-line terminal boundary.
+>
+> Adjacent routes and scenario branches display their configured passage names alongside destination names resolved from `ScenarioCatalog`. Their descriptions animate only after a valid selection. Paid city transport animates its existing description after confirmation and payment. Transitions use `[SOURCE - DESTINATION]`; Enter reveals the complete text and removes terminal echo.
+>
+> Saving remains inside the INN screen. Its options give way to an animated message, the actual save result and `aperte ENTER para continuar`. A failed save returns to the INN even when the player selected `Salvar e encerrar`. Battle action messages now also accept Enter during animation and redraw the complete final three-line message window.
 
 ## 8. Additional consumable and skill effects
 

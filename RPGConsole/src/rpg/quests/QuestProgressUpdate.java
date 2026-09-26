@@ -93,8 +93,7 @@ public final class QuestProgressUpdate {
                         || currentQuantity <= 0
                         || currentQuantity >= requiredQuantity) {
                     throw new IllegalArgumentException(
-                            "Objective progress update requires progress "
-                                    + "between zero and the required quantity.");
+                            "Objective progress update requires progress between zero and the required quantity.");
                 }
 
                 break;
@@ -138,8 +137,7 @@ public final class QuestProgressUpdate {
         if (!normalizedValue.matches(ID_PATTERN)) {
             throw new IllegalArgumentException(
                     fieldName
-                            + " ID must use lowercase letters, numbers and "
-                            + "single underscores: "
+                            + " ID must use lowercase letters, numbers and single underscores: "
                             + normalizedValue);
         }
 

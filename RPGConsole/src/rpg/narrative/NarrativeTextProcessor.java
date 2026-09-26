@@ -168,7 +168,7 @@ public final class NarrativeTextProcessor {
 
 			if (index + 1 >= normalizedValue.length() || normalizedValue.charAt(index + 1) != 'n') {
 				throw new IllegalArgumentException(
-						fieldName + " can only use backslashes as the \\\\n " + "line-break sequence."
+						fieldName + " can only use backslashes as the \\\\n line-break sequence."
 				);
 			}
 

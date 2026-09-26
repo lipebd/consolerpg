@@ -208,7 +208,7 @@ public final class QuestMenu {
             ConsoleUI.displayWrappedText(questDescription);
 
             System.out.println();
-            System.out.println("Etapa " + currentStep.getStep() + " — " + currentStep.getTitle());
+            System.out.println("Etapa " + currentStep.getStep() + " - " + currentStep.getTitle());
             System.out.println();
 
             ConsoleUI.displayWrappedText(stepDescription);

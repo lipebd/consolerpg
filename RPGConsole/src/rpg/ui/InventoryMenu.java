@@ -88,11 +88,8 @@ public final class InventoryMenu {
 		for (int index = 0; index < categories.size(); index++) {
 			System.out.println("[" + (index + 1) + "] " + getCategoryDisplayName(categories.get(index)));
 		}
-		if (feedbackMessage != null) {
-		    System.out.println();
-		    ConsoleUI.displayWrappedText(feedbackMessage);
-		}
 		System.out.println();
+		System.out.println(feedbackMessage == null ? "" : feedbackMessage);
 		System.out.println("[0] Fechar inventário");
 		System.out.print("> ");
 	}
@@ -231,7 +228,7 @@ public final class InventoryMenu {
 			String feedbackMessage
 	) {
 		ConsoleUI.clearScreen();
-		ConsoleUI.displayHeading(getCategoryDisplayName(category) + " — Página " + (currentPage + 1) + "/" + totalPages);
+		ConsoleUI.displayHeading(getCategoryDisplayName(category) + " - Página " + (currentPage + 1) + "/" + totalPages);
 
 		System.out.println();
 		System.out.println("Selecione um item:");
@@ -264,12 +261,9 @@ public final class InventoryMenu {
 		if (currentPage < totalPages - 1) {
 			System.out.println("[P] Próxima página");
 		}
-		if (feedbackMessage != null) {
-		    System.out.println();
-		    ConsoleUI.displayWrappedText(feedbackMessage);
-		}
 		System.out.println();
-		System.out.println("[0] Voltar");
+		System.out.println(feedbackMessage == null ? "" : feedbackMessage);
+		System.out.println("[0] Fechar inventário");
 		System.out.print("> ");
 	}
 

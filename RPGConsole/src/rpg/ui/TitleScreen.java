@@ -3,7 +3,7 @@ package rpg.ui;
 // Displays the provisional title screen.
 public final class TitleScreen {
 
-    private static final String GAME_TITLE = "RPG CONSOLE — V6";
+    private static final String GAME_TITLE = "RPG CONSOLE - V6";
 
     private TitleScreen() {}
 

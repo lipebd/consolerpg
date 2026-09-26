@@ -47,7 +47,7 @@ public final class QuestEffectCatalog {
 			if (existingEffect.getEffectType() == QuestEffectType.TRANSPORT_PARTY
 					&& effectDefinition.getEffectType() == QuestEffectType.TRANSPORT_PARTY) {
 				throw new IllegalArgumentException(
-						"Quest trigger cannot define more than one " + "TRANSPORT_PARTY effect for "
+						"Quest trigger cannot define more than one TRANSPORT_PARTY effect for "
 								+ describe(triggerLocation) + "."
 				);
 			}

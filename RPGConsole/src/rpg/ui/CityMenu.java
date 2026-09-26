@@ -23,7 +23,6 @@ public final class CityMenu {
 	public Optional<CityAction> selectAction(
 			String cityName,
 			String cityDescription,
-			boolean shouldDisplayDescription,
 			List<CityAction> actions,
 			Set<CityAction> markedActions
 	) {
@@ -40,12 +39,8 @@ public final class CityMenu {
 		while (true) {
 			ConsoleUI.clearScreen();
 			ConsoleUI.displayHeading(cityName);
-
-			if (shouldDisplayDescription) {
-				System.out.println();
-				ConsoleUI.displayWrappedText(cityDescription);
-			}
-
+			System.out.println();
+			ConsoleUI.displayMapDescriptionPreview(cityDescription, 5);
 			System.out.println();
 			System.out.println(WorldTimeFormatter.formatCurrentTime(worldClock));
 
@@ -62,16 +57,17 @@ public final class CityMenu {
 
 			ConsoleUI.displayActionRows(actionLabels, secondRowStartIndex);
 
-			if (feedbackMessage != null) {
-				System.out.println();
-				ConsoleUI.displayWrappedText(feedbackMessage);
-			}
-
-			System.out.println();
+			System.out.println(feedbackMessage == null ? "" : feedbackMessage);
 			System.out.println("[0] Encerrar jogo");
 			System.out.print("> ");
 
 			String choice = consoleInput.readTrimmedLine();
+
+			if (choice.equalsIgnoreCase("M")) {
+			    ConsoleUI.displayMapDescription(cityName, cityDescription, consoleInput);
+			    feedbackMessage = null;
+			    continue;
+			}
 
 			if (choice.equals("0")) {
 				return Optional.empty();

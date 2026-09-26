@@ -41,28 +41,34 @@ public final class BattleRewardScreen {
 	private List<String> buildSummaryLines(BattleRewards rewards) {
 		List<String> lines = new ArrayList<>();
 
+		int nameWidth = rewards.getCharacterProgressionResults().stream()
+				.mapToInt(currentMember -> currentMember.getCharacter().getName().length()).max().orElse(1);
+
 		lines.add("Recompensas:");
 		lines.add("  EXP:   +" + rewards.getGlobalExperience());
 		lines.add("  " + GameCurrency.getName() + ":  +" + GameCurrency.format(rewards.getGold()));
 
-		addRewardModifiers(lines, rewards.getRewardModifiers());
 		addCollectedItems(lines, rewards.getCollectedItems());
 
 		lines.add("");
 		lines.add("Grupo:");
 
 		for (CharacterProgressionResult result : rewards.getCharacterProgressionResults()) {
+			String name = result.getCharacter().getName();
+			String symbol = result.getCharacter().getPlayableClassDefinition().getSymbol();
+
 			String levels = result.getLevelsGained() > 0 ? result.getPreviousLevel() + " → " + result.getCurrentLevel()
 					: Integer.toString(result.getCurrentLevel());
 
-			String entry = result.getCharacter().getName() + "  Nv " + levels + " | EXP +"
-					+ result.getExperienceReceived();
+			String entry = "  [" + symbol + "] " + String.format("%-" + nameWidth + "s", name) + "  "
+					+ String.format("%-10s", "Nv " + levels) + " | EXP +" + result.getExperienceReceived();
 
-			lines.addAll(ConsoleUI.wrapText(entry, "  "));
+			lines.add(entry);
 		}
 
 		addDiscardedRewards(lines, rewards);
-
+		lines.add("");
+		addRewardModifiers(lines, rewards.getRewardModifiers());
 		return lines;
 	}
 

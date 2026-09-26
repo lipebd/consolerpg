@@ -71,6 +71,20 @@ public final class ConsoleUI {
 		}
 	}
 
+	static void animateLine(String line, long characterDelayMillis) {
+		Objects.requireNonNull(line, "Animated line cannot be null.");
+
+		for (int offset = 0; offset < line.length();) {
+			int codePoint = line.codePointAt(offset);
+
+			System.out.print(new String(Character.toChars(codePoint)));
+			System.out.flush();
+			pause(characterDelayMillis);
+
+			offset += Character.charCount(codePoint);
+		}
+	}
+
 	public static void displayIgnoredEndOfInput() {
 		System.out.println();
 		System.out.println("Ctrl+Z ignorado.");
@@ -175,4 +189,123 @@ public final class ConsoleUI {
 		return visibleText.codePointCount(0, visibleText.length());
 	}
 
+	public static void displayMapDescriptionPreview(String description, int maxLines) {
+		if (maxLines <= 0) {
+			throw new IllegalArgumentException("Preview line count must be positive.");
+		}
+
+		List<String> lines = wrapText(description);
+		int visibleLines = Math.min(maxLines, lines.size());
+
+		for (int index = 0; index < visibleLines; index++) {
+			String line = lines.get(index);
+
+			if (index == maxLines - 1 && lines.size() > maxLines) {
+				String suffix = "... [M] Mais";
+
+				while (getVisibleLength(line + suffix) > TEXT_COLUMN_WIDTH) {
+					int lastSpace = line.lastIndexOf(' ');
+
+					if (lastSpace < 0) {
+						line = "";
+						break;
+					}
+
+					line = line.substring(0, lastSpace);
+				}
+
+				System.out.println(line + suffix);
+			} else {
+				System.out.println(line);
+			}
+		}
+	}
+
+	static void displayMapDescription(String mapName, String description, ConsoleInput consoleInput) {
+		Objects.requireNonNull(consoleInput, "Console input cannot be null.");
+
+		List<String> lines = wrapText(description);
+		int linesPerPage = 12;
+
+		for (int start = 0; start < lines.size(); start += linesPerPage) {
+			clearScreen();
+			displayHeading(mapName, "Descrição do mapa");
+			System.out.println();
+
+			int end = Math.min(start + linesPerPage, lines.size());
+
+			for (int index = start; index < end; index++) {
+				System.out.println(lines.get(index));
+			}
+
+			for (int index = end - start; index < linesPerPage; index++) {
+				System.out.println();
+			}
+
+			System.out.println();
+			System.out.println(end < lines.size() ? "[ENTER] Próxima página" : "[ENTER] Voltar");
+			System.out.print("> ");
+			consoleInput.readLine();
+		}
+	}
+
+	static void displayMapMenuFooter() {
+		String exitOption = "[0] Encerrar jogo";
+		int padding = Math.max(1, ACTION_MENU_COLUMN_WIDTH - getVisibleLength(exitOption));
+
+		System.out.println(exitOption + " ".repeat(padding) + "[D] Descrição do mapa");
+	}
+
+	public static void displayScenarioTransition(String sourceName, String destinationName, String description, ConsoleInput consoleInput) {
+		Objects.requireNonNull(consoleInput, "Console input cannot be null.");
+
+		List<String> lines = wrapText(description);
+		boolean interrupted = false;
+
+		consoleInput.discardPendingInput();
+		clearScreen();
+		displayHeading(sourceName, destinationName);
+		System.out.println();
+
+		for (int index = 0; index < lines.size(); index++) {
+			String line = lines.get(index);
+			for (int offset = 0; offset < line.length();) {
+				int codePoint = line.codePointAt(offset);
+
+				System.out.print(new String(Character.toChars(codePoint)));
+				System.out.flush();
+
+				if (consoleInput.pollLine(25).isPresent()) {
+					interrupted = true;
+					break;
+				}
+
+				offset += Character.charCount(codePoint);
+			}
+
+			if (interrupted) {
+				break;
+			}
+
+			System.out.println();
+
+			if (index < lines.size() - 1 && consoleInput.pollLine(1200).isPresent()) {
+				interrupted = true;
+				break;
+			}
+		}
+
+		if (interrupted) {
+			// Remove the echoed Enter and show the complete transition text.
+			clearScreen();
+			displayHeading(sourceName, destinationName);
+			System.out.println();
+
+			for (String line : lines) {
+				System.out.println(line);
+			}
+		}
+		consoleInput.pollLine(2500);
+		consoleInput.discardPendingInput();
+	}
 }

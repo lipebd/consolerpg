@@ -741,8 +741,7 @@ public final class QuestProgressService {
 
             if (currentProgress < objective.getRequiredQuantity()) {
                 throw new IllegalStateException(
-                        "Quest delivery cannot proceed before the other "
-                                + "objectives are complete: "
+                        "Quest delivery cannot proceed before the other objectives are complete: "
                                 + questId);
             }
         }

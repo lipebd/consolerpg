@@ -27,8 +27,7 @@ public final class ClassPathQuestionnaireCatalog {
 
         if (questionDefinition.getOrder() != expectedOrder) {
             throw new IllegalArgumentException(
-                    "Class path question orders must start at 1 and be consecutive. "
-                            + "Expected "
+                    "Class path question orders must start at 1 and be consecutive. Expected "
                             + expectedOrder
                             + " but found "
                             + questionDefinition.getOrder()

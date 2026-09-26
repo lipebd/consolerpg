@@ -231,8 +231,7 @@ public final class QuestProgress {
 
 		if (!isCurrentStepComplete(questDefinition.getId())) {
 			throw new IllegalStateException(
-					"Quest step cannot advance before every objective "
-							+ "is complete: "
+					"Quest step cannot advance before every objective is complete: "
 							+ questDefinition.getId()
 			);
 		}

@@ -978,6 +978,8 @@ Parts 1 through 6 are implemented and tested:
 - Character status and battle selection show four natural and two scroll skill positions, including non-selectable empty slots. Battle selection groups positions by column and abbreviates long names only in that menu.
 - Character-status skill details use shared wrapping and fixed 17-line pages with reserved feedback. Skill descriptions consistently show attribute stages as repeated arrows.
 
+Part 7 travel, exploration and INN-saving presentation has been implemented and visually verified. Route and branch menus resolve destination names from scenario IDs; route, branch and paid-transport descriptions animate after valid selection. Exploration results animate within the stable combat-scenario layout, and Enter can reveal complete travel, exploration and battle-message screens without terminal echo. Saving presents its animation and actual success or failure inside the INN screen. The Part 7 dash and string-concatenation review remains pending.
+
 ## Current limitations and temporary implementations
 
 - Permanent skill-scroll content and curated scroll drops remain absent while the draft skills await required combat mechanics and final content review.
@@ -999,9 +1001,9 @@ Parts 1 through 6 are implemented and tested:
 
 V6 is the latest packaged release as `v6.0.0`. V7 development continues on `feature/v7-polish`.
 
-Parts 1 through 6 are implemented and tested. Skill-slot presentation, skill-detail pagination and attribute-stage description notation are complete. Part 7 is next; Parts 8 and 9 and the final V7 verification, packaging and release remain pending.
+Parts 1 through 6 are complete. Part 7 travel, exploration, saving and battle-message interruption have been implemented and tested; its text-polish review remains before closure. Parts 8 and 9 and the final V7 verification, packaging and release remain pending.
 
-The general inventory screen outside battle still needs the previously identified flush and incomplete-screen correction. Animated presentation of exploration messages remains a separate future block.
+The general inventory screen outside battle still needs the previously identified flush and incomplete-screen correction.
 
 ## Important conventions
 

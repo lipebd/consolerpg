@@ -47,8 +47,7 @@ public final class QuestStepDefinition {
 
             if (objective.getOrder() != expectedOrder) {
                 throw new IllegalArgumentException(
-                        "Quest objective order must start at 1 and be consecutive. "
-                                + "Expected order "
+                        "Quest objective order must start at 1 and be consecutive. Expected order "
                                 + expectedOrder
                                 + " but found "
                                 + objective.getOrder()
@@ -84,8 +83,7 @@ public final class QuestStepDefinition {
 
         if (hasDeliveryObjective && talkObjectiveCount != 1) {
             throw new IllegalArgumentException(
-                    "Quest step containing DELIVER_ITEM must contain exactly one "
-                            + "TALK_TO_NPC objective.");
+                    "Quest step containing DELIVER_ITEM must contain exactly one TALK_TO_NPC objective.");
         }
     }
 

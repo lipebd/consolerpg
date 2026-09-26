@@ -34,7 +34,7 @@ public final class AllyRecruitmentMenu {
 
 			System.out.println(
 					ally.getName()
-							+ " — ["
+							+ " - ["
 							+ classDefinition.getSymbol()
 							+ "] "
 							+ classDefinition.getName());

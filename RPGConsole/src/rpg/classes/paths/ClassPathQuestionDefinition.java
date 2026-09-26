@@ -82,8 +82,7 @@ public final class ClassPathQuestionDefinition {
 
         if (!normalizedValue.matches(ID_PATTERN)) {
             throw new IllegalArgumentException(
-                    "Class path question ID must use lowercase letters, numbers "
-                            + "and single underscores: "
+                    "Class path question ID must use lowercase letters, numbers and single underscores: "
                             + normalizedValue);
         }
 

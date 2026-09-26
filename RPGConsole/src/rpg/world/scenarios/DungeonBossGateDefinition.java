@@ -21,7 +21,7 @@ public final class DungeonBossGateDefinition {
 
 		if (this.dungeonId.equals(this.blockedDestinationScenarioId)) {
 			throw new IllegalArgumentException(
-					"Dungeon boss gate cannot transport the party " + "to the same dungeon: " + this.dungeonId
+					"Dungeon boss gate cannot transport the party to the same dungeon: " + this.dungeonId
 			);
 		}
 	}

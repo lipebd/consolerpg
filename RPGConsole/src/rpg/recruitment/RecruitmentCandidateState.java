@@ -26,8 +26,7 @@ public final class RecruitmentCandidateState {
 
         if (!trimmedCandidateId.matches(ID_PATTERN)) {
             throw new IllegalArgumentException(
-                    "Recruitment candidate ID must use lowercase letters, "
-                            + "numbers and single underscores: "
+                    "Recruitment candidate ID must use lowercase letters, numbers and single underscores: "
                             + trimmedCandidateId);
         }
 

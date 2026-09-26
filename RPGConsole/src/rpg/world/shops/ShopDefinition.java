@@ -27,8 +27,7 @@ public final class ShopDefinition {
 
 		if (!trimmedId.matches(ID_PATTERN)) {
 			throw new IllegalArgumentException(
-					"Shop ID must use lowercase letters, numbers "
-							+ "and single underscores: " + trimmedId
+					"Shop ID must use lowercase letters, numbers and single underscores: " + trimmedId
 			);
 		}
 
