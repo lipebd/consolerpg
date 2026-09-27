@@ -1,4 +1,4 @@
-RPGCONSOLE — VERSÃO 6.0.0
+RPGCONSOLE — VERSÃO 7.0.0
 
 COMO EXECUTAR
 
@@ -40,9 +40,9 @@ SALVAMENTO
 O jogo possui um único espaço de salvamento. Salve sua campanha nas estalagens.
 O arquivo save.txt será criado ao lado de RPGConsole.cmd após o primeiro salvamento.
 
-Salvamentos de versões anteriores não são compatíveis com a V6. Para continuar
-uma campanha antiga, mantenha a versão anterior do jogo e uma cópia do respectivo
-save.txt em sua pasta. Comece uma nova campanha na V6.
+Antes de reutilizar um save.txt de outra versão, faça uma cópia de segurança.
+Para começar uma nova campanha, mova ou renomeie o save.txt da pasta do jogo
+antes de iniciar o RPGConsole.
 
 SOLUÇÃO DE PROBLEMAS
 

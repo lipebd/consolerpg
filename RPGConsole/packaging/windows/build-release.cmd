@@ -3,16 +3,16 @@ setlocal EnableExtensions EnableDelayedExpansion
 
 for %%I in ("%~dp0..\..") do set "PROJECT_ROOT=%%~fI"
 
-set "VERSION=6.0.0"
+set "VERSION=7.0.0"
 set "APP_NAME=RPGConsole"
-set "BUILD_DIR=%PROJECT_ROOT%\output\windows-v6-build"
+set "BUILD_DIR=%PROJECT_ROOT%\output\windows-v%VERSION%-build"
 set "RELEASE_DIR=%PROJECT_ROOT%\output\%APP_NAME%-v%VERSION%"
 set "ZIP_FILE=%PROJECT_ROOT%\output\%APP_NAME%-v%VERSION%-windows-x64.zip"
 set "CLASSES_DIR=%BUILD_DIR%\classes"
 set "INPUT_DIR=%BUILD_DIR%\input"
 set "APP_IMAGE_DIR=%BUILD_DIR%\app-image"
 set "SOURCES_FILE=%BUILD_DIR%\sources.txt"
-set "JAR_FILE=%INPUT_DIR%\%APP_NAME%-v6.jar"
+set "JAR_FILE=%INPUT_DIR%\%APP_NAME%-v%VERSION%.jar"
 
 echo Verificando ferramentas...
 
@@ -74,7 +74,7 @@ jpackage ^
     --name "%APP_NAME%" ^
     --app-version "%VERSION%" ^
     --input "%INPUT_DIR%" ^
-    --main-jar "%APP_NAME%-v6.jar" ^
+    --main-jar "%APP_NAME%-v%VERSION%.jar" ^
     --main-class rpg.Main ^
     --dest "%APP_IMAGE_DIR%" ^
     --add-modules java.base ^
@@ -121,5 +121,5 @@ exit /b 0
 
 :error
 echo.
-echo O build da V6 falhou.
+echo O build da V7 falhou.
 exit /b 1
