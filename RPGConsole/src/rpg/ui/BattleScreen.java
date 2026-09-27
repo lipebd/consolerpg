@@ -130,6 +130,24 @@ public final class BattleScreen {
 		return text.substring(0, endIndex) + "…";
 	}
 
+	private static String formatResource(String label, int current, int max) {
+	    String color = "";
+
+	    if (max <= 0 || current <= 0 || (long) current * 100 <= (long) max * 15) {
+	        color = "\u001B[31m";          // Vermelho
+	    } else if ((long) current * 100 <= (long) max * 30) {
+	        color = "\u001B[38;5;208m";    // Laranja
+	    } else if ((long) current * 100 <= (long) max * 50) {
+	        color = "\u001B[33m";          // Amarelo
+	    }
+
+	    String displayedValue = color.isEmpty()
+	            ? String.valueOf(current)
+	            : color + current + "\u001B[0m";
+
+	    return label + " " + displayedValue + "/" + max;
+	}
+
 	private static void displayParty(Party party, List<PlayableCharacter> selectableAllies) {
 		List<String> classesAndLevels = new ArrayList<>();
 		List<String> names = new ArrayList<>();
@@ -156,9 +174,9 @@ public final class BattleScreen {
 			classesAndLevels.add(marker + " ".repeat(leftPadding) + classAndLevel);
 
 			names.add(member.getName());
-			hp.add("HP " + member.getCurrentHp() + "/" + member.getMaxHp());
-			mp.add("MP " + member.getCurrentMp() + "/" + member.getMaxMp());
-			sp.add("SP " + member.getCurrentSp() + "/" + member.getMaxSp());
+			hp.add(formatResource("HP", member.getCurrentHp(), member.getMaxHp()));
+			mp.add(formatResource("MP", member.getCurrentMp(), member.getMaxMp()));
+			sp.add(formatResource("SP", member.getCurrentSp(), member.getMaxSp()));
 
 			effects.add(
 					member.isAlive() ? CombatEffectFormatter.formatCompactEffectSummary(member, PARTY_COLUMN_WIDTH)

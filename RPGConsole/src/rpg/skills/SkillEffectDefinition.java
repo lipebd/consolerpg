@@ -24,7 +24,7 @@ public final class SkillEffectDefinition {
 	private final int triggerChancePercent;
 	private final SpecialBattleStateType specialStateType;
 	private final SkillConditionType conditionType;
-	private final Integer conditionValue;
+	private final String conditionValue;
 
 	public SkillEffectDefinition(
 			int sequence,
@@ -39,7 +39,7 @@ public final class SkillEffectDefinition {
 			int triggerChancePercent,
 			SpecialBattleStateType specialStateType,
 			SkillConditionType conditionType,
-			Integer conditionValue
+			String conditionValue
 	) {
 		if (sequence < 1) {
 			throw new IllegalArgumentException("Skill effect sequence must be positive.");
@@ -70,16 +70,41 @@ public final class SkillEffectDefinition {
 	private void validateCondition() {
 		if (conditionType == SkillConditionType.NONE) {
 			if (conditionValue != null) {
-				throw new IllegalArgumentException(
-						"An unconditional skill effect cannot define a condition value."
-				);
+				throw new IllegalArgumentException("An unconditional skill effect cannot define a condition value.");
 			}
 
 			return;
 		}
 
-		if (conditionValue == null || conditionValue < 1 || conditionValue > 100) {
-			throw new IllegalArgumentException("Conditional HP percentage must be between 1 and 100.");
+		if (conditionValue == null) {
+			throw new IllegalArgumentException("A conditional skill effect requires a condition value.");
+		}
+
+		switch (conditionType) {
+		case SELF_HP_LESS_THAN_PERCENT, SELF_HP_GREATER_THAN_PERCENT, TARGET_HP_LESS_THAN_PERCENT,
+				TARGET_HP_GREATER_THAN_PERCENT -> {
+			int percent;
+
+			try {
+				percent = Integer.parseInt(conditionValue);
+			} catch (NumberFormatException exception) {
+				throw new IllegalArgumentException("Conditional HP percentage must be an integer.", exception);
+			}
+
+			if (percent < 1 || percent > 100) {
+				throw new IllegalArgumentException("Conditional HP percentage must be between 1 and 100.");
+			}
+		}
+
+		case SELF_GREATER, SELF_LOWER -> {
+			try {
+				CharacterAttribute.valueOf(conditionValue);
+			} catch (IllegalArgumentException exception) {
+				throw new IllegalArgumentException("Invalid conditional attribute: " + conditionValue, exception);
+			}
+		}
+
+		case NONE -> throw new IllegalStateException("NONE was already handled.");
 		}
 	}
 
@@ -91,9 +116,13 @@ public final class SkillEffectDefinition {
 
 		case DAMAGE_POWER_MODIFIER -> validateDamagePowerModifier();
 
+		case HP_SACRIFICE -> validateHpSacrifice();
+
 		case HP_RECOVERY -> validateHpRecovery();
 
 		case MP_RECOVERY, SP_RECOVERY -> validateFixedResourceRecovery();
+
+		case HP_BALANCE -> validateHpBalance();
 
 		case REVIVE -> validateRevival();
 
@@ -105,6 +134,37 @@ public final class SkillEffectDefinition {
 
 		case SPECIAL_STATE -> validateSpecialState();
 		}
+	}
+
+	private void validateHpBalance() {
+		if (phase != SkillExecutionPhase.PRIMARY || targetType != SkillTargetType.ALL_ALLIES) {
+			throw new IllegalArgumentException("HP balance must use PRIMARY and target ALL_ALLIES.");
+		}
+
+		if (conditionType != SkillConditionType.NONE) {
+			throw new IllegalArgumentException("HP balance cannot define a per-target condition.");
+		}
+
+		rejectDamageType();
+		rejectPower();
+		rejectAttributeData();
+		rejectSpecialState();
+	}
+
+	private void validateHpSacrifice() {
+		if (phase != SkillExecutionPhase.PRIMARY || targetType != SkillTargetType.SELF) {
+			throw new IllegalArgumentException("An HP sacrifice must use PRIMARY and target SELF.");
+		}
+
+		requirePositivePower();
+
+		if (power > 100) {
+			throw new IllegalArgumentException("HP-sacrifice percentage cannot exceed 100.");
+		}
+
+		rejectDamageType();
+		rejectAttributeData();
+		rejectSpecialState();
 	}
 
 	private void validateRecoilDamage() {
@@ -123,7 +183,7 @@ public final class SkillEffectDefinition {
 		}
 
 		rejectDamageType();
-		rejectAttributeData();
+		rejectAttributeStageData();
 		rejectSpecialState();
 	}
 
@@ -134,13 +194,18 @@ public final class SkillEffectDefinition {
 
 		requirePositivePower();
 
-		rejectAttributeData();
+		rejectAttributeStageData();
 		rejectSpecialState();
 	}
 
 	private void validateDamagePowerModifier() {
-		if (phase != SkillExecutionPhase.PRE_ACTION) {
-			throw new IllegalArgumentException("A damage-power modifier must use PRE_ACTION.");
+		if (phase != SkillExecutionPhase.PRE_ACTION
+				&& (phase != SkillExecutionPhase.PRIMARY
+						|| (targetType != SkillTargetType.SINGLE_ENEMY
+								&& targetType != SkillTargetType.RANDOM_ENEMY))) {
+			throw new IllegalArgumentException(
+					"A damage-power modifier must use PRE_ACTION or PRIMARY with a single enemy target."
+			);
 		}
 
 		if (!isEnemyTarget()) {
@@ -215,9 +280,7 @@ public final class SkillEffectDefinition {
 		}
 
 		if (duration == null || duration < 1) {
-			throw new IllegalArgumentException(
-					"A non-VEL attribute-stage effect must define a positive duration."
-			);
+			throw new IllegalArgumentException("A non-VEL attribute-stage effect must define a positive duration.");
 		}
 	}
 
@@ -226,7 +289,10 @@ public final class SkillEffectDefinition {
 			throw new IllegalArgumentException("A purification effect must target allies.");
 		}
 
-		rejectAllOptionalEffectData();
+		validateOptionalRemovalPower();
+		rejectDamageType();
+		rejectAttributeData();
+		rejectSpecialState();
 	}
 
 	private void validateDissipation() {
@@ -234,7 +300,16 @@ public final class SkillEffectDefinition {
 			throw new IllegalArgumentException("A dissipation effect must target enemies.");
 		}
 
-		rejectAllOptionalEffectData();
+		validateOptionalRemovalPower();
+		rejectDamageType();
+		rejectAttributeData();
+		rejectSpecialState();
+	}
+
+	private void validateOptionalRemovalPower() {
+		if (power != null && power < 1) {
+			throw new IllegalArgumentException("Removal power must be positive when defined.");
+		}
 	}
 
 	private void validateSpecialState() {
@@ -256,13 +331,6 @@ public final class SkillEffectDefinition {
 		if (power == null || power < 1) {
 			throw new IllegalArgumentException("Skill effect power must be positive.");
 		}
-	}
-
-	private void rejectAllOptionalEffectData() {
-		rejectDamageType();
-		rejectPower();
-		rejectAttributeData();
-		rejectSpecialState();
 	}
 
 	private void requireRecoveryScalingAttribute() {
@@ -366,7 +434,11 @@ public final class SkillEffectDefinition {
 		return conditionType;
 	}
 
-	public Integer getConditionValue() {
-		return conditionValue;
+	public int getConditionPercent() {
+		return Integer.parseInt(conditionValue);
+	}
+
+	public CharacterAttribute getConditionAttribute() {
+		return CharacterAttribute.valueOf(conditionValue);
 	}
 }

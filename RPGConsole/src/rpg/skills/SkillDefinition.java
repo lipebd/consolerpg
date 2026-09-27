@@ -118,9 +118,7 @@ public final class SkillDefinition {
 				.anyMatch(effect -> effect.getEffectType() != SkillEffectType.DAMAGE_POWER_MODIFIER);
 
 		if (!hasEffectiveComponent) {
-			throw new IllegalArgumentException(
-					"Skill must contain an effect capable of affecting a target: " + id
-			);
+			throw new IllegalArgumentException("Skill must contain an effect capable of affecting a target: " + id);
 		}
 	}
 
@@ -129,6 +127,28 @@ public final class SkillDefinition {
 			SkillEffectDefinition effect = effects.get(index);
 
 			if (effect.getEffectType() != SkillEffectType.DAMAGE_POWER_MODIFIER) {
+				continue;
+			}
+
+			if (effect.getPhase() == SkillExecutionPhase.PRIMARY) {
+				if (index + 1 >= effects.size()) {
+					throw new IllegalArgumentException(
+							"A PRIMARY damage-power modifier must immediately precede damage with the same target type: "
+									+ id
+					);
+				}
+
+				SkillEffectDefinition nextEffect = effects.get(index + 1);
+
+				if (nextEffect.getPhase() != SkillExecutionPhase.PRIMARY
+						|| nextEffect.getEffectType() != SkillEffectType.DAMAGE
+						|| nextEffect.getTargetType() != effect.getTargetType()) {
+					throw new IllegalArgumentException(
+							"A PRIMARY damage-power modifier must immediately precede damage with the same target type: "
+									+ id
+					);
+				}
+
 				continue;
 			}
 
@@ -222,9 +242,7 @@ public final class SkillDefinition {
 		int recoilIndex = effects.indexOf(recoilEffect);
 
 		if (recoilIndex < 1) {
-			throw new IllegalArgumentException(
-					"Recoil damage must immediately follow its source damage effect: " + id
-			);
+			throw new IllegalArgumentException("Recoil damage must immediately follow its source damage effect: " + id);
 		}
 
 		SkillEffectDefinition sourceEffect = effects.get(recoilIndex - 1);
@@ -235,8 +253,7 @@ public final class SkillDefinition {
 
 		if (!isCompatibleSource) {
 			throw new IllegalArgumentException(
-					"Recoil damage must immediately follow a single-enemy damage effect in the same phase: "
-							+ id
+					"Recoil damage must immediately follow a single-enemy damage effect in the same phase: " + id
 			);
 		}
 

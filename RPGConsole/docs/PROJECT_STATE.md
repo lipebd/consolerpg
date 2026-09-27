@@ -529,10 +529,11 @@ The first V4 gameplay-system block is complete.
 
 ### Skill execution
 
-- One `SkillExecutionContext` preserves the user and targets selected for the complete skill use.
+- `SkillExecutionContext` preserves the user, explicitly selected targets and equipped weapon base power; `SkillUseState` preserves mutable state for one use.
 - `SkillExecutor` processes `PRE_ACTION`, `PRIMARY` and deferred `POST_ACTION` components in sequence.
 - Existing temporary-effect durations decrease after the acting character consumes its turn and before `POST_ACTION` components are applied.
-- Each component is evaluated in this order: condition, applicability, trigger, resistance when applicable, then application.
+- Each component selects its targets, evaluates its condition and applicability, then performs its trigger, resistance when applicable and application.
+- `RANDOM_ENEMY` and `RANDOM_ALLY` select independently for each component from currently eligible participants. A paired `PRIMARY` damage-power modifier and damage component share one selection. Deferred random targets reserved before the turn ends are reused by their `POST_ACTION` components.
 - `triggerChancePercent` belongs to the component. A blank field means 100%, and one trigger roll is shared by all its applicable targets.
 - Resistance is calculated separately for each target from the user's effective LCK and the target's effective RES.
 - `SkillEffectOutcome` distinguishes `APPLIED`, `RESISTED` and `NOT_TRIGGERED` for presentation.
@@ -552,6 +553,9 @@ The first V4 gameplay-system block is complete.
 - `DAMAGE_POWER_MODIFIER` affects every later compatible damage component against the same target during one execution. Multiple modifiers use overflow-protected accumulation.
 - `RECOIL_DAMAGE` derives a percentage from the actual damage of the immediately preceding single-enemy damage component and applies direct non-lethal damage to the user.
 - Recovery-item purification is connected to active negative attribute states.
+- Damage uses ATK for physical or MAG for magical attacks by default; a skill damage component may choose another offensive attribute while preserving its physical or magical defense.
+- Partial purification and dissipation remove up to the specified number of randomly selected affected attributes; blank power removes all.
+- HP sacrifice uses a nonlethal percentage of the user's current HP. HP balance averages the current HP of living allies and caps each result at that ally's maximum HP.
 
 ## V4 natural character progression
 

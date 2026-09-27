@@ -96,6 +96,18 @@ public final class CombatEffectState {
 		return changed;
 	}
 
+	public boolean dissipatePositiveStates(Set<CharacterAttribute> attributes) {
+		Objects.requireNonNull(attributes, "Attributes cannot be null.");
+
+		boolean changed = false;
+
+		for (CharacterAttribute attribute : attributes) {
+			changed |= getState(attribute).clearPositive();
+		}
+
+		return changed;
+	}
+
 	public boolean consumePendingSpeedStages() {
 		AttributeStageState speedState = getState(CharacterAttribute.VEL);
 

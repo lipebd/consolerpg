@@ -1404,7 +1404,7 @@ Each valid line contains exactly 14 fields:
 | 11 | Trigger chance | `int` | Defaults to `100` |
 | 12 | Special state type | `SpecialBattleStateType` | Allowed when inapplicable |
 | 13 | Condition type | `SkillConditionType` | Not allowed |
-| 14 | Condition value | `Integer` | Allowed when inapplicable |
+| 14 | Condition value | `String` (percentage or attribute name) | Allowed when inapplicable |
 
 Execution phases:
 
@@ -1425,6 +1425,8 @@ Effect types:
 - `PURIFICATION`
 - `DISSIPATION`
 - `SPECIAL_STATE`
+- `HP_SACRIFICE`
+- `HP_BALANCE`
 
 Target types:
 
@@ -1439,21 +1441,28 @@ Target types:
 
 Rules:
 
+- `DAMAGE` requires a damage type and positive power. Its optional `attribute` selects any effective offensive attribute; an empty value defaults to ATK for physical damage or MAG for magical damage. Damage type still selects the target's DEF or RES.
 - Sequences must be positive, unique and declared in ascending order within each skill.
-- Phases cannot move backwards from `PRE_ACTION` to `PRIMARY` to `POST_ACTION`.
+- Phases cannot move backwards from `POST_ACTION` to `PRIMARY` to `PRE_ACTION`.
 - Empty `triggerChancePercent` means `100`; explicit values must be between `1` and `100`.
 - Trigger chance is configured per component and rolled once for all of that component's applicable targets.
-- Damage requires `PHYSICAL` or `MAGICAL` damage type and positive power.
 - Recoil damage uses `PRIMARY`, targets `SELF`, leaves `damageType` empty and defines a percentage from `1` to `100` in `power`.
 - A `RECOIL_DAMAGE` component must immediately follow a `SINGLE_ENEMY` damage component in the same phase. It uses the actual HP damage dealt by that component and cannot defeat the user.
 - HP recovery and revival require positive power and an `ATK` or `MAG` scaling attribute.
+- HP-percentage conditions require a value between `1` and `100`.
 - MP and SP recovery use fixed positive power and leave the attribute field empty.
 - Attribute-stage components require an attribute and stages from `-3` to `3`, excluding zero.
 - Non-VEL stages require a positive duration; VEL stages leave duration empty.
 - `DISTORTED_ATTRIBUTES` uses `SPECIAL_STATE` and currently targets `SINGLE_ENEMY`.
-- `DAMAGE_POWER_MODIFIER` must precede a compatible damage component with the same target type.
-- Condition type `NONE` leaves `conditionValue` empty.
-- HP-percentage conditions require a value between `1` and `100`.
+- `HP_SACRIFICE` uses `PRIMARY`, targets `SELF` and sets `power` to a percentage from `1` to `100` of current HP. The sacrificed amount is rounded down and cannot reduce the user below 1 HP. At 1 HP, the component remains applicable and sacrifices 0 HP.
+- `HP_BALANCE` uses `PRIMARY`, targets `ALL_ALLIES`, leaves effect data empty and requires condition `NONE`. It averages current HP among living allies, rounds to the nearest integer and sets each living ally to the smaller of that average and their own maximum HP. Defeated allies are excluded.
+- `PURIFICATION` and `DISSIPATION` leave `power` empty to clear all eligible attribute states, or define a positive limit to clear up to that many randomly chosen attributes without repetition. All stages of each selected attribute are cleared.
+- A `PRE_ACTION` `DAMAGE_POWER_MODIFIER` applies to later compatible damage against the same target during that skill use.
+- A `DAMAGE_POWER_MODIFIER` in `PRE_ACTION` must precede compatible damage with the same target type. Its bonus remains available against the same target for later damage components during that skill use.
+- A `DAMAGE_POWER_MODIFIER` in `PRIMARY` targets `SINGLE_ENEMY` or `RANDOM_ENEMY` and must immediately precede a `PRIMARY;DAMAGE` component with the same target type. Both components use the same enemy. If the modifier's condition matches, its bonus applies only to that following damage.
+- Each `RANDOM_ENEMY` or `RANDOM_ALLY` component draws independently when it executes. Enemy targets must still be alive; `REVIVE;RANDOM_ALLY` draws from defeated allies, while other random-ally effects draw from living allies. Conditions are checked after selection and do not cause another draw. A paired `PRIMARY` modifier and damage component share one target.
+- `NONE` leaves `conditionValue` empty. HP conditions use an integer percentage from `1` to `100` with strict `<` or `>` comparison: `SELF_HP_LESS_THAN_PERCENT`, `SELF_HP_GREATER_THAN_PERCENT`, `TARGET_HP_LESS_THAN_PERCENT` and `TARGET_HP_GREATER_THAN_PERCENT`.
+- `SELF_GREATER` and `SELF_LOWER` compare the user's effective attribute with the target's same effective attribute. Their `conditionValue` is one of `ATK`, `DEF`, `MAG`, `RES`, `VEL` or `LCK`; the effect's `attribute` field remains available for its own purpose.
 
 Examples:
 

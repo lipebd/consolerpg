@@ -78,7 +78,7 @@ ScenarioDefinition = dados comuns carregados de scenarios.txt
 Scenario           = cenário de execução usado por World
 
 SkillDefinition = conteúdo imutável e reutilizável da habilidade
-SkillExecution  = estado temporário de uma única utilização
+SkillUseState  = estado temporário de uma única utilização
 
 SkillScrollDefinition = vínculo imutável entre item, habilidade e classe
 SkillScroll           = item especializado criado para o inventário
@@ -377,7 +377,7 @@ Identidade, posicionamento e fala são conceitos separados. Um NPC pode existir 
 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
-| `SkillDefinition` | Definição imutável | Combina identidade, classe, tipo de aquisição, requisito de nível, custos, nome, descrição e lista ordenada de componentes. Pode ser referenciada diretamente pelo personagem porque o estado mutável de cada uso fica em `SkillExecution`. |
+| `SkillDefinition` | Definição imutável | Combina identidade, classe, tipo de aquisição, requisito de nível, custos, nome, descrição e lista ordenada de componentes. Pode ser referenciada diretamente pelo personagem porque o estado mutável de cada uso fica em `SkillUseState`. |
 | `SkillEffectDefinition` | Definição imutável de componente | Representa um componente de dano, recuperação, estágio, purificação, dissipação, modificador ou estado especial. Valida quais campos são obrigatórios, opcionais ou proibidos para cada tipo. |
 | `SkillLoader` | Carregamento de dados | Lê `skills.txt` e `skill_effects.txt`, interpreta `LEVEL` e `SCROLL`, valida requisitos de nível, IDs de classe, cabeçalhos, componentes, sequência, fases e referências cruzadas e registra habilidades completas. |
 | `SkillCatalog` | Catálogo | Registra `SkillDefinition` por ID estável e oferece as definições carregadas aos personagens e sistemas consumidores. |
@@ -422,8 +422,8 @@ Identidade, posicionamento e fala são conceitos separados. Um NPC pode existir 
 | `RecoveryCalculator` | Calculador de domínio | Calcula recuperação de HP e ressurreição a partir do poder e do ATK ou MAG efetivo indicado pelo componente. MP e SP permanecem fixos. |
 | `EffectResistanceCalculator` | Calculador de domínio | Calcula e sorteia a resistência baseada na LCK efetiva do aplicador e na RES efetiva do alvo. Mantém `KR` e o teto de chance em um único lugar. |
 | `SkillExecutor` | Executor de domínio | Orquestra condições, aplicabilidade, um trigger por componente, resistência individual e aplicação. Reutiliza calculadores e operações de `GameCharacter` sem repetir suas fórmulas. |
-| `SkillExecution` | Estado de uma utilização | Preserva os resultados, modificadores acumulados e componentes `POST_ACTION` de uma única utilização de habilidade. |
-| `SkillExecutionContext` | Contexto imutável | Agrupa o usuário, os alvos selecionados uma única vez e o poder-base da arma equipado no início da habilidade. |
+| `SkillUseState` | Estado de uma utilização | Preserva os resultados, modificadores acumulados e componentes `POST_ACTION` de uma única utilização de habilidade. |
+| `SkillExecutionContext` | Contexto imutável | Agrupa o usuário, os alvos escolhidos manualmente e o poder-base da arma equipado no início da habilidade. Os alvos aleatórios são sorteados por componente. |
 | `SkillEffectResult` | Resultado imutável | Associa componente, alvo, desfecho e valor produzido para que `Battle` apenas apresente o resultado. |
 | `SkillEffectOutcome` | Enum de resultado | Distingue `APPLIED`, `RESISTED` e `NOT_TRIGGERED`. |
 
@@ -844,7 +844,7 @@ World                   = mudança efetiva para a cidade escolhida
 | Definição de uma habilidade | `SkillDefinition` | `skills.txt` + `skill_effects.txt` → `SkillLoader` → `SkillCatalog` |
 | Especialização de um pergaminho | `SkillScrollDefinition` | item + habilidade + classe → `SkillScrollLoader` → `SkillScrollDefinitionCatalog` |
 | Aprender por pergaminho | `SkillScrollService` | inventário → `SkillScrollUseMenu` → `PlayableCharacter` → consumo condicional |
-| Uma utilização de habilidade | `SkillExecution` | `Battle` → contexto e alvos → `SkillExecutor` → resultados → `Battle` |
+| Uma utilização de habilidade | `SkillUseState` | `Battle` → contexto e alvos → `SkillExecutor` → resultados → `Battle` |
 | Definição de um equipamento | `EquipmentDefinition` | `items.txt` + arquivo especializado → `EquipmentLoader` → `EquipmentCatalog` |
 | Equipar, trocar ou remover item | `EquipmentService` | `Inventory` ↔ `PlayableCharacter` → `CharacterEquipment` |
 | Equipamento na interface | `EquipmentMenu` | inventário ou status → filtro/seleção → comparação → confirmação |

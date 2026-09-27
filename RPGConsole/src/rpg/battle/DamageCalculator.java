@@ -2,6 +2,7 @@ package rpg.battle;
 
 import java.util.Objects;
 
+import rpg.characters.CharacterAttribute;
 import rpg.characters.GameCharacter;
 
 // Calculates damage before defending, rounding and HP limits.
@@ -14,6 +15,7 @@ public final class DamageCalculator {
 			GameCharacter attacker,
 			GameCharacter target,
 			DamageType damageType,
+			CharacterAttribute scalingAttribute,
 			int skillPower,
 			int weaponBaseDamage,
 			int powerModifierPercent
@@ -36,7 +38,7 @@ public final class DamageCalculator {
 			throw new IllegalArgumentException("Damage power modifier cannot be negative.");
 		}
 
-		int offensiveAttribute = getOffensiveAttribute(attacker, damageType);
+		int offensiveAttribute = getOffensiveAttribute(attacker, damageType, scalingAttribute);
 
 		int defensiveAttribute = getDefensiveAttribute(target, damageType);
 
@@ -69,11 +71,15 @@ public final class DamageCalculator {
 		return (int) Math.round(scaledDamage / 100.0);
 	}
 
-	private int getOffensiveAttribute(GameCharacter attacker, DamageType damageType) {
-		return switch (damageType) {
-		case PHYSICAL -> attacker.getAttack();
-		case MAGICAL -> attacker.getMagic();
-		};
+	private int
+			getOffensiveAttribute(GameCharacter attacker, DamageType damageType, CharacterAttribute scalingAttribute) {
+		CharacterAttribute selectedAttribute = scalingAttribute;
+
+		if (selectedAttribute == null) {
+			selectedAttribute = damageType == DamageType.PHYSICAL ? CharacterAttribute.ATK : CharacterAttribute.MAG;
+		}
+
+		return attacker.getEffectiveAttribute(selectedAttribute);
 	}
 
 	private int getDefensiveAttribute(GameCharacter target, DamageType damageType) {

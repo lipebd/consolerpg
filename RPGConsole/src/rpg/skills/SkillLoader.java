@@ -196,7 +196,11 @@ public final class SkillLoader {
 				skillId
 		);
 
-		Integer conditionValue = parseOptionalInteger(fields[13], "condition value", skillId);
+		String conditionValue = fields[13].trim();
+
+		if (conditionValue.isEmpty()) {
+			conditionValue = null;
+		}
 
 		return new SkillEffectDefinition(
 				sequence,

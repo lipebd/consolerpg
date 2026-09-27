@@ -13,12 +13,12 @@ import java.util.Random;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
-import rpg.items.RecoveryItem;
 import rpg.characters.CharacterAttribute;
 import rpg.characters.Enemy;
 import rpg.characters.GameCharacter;
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
+import rpg.items.RecoveryItem;
 import rpg.items.equipment.WeaponDefinition;
 import rpg.skills.SkillDefinition;
 import rpg.skills.SkillEffectDefinition;
@@ -55,10 +55,9 @@ public class Battle {
 	private EnemyTargetMenu enemyTargetMenu;
 	private EnemyBattleGroup enemyGroup;
 	private ConsoleInput consoleInput;
-	private final Random random;
 	private final DamageCalculator damageCalculator;
 	private final SkillExecutor skillExecutor;
-	private SkillExecution pendingPostActionExecution;
+	private SkillUseState pendingPostActionExecution;
 	private RecoveryItem pendingPostActionItem;
 	private PlayableCharacter pendingPostActionTarget;
 	private boolean partyFled;
@@ -75,7 +74,6 @@ public class Battle {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
 		this.enemyGroup = Objects.requireNonNull(enemyGroup, "Enemy battle group cannot be null.");
 		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
-		this.random = Objects.requireNonNull(random, "Random generator cannot be null.");
 		this.damageCalculator = new DamageCalculator();
 		this.skillExecutor = new SkillExecutor(
 				damageCalculator,
@@ -251,11 +249,11 @@ public class Battle {
 			}
 
 			case "3" -> {
-			    if (actingCharacter.getUnlockedSkillDefinitions().isEmpty()) {
-			        feedbackMessage = "Nenhuma habilidade disponível.";
-			    } else {
-			        validAction = executeSkillMenu(actingCharacter);
-			    }
+				if (actingCharacter.getUnlockedSkillDefinitions().isEmpty()) {
+					feedbackMessage = "Nenhuma habilidade disponível.";
+				} else {
+					validAction = executeSkillMenu(actingCharacter);
+				}
 			}
 
 			case "4" -> {
@@ -303,13 +301,8 @@ public class Battle {
 
 			case "2" -> executeEnemyAnalysis();
 
-			case "3" -> turnOrderScreen.show(
-			        currentTurnOrder,
-			        currentRoundNumber,
-			        scenarioName,
-			        battleType,
-			        consoleInput
-			);
+			case "3" ->
+				turnOrderScreen.show(currentTurnOrder, currentRoundNumber, scenarioName, battleType, consoleInput);
 
 			default -> feedbackMessage = "Opção inválida.";
 			}
@@ -343,8 +336,8 @@ public class Battle {
 				int selectedIndex = Integer.parseInt(choice) - 1;
 
 				if (selectedIndex < 0 || selectedIndex >= skills.size() || skills.get(selectedIndex).isEmpty()) {
-				    feedbackMessage = "Habilidade inválida.";
-				    continue;
+					feedbackMessage = "Habilidade inválida.";
+					continue;
 				}
 
 				SkillDefinition selectedSkill = skills.get(selectedIndex).orElseThrow();
@@ -503,18 +496,16 @@ public class Battle {
 			}
 
 			if (pendingPostActionItem != null) {
-			    if (!pendingPostActionItem.applyAttributeStage(
-			            pendingPostActionTarget)) {
-			        throw new IllegalStateException(
-			                "Scheduled item stage did not affect its target.");
-			    }
+				if (!pendingPostActionItem.applyAttributeStage(pendingPostActionTarget)) {
+					throw new IllegalStateException("Scheduled item stage did not affect its target.");
+				}
 
-			    displayActionMessages(List.of(
-			            getAttributeDisplayName(
-			                    pendingPostActionItem.getStageAttribute())
-			                    + " de " + pendingPostActionTarget.getName()
-			                    + " aumentou."
-			    ));
+				displayActionMessages(
+						List.of(
+								getAttributeDisplayName(pendingPostActionItem.getStageAttribute()) + " de "
+										+ pendingPostActionTarget.getName() + " aumentou."
+						)
+				);
 			}
 
 			ConsoleUI.pause(PACING_PAUSE_MILLISECONDS, consoleInput);
@@ -529,7 +520,7 @@ public class Battle {
 			SkillExecutionContext selectedContext
 	) {
 
-		SkillExecution execution = skillExecutor.beginExecution(skill, selectedContext);
+		SkillUseState execution = skillExecutor.beginExecution(skill, selectedContext);
 
 		if (!execution.canConsumeTurn()) {
 			return false;
@@ -593,7 +584,7 @@ public class Battle {
 						.map(member -> (GameCharacter) member).toList()
 		);
 
-		case RANDOM_ALLY -> selectRandomAllyTarget(skill);
+		case RANDOM_ALLY -> Optional.of(party.getMembers().stream().map(member -> (GameCharacter) member).toList());
 
 		case SINGLE_ENEMY -> enemyTargetMenu.selectTarget(enemyGroup, currentRoundNumber)
 				.map(slot -> List.<GameCharacter>of(slot.getEnemy()));
@@ -629,22 +620,6 @@ public class Battle {
 		return selectedTarget.map(target -> List.<GameCharacter>of(target));
 	}
 
-	private Optional<List<GameCharacter>> selectRandomAllyTarget(SkillDefinition skill) {
-		List<PlayableCharacter> candidates = targetsDefeatedAlly(skill, SkillTargetType.RANDOM_ALLY)
-				? party.getDefeatedMembers()
-				: party.getLivingMembers();
-
-		if (candidates.isEmpty()) {
-			System.out.println("Não há aliados disponíveis para essa habilidade.");
-
-			return Optional.empty();
-		}
-
-		PlayableCharacter selectedTarget = candidates.get(random.nextInt(candidates.size()));
-
-		return Optional.of(List.of(selectedTarget));
-	}
-
 	private Optional<List<GameCharacter>> selectRandomEnemyTarget() {
 		List<EnemyBattleSlot> candidates = enemyGroup.getLivingSlots();
 
@@ -652,9 +627,7 @@ public class Battle {
 			throw new IllegalStateException("No living enemy is available.");
 		}
 
-		Enemy selectedTarget = candidates.get(random.nextInt(candidates.size())).getEnemy();
-
-		return Optional.of(List.of(selectedTarget));
+		return Optional.of(candidates.stream().map(slot -> (GameCharacter) slot.getEnemy()).toList());
 	}
 
 	private boolean targetsDefeatedAlly(SkillDefinition skill, SkillTargetType targetType) {
@@ -697,24 +670,35 @@ public class Battle {
 		return switch (result.getEffect().getEffectType()) {
 		case DAMAGE, RECOIL_DAMAGE -> targetName + " sofreu " + result.getAmount() + " de dano.";
 
+		case HP_SACRIFICE -> targetName + " sacrificou " + result.getAmount() + " de HP.";
+
 		case HP_RECOVERY -> targetName + " recuperou " + result.getAmount() + " de HP.";
 
 		case MP_RECOVERY -> targetName + " recuperou " + result.getAmount() + " de MP.";
 
 		case SP_RECOVERY -> targetName + " recuperou " + result.getAmount() + " de SP.";
 
+		case HP_BALANCE -> targetName + " ficou com " + result.getAmount() + " de HP.";
+
 		case REVIVE -> targetName + " foi revivido com " + result.getAmount() + " HP!";
 
 		case ATTRIBUTE_STAGE -> formatAttributeStageResult(result, targetName);
 
-		case PURIFICATION -> "Os efeitos negativos de " + targetName + " foram purificados.";
-
-		case DISSIPATION -> "Os efeitos positivos de " + targetName + " foram dissipados.";
+		case PURIFICATION ->
+			formatRemovedStates(result, targetName, "efeito negativo purificado", "efeitos negativos purificados");
+		case DISSIPATION ->
+			formatRemovedStates(result, targetName, "efeito positivo dissipado", "efeitos positivos dissipados");
 
 		case SPECIAL_STATE -> formatSpecialStateResult(target, targetName);
 
 		case DAMAGE_POWER_MODIFIER -> null;
 		};
+	}
+
+	private String formatRemovedStates(SkillEffectResult result, String targetName, String singular, String plural) {
+		int count = result.getAmount();
+
+		return targetName + " teve " + count + " " + (count == 1 ? singular : plural) + ".";
 	}
 
 	private String formatAttributeStageResult(SkillEffectResult result, String targetName) {
@@ -753,7 +737,7 @@ public class Battle {
 		return character.getName();
 	}
 
-	private void updateFinishingCharacter(SkillExecution execution) {
+	private void updateFinishingCharacter(SkillUseState execution) {
 		if (enemyGroup.isDefeated()) {
 			finishingCharacter = execution.getContext().getActingCharacter();
 		}
@@ -834,7 +818,7 @@ public class Battle {
 			int weaponBaseDamage
 	) {
 		double calculatedDamage = damageCalculator
-				.calculateDamage(attacker, target, damageType, 0, weaponBaseDamage, 0);
+				.calculateDamage(attacker, target, damageType, null, 0, weaponBaseDamage, 0);
 
 		return target.takeDamage(calculatedDamage);
 	}

@@ -13,19 +13,18 @@ import rpg.skills.SkillEffectType;
 import rpg.skills.SkillTargetType;
 
 // Tracks the mutable execution of one skill use.
-public final class SkillExecution {
+public final class SkillUseState {
 
 	private final SkillDefinition skillDefinition;
 	private final SkillExecutionContext context;
 
 	private final List<SkillEffectResult> effectResults;
-
 	private final Map<GameCharacter, Integer> damagePowerModifiers;
-
+	private final Map<SkillEffectDefinition, List<GameCharacter>> reservedPostActionTargets;
 	private boolean canConsumeTurn;
 	private boolean postActionExecuted;
 
-	SkillExecution(SkillDefinition skill, SkillExecutionContext context) {
+	SkillUseState(SkillDefinition skill, SkillExecutionContext context) {
 		this.skillDefinition = Objects.requireNonNull(skill, "Skill definition cannot be null.");
 
 		this.context = Objects.requireNonNull(context, "Skill execution context cannot be null.");
@@ -36,6 +35,16 @@ public final class SkillExecution {
 
 		this.canConsumeTurn = false;
 		this.postActionExecuted = false;
+
+		this.reservedPostActionTargets = new IdentityHashMap<>();
+	}
+
+	void reservePostActionTargets(SkillEffectDefinition effect, List<GameCharacter> targets) {
+		reservedPostActionTargets.put(effect, List.copyOf(targets));
+	}
+
+	List<GameCharacter> takeReservedPostActionTargets(SkillEffectDefinition effect) {
+		return reservedPostActionTargets.remove(effect);
 	}
 
 	void addEffectResult(SkillEffectResult result) {

@@ -378,9 +378,11 @@ If removed before generation, they do not affect the next round.
 
 ### Purification and dissipation
 
-Purification removes all negative attribute states from the target.
+Purification removes negative attribute states; dissipation removes positive attribute states. Each operation clears all stages of every affected attribute, including pending VEL stages.
 
-Dissipation removes all positive attribute states from the target.
+A skill component with empty `power` removes all eligible attributes. With positive `power`, it randomly selects up to that many eligible attributes without repetition. One attribute with multiple stages counts as one selection.
+
+Dissipation performs one resistance check per target and component. If the target resists, no attributes are removed; if it does not resist, all attributes selected by that component are cleared. Purification does not perform a resistance check.
 
 Pending VEL states are eligible for these operations.
 
@@ -409,9 +411,7 @@ KF = 20
 KM = 20
 ```
 
-Physical damage uses effective ATK against effective DEF.
-
-Magical damage uses effective MAG against effective RES.
+Physical damage defaults to the attacker's effective ATK and uses the target's effective DEF. Magical damage defaults to the attacker's effective MAG and uses the target's effective RES. A `DAMAGE` component may select another effective offensive attribute through `attribute`; its damage type continues to determine DEF or RES.
 
 Effective attributes include all applicable natural values, equipment bonuses and temporary attribute stages.
 
@@ -426,9 +426,9 @@ basePower =
 
 Player basic attacks use zero skill power, no conditional power modifier and the equipped weapon's full base damage. The weapon selects physical or magical damage; without a weapon, the attack falls back to physical damage with zero weapon power. Enemy basic attacks currently use physical damage and zero weapon power.
 
-Every offensive skill also adds 100% of the equipped weapon's base damage. A skill remains usable without a weapon, in which case this term is zero. The skill component's own damage type independently selects ATK against DEF or MAG against RES, so a magical weapon may strengthen a physical skill and vice versa.
+Every offensive skill also adds 100% of the equipped weapon's base damage. A skill remains usable without a weapon, in which case this term is zero. The skill component's damage type selects the target's DEF or RES independently of its optional offensive attribute and the weapon's damage type.
 
-For the same attacker, target and damage type, the relative power of a damaging skill over a basic attack is:
+For the same attacker, target, damage type and offensive attribute, with no damage-power modifier, the relative power of a damaging skill over a basic attack is:
 
 ```text
 skillDamage / basicDamage = 1 + skillPower / (effectiveAttribute + weaponBaseDamage)
@@ -444,11 +444,9 @@ modifiedPower =
     × (1 + powerModifierPercent / 100)
 ```
 
-A `DAMAGE_POWER_MODIFIER` affects every later compatible damage component:
+A `PRE_ACTION` `DAMAGE_POWER_MODIFIER` remains available for later compatible damage against the same target during that skill use. Multiple applicable modifiers add their percentages using overflow-safe arithmetic.
 
-- within the same skill execution;
-- against the same selected target;
-- until that skill use ends.
+A `PRIMARY` `DAMAGE_POWER_MODIFIER` immediately precedes damage with the same `SINGLE_ENEMY` or `RANDOM_ENEMY` target type. Both components use the same enemy. If the modifier applies, its percentage is added to any existing `PRE_ACTION` modifier for that damage only. Its condition is evaluated on the selected enemy before that damage; a failed condition does not cancel or redirect the hit.
 
 It does not affect earlier damage, other targets or future skill uses. Multiple compatible modifiers add their percentages using overflow-safe arithmetic.
 
@@ -509,11 +507,21 @@ Recoil damage:
 - may have its own component trigger chance;
 - cannot be resisted.
 
+## HP sacrifice and balance
+
+`HP_SACRIFICE` removes the configured percentage of the user's current HP, rounded down. It uses non-lethal damage and leaves at least 1 HP. At 1 HP, it removes 0 HP but remains an applied component and can consume the skill's action and resources.
+
+`HP_BALANCE` considers only living allies. It averages their current HP once, rounding to the nearest integer, then sets each living ally's HP to the smaller of that average and their own maximum HP. An ally above the result loses HP; an ally below it recovers HP. Defeated allies remain defeated.
+
+If no living ally's HP changes, `HP_BALANCE` produces no attempted effect. A skill containing only that ineffective component does not consume action or resources; other attempted components of the same skill can still do so.
+
 ## Skill execution
 
 Skills are immutable external definitions composed of one or more ordered effects.
 
-Each use creates one mutable execution. Targets are selected once for each target type used by the skill and are reused by all compatible effects.
+Each skill use creates one mutable `SkillUseState`. Manually selected single targets remain selected for that use. Each `RANDOM_ENEMY` or `RANDOM_ALLY` component makes its own selection when it executes, among enemies still alive or the appropriate living/defeated allies. The same living target may be selected again by a later component. If no valid random target remains, that component is skipped without undoing earlier hits.
+
+A paired `PRIMARY` damage-power modifier and damage component use one target selection for that hit, even when the modifier's condition fails. A random target is selected before its condition is checked; a failed condition does not reroll the target.
 
 Effects are executed in this order:
 
@@ -528,11 +536,14 @@ POST_ACTION
 
 `POST_ACTION` effects are executed only after the acting character finishes the consumed turn and all conventional effect durations are reduced.
 
+When a skill depends only on an applicable random `POST_ACTION` component to consume the turn, its selected target is reserved during the applicability check and reused after the turn ends. A failed target condition does not consume the action or resources by itself.
+
 Skill resources are consumed only after target selection and when the execution is able to consume the turn.
 
 Components are evaluated in this order:
 
 ```text
+target selection, when random
 condition
 applicability
 trigger chance
@@ -541,6 +552,8 @@ application
 ```
 
 An applicable component that is resisted or does not trigger still counts as an attempted component and consumes the turn. A component whose condition does not match or that cannot affect any selected target does not constitute an attempt.
+
+HP-percentage conditions compare current HP with maximum HP using strict `<` or `>` thresholds. `SELF_GREATER` and `SELF_LOWER` compare the user's effective value of the attribute named in `conditionValue` with the target's effective value of that same attribute. An effect's separate `attribute` field continues to describe its own scaling or stage change.
 
 ## Skill-effect trigger chance
 

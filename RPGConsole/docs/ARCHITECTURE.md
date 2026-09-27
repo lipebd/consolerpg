@@ -26,7 +26,7 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.characters` | Character state, name validation and selection, playable-character level boundaries, natural and equipment-modified attributes, equipped slots, party ownership and enemy ranks | `GameCharacter`, `CharacterStats`, `CharacterEquipment`, `PlayableCharacter`, `PlayableCharacterLevelRules`, `Party`, `Enemy`, `EnemyRank`, `CharacterNameRules`, `CharacterNameCatalog`, `CharacterNameLoader`, `CharacterNameSelector` |
 | `rpg.classes` | Immutable playable-class definitions, symbols, external loading, lookup and natural-growth calculation | `PlayableClassDefinition`, `PlayableClassLoader`, `PlayableClassCatalog`, `CharacterGrowthCalculator` |
 | `rpg.development` | Isolated configurable party construction for development runs | `DevelopmentPartyFactory` |
-| `rpg.battle` | Battle coordination, skill execution and centralized combat calculations | `Battle`, `BattleResult`, `BattleCoordinator`, `SkillExecutor`, `SkillExecution`, `SkillExecutionContext`, `SkillEffectResult`, `DamageType`, `DamageCalculator`, `RecoveryCalculator`, `EffectResistanceCalculator`, `EnemyBattleGroup`, `BattleTurnOrder`, `BattleEscapeService`, `BattleType` |
+| `rpg.battle` | Battle coordination, skill execution and centralized combat calculations | `Battle`, `BattleResult`, `BattleCoordinator`, `SkillExecutor`, `SkillUseState`, `SkillExecutionContext`, `SkillEffectResult`, `DamageType`, `DamageCalculator`, `RecoveryCalculator`, `EffectResistanceCalculator`, `EnemyBattleGroup`, `BattleTurnOrder`, `BattleEscapeService`, `BattleType` |
 | `rpg.battle.rewards` | Reward calculation, temporary and equipment modifiers, immutable reward snapshots and individual progression results | `BattleRewardService`, `RewardCalculator`, `PartyRewardModifierState`, `BattleRewardModifiers`, `BattleRewards`, `CharacterProgressionResult` |
 | `rpg.effects` | Mutable combat-effect state and reusable attribute-stage rules | `CombatEffectState`, `AttributeStageState`, `AttributeStageRules`, `SpecialBattleStateType` |
 | `rpg.skills` | Immutable skill and component definitions, external loading and closed skill vocabularies | `SkillDefinition`, `SkillEffectDefinition`, `SkillLoader`, `SkillCatalog`, `SkillTargetType`, `SkillEffectType`, `SkillExecutionPhase`, `SkillConditionType` |
@@ -293,7 +293,7 @@ The same `EnemyDefinition` can create many independent `Enemy` objects without s
 
 This distinction also permits repeated enemies in one battle. Two Lobermos created from the same definition have independent HP and defensive state.
 
-The same separation applies to items, scenarios, playable classes and skills. Scenario definitions are transformed into runtime `City`, `Field` and `Dungeon` objects by `ScenarioFactory`. A `PlayableCharacter` references immutable class and skill definitions, while one mutable `SkillExecution` represents the state of a single skill use. A separate mutable `Skill` object is unnecessary because persistent per-use state does not belong to the definition.
+The same separation applies to items, scenarios, playable classes and skills. Scenario definitions are transformed into runtime `City`, `Field` and `Dungeon` objects by `ScenarioFactory`. A `PlayableCharacter` references immutable class and skill definitions, while one mutable `SkillUseState` represents the state of a single skill use. A separate mutable `Skill` object is unnecessary because persistent per-use state does not belong to the definition.
 
 Shop data follows the same separation:
 
@@ -513,10 +513,10 @@ The battle system is divided into the following responsibilities:
   - Formats compact panel effects, tactical effect counts and the two-line attribute-stage overview.
 - `SkillExecutor`
   - Evaluates component conditions and applicability, performs trigger and resistance tests and delegates each applied operation to its single domain owner.
-- `SkillExecution`
-  - Preserves the mutable state and accumulated results of one skill use, including deferred `POST_ACTION` components.
+- `SkillUseState`
+  - Preserves the mutable state and accumulated results of one skill use, including deferred `POST_ACTION` components and their reserved random targets.
 - `SkillExecutionContext`
-  - Stores the user, the targets selected once for the complete skill use and a snapshot of equipped weapon base damage.
+  - Stores the user, explicitly selected targets and a snapshot of equipped weapon base damage.
 - `SkillEffectResult` and `SkillEffectOutcome`
   - Report `APPLIED`, `RESISTED` or `NOT_TRIGGERED` without requiring the interface to infer what happened.
 - `DamageCalculator`
@@ -679,7 +679,7 @@ SkillScroll
 One use follows this lifecycle:
 
 ```text
-select targets once
+select explicit targets
         ↓
 create SkillExecutionContext
         ↓
@@ -695,6 +695,7 @@ execute deferred POST_ACTION components
 For each component, `SkillExecutor` evaluates:
 
 ```text
+target selection
 condition
     → applicability
     → one component trigger roll
@@ -706,9 +707,9 @@ A blank external trigger chance means 100%. A component trigger is rolled once a
 
 Damage, recovery, attribute-stage mutation and resource changes remain owned by their existing calculators or character operations. This keeps `SkillExecutor` responsible for orchestration instead of duplicating domain formulas.
 
-`DAMAGE_POWER_MODIFIER` affects every later compatible damage component against the same target during the same `SkillExecution`. Multiple modifiers accumulate with overflow protection and never leak into another target or skill use.
+A `PRE_ACTION` damage-power modifier accumulates for later compatible damage against the same target during this skill use. A `PRIMARY` modifier applies only to the immediately following `PRIMARY` damage component with the same `SINGLE_ENEMY` or `RANDOM_ENEMY` target type. A paired random modifier and damage component share one target selection. Multiple applicable modifiers add their percentages with overflow protection; modifier state never leaks into another skill use.
 
-Player basic attacks read the equipped weapon's damage type, normal-attack name and base weapon damage. Without a weapon, they fall back to physical damage and zero weapon power. Offensive skill components always add 100% of the equipped weapon's base damage, while the component's own `DamageType` independently selects ATK against DEF or MAG against RES. `DamageType` therefore belongs to `rpg.battle`, where both attacks and skills consume it.
+Player basic attacks read the equipped weapon's damage type, normal-attack name and base weapon damage. Without a weapon, they fall back to physical damage and zero weapon power. Offensive skill components always add 100% of the equipped weapon's base damage. Physical damage targets DEF and uses ATK by default; magical damage targets RES and uses MAG by default. A damage component may specify a different offensive attribute without changing its damage type. `DamageType` therefore belongs to `rpg.battle`, where both attacks and skills consume it.
 
 ## Equipment architecture
 

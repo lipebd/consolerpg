@@ -185,7 +185,6 @@ The checklist fixes **what belongs to V7**, not every rule for implementing it. 
 * Normalization items specify the subset of negative attribute stages to clear in external data. Existing `false` means none and `true` means all; permit explicit attribute lists without another column when implementing this family. Add Sorrateira for VEL/LCK and include all six attributes in Total. Unlisted attributes remain untouched; an item with no eligible negative state is ineffective.
 * Outside-battle reward potions activate the existing separate party EXP and GOLD modifiers for 15 rewarded victories. Ascensão grants EXP +50%, Prosperidade GOLD +50%, and Sucesso grants EXP and GOLD +25% each. An active modifier of the same type blocks activation and item consumption. Sucesso requires both modifier slots free and applies both effects together or neither. Preserve existing save/load behavior for the modifier state.
 * Furtividade and Invisibilidade remain undecided for V7 pending a group decision. If selected, they affect only random normal battles, not epic or boss encounters; their duration and exact event-conversion behavior must be approved before implementation. Do not mark them implemented as part of the other item families.
-* Discuss and freeze additional skill-effect choices after the item work. Reuse the existing effect semantics and external fields whenever they represent the same rule.
 
 > **Recovery and revival items completed and verified on 2026-09-26.**
 >
@@ -199,10 +198,22 @@ The checklist fixes **what belongs to V7**, not every rule for implementing it. 
 >
 > Ascensão, Prosperidade and Sucesso activate the existing party reward modifiers for 15 rewarded victories. Item use occurs outside battle through a cancellable confirmation on the item sheet. An active modifier blocks another potion that needs the same slot without consuming it; Sucesso checks both slots before changing either one. Successful use refreshes the consumable list. Reward calculation, victory countdown and saved modifier state continue to use the existing systems.
 
-* [ ] Select the specific additional consumable effects for V7 and freeze their rules before implementing them.
-* [ ] Select the specific additional skill effects for V7 and freeze their rules before implementing them.
-* [ ] Extend the existing definition, validation, execution and presentation paths only as required by the approved effects.
-* [ ] Verify each distinct new effect behavior and relevant failure boundary without repeating the same execution path for every item or skill.
+### Frozen skill contract (2026-09-26)
+
+* `HP_SACRIFICE` sacrifices 50% of the user's current HP, rounded down, without reducing HP below 1. The skill remains usable at 1 HP; in that case, the sacrifice removes 0 HP.
+* HP conditions use strict comparisons: `SELF_HP_LESS_THAN_PERCENT`, `SELF_HP_GREATER_THAN_PERCENT`, `TARGET_HP_LESS_THAN_PERCENT` and `TARGET_HP_GREATER_THAN_PERCENT`. Replace the existing `*_HP_AT_MOST_PERCENT` conditions and migrate their current thresholds from X to X + 1, accepting the small difference for fractional percentages.
+* `SELF_GREATER` and `SELF_LOWER` compare the user's attribute with the target's same attribute. `conditionValue` names that attribute; the effect's `attribute` field retains its existing purpose.
+* `DAMAGE` may specify an offensive `attribute`. When absent, physical damage uses ATK and magical damage uses MAG. The damage type still determines whether the target defends with DEF or RES.
+* `PURIFICATION` and `DISSIPATION` may use `power` to remove up to that many randomly chosen negative or positive attribute states, respectively. Each chosen attribute has all its stages cleared. Empty `power` clears all eligible states as before.
+* Each random-target attack selects independently among currently valid targets. The same target may be selected again. If no enemies remain before another hit, skip the remaining hits and finish the skill normally, preserving its action and resource cost. Verify `RANDOM_ALLY` under the same per-component selection rule.
+* A `PRIMARY` damage-power modifier may precede a random-target damage component. Both components use the same target selected for that hit; the modifier applies only to that next compatible damage. Preserve the existing behavior of `PRE_ACTION` modifiers.
+* `HP_BALANCE` averages the current HP of living allies, rounding to the nearest integer. Set each living ally's HP to the smaller of that average and their own maximum HP. Defeated allies are excluded.
+* Keep the existing 14 fields in `skill_effects.txt`. `ALL_BUT_TARGET` is outside this scope.
+
+* [x] Select the specific additional consumable effects for V7 and freeze their rules before implementing them.
+* [x] Select the specific additional skill effects for V7 and freeze their rules before implementing them.
+* [x] Extend the existing definition, validation, execution and presentation paths only as required by the approved effects.
+* [x] Verify each distinct new effect behavior and relevant failure boundary without repeating the same execution path for every item or skill.
 
 This part reserves room for selected new effects; it does not approve an unlimited effect catalog. Enemy action selection and enemy use of magic, buffs or debuffs are handled as a study in Part 9.
 

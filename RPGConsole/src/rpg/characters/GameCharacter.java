@@ -296,6 +296,19 @@ public abstract class GameCharacter {
 		return Math.addExact(naturalValue, getStructuralAttributeBonus(attribute));
 	}
 
+	public int getEffectiveAttribute(CharacterAttribute attribute) {
+		Objects.requireNonNull(attribute, "Character attribute cannot be null.");
+
+		return switch (attribute) {
+		case ATK -> getAttack();
+		case DEF -> getDefense();
+		case MAG -> getMagic();
+		case RES -> getResistance();
+		case VEL -> getSpeed();
+		case LCK -> getLuck();
+		};
+	}
+
 	public boolean applyTimedAttributeStages(CharacterAttribute attribute, int stageChange, int duration) {
 		return combatEffectState.applyTimedStages(attribute, stageChange, duration);
 	}
@@ -317,7 +330,7 @@ public abstract class GameCharacter {
 	}
 
 	public boolean purifyNegativeAttributeStates(Set<CharacterAttribute> attributes) {
-	    return combatEffectState.purifyNegativeStates(attributes);
+		return combatEffectState.purifyNegativeStates(attributes);
 	}
 
 	public boolean purifyNegativeAttributeStates() {
@@ -326,6 +339,10 @@ public abstract class GameCharacter {
 
 	public boolean dissipatePositiveAttributeStates() {
 		return combatEffectState.dissipateAllPositiveStates();
+	}
+
+	public boolean dissipatePositiveAttributeStates(Set<CharacterAttribute> attributes) {
+		return combatEffectState.dissipatePositiveStates(attributes);
 	}
 
 	public boolean consumePendingSpeedStages() {

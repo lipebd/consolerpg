@@ -27,9 +27,13 @@ public final class SkillDetailFormatter {
 
 		case RECOIL_DAMAGE -> "Recuo";
 
+		case HP_SACRIFICE -> "Sacrifício";
+
 		case HP_RECOVERY -> "Cura";
 
 		case MP_RECOVERY, SP_RECOVERY -> "Recuperação";
+
+		case HP_BALANCE -> "Equilíbrio de HP";
 
 		case REVIVE -> "Ressurreição";
 
@@ -64,13 +68,13 @@ public final class SkillDetailFormatter {
 
 		case ALL_BUT_SELF -> "Todos os outros aliados";
 
-		case RANDOM_ALLY -> "Um aliado aleatório";
+		case RANDOM_ALLY -> "Aliado aleatório";
 
 		case SINGLE_ENEMY -> "Um inimigo";
 
 		case ALL_ENEMIES -> "Todos os inimigos";
 
-		case RANDOM_ENEMY -> "Um inimigo aleatório";
+		case RANDOM_ENEMY -> "Inimigo aleatório";
 		};
 	}
 

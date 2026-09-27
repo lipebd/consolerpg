@@ -160,7 +160,7 @@ The following suffixes have specific meanings in RPGConsole.
 | `Settings` | Immutable configuration values controlling a feature | `ExplorationSettings`, `DungeonSettings` |
 | `Session` | Mutable progress that lasts for one execution of a feature | `ExplorationSession` |
 | `State` | Mutable runtime data preserved for the lifetime of a domain object or the current program execution | `ShopState`, `ShopOfferState` |
-| `Execution` | Mutable state limited to one execution of a composite action | `SkillExecution` |
+| `Execution` | Mutable state limited to one execution of a composite action | `SkillUseState` |
 | `Context` | Inputs and shared selections used throughout one execution | `SkillExecutionContext` |
 | `Generator` | Selects or creates results using rules and randomness | `EncounterGenerator`, `ShopStateGenerator` |
 | `Calculator` | Centralizes one domain formula without coordinating the complete flow | `DamageCalculator`, `RecoveryCalculator`, `EffectResistanceCalculator`, `CharacterGrowthCalculator` |
@@ -189,7 +189,7 @@ The following suffixes have specific meanings in RPGConsole.
 
 Use `naturalStats` for the character values produced by class and level before equipment bonuses and temporary combat effects. Use `effective` only for values after every currently applicable modifier has been considered.
 
-A `Definition` does not require a parallel mutable class with the same root name. Create a runtime counterpart only when the concept has persistent instance state. For example, `SkillDefinition` can be referenced directly by a character because per-use state belongs to `SkillExecution`; an otherwise empty `Skill` wrapper would add no responsibility.
+A `Definition` does not require a parallel mutable class with the same root name. Create a runtime counterpart only when the concept has persistent instance state. For example, `SkillDefinition` can be referenced directly by a character because per-use state belongs to `SkillUseState`; an otherwise empty `Skill` wrapper would add no responsibility.
 
 Before creating a new class, check whether its intended role matches one of these established terms.
 
