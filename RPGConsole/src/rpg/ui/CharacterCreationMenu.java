@@ -158,8 +158,6 @@ public final class CharacterCreationMenu {
 	private void displayConfirmation(String proposedName, PlayableClassDefinition classDefinition, String feedbackMessage) {
 		ConsoleUI.clearScreen();
 		ConsoleUI.displayHeading("Nova Campanha");
-
-		System.out.println();
 		System.out.println("Nome: " + proposedName);
 
 		System.out.println();

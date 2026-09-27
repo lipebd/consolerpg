@@ -90,10 +90,10 @@ public final class BattleScreen {
 			} else {
 				names.add(truncateToWidth(name, width));
 			}
-			hp.add("HP " + slot.getEnemy().getCurrentHp() + "/" + slot.getEnemy().getMaxHp());
+			hp.add(formatResource("HP", slot.getEnemy().getCurrentHp(), slot.getEnemy().getMaxHp()));
 			effects.add(
 					slot.isAlive() ? CombatEffectFormatter.formatCompactEffectSummary(slot.getEnemy(), width)
-							: "DERROTADO"
+							: "\u001B[31mDERROTADO\u001B[0m"
 			);
 		}
 
@@ -180,7 +180,7 @@ public final class BattleScreen {
 
 			effects.add(
 					member.isAlive() ? CombatEffectFormatter.formatCompactEffectSummary(member, PARTY_COLUMN_WIDTH)
-							: "DERROTADO"
+							: "\u001B[31mDERROTADO\u001B[0m"
 			);
 		}
 

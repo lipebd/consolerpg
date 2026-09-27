@@ -51,9 +51,9 @@ meruma_dourada;MATERIAL;false;;;Merumã Dourada;Uma fruta dourada raríssima. Ut
 # Itens Chave
 poema_do_papai;KEY_ITEM;false;;;Poema do Papai;Um pequeno poema escrito pelo seu pai. Suas palavras lembram que sempre existe um caminho de volta para casa.
 # Armas
-adaga_improvisada;WEAPON;false;;;Adaga Improvisada;Uma lâmina simples e desgastada, adequada para golpes rápidos.
-adaga_comum;WEAPON;false;;;Adaga Comum;Uma adaga equilibrada e confiável para combates próximos.
-adaga_pesada;WEAPON;false;;;Adaga Pesada;Uma lâmina curta de peso incomum, feita para produzir talhos profundos.
+adaga_improvisada;WEAPON;false;15;;Adaga Improvisada;Uma lâmina simples e desgastada, adequada para golpes rápidos.
+adaga_comum;WEAPON;false;20;;Adaga Comum;Uma adaga equilibrada e confiável para combates próximos.
+adaga_pesada;WEAPON;false;30;;Adaga Pesada;Uma lâmina curta de peso incomum, feita para produzir talhos profundos.
 adaga_do_heroi;WEAPON;false;;;Adaga do Herói;Uma adaga associada às façanhas de um herói de identidade esquecida.
 pequena_inquisidora;WEAPON;false;;;Pequena Inquisidora;Uma lâmina severa criada para marcar aqueles considerados culpados.
 grande_inquisidora;WEAPON;false;;;Grande Inquisidora;Uma adaga solene cuja presença parece exigir silêncio e confissão.
@@ -119,9 +119,9 @@ livro_das_mil_vozes;WEAPON;false;;;Livro das Mil Vozes;Um tomo inquietante cujas
 evangelho_do_abismo;WEAPON;false;;;Evangelho do Abismo;Um livro proibido que descreve verdades encontradas além da realidade.
 o_livro_inacabado;WEAPON;false;;;O Livro Inacabado;Um grimório lendário cuja última página continua escrevendo a si mesma.
 # Armaduras
-vestes_comuns;ARMOR;false;;;Vestes Comuns;Vestes leves que oferecem proteção básica sem limitar os movimentos.
-vestes_reforcadas;ARMOR;false;;;Vestes Reforçadas;Vestes leves reforçadas para resistir melhor aos perigos da estrada.
-robe_de_brim;ARMOR;false;;;Robe de Brim;Um robe resistente cuja trama espessa amortece golpes e energias hostis.
+vestes_comuns;ARMOR;false;25;;Vestes Comuns;Vestes leves que oferecem proteção básica sem limitar os movimentos.
+vestes_reforcadas;ARMOR;false;45;;Vestes Reforçadas;Vestes leves reforçadas para resistir melhor aos perigos da estrada.
+robe_de_brim;ARMOR;false;50;;Robe de Brim;Um robe resistente cuja trama espessa amortece golpes e energias hostis.
 traje_do_assassino;ARMOR;false;;;Traje do Assassino;Um conjunto discreto moldado para proteger sem comprometer movimentos rápidos.
 traje_do_arcano;ARMOR;false;;;Traje do Arcano;Vestes encantadas que conciliam mobilidade e proteção contra forças mágicas.
 regalia_de_merlin;ARMOR;false;;;Regália de Merlin;Uma indumentária lendária bordada com símbolos de uma tradição arcana esquecida.
@@ -131,9 +131,9 @@ macacao_de_couro;ARMOR;false;;;Macacão de Couro;Uma proteção flexível de cou
 conjunto_do_vigilante;ARMOR;false;;;Conjunto do Vigilante;Uma indumentária criada para aqueles que permanecem atentos enquanto outros descansam.
 conjunto_do_rastreador;ARMOR;false;;;Conjunto do Rastreador;Um traje resistente e silencioso adequado para perseguir qualquer tipo de presa.
 indumentaria_de_robin;ARMOR;false;;;Indumentária de Robin;Um conjunto lendário associado a um arqueiro que jamais aceitava uma vantagem injusta.
-gibao_comum;ARMOR;false;;;Gibão Comum;Uma proteção pesada e simples feita para suportar impactos diretos.
-gibao_reforcado;ARMOR;false;;;Gibão Reforçado;Um gibão fortalecido com placas adicionais sobre as regiões mais vulneráveis.
-cota_de_aco;ARMOR;false;;;Cota de Aço;Uma armadura de elos metálicos que distribui a força dos golpes recebidos.
+gibao_comum;ARMOR;false;25;;Gibão Comum;Uma proteção pesada e simples feita para suportar impactos diretos.
+gibao_reforcado;ARMOR;false;45;;Gibão Reforçado;Um gibão fortalecido com placas adicionais sobre as regiões mais vulneráveis.
+cota_de_aco;ARMOR;false;50;;Cota de Aço;Uma armadura de elos metálicos que distribui a força dos golpes recebidos.
 armadura_do_barbaro;ARMOR;false;;;Armadura do Bárbaro;Uma proteção robusta marcada por incontáveis confrontos vencidos pela força.
 armadura_do_templario;ARMOR;false;;;Armadura do Templário;Uma armadura solene construída para resistir tanto ao aço quanto à magia.
 arnes_de_arthur;ARMOR;false;;;Arnês de Arthur;Uma armadura lendária digna daqueles que carregam o peso de um reino.

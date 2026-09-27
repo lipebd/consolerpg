@@ -2,8 +2,8 @@
 # -------------------------------------------------------------
 # Flagelo
 # -------------------------------------------------------------
-investida;1;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;5;;;;;;NONE;
-investida;2;PRIMARY;RECOIL_DAMAGE;SELF;;50;;;;25;;NONE;
+investida;1;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;10;;;;;;NONE;
+investida;2;PRIMARY;RECOIL_DAMAGE;SELF;;25;;;;25;;NONE;
 quebra_armadura;1;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;10;;;;;;NONE;
 quebra_armadura;2;PRIMARY;ATTRIBUTE_STAGE;SINGLE_ENEMY;;;DEF;-1;2;;;NONE;
 golpe_experiente;1;PRIMARY;DAMAGE;SINGLE_ENEMY;PHYSICAL;30;;;;;;NONE;

@@ -2,6 +2,7 @@
 
 # Bree
 mercado_bree;bree;CITY;2;Mercado de Bree;Um mercado movimentado onde comerciantes de várias regiões oferecem suas mercadorias.
+ferreiro_bree;bree;CITY;9;Ferreiro de Bree;Um ferreiro muito amigável que vende armas e armaduras forjadas por ele e seu filho.
 
 # Verdes Ermos
 viajante_verdes_ermos;verdes_ermos;EXPLORATION;2;Mercador Viajante;Um mercador itinerante que atravessa os campos em busca de ingredientes raros e novos clientes.
