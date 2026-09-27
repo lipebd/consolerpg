@@ -19,6 +19,7 @@ import rpg.classes.PlayableClassDefinition;
 import rpg.enemies.EnemyCatalog;
 import rpg.enemies.EnemyDefinition;
 import rpg.enemies.EnemyDropCatalog;
+import rpg.enemies.EnemySpawn;
 import rpg.flags.CampaignFlags;
 import rpg.items.Item;
 import rpg.items.ItemCatalog;
@@ -119,6 +120,7 @@ import rpg.world.scenarios.DungeonBossAccess;
 import rpg.world.scenarios.DungeonBossAccessResolver;
 import rpg.world.scenarios.DungeonBossGateDefinition;
 import rpg.world.scenarios.DungeonProgress;
+import rpg.world.scenarios.DungeonSettings;
 import rpg.world.scenarios.Scenario;
 import rpg.world.scenarios.ScenarioCatalog;
 import rpg.world.shops.ShopAccessType;
@@ -845,23 +847,6 @@ public class World {
 		return campaignSaveService.save(snapshot);
 	}
 
-	private void displaySaveFailure(CampaignSaveResult saveResult) {
-		System.out.println();
-
-		switch (saveResult) {
-            case ENCODING_FAILED ->
-                    System.out.println(
-                            "Não foi possível preparar os dados da campanha para salvar.");
-
-            case FILE_WRITE_FAILED ->
-                    System.out.println("Não foi possível gravar a campanha salva.");
-
-            case SUCCESS ->
-                    throw new IllegalArgumentException(
-                            "A successful save cannot be displayed as a failure.");
-		}
-	}
-
 	private void executeCombatScenarioMenu() {
 		if (!(currentScenario
 				instanceof CombatScenario combatScenario)) {
@@ -1444,7 +1429,7 @@ public class World {
 
 		ExplorationSettings settings = combatScenario.getExplorationSettings();
 
-        List<EnemyDefinition> selectedDefinitions =
+        List<EnemySpawn> selectedDefinitions =
                 encounterGenerator.generateGroup(
 				currentScenario.getId(),
 				position,
@@ -1659,7 +1644,9 @@ public class World {
 			return true;
 		}
 
-		BattleResult result = startEncounter(epicDefinitions, BattleType.EPIC);
+		DungeonSettings settings = dungeon.getDungeonSettings();
+		int epicLevel = rollEnemyLevel(settings.getEpicMinLevel(), settings.getEpicMaxLevel());
+		BattleResult result = startEncounter(createEnemySpawns(epicDefinitions, epicLevel), BattleType.EPIC);
 
 		if (result == BattleResult.VICTORY) {
 			dungeonProgress.recordEpicVictory(dungeon.getId(), worldClock.getElapsedHours());
@@ -1687,7 +1674,7 @@ public class World {
 	}
 
 	private BattleResult startEncounter(
-			List<EnemyDefinition> enemyDefinitions,
+			List<EnemySpawn> enemySpawn,
 			BattleType battleType
 	) {
 		if (!(currentScenario instanceof CombatScenario combatScenario)) {
@@ -1695,7 +1682,7 @@ public class World {
 		}
 
 		BattleResult result =
-				battleCoordinator.start(enemyDefinitions, combatScenario, battleType);
+				battleCoordinator.start(enemySpawn, combatScenario, battleType);
 
 		if (result == BattleResult.VICTORY || result == BattleResult.DEFEAT) {
 			advanceWorldTime(HOURS_PER_FINISHED_BATTLE);
@@ -1905,16 +1892,18 @@ public class World {
 
 	private void executeBossEncounter(Dungeon dungeon) {
         String dungeonId = dungeon.getId();
-
+        DungeonSettings settings = dungeon.getDungeonSettings();
         boolean narrativeBoss = !dungeonProgress.isNarrativeBossDefeated(dungeonId);
 
         List<String> bossEnemyIds =
                 narrativeBoss
-                        ? dungeon.getDungeonSettings().getBossEnemyIds()
-                        : dungeon.getDungeonSettings().getRecurringBossEnemyIds();
+                        ? settings.getBossEnemyIds()
+                        : settings.getRecurringBossEnemyIds();
 
         List<EnemyDefinition> bossDefinitions = resolveEnemyDefinitions(bossEnemyIds);
-
+        int bossLevel = narrativeBoss
+                ? settings.getNarrativeBossLevel()
+                : rollEnemyLevel(settings.getRecurringBossMinLevel(), settings.getRecurringBossMaxLevel());
 		ConsoleUI.clearScreen();
 		ConsoleUI.displayHeading(dungeon.getName(), "Boss");
 
@@ -1925,7 +1914,7 @@ public class World {
 			System.out.println("- " + bossDefinition.getName());
 		}
 
-		BattleResult result = startEncounter(bossDefinitions, BattleType.BOSS);
+		BattleResult result = startEncounter(createEnemySpawns(bossDefinitions, bossLevel), BattleType.BOSS);
 
 		if (result == BattleResult.VICTORY) {
 			long elapsedHours = worldClock.getElapsedHours();
@@ -1975,6 +1964,16 @@ public class World {
 	private void terminateGame() {
 		System.out.println("\nObrigado por testar a versão atual!");
 		running = false;
+	}
+
+	private List<EnemySpawn> createEnemySpawns(List<EnemyDefinition> definitions, int level) {
+		return definitions.stream()
+				.map(definition -> new EnemySpawn(definition, level))
+				.toList();
+	}
+
+	private int rollEnemyLevel(int minLevel, int maxLevel) {
+	    return Math.toIntExact(random.nextLong(minLevel, (long) maxLevel + 1));
 	}
 
 	private List<CrafterDefinition> getCityCrafters(City city) {

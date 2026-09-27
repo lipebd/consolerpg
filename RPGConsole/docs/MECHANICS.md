@@ -959,6 +959,54 @@ A character below level 20 retains only EXP lower than the requirement for the n
 
 At level 20, character status displays `Nível máximo` instead of progress toward an unavailable level 21.
 
+## Enemy levels and natural progression
+
+Every runtime enemy has a positive level. Enemy levels determine internal combat power and are not displayed to the player.
+
+Each enemy definition stores level-1 natural stats together with optional primary, secondary and weakness attributes. These three specializations are independent, but every attribute present must be distinct from the others.
+
+For a target level:
+
+```text
+gainedLevels = level - 1
+primaryGrowthOccurrences = floor(level / 2)
+secondaryGrowthOccurrences = floor(level / 3)
+weaknessGrowthOccurrences = floor(level / 2)
+```
+
+Natural HP grows by `10` for every gained level. Maximum MP and SP retain their level-1 values.
+
+Regular-attribute growth for every gained level is:
+
+| Attribute | Growth |
+|---|---:|
+| `ATK` | `+3` |
+| `DEF` | `+1` |
+| `MAG` | `+3` |
+| `RES` | `+1` |
+| `VEL` | `+1` |
+| `LCK` | `+1` |
+
+The primary attribute receives one additional point at levels 2, 4, 6 and every two levels thereafter. The secondary attribute receives one additional point at levels 3, 6, 9 and every three levels thereafter.
+
+When an attribute is the enemy's weakness, its complete regular and specialization growth is replaced by one point at levels 2, 4, 6 and every two levels thereafter. Because all configured specialization attributes must be distinct, one attribute cannot simultaneously be primary, secondary and weakness.
+
+After natural level growth, rank multipliers affect maximum HP, ATK and MAG:
+
+| Enemy rank | HP | ATK and MAG |
+|---|---:|---:|
+| `COMMON` | 100% | 100% |
+| `VETERAN` | 130% | 110% |
+| `LEADER` | 200% | 120% |
+| `BOSS` | 300% | 130% |
+| `EPIC` | 400% | 140% |
+
+Rank does not multiply MP, SP, DEF, RES, VEL or LCK. Each multiplied result is rounded to the nearest integer, with an exact half rounded upward. `LEGENDARY` remains reserved and has no configured stat multipliers.
+
+Enemy progression has no global gameplay level cap. Every configured level must be positive, and growth uses exact arithmetic so overflow is rejected rather than wrapping. Encounter and dungeon loading calculate the highest configured level for every referenced enemy and reject invalid content during initialization.
+
+Enemy level currently does not change EXP, GOLD or drops. Scenario rewards, rank reward multipliers and independent drop entries retain their existing behavior.
+
 ## Skill acquisition and availability
 
 Every skill defines one acquisition type and a level requirement within the supported playable-character range, currently levels 1 through 20.
@@ -1829,9 +1877,12 @@ Exploration reward selection is independent from battle rewards. Every enemy dro
 Every dungeon defines:
 
 - A mandatory narrative boss group.
+- A fixed positive narrative-boss level.
 - A mandatory recurring boss group.
+- A positive recurring-boss minimum and maximum level.
 - A positive recurring-boss cooldown in fictional world hours.
 - A mandatory epic enemy group.
+- A positive epic minimum and maximum level.
 - An epic minimum position and area restriction.
 - A positive epic cooldown in fictional world hours.
 
@@ -1866,6 +1917,8 @@ Recurring-boss availability is evaluated when the party reaches the final positi
 
 Epic encounters begin initially available. Boss and epic respawn hours remain hidden from the player in V5.
 
+The narrative boss always uses its configured fixed level. A recurring-boss encounter rolls one inclusive level from its configured range when the encounter begins. An accepted epic encounter rolls one inclusive level from its configured range. Every enemy in the same boss or epic group receives that shared level.
+
 ## Random encounters
 
 Encounter entries are filtered by:
@@ -1874,6 +1927,8 @@ Encounter entries are filtered by:
 - Current exploration position.
 - Normal or special area.
 - Maximum copies of the same enemy.
+
+Each eligible entry also defines an inclusive minimum and maximum enemy level. After an entry is selected, every generated copy rolls its own level independently. Two copies of the same species in one battle may therefore have different natural stats.
 
 Enemy weights are relative selection weights.
 
@@ -1885,6 +1940,8 @@ The generated group size respects:
 - The scenario maximum.
 - The global enemy-group limit.
 - Each encounter entry's maximum copy count.
+
+Enemy level does not change entry eligibility, selection weight, group-size limits or copy limits.
 
 Repeated enemies receive numbered battle names, while unique enemies retain their regular display name.
 

@@ -187,7 +187,7 @@ File:
 
 `data/enemies.txt`
 
-Each valid enemy line contains exactly 13 fields:
+Each valid enemy line contains exactly 16 fields:
 
 | Position | Field | Java type | Example |
 |---:|---|---|---|
@@ -196,25 +196,28 @@ Each valid enemy line contains exactly 13 fields:
 | 3 | Maximum HP | `int` | `50` |
 | 4 | Maximum MP | `int` | `1` |
 | 5 | Maximum SP | `int` | `1` |
-| 6 | Attack | `int` | `8` |
-| 7 | Defense | `int` | `5` |
-| 8 | Magic | `int` | `1` |
-| 9 | Resistance | `int` | `1` |
-| 10 | Speed | `int` | `5` |
-| 11 | Luck | `int` | `1` |
-| 12 | Enemy rank | `EnemyRank` | `COMMON` |
-| 13 | Description | `String` | `Uma criatura lupina...` |
+| 6 | Attack | `int` | `9` |
+| 7 | Defense | `int` | `6` |
+| 8 | Magic | `int` | `5` |
+| 9 | Resistance | `int` | `6` |
+| 10 | Speed | `int` | `8` |
+| 11 | Luck | `int` | `4` |
+| 12 | Primary attribute | optional `CharacterAttribute` | `ATK` |
+| 13 | Secondary attribute | optional `CharacterAttribute` | empty |
+| 14 | Weakness attribute | optional `CharacterAttribute` | empty |
+| 15 | Enemy rank | `EnemyRank` | `COMMON` |
+| 16 | Description | `String` | `Uma criatura lupina...` |
 
 Header:
 
 ```text
-# id;name;maxHp;maxMp;maxSp;attack;defense;magic;resistance;speed;luck;rank;description
+# id;name;maxHp;maxMp;maxSp;attack;defense;magic;resistance;speed;luck;primaryAttribute;secondaryAttribute;weaknessAttribute;rank;description
 ```
 
 Example:
 
 ```text
-lobermo;Lobermo;50;1;1;8;5;1;1;5;1;COMMON;Uma criatura lupina que percorre os Verdes Ermos em busca de presas.
+lobermo;Lobermo;50;1;1;9;6;5;6;8;4;ATK;;;COMMON;Uma criatura lupina que percorre os Verdes Ermos em busca de presas.
 ```
 
 Supported enemy ranks:
@@ -241,12 +244,16 @@ Rules:
 - Maximum HP must be positive.
 - Maximum MP and SP cannot be negative.
 - ATK, DEF, MAG, RES, VEL and LCK must be positive.
+- Numeric attributes represent the species' natural level-1 values before rank multipliers.
+- Primary, secondary and weakness attributes are independently optional. An absent value uses an empty field.
+- Every non-empty specialization field must be a valid `CharacterAttribute`.
+- Primary, secondary and weakness attributes must be pairwise distinct when present.
 - Literal `\n` sequences in descriptions are converted into line breaks.
 - Invalid definitions report their source line and enemy ID.
 
-`EnemyLoader` ignores blank lines and comments, requires exactly 13 fields, converts numeric values and `EnemyRank`, creates `CharacterStats`, and registers an `EnemyDefinition`.
+`EnemyLoader` ignores blank lines and comments, requires exactly 16 fields, converts numeric values, optional attributes and `EnemyRank`, creates the level-1 `CharacterStats`, and registers an `EnemyDefinition`.
 
-Enemy definitions contain reusable immutable data. Each battle creates a separate mutable `Enemy` instance from its definition.
+Enemy definitions contain reusable immutable species data. Each battle combines one definition with a positive runtime level, calculates its natural stats and creates a separate mutable `Enemy` instance. `LEGENDARY` remains a recognized reserved rank, but its stat multipliers are not configured and stat calculation rejects it.
 
 ## Encounter definitions
 
@@ -254,28 +261,30 @@ File:
 
 `data/encounters.txt`
 
-Each valid encounter line contains exactly 7 fields:
+Each valid encounter line contains exactly 9 fields:
 
 | Position | Field | Java type | Example |
 |---:|---|---|---|
 | 1 | Scenario ID | `String` | `verdes_ermos` |
 | 2 | Enemy ID | `String` | `lobermo` |
 | 3 | Minimum position | `int` | `1` |
-| 4 | Maximum position | `int` | `5` |
-| 5 | Selection weight | `int` | `50` |
-| 6 | Maximum copies | `int` | `2` |
-| 7 | Area restriction | `ExplorationAreaRestriction` | `ANY` |
+| 4 | Maximum position | `int` | `2` |
+| 5 | Minimum enemy level | `int` | `1` |
+| 6 | Maximum enemy level | `int` | `2` |
+| 7 | Selection weight | `int` | `50` |
+| 8 | Maximum copies | `int` | `1` |
+| 9 | Area restriction | `ExplorationAreaRestriction` | `NORMAL_ONLY` |
 
 Header:
 
 ```text
-# scenarioId;enemyId;minPosition;maxPosition;weight;maxCopies;areaRestriction
+# scenarioId;enemyId;minPosition;maxPosition;minLevel;maxLevel;weight;maxCopies;areaRestriction
 ```
 
 Example:
 
 ```text
-verdes_ermos;lobermo;1;5;50;2;ANY
+verdes_ermos;lobermo;1;2;1;2;50;1;NORMAL_ONLY
 ```
 
 Area restriction values:
@@ -288,11 +297,14 @@ Rules:
 
 - `minPosition` is the first exploration position where the enemy may appear.
 - `maxPosition` is the last valid position.
+- `minLevel` and `maxLevel` must be positive, and the minimum cannot exceed the maximum.
+- Each generated copy rolls its level independently inside the inclusive configured range.
 - `weight` is relative and does not represent the chance that a battle occurs.
 - Weights are compared only among entries eligible for the current scenario, position and area type.
 - Eligible weights do not need to total 100.
 - `maxCopies` limits how many copies of the enemy may join one generated enemy group.
 - The referenced enemy ID must exist in `EnemyCatalog`.
+- The enemy's natural stats and rank multipliers must remain numerically valid at `maxLevel`; overflow rejects the encounter during loading.
 
 Loading flow:
 
@@ -301,8 +313,11 @@ encounters.txt
     -> EncounterLoader
     -> EncounterCatalog
     -> EncounterGenerator
-    -> EnemyDefinition
+    -> EnemySpawn
+    -> BattleCoordinator
 ```
+
+`EnemySpawn` pairs one immutable `EnemyDefinition` with one rolled positive level. It does not create or own mutable battle state.
 
 ## Exploration reward definitions
 
@@ -862,28 +877,33 @@ File:
 
 `data/dungeons.txt`
 
-Each active dungeon line contains exactly 8 fields:
+Each active dungeon line contains exactly 13 fields:
 
 ```text
-# scenarioId;bossEnemyIds;recurringBossEnemyIds;recurringBossCooldownHours;epicEnemyIds;epicMinPosition;epicAreaRestriction;epicEnemyCooldownHours
+# scenarioId;bossEnemyIds;narrativeBossLevel;recurringBossEnemyIds;recurringBossMinLevel;recurringBossMaxLevel;recurringBossCooldownHours;epicEnemyIds;epicMinLevel;epicMaxLevel;epicMinPosition;epicAreaRestriction;epicEnemyCooldownHours
 ```
 
 Example:
 
 ```text
-gruta_relamparrocha;mestre_eletrogoblin;mestre_eletrogoblin;4;relampagolem;1;ANY;6
+gruta_relamparrocha;mestre_eletrogoblin;2;mestre_eletrogoblin;1;1;4;relampagolem;1;1;1;ANY;6
 ```
 
 | Position | Field | Type | Example |
 |---|---|---|---|
 | 1 | Dungeon scenario ID | Stable ID | `gruta_relamparrocha` |
 | 2 | Narrative boss enemy IDs | Comma-separated ID group | `mestre_eletrogoblin` |
-| 3 | Recurring boss enemy IDs | Comma-separated ID group | `mestre_eletrogoblin` |
-| 4 | Recurring boss cooldown | Positive integer world hours | `4` |
-| 5 | Epic enemy IDs | Comma-separated ID group | `relampagolem` |
-| 6 | Epic minimum position | Positive integer | `1` |
-| 7 | Epic area restriction | `ExplorationAreaRestriction` | `ANY` |
-| 8 | Epic cooldown | Positive integer world hours | `6` |
+| 3 | Narrative boss level | Positive integer | `2` |
+| 4 | Recurring boss enemy IDs | Comma-separated ID group | `mestre_eletrogoblin` |
+| 5 | Recurring boss minimum level | Positive integer | `1` |
+| 6 | Recurring boss maximum level | Positive integer | `1` |
+| 7 | Recurring boss cooldown | Positive integer world hours | `4` |
+| 8 | Epic enemy IDs | Comma-separated ID group | `relampagolem` |
+| 9 | Epic minimum level | Positive integer | `1` |
+| 10 | Epic maximum level | Positive integer | `1` |
+| 11 | Epic minimum position | Positive integer | `1` |
+| 12 | Epic area restriction | `ExplorationAreaRestriction` | `ANY` |
+| 13 | Epic cooldown | Positive integer world hours | `6` |
 
 Rules:
 
@@ -896,6 +916,12 @@ Rules:
 - Narrative and recurring boss groups may reference the same enemy IDs.
 - An epic enemy cannot also belong to either boss group.
 - Empty IDs and duplicates inside the same group are invalid.
+- `narrativeBossLevel` must be positive and is fixed for every first-completion boss encounter.
+- Recurring-boss and epic minimum and maximum levels must be positive, and each minimum cannot exceed its maximum.
+- One recurring-boss level is rolled for the entire recurring group when that encounter begins.
+- One epic level is rolled for the entire epic group after the player accepts the encounter.
+- Every member of one boss or epic group uses the same rolled level.
+- Natural stats and rank multipliers must remain numerically valid at the narrative level and at both configured maximum levels; overflow rejects the dungeon during loading.
 - `recurringBossCooldownHours` and `epicEnemyCooldownHours` must be positive.
 - `epicMinPosition` must be at least `1` and lower than the dungeon's final exploration position.
 - `epicAreaRestriction` must be `NORMAL_ONLY`, `SPECIAL_ONLY` or `ANY`.

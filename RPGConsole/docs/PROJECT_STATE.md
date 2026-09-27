@@ -2,15 +2,15 @@
 
 ## Current version
 
-V6 is complete and preserved as the current released version.
+V7 is complete and preserved as the current released version.
 
 Current stage:
 
-`V7 polish — Parts 1 through 9 complete; final verification and portable V7 release pending. Recovery, revival, selective normalization, attribute-stage and temporary EXP/GOLD reward items are implemented and tested. Additional skill effects, conditions and other adjustments are implemented and tested. A preliminary V8_ROADMAP.md was created based on V7 Part 9.`
+`V8 enemy combat — the V7 INN carryover and the enemy-level, natural-growth, rank-strength and encounter-level block are implemented and verified. Enemy skills, action choice and target choice remain pending.`
 
 Current Git branch:
 
-`feature/v7-polish`
+`feature/v8-enemy-combat`
 
 Preserved release tags:
 
@@ -20,6 +20,7 @@ Preserved release tags:
 * `v4.0.0`
 * `v5.0.0`
 * `v6.0.0`
+* `v7.0.0`
 
 ## Project objective
 
@@ -971,7 +972,7 @@ Part 9 added immutable quest, flag and candidate snapshots; strict version-3 pro
 
 ## V7 interface polish
 
-Parts 1 through 6 are implemented and tested:
+V7 interface polish is implemented, tested and released:
 
 - Shared prose wrapping uses 75 visible columns, respects authored line breaks and ignores ANSI color codes when measuring text.
 - Console clearing and ordinary screen headings are centralized in `ConsoleUI`.
@@ -990,19 +991,39 @@ Parts 1 through 6 are implemented and tested:
 
 Part 7 travel, exploration, INN-saving and battle-message presentation is complete and visually verified. Route and branch menus resolve destination names from scenario IDs; route, branch and paid-transport descriptions animate after valid selection. Exploration results animate within the stable combat-scenario layout. Enter reveals complete travel, exploration and battle-message screens without terminal echo. Saving presents its animation and actual success or failure inside the INN screen.
 
-The first Part 8 block adds fixed or percentage-based recovery and revival items. Out-of-battle single-target use requests an ally, group use requests confirmation, and unsuccessful attempts preserve the item. Successful results animate and return to the refreshed inventory. The recovery and revival paths were tested, including cancellation and ineffective group use. Recovery, revival, selective normalization and attribute-stage items are implemented and tested. Persistent EXP/GOLD bonus items and additional skill effects remain pending.
+Part 8 completed fixed and percentage-based recovery and revival items, battle-only attribute-stage items, selective normalization items and persistent EXP/GOLD reward potions. Additional skill effects, conditions, attribute-based damage scaling and independent random targeting were also implemented and tested. Ineffective item attempts preserve the item, applicable confirmations remain cancellable and successful outside-battle results return to the refreshed inventory.
+
+## V8 enemy levels and encounter strength
+
+The V7 carryover for INN resting is complete. A successful rest uses a separate bounded result screen with shared wrapping and line animation; Enter reveals the complete result before a subsequent Enter returns to the INN.
+
+The first enemy-combat block is implemented and verified:
+
+- Every runtime `Enemy` has a positive level that remains hidden from the player.
+- `EnemyDefinition` stores level-1 natural stats and independently optional primary, secondary and weakness attributes.
+- `EnemyGrowthCalculator` centralizes enemy natural growth, weakness behavior, rank stat multipliers, rounding and exact arithmetic.
+- Enemy ranks multiply HP and offensive attributes after natural level growth. `LEGENDARY` remains reserved without configured stat multipliers.
+- Random encounter entries define inclusive minimum and maximum levels. `EncounterGenerator` rolls each generated copy independently and carries the selected definition and level through `EnemySpawn`.
+- Dungeon data defines a fixed narrative-boss level and separate recurring-boss and epic ranges. Every enemy inside one boss or epic group shares the level selected for that encounter.
+- Encounter and dungeon loaders validate growth at every configured maximum level so invalid ranges and arithmetic overflow fail during initialization.
+- All current enemy species were rebased to intentional level-1 stats. Optional specializations and limited lore-specific base adjustments preserve distinct identities without using arbitrary historical values as the primary balancing mechanism.
+- Verdes Ermos and Gruta Relamparrocha were rebalanced and verified through normal campaign play. The Mestre Eletrogoblin narrative encounter was approved at level 2 after completion with a level-4 protagonist using the Adaga Improvisada and Gibão Comum.
+
+Enemy level currently does not change EXP, GOLD or drops. Encounter ranges outside the verified opening regions remain preliminary content values for later regional balance passes.
 
 ## Current limitations and temporary implementations
 
 - Permanent skill-scroll content and curated scroll drops remain absent while the draft skills await required combat mechanics and final content review.
 - Playable-class definitions, natural growth and the complete approved 30-skill roster are external; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy turns currently use basic attacks; enemy skill selection is deferred.
+- Enemy-level reward scaling remains undecided; current rewards continue to depend on scenario and rank.
+- Encounter and dungeon level ranges outside Verdes Ermos and Gruta Relamparrocha remain preliminary until their regions receive representative playtesting.
 - `RECRUIT` references are now validated through `QuestRecruitmentCatalog` and resolved through candidate state.
 - After a normal victory, defeated allies remain unavailable until revived by a skill, item or city INN; full-party defeat instead activates rescue and complete restoration.
 - Items sold by the player cannot be bought back.
 - Normal new games currently begin with only the protagonist. The first-ally runtime behavior is implemented; later allies remain future narrative content.
 - Candidate naming reuses the implemented shared external-name selection and preserves one generated name across the active campaign and version-3 save/load cycles.
-- The four current random character names remain temporary pending creative-team curation.
+- The external character-name catalog has been expanded and can continue receiving content additions without code changes.
 - Party-title acquisition and character-history presentation remain future narrative work.
 - Initial crafting content is limited to two Bree crafters and two recipes pending broader creative and balance curation.
 - Crafters are currently restricted to city scenarios.
@@ -1011,7 +1032,7 @@ The first Part 8 block adds fixed or percentage-based recovery and revival items
 
 ## Current next step
 
-V7 was released as `v7.0.0` and integrated into `master`. V8 development has started. Its first block, the INN rest-result presentation, is implemented and verified. Enemy levels, enemy skills, action choice and target choice remain proposals in `V8_ROADMAP_DRAFT.md`; their detailed rules have not yet been approved.
+V7 was released as `v7.0.0` and integrated into `master`. V8 development continues on `feature/v8-enemy-combat`. The INN rest-result carryover and the first enemy-level and encounter-strength block are implemented, balanced for the opening regions and verified. The next block is the discussion and implementation of reusable enemy skills; action choice and target choice remain later roadmap work.
 
 ## Important conventions
 

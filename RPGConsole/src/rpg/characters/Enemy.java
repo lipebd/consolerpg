@@ -5,44 +5,55 @@ import rpg.items.DropEntry;
 
 // Represents an enemy controlled by the game.
 public class Enemy extends GameCharacter {
-	
+
 	private final String id;
+	private final int level;
 	private final List<DropEntry> dropTable;
-    private String description;
-    private final EnemyRank rank;
-    
-    public Enemy(
-            String id,
-            String name,
-            CharacterStats stats,
-            EnemyRank rank,
-            List<DropEntry> dropTable,
-            String description) {
-        super(name, stats);
+	private String description;
+	private final EnemyRank rank;
 
-        if (id == null || id.isBlank()) {
-            throw new IllegalArgumentException("Enemy ID cannot be empty.");
-        }
+	public Enemy(
+			String id,
+			String name,
+			CharacterStats stats,
+			int level,
+			EnemyRank rank,
+			List<DropEntry> dropTable,
+			String description
+	) {
+		super(name, stats);
+		if (level < 1) {
+			throw new IllegalArgumentException("Enemy level must be at least one.");
+		}
 
-        this.id = id.trim();
-        this.rank = rank;
-        this.dropTable = dropTable;
-        this.description = description;
-    }
+		this.level = level;
+		if (id == null || id.isBlank()) {
+			throw new IllegalArgumentException("Enemy ID cannot be empty.");
+		}
 
-    public String getId() {
-        return id;
-    }
+		this.id = id.trim();
+		this.rank = rank;
+		this.dropTable = dropTable;
+		this.description = description;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public int getLevel() {
+		return level;
+	}
 
 	public String getDescription() {
-	    return description;
+		return description;
 	}
-	
+
 	public EnemyRank getRank() {
-	    return rank;
+		return rank;
 	}
-	
+
 	public List<DropEntry> getDropTable() {
-	    return dropTable;
+		return dropTable;
 	}
 }

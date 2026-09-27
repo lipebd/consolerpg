@@ -32,7 +32,7 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.skills` | Immutable skill and component definitions, external loading and closed skill vocabularies | `SkillDefinition`, `SkillEffectDefinition`, `SkillLoader`, `SkillCatalog`, `SkillTargetType`, `SkillEffectType`, `SkillExecutionPhase`, `SkillConditionType` |
 | `rpg.items` | External item definitions, runtime item behavior, shared inventory and individual drop rules | `ItemDefinition`, `ItemDefinitionCatalog`, `ItemLoader`, `RecoveryItemDefinition`, `RecoveryItemLoader`, `ItemFactory`, `Item`, `BasicItem`, `RecoveryItem`, `ItemCatalog`, `Inventory`, `DropEntry` |
 | `rpg.items.equipment` | Immutable equipment specialization, loading, lookup, compatibility vocabulary and inventory-to-character transfers | `EquipmentDefinition`, `WeaponDefinition`, `ArmorDefinition`, `TrinketDefinition`, `EquipmentLoader`, `EquipmentCatalog`, `EquipmentService`, `WeaponType`, `ArmorWeight`, `TrinketType` |
-| `rpg.enemies` | Enemy definitions and external enemy/drop loading | `EnemyDefinition`, `EnemyCatalog`, `EnemyLoader`, `EnemyDropCatalog`, `EnemyDropLoader` |
+| `rpg.enemies` | Enemy definitions, external enemy/drop loading and level/rank stat calculation | `EnemyDefinition`, `EnemyCatalog`, `EnemyLoader`, `EnemyGrowthCalculator`, `EnemyDropCatalog`, `EnemyDropLoader` |
 | `rpg.flags` | Immutable permanent-flag definitions, external loading and mutable set-only campaign flag state | `FlagDefinition`, `FlagCatalog`, `FlagLoader`, `CampaignFlags` |
 | `rpg.requirements` | Immutable reusable requirement sets, external loading, pure runtime evaluation and quest-availability dependency validation | `RequirementDefinition`, `RequirementSetDefinition`, `RequirementCatalog`, `RequirementLoader`, `RequirementEvaluator`, `QuestAvailabilityValidator` |
 | `rpg.quests` | Immutable quest, step and objective definitions, mutable campaign progress, controlled persistence restoration, synchronous gameplay-event processing and NPC-interaction resolution | `QuestDefinition`, `QuestStepDefinition`, `QuestObjectiveDefinition`, `QuestCatalog`, `QuestLoader`, `QuestProgress`, `QuestProgressRestorer`, `QuestProgressService`, `QuestNpcInteractionResolver` |
@@ -43,7 +43,7 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.recruitment` | Recruitment definitions, persistent candidate identity, controlled persistence restoration, ally construction, class selection and atomic recruitment composition | `QuestRecruitmentDefinition`, `QuestRecruitmentCatalog`, `RecruitmentCandidateState`, `RecruitmentCandidateStateCatalog`, `RecruitmentCandidateStateRestorer`, `AllyRecruitmentService`, `ClassPathRecruitmentService` |
 | `rpg.world` | Active world state, fictional world time, scenario discovery, rescue coordination, shop-restocking coordination, narrative interaction and high-level gameplay flow | `World`, `WorldClock`, `WorldProgress` |
 | `rpg.world.scenarios` | External scenario and dungeon definitions, runtime scenario hierarchy, permanent dungeon progression and scenario creation | `ScenarioDefinition`, `ScenarioDefinitionCatalog`, `ScenarioLoader`, `CombatScenarioDefinition`, `CombatScenarioLoader`, `DungeonDefinition`, `DungeonLoader`, `ScenarioFactory`, `Scenario`, `CombatScenario`, `Field`, `Dungeon`, `DungeonSettings`, `DungeonProgress`, `City`, `ScenarioCatalog`, `CombatScenarioAction`, `CityAction` |
-| `rpg.world.encounters` | Encounter availability and weighted group generation | `EncounterEntry`, `EncounterCatalog`, `EncounterLoader`, `EncounterGenerator` |
+| `rpg.world.encounters` | Encounter availability, per-instance level selection and weighted group generation | `EncounterEntry`, `EncounterCatalog`, `EncounterLoader`, `EncounterGenerator`, `EnemySpawn` |
 | `rpg.world.exploration` | Exploration configuration, progress and event selection | `ExplorationSettings`, `ExplorationSession`, `ExplorationEventGenerator`, `ExplorationEventType`, `ExplorationAreaRestriction` |
 | `rpg.world.inns` | Immutable city-INN definitions, complete city coverage validation and lookup by stable or city scenario ID | `InnDefinition`, `InnCatalog`, `InnLoader` |
 | `rpg.world.shops` | External shop and offer definitions, runtime stock state, weighted offer generation and atomic commercial transactions | `ShopAccessType`, `ShopDefinition`, `ShopCatalog`, `ShopLoader`, `ShopStockEntry`, `ShopStockCatalog`, `ShopStockLoader`, `ShopOfferState`, `ShopState`, `ShopStateCatalog`, `ShopStateGenerator`, `ShopTransactionService`, `ShopPurchaseResult`, `ShopSaleResult` |
@@ -165,6 +165,7 @@ The calculator derives the complete natural-stat snapshot directly from the clas
 
 `Enemy` adds:
 
+- Positive hidden level.
 - Enemy rank.
 - Description.
 - Runtime drop table.
@@ -267,9 +268,12 @@ Scenario
 `Dungeon` adds immutable `DungeonSettings`, including:
 
 - A required narrative boss group.
+- Its fixed positive level.
 - A required recurring boss group.
+- Its positive minimum and maximum levels.
 - The recurring-boss cooldown in fictional world hours.
 - A required epic enemy group.
+- Its positive minimum and maximum levels.
 - The epic minimum exploration position.
 - The epic normal, special or unrestricted area requirement.
 - The epic cooldown in fictional world hours.
@@ -282,16 +286,17 @@ Narrative and recurring boss groups may reuse the same canonical enemy IDs. Epic
 
 ## Definition and runtime separation
 
-Enemy data is separated into two layers:
+Enemy data is separated into three layers:
 
 | Layer | Example | Purpose |
 |---|---|---|
-| Definition | `EnemyDefinition` for `lobermo` | Reusable immutable template loaded once |
-| Runtime object | One Lobermo inside a battle | Mutable HP, resources and battle state |
+| Definition | `EnemyDefinition` for `lobermo` | Reusable immutable species template with level-1 stats and growth specializations |
+| Spawn request | `EnemySpawn` containing Lobermo and level 2 | Immutable pairing selected for one encounter |
+| Runtime object | One level-2 Lobermo inside a battle | Calculated natural stats, mutable resources and battle state |
 
-The same `EnemyDefinition` can create many independent `Enemy` objects without sharing mutable battle state.
+The same `EnemyDefinition` can participate in many `EnemySpawn` values and create independent `Enemy` objects without sharing mutable battle state. `EnemySpawn` carries only the selected definition and level; mutable combat state begins in `Enemy`.
 
-This distinction also permits repeated enemies in one battle. Two Lobermos created from the same definition have independent HP and defensive state.
+This distinction also permits repeated enemies in one battle. Two Lobermos created from the same definition may receive different encounter levels and always have independent HP and defensive state.
 
 The same separation applies to items, scenarios, playable classes and skills. Scenario definitions are transformed into runtime `City`, `Field` and `Dungeon` objects by `ScenarioFactory`. A `PlayableCharacter` references immutable class and skill definitions, while one mutable `SkillUseState` represents the state of a single skill use. A separate mutable `Skill` object is unnecessary because persistent per-use state does not belong to the definition.
 
@@ -329,6 +334,20 @@ Enemy runtime instance
 - Drop-reference validation.
 - Runtime enemy creation.
 
+`EnemyDefinition` owns the immutable level-1 stats, optional primary, secondary and weakness attributes, rank and descriptive data. `EnemyGrowthCalculator` derives one complete natural-stat snapshot from that definition, rank and target level. `EnemyDefinition` then creates the runtime `Enemy` with the calculated stats and selected level.
+
+```text
+EnemyDefinition + target level
+              ↓
+  EnemyGrowthCalculator
+              ↓
+       CharacterStats
+              ↓
+            Enemy
+```
+
+The calculator owns enemy growth and rank stat multipliers. It validates specialization conflicts in one place and uses exact arithmetic so invalid high-level content fails during initialization or runtime creation instead of wrapping.
+
 ## Encounter data flow
 
 ```text
@@ -340,7 +359,7 @@ EncounterCatalog
         ↓
 EncounterGenerator
         ↓
-List<EnemyDefinition>
+List<EnemySpawn>
         ↓
 BattleCoordinator
         ↓
@@ -352,6 +371,8 @@ An `EncounterEntry` associates an enemy ID with:
 - Scenario ID.
 - Minimum exploration position.
 - Maximum exploration position.
+- Minimum enemy level.
+- Maximum enemy level.
 - Relative selection weight.
 - Maximum copies in one battle.
 - Normal, special or unrestricted area availability.
@@ -360,7 +381,7 @@ Encounter generation also uses the minimum and maximum enemy counts configured b
 
 Selection weights are relative and do not need to total 100.
 
-The generator creates a list of eligible enemy definitions while respecting:
+The generator creates a list of enemy spawns while respecting:
 
 - Scenario ID.
 - Exploration position.
@@ -370,6 +391,8 @@ The generator creates a list of eligible enemy definitions while respecting:
 - Scenario minimum group size.
 - Scenario maximum group size.
 - Global enemy-group limit.
+
+After selecting an eligible entry for each group position, `EncounterGenerator` independently rolls that copy's inclusive level range and creates an `EnemySpawn`. `BattleCoordinator` receives the resulting spawns and delegates natural-stat calculation and runtime creation to each definition.
 
 ## Enemy drop data flow
 
@@ -455,7 +478,9 @@ For dungeon events, `World` combines transient session state with permanent `Dun
 
 An ineligible epic result becomes a regular battle using the current area's encounter pool.
 
-The final dungeon position bypasses random event generation. `World` selects the narrative boss before first completion, the recurring boss after its cooldown, or an empty final resolution while the recurring boss remains unavailable.
+The final dungeon position bypasses random event generation. `World` selects the narrative boss before first completion, the recurring boss after its cooldown, or an empty final resolution while the recurring boss remains unavailable. The narrative group uses its fixed level; a recurring group receives one inclusive level rolled from its configured range.
+
+When the player accepts an eligible epic encounter, `World` rolls one inclusive level from the epic range. Every member of the same boss or epic group is represented by an `EnemySpawn` with that shared level before `BattleCoordinator` creates the runtime enemies.
 
 Boss and epic availability is not snapshotted when an exploration session begins. World-time advancement from battles earlier in the same session can make either encounter available later in that session.
 
@@ -504,7 +529,7 @@ The battle system is divided into the following responsibilities:
 - `Battle`
   - Coordinates the battle lifecycle, character actions, target-selection requests and results; delegates battle screens and menu input to `rpg.ui`.
 - `BattleCoordinator`
-  - Creates runtime enemies, receives the normal, boss or epic battle type, starts battles and grants victory rewards.
+  - Receives one or more `EnemySpawn` values, creates runtime enemies at their selected levels, receives the normal, boss or epic battle type, starts battles and grants victory rewards.
 - `BattleType`
   - Identifies a normal, boss or epic battle for contextual presentation.
 - `BattleScreen`
@@ -559,7 +584,7 @@ The battle system is divided into the following responsibilities:
 Current battle flow:
 
 ```text
-Enemy definitions
+EnemySpawn values
         ↓
 BattleCoordinator
         ↓
@@ -1595,7 +1620,7 @@ Version-3 restoration validates active objective structure and counters against 
 The following implementations remain intentionally temporary:
 
 - `RewardModifierItemLoader` validates `data/reward_modifier_items.txt` against base consumable definitions and returns immutable definitions indexed by item ID. `ItemFactory` creates `RewardModifierItem` for those IDs and rejects overlapping item specializations. The item delegates atomic EXP/GOLD activation to `PartyRewardModifierState` and is consumed only after successful activation. `InventoryMenu` owns the cancellable confirmation, blocked-slot feedback and brief success presentation; `BattleItemMenu` does not list these outside-battle items.
-- `character_names.txt` currently contains only temporary entries pending creative-team curation.
+- `character_names.txt` contains an expanded external catalog and can continue receiving content additions without changing character-name selection code.
 - Playable-class definitions, natural class growth and the complete approved 30-skill class-progression roster are integrated; skill powers and resource costs remain provisional pending the general balance pass.
 - Enemy actions currently use basic attacks; enemy skill selection can reuse the skill executor later but is outside the current scope.
 - The first recruitment composes with the level-7 class-path ceremony. Later recruitments remain narrative events and will reuse the generic recruitment components without repeating the ceremony.

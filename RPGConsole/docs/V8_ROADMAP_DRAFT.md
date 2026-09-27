@@ -1,6 +1,6 @@
 # RPGConsole V8 Roadmap — Draft for discussion
 
-> **Status: proposal, not approved implementation rules.** This document organizes work after the V7 release. It does not expand V7 scope. Mark a rule as frozen only after discussing its gameplay consequences and reviewing the affected code and data.
+> **Status: active roadmap with individually frozen blocks.** The INN carryover and enemy-level block are implemented and verified. Enemy skills, action choice and target choice remain proposals until their gameplay rules are discussed and frozen.
 
 ## Release aim and boundaries
 
@@ -10,12 +10,12 @@ V8 does not require a clever general-purpose AI. Keep enemy decisions explainabl
 
 ### Candidate implementation order
 
-1. Resolve the known INN rest-display issue carried over from V7.
-2. Enemy levels and per-encounter stat generation.
-3. Reusable enemy skill headers, enemy-to-skill links and shared ordered effects.
-4. Enemy action choice, execution and player feedback.
-5. Individual target selection and a small set of behavior profiles.
-6. Content migration, balancing, regression and release verification.
+1. [x] Resolve the known INN rest-display issue carried over from V7.
+2. [x] Implement enemy levels and per-encounter stat generation.
+3. [ ] Add reusable enemy skill headers, enemy-to-skill links and shared ordered effects.
+4. [ ] Add enemy action choice, execution and player feedback.
+5. [ ] Add individual target selection and a small set of behavior profiles.
+6. [ ] Complete remaining content balancing, regression and release verification.
 
 The order is intentional: target choice must know what action will be performed and whether it requires a physical, magical, ally, self, group or random target.
 
@@ -28,19 +28,27 @@ The order is intentional: target choice must know what action will be performed 
 
 ## 1. Enemy levels and encounter strength
 
-### Working direction
+### Frozen and implemented rules
 
-* [ ] Replace provisional enemy numbers in `enemies.txt` with intentionally chosen **level-1 base attributes**; do not preserve current arbitrary values as a balancing contract. The level-1 meaning is approved as a design starting point, not yet a finalized set of base numbers.
-* [ ] Define the growth rule and numerical safety range before changing existing content. Enemy level is gameplay power, can exceed the player level-20 cap and is not displayed to the player.
-* [ ] Prototype the playable-character growth schedule with primary and secondary attributes at enemy levels 1, 20 and 40. Adopt or adapt its individual growth rates only after checking HP, damage, resources, speed and initiative in representative battles. Reuse the existing calculation only if the chosen enemy rule truly matches it; its current implementation validates playable levels and cannot directly accept higher enemy levels.
-* [ ] Consider the effect of VEL growth on the current turn-order rule: large speed gaps can grant up to three actions per round. Test concrete low-, mid- and high-level encounters before adopting the player's growth values unchanged.
-* [ ] Add `minLevel` and `maxLevel` to each applicable entry in `encounters.txt`, validate their range and draw the level for **each spawned instance** from the selected entry. Different copies of one enemy may have different levels. Encounter rules do not change the immutable species definition.
-* [ ] Preserve encounter weight, position, area restriction and maximum-copy behavior. Carry the selected encounter entry and the drawn level through enemy creation; today encounters pass only enemy definitions to battle creation.
-* [ ] Decide how boss, epic and scripted battles receive their level, since they may be created directly from enemy IDs rather than `encounters.txt`.
-* [ ] Decide whether level affects EXP and GOLD. Today these rewards depend on the scenario and enemy rank; a stronger enemy in the same scenario would otherwise yield the same rewards. Review drops separately before introducing any level-based drop rule.
-* [ ] Ensure resource maxima, stats, damage, initiative, action count and reward math cannot overflow or silently wrap at the highest supported enemy level.
+* [x] Treat every numeric stat in `enemies.txt` as an intentional level-1 natural value. Use shared authoring profiles only as a balancing reference; keep the file as the single source of species data and use lore-specific base adjustments sparingly.
+* [x] Give every runtime enemy a positive hidden level. Enemy levels may exceed the playable level-20 boundary and have no global gameplay cap.
+* [x] Store independently optional primary, secondary and weakness attributes in each enemy definition. Every configured attribute must be distinct from the others.
+* [x] Centralize enemy growth in `EnemyGrowthCalculator`. HP gains 10 per level; MP and SP remain fixed; ATK and MAG gain 3 per level; DEF, RES, VEL and LCK gain 1 per level; primary and secondary bonuses follow the existing two- and three-level schedules; weakness replaces ordinary growth with one point every two levels.
+* [x] Apply rank stat multipliers after natural growth. Ranks modify HP, ATK and MAG while leaving other stats unchanged. `LEGENDARY` remains reserved without configured stat multipliers.
+* [x] Add inclusive `minLevel` and `maxLevel` fields to encounter entries and roll every generated copy independently. Preserve position, area, weight, copy and group-size behavior.
+* [x] Carry each selected definition and level through immutable `EnemySpawn` values until `BattleCoordinator` creates runtime enemies.
+* [x] Give every dungeon a fixed narrative-boss level plus recurring-boss and epic level ranges. All enemies in one boss or epic group share the level selected for that encounter.
+* [x] Use exact arithmetic and validate every encounter and dungeon reference at its highest configured level during initialization.
+* [x] Rebase all current enemy species to level-1 stats and configure their approved optional specializations.
+* [x] Rebalance and verify Verdes Ermos and Gruta Relamparrocha through normal campaign play, including the level-2 Mestre Eletrogoblin narrative encounter.
 
-**Open decisions:** formula for HP, MP, SP and the six attributes; primary/secondary choices in enemy data; safe enemy-level ceiling; levels for non-random encounters; EXP/GOLD adjustment. Do not add growth-related columns beyond those justified by the chosen formula.
+### Remaining balance work
+
+* [ ] Decide whether enemy level changes EXP or GOLD. Current rewards continue to depend on scenario and rank, while drops remain independent entries.
+* [ ] Validate and tune encounter ranges outside Verdes Ermos and Gruta Relamparrocha through representative regional play.
+* [ ] Revisit high-level VEL, initiative and the usefulness of an authored content ceiling when later regions receive final level ranges.
+
+> **Enemy levels and opening-region balance completed and verified.** The implemented formulas and rank multipliers are recorded in `MECHANICS.md`; external fields and validation rules are recorded in `DATA_FORMATS.md`.
 
 ## 2. Enemy skills using shared effects
 
@@ -53,6 +61,8 @@ The order is intentional: target choice must know what action will be performed 
 * [ ] Review player-only assumptions in skill header validation, execution context, target selection, weapon snapshot, UI and skill-slot ownership before adapting shared execution. Preserve the playable six-slot and scroll contracts.
 * [ ] Decide how enemy attacks obtain their base damage. Currently an enemy's basic attack uses zero skill power and zero weapon base damage; skill damage can add its own `DAMAGE` power. Compare leaving the weapon contribution at zero while tuning ATK/MAG, adding a base-damage value to the enemy itself, and relying on component power for individual skills. Do not fix DBA at zero or add an enemy stat before comparing normal-attack and skill damage across representative levels and enemy species. Power defined only in a shared enemy skill does not strengthen that species' basic attack.
 * [ ] Decide which effects and target types enemies may author initially. Reusing a shared effect parser need not imply enabling every combination in enemy content immediately.
+
+> **Frozen resource direction:** enemies retain finite MP and SP, and enemy skills consume their configured resources. The basic attack remains available without MP or SP cost and provides a safe fallback when no skill is usable. Exact skill costs, resource pools and action-selection frequency remain part of the enemy-skill balance pass.
 
 ### Proposed available-skill ceilings, including the ever-available basic attack
 
@@ -67,7 +77,7 @@ The order is intentional: target choice must know what action will be performed 
 
 These are **maximums**, not required counts. Distinguish all skills registered for a species from the skills available to one spawned instance. If a boss can draw a subset from a larger pool, decide whether defining moves must be guaranteed and how many remaining places are randomized. Do not permit a random loadout to omit a move required by the encounter design.
 
-**Open decisions:** exact enemy skill header; link format; fixed versus variable loadouts; guaranteed skills and random subset behavior; initial supported effects; per-instance skill selection timing; resource eligibility; enemy DBA or equivalent base-attack power. The final boss's proposed party-skill copying is separate, later design work.
+**Open decisions:** exact enemy skill header; link format; fixed versus variable loadouts; guaranteed skills and random subset behavior; initial supported effects; per-instance skill selection timing; resource costs and pools; enemy DBA or equivalent base-attack power. The final boss's proposed party-skill copying is separate, later design work.
 
 ## 3. Enemy action choice
 
@@ -93,19 +103,21 @@ These are **maximums**, not required counts. Distinguish all skills registered f
 
 ## 5. Content and release checks
 
-* [ ] Migrate enemy base stats, encounter level ranges and enemy skill assignments with concrete low-/mid-/late-game examples rather than filling every entry with placeholder values.
-* [ ] Check an enemy species reused in early and late regions, two copies with distinct rolled levels, and all non-random battle entry points.
+* [x] Migrate all current enemy base stats and encounter level ranges away from their historical placeholder balance. Opening-region values are verified; later regional ranges remain preliminary.
+* [ ] Assign enemy skills with concrete low-/mid-/late-game examples after the skill contract is frozen.
+* [x] Check two copies with distinct rolled levels and the fixed narrative-boss entry point.
+* [ ] Check one species reused in early and late regions plus recurring-boss and epic level-range entry points during their regional balance passes.
 * [ ] Test resource exhaustion, fallback basic attack, enemy magic, buffs/debuffs, purification/dissipation, targeting each side, defeated targets, random loadouts and target persistence.
 * [ ] Check progression pacing, initiative/action counts, EXP/GOLD, drops and normal/boss/epic battle outcomes. Preserve existing playable skill, inventory and save/load behavior.
 * [ ] Update architecture, mechanics, data formats, class guides and project state after each approved block is implemented and verified. Do not describe deferred legendary abilities as implemented.
 * [ ] Review the complete diff, package a portable release and check Unicode text and representative playthroughs before tagging V8.
 
-## Questions to settle before the first V8 implementation
+## Questions remaining for later V8 blocks
 
-1. Starting from level-1 base attributes, do enemies use the same progression numbers as players after separating level validation, or a different growth schedule?
-2. Which exact level range is safe and useful, especially for VEL and its extra actions?
-3. How are boss, epic and scripted enemy levels assigned?
-4. Does enemy level change EXP/GOLD, and by what bounded rule?
-5. Which skills are guaranteed, and which may be randomly chosen per encounter?
-6. What is the smallest usable enemy action-selection rule before tuning individual content?
-7. Should an enemy contribute its own base damage to basic and skill attacks, or should ATK/MAG and per-skill power suffice? Compare actual results at several levels before deciding.
+1. What exact fields belong in enemy skill headers and enemy-to-skill links?
+2. Which skills are guaranteed, and which may be randomly selected for one spawned enemy?
+3. Which shared effects and target types are enabled in the first enemy-skill content pass?
+4. Should an enemy contribute its own base damage to basic and skill attacks, or should ATK/MAG and per-skill power suffice?
+5. What is the smallest explainable action-selection rule before individual tuning?
+6. Which target profiles and retarget thresholds are frozen after action choice exists?
+7. Before release, should enemy level adjust EXP or GOLD through a bounded rule?

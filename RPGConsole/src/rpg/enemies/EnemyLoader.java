@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Locale;
 
+import rpg.characters.CharacterAttribute;
 import rpg.characters.CharacterStats;
 import rpg.characters.EnemyRank;
 
@@ -45,8 +47,10 @@ public class EnemyLoader {
 	private EnemyDefinition parseLine(String line) {
 		String[] fields = line.split(";", -1);
 
-		if (fields.length != 13) {
-			throw new IllegalArgumentException("Dados inválidos: " + line);
+		if (fields.length != 16) {
+			throw new IllegalArgumentException(
+					"Invalid enemy data. Expected 16 fields but found " + fields.length + ": " + line
+			);
 		}
 
 		String id = fields[0].trim();
@@ -62,9 +66,12 @@ public class EnemyLoader {
 		int speed = Integer.parseInt(fields[9].trim());
 		int luck = Integer.parseInt(fields[10].trim());
 
-		EnemyRank rank = EnemyRank.valueOf(fields[11].trim().toUpperCase());
+		CharacterAttribute primaryAttribute = parseOptionalAttribute(fields[11], "primary", id);
+		CharacterAttribute secondaryAttribute = parseOptionalAttribute(fields[12], "secondary", id);
+		CharacterAttribute weaknessAttribute = parseOptionalAttribute(fields[13], "weakness", id);
 
-		String description = fields[12].trim().replace("\\n", System.lineSeparator());
+		EnemyRank rank = EnemyRank.valueOf(fields[14].trim().toUpperCase(Locale.ROOT));
+		String description = fields[15].trim().replace("\\n", System.lineSeparator());
 
 		CharacterStats stats;
 
@@ -77,6 +84,33 @@ public class EnemyLoader {
 			);
 		}
 
-		return new EnemyDefinition(id, name, stats, rank, List.of(), description);
+		return new EnemyDefinition(
+				id,
+				name,
+				stats,
+				primaryAttribute,
+				secondaryAttribute,
+				weaknessAttribute,
+				rank,
+				List.of(),
+				description
+		);
+	}
+
+	private CharacterAttribute parseOptionalAttribute(String field, String position, String enemyId) {
+		String value = field.trim();
+
+		if (value.isEmpty()) {
+			return null;
+		}
+
+		try {
+			return CharacterAttribute.valueOf(value.toUpperCase(Locale.ROOT));
+		} catch (IllegalArgumentException exception) {
+			throw new IllegalArgumentException(
+					"Invalid " + position + " attribute for enemy '" + enemyId + "': " + value,
+					exception
+			);
+		}
 	}
 }
