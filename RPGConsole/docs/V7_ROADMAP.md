@@ -184,7 +184,7 @@ The checklist fixes **what belongs to V7**, not every rule for implementing it. 
 * Attribute fruits and potions apply +1 or +3 existing attribute stages to one ally during battle only. Apply them after the user's consumed-turn duration reduction, as for `POST_ACTION` skill components. Ordinary stages use the existing affected-character turn lifecycle; VEL remains pending for the next turn-order calculation. An application that changes no stage or duration does not consume an item or action. Use three explicit `attribute`, `stages` and `duration` columns in `recovery_items.txt`, matching the skill-effect data convention. VEL leaves `duration` empty. The existing recovery and purification components act during item use; attribute stages apply after the acting character finishes the consumed turn.
 * Normalization items specify the subset of negative attribute stages to clear in external data. Existing `false` means none and `true` means all; permit explicit attribute lists without another column when implementing this family. Add Sorrateira for VEL/LCK and include all six attributes in Total. Unlisted attributes remain untouched; an item with no eligible negative state is ineffective.
 * Outside-battle reward potions activate the existing separate party EXP and GOLD modifiers for 15 rewarded victories. Ascensão grants EXP +50%, Prosperidade GOLD +50%, and Sucesso grants EXP and GOLD +25% each. An active modifier of the same type blocks activation and item consumption. Sucesso requires both modifier slots free and applies both effects together or neither. Preserve existing save/load behavior for the modifier state.
-* Furtividade and Invisibilidade remain undecided for V7 pending a group decision. If selected, they affect only random normal battles, not epic or boss encounters; their duration and exact event-conversion behavior must be approved before implementation. Do not mark them implemented as part of the other item families.
+* Furtividade and Invisibilidade are suspended indefinitely. They remain possible future content, with no implementation planned for V7 and no approved duration or encounter-conversion rules.
 
 > **Recovery and revival items completed and verified on 2026-09-26.**
 >
@@ -215,15 +215,21 @@ The checklist fixes **what belongs to V7**, not every rule for implementing it. 
 * [x] Extend the existing definition, validation, execution and presentation paths only as required by the approved effects.
 * [x] Verify each distinct new effect behavior and relevant failure boundary without repeating the same execution path for every item or skill.
 
-This part reserves room for selected new effects; it does not approve an unlimited effect catalog. Enemy action selection and enemy use of magic, buffs or debuffs are handled as a study in Part 9.
+> **Part 8 closed on 2026-09-26.**
+>
+> The selected recovery, revival, attribute-stage, purification and reward-modifier items were implemented and tested. Additional skill effects, conditions, attribute-based damage scaling and independent random targeting were implemented and tested. Temporary item and encounter test data were removed. Furtividade and Invisibilidade remain suspended indefinitely.
 
 ## 9. Enemy decision-making study — no V7 implementation
 
-* [ ] Map the current enemy turn, available attacks, targeting rules and battle-effect execution paths.
-* [ ] Compare practical approaches to target selection, target persistence and attack/action selection for a deliberately simple enemy AI.
-* [ ] Study what enemy magical attacks, buffs and debuffs would require in definitions, execution, feedback and validation.
-* [ ] Record a bounded recommendation, implementation order and open decisions for a later version.
-* [ ] Make no enemy-AI or enemy-action expansion in V7 as a consequence of this study alone.
+* [x] Map the current enemy turn, available attacks, targeting rules and battle-effect execution paths.
+* [x] Compare practical approaches to target selection, target persistence and attack/action selection for a deliberately simple enemy AI.
+* [x] Study what enemy magical attacks, buffs and debuffs would require in definitions, execution, feedback and validation.
+* [x] Record a bounded recommendation, implementation order and open decisions for a later version.
+* [x] Make no enemy-AI or enemy-action expansion in V7 as a consequence of this study alone.
+
+> **Part 9 closed on 2026-09-26.**
+>
+> Current enemy turns use a physical basic attack against the living party member with the lowest absolute HP. The study recommends defining enemy levels and actions before implementing target selection. A future version may use reusable enemy skills with shared ordered effects, per-enemy action sets and three initial target-behavior profiles: instinctive, predator and tactical. Target choice should follow the selected action and remain independent for each enemy instance. No enemy AI or enemy-action expansion was implemented in V7. Enemy growth rates, DBA, action selection, loadouts and reward scaling remain open for V8 balancing.
 
 ## 10. V7 verification, documentation and release
 

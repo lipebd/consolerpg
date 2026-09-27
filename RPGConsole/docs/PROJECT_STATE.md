@@ -6,7 +6,7 @@ V6 is complete and preserved as the current released version.
 
 Current stage:
 
-`V7 polish — Parts 1 through 7 complete. Recovery, revival, selective normalization, attribute-stage and temporary EXP/GOLD reward items are implemented and tested. Remaining V7 work pending`
+`V7 polish — Parts 1 through 9 complete; final verification and portable V7 release pending. Recovery, revival, selective normalization, attribute-stage and temporary EXP/GOLD reward items are implemented and tested. Additional skill effects, conditions and other adjustments are implemented and tested. A preliminary V8_ROADMAP.md was created based on V7 Part 9.`
 
 Current Git branch:
 
