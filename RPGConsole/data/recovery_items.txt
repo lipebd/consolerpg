@@ -11,7 +11,7 @@ pocao_de_aramao;SINGLE_ALLY;0;50;0;0;false;;;
 pocao_de_poranjo;SINGLE_ALLY;0;0;50;0;false;;;
 pocao_concentrada_de_aramao;SINGLE_ALLY;0;200;0;0;false;;;
 pocao_concentrada_de_poranjo;SINGLE_ALLY;0;0;200;0;false;;;
-pocao_de_frutas_da_montanha;ALL_ALLIES;0;75;75;0;false;;;
+pocao_de_frutas_da_montanha;SINGLE_ALLY;0;75;75;0;false;;;
 pocao_concentrada_de_frutas_da_montanha;SINGLE_ALLY;0;150;150;0;false;;;
 gole_de_vida;SINGLE_ALLY;100%;0;0;0;false;;;
 elixir_da_segunda_chance;SINGLE_ALLY;0;0;0;50%;false;;;

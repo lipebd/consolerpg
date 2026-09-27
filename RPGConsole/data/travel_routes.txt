@@ -28,4 +28,3 @@ ruinas_sanguemar_deep_valley;ruinas_sanguemar;deep_valley;false;Portal Não Mág
 verdes_ermos_entrelugar;verdes_ermos;entrelugar;false;Seguir para Entrelugar;Uma bifurcação entre os campos revela um caminho incomum até Entrelugar.;
 entrelugar_muro_destruido;entrelugar;verdes_ermos;false;Muro Destruído;Uma abertura no antigo muro da cidade conduz aos Verdes Ermos.;1
 setegalhos_estrada_leste;setegalhos;verdes_ermos;false;Estrada Leste;A estrada leste deixa o povoado para trás e retorna aos Verdes Ermos.;4
-bree_buero;bree;gruta_relamparrocha;true;Buero;Bora matar épico;1
