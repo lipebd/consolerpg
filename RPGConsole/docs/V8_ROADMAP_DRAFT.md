@@ -21,10 +21,10 @@ The order is intentional: target choice must know what action will be performed 
 
 ## V7 carryover: INN rest presentation
 
-* [ ] Review the INN **rest** result screen. The rest message currently has no animation, and wrapping can push the contextual heading out of the visible console area. Keep the heading and result within the established screen bounds.
-* [ ] Verify both short and wrapping rest messages at the supported terminal size. Preserve rest cost and resource-restoration behavior.
+* [x] Resolve the V7 INN rest-result issue: animate the wrapped message and keep the contextual heading and result within the established screen bounds.
+* [x] Verify the short already-rested feedback and the wrapped rest result at the supported terminal size. Preserve rest cost and resource-restoration behavior.
 
-Saving at the INN has its own working animation and result presentation; the V7 observation concerns resting, not saving.
+> **INN rest presentation completed and verified.** A successful rest opens a bounded contextual result screen with animated wrapped text. Enter reveals the complete message; a subsequent Enter returns to the INN. Short feedback remains in the menu. Payment and restoration retain their existing rules.
 
 ## 1. Enemy levels and encounter strength
 

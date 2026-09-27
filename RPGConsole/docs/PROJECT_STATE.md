@@ -1011,11 +1011,7 @@ The first Part 8 block adds fixed or percentage-based recovery and revival items
 
 ## Current next step
 
-V6 is the latest packaged release as `v6.0.0`. V7 development continues on `feature/v7-polish`. Parts 1 through 7 are complete. The recovery and revival item block of Part 8 is implemented and tested; attribute items, normalization items, persistent battle-reward bonuses and skill effects remain pending. Part 9 and final V7 verification, packaging and release also remain pending.
-
-Parts 1 through 6 are complete. Part 7 travel, exploration, saving and battle-message interruption have been implemented and tested; its text-polish review remains before closure. Parts 8 and 9 and the final V7 verification, packaging and release remain pending.
-
-The general inventory screen outside battle still needs the previously identified flush and incomplete-screen correction.
+V7 was released as `v7.0.0` and integrated into `master`. V8 development has started. Its first block, the INN rest-result presentation, is implemented and verified. Enemy levels, enemy skills, action choice and target choice remain proposals in `V8_ROADMAP_DRAFT.md`; their detailed rules have not yet been approved.
 
 ## Important conventions
 

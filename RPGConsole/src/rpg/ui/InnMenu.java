@@ -1,12 +1,13 @@
 package rpg.ui;
 
+import java.util.List;
 import java.util.Objects;
 
 import rpg.GameCurrency;
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
-import rpg.world.inns.InnDefinition;
 import rpg.persistence.CampaignSaveResult;
+import rpg.world.inns.InnDefinition;
 
 // Displays an INN and controls the party-resting flow.
 public final class InnMenu {
@@ -66,17 +67,11 @@ public final class InnMenu {
 		String availableGoldLabel = GameCurrency.getName() + " disponível:";
 		int labelWidth = Math.max(stayPriceLabel.length(), availableGoldLabel.length()) + 1;
 
-		System.out.printf("\n%-" + labelWidth + "s%s%n",
-				stayPriceLabel, GameCurrency.format(innDefinition.getPrice()));
-		System.out.printf("%-" + labelWidth + "s%s%n",
-				availableGoldLabel, GameCurrency.format(party.getGold()));
+		System.out.printf("\n%-" + labelWidth + "s%s%n", stayPriceLabel, GameCurrency.format(innDefinition.getPrice()));
+		System.out.printf("%-" + labelWidth + "s%s%n", availableGoldLabel, GameCurrency.format(party.getGold()));
 	}
 
-	private void displayInn(
-			String cityName,
-			InnDefinition innDefinition,
-			String feedbackMessage
-	) {
+	private void displayInn(String cityName, InnDefinition innDefinition, String feedbackMessage) {
 		displayInnDetails(cityName, innDefinition);
 		System.out.println();
 		System.out.println("[1] Descansar");
@@ -91,10 +86,7 @@ public final class InnMenu {
 		System.out.print("> ");
 	}
 
-	private String tryRest(
-			String cityName,
-			InnDefinition innDefinition
-	) {
+	private String tryRest(String cityName, InnDefinition innDefinition) {
 		if (isPartyFullyRestored()) {
 			return "O grupo ainda está descansado e não precisa de uma estadia.";
 		}
@@ -113,7 +105,52 @@ public final class InnMenu {
 
 		party.fullyRestoreMembers();
 
-		return "Após uma noite de descanso, todos despertam com as forças completamente renovadas.";
+		displayRestResult(cityName, innDefinition);
+		return null;
+	}
+
+	private void displayRestResult(String cityName, InnDefinition innDefinition) {
+		String message = "Após uma noite de descanso, todos despertam com as forças completamente renovadas.";
+		List<String> lines = ConsoleUI.wrapText(message);
+		boolean interrupted = false;
+
+		consoleInput.discardPendingInput();
+		ConsoleUI.clearScreen();
+		ConsoleUI.displayHeading(cityName, innDefinition.getName());
+		System.out.println();
+
+		for (int index = 0; index < lines.size(); index++) {
+			interrupted = ConsoleUI.animateLine(lines.get(index), 35, consoleInput);
+
+			if (interrupted) {
+				break;
+			}
+
+			System.out.println();
+
+			if (index < lines.size() - 1 && consoleInput.pollLine(350).isPresent()) {
+				interrupted = true;
+				break;
+			}
+		}
+
+		if (interrupted) {
+			// Remove the terminal's echoed Enter and show the complete result.
+			ConsoleUI.clearScreen();
+			ConsoleUI.displayHeading(cityName, innDefinition.getName());
+			System.out.println();
+
+			for (String line : lines) {
+				System.out.println(line);
+			}
+		}
+
+		System.out.println();
+		System.out.print("aperte ENTER para continuar");
+		System.out.flush();
+
+		consoleInput.discardPendingInput();
+		consoleInput.readLine();
 	}
 
 	public void displaySaving(String cityName, InnDefinition innDefinition) {
