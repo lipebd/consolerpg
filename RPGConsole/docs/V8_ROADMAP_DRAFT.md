@@ -10,13 +10,21 @@ V8 does not require a clever general-purpose AI. Keep enemy decisions explainabl
 
 ### Candidate implementation order
 
-1. Enemy levels and per-encounter stat generation.
-2. Reusable enemy skill headers, enemy-to-skill links and shared ordered effects.
-3. Enemy action choice, execution and player feedback.
-4. Individual target selection and a small set of behavior profiles.
-5. Content migration, balancing, regression and release verification.
+1. Resolve the known INN rest-display issue carried over from V7.
+2. Enemy levels and per-encounter stat generation.
+3. Reusable enemy skill headers, enemy-to-skill links and shared ordered effects.
+4. Enemy action choice, execution and player feedback.
+5. Individual target selection and a small set of behavior profiles.
+6. Content migration, balancing, regression and release verification.
 
 The order is intentional: target choice must know what action will be performed and whether it requires a physical, magical, ally, self, group or random target.
+
+## V7 carryover: INN rest presentation
+
+* [ ] Review the INN **rest** result screen. The rest message currently has no animation, and wrapping can push the contextual heading out of the visible console area. Keep the heading and result within the established screen bounds.
+* [ ] Verify both short and wrapping rest messages at the supported terminal size. Preserve rest cost and resource-restoration behavior.
+
+Saving at the INN has its own working animation and result presentation; the V7 observation concerns resting, not saving.
 
 ## 1. Enemy levels and encounter strength
 

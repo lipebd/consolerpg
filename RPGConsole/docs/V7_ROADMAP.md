@@ -239,3 +239,5 @@ The checklist fixes **what belongs to V7**, not every rule for implementing it. 
 * [ ] Review the finished V7 diff for duplicate responsibilities, unintended temporary code and unrelated changes.
 * [ ] Build and check the portable Windows package, including Unicode presentation and an extracted-package playthrough of the changed flows.
 * [ ] Prepare the V7 release notes, tag and publish the release after the final verification and documentation are approved.
+
+> **Known V7 issue:** INN resting has no result animation, and a long rest message may wrap and push the heading outside the visible screen. Resting and INN saving remain functional. Rest-screen presentation is deferred to V8.
