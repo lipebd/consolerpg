@@ -51,7 +51,7 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.world.rewards` | External exploration reward pools, validation and weighted selection | `ExplorationRewardEntry`, `ExplorationRewardCatalog`, `ExplorationRewardLoader`, `ExplorationRewardGenerator`, `ExplorationReward`, `ExplorationRewardType` |
 | `rpg.world.travel` | External directed-route definitions, loading and runtime unlock progress | `TravelRouteDefinition`, `TravelCatalog`, `TravelRouteLoader`, `TravelProgress` |
 | `rpg.world.transport` | External paid city-transport definitions, loading and destination lookup | `CityTransportDefinition`, `CityTransportCatalog`, `CityTransportLoader` |
-| `rpg.ui` | Console input, centralized wrapping, heading composition and clearing, menus, character creation, navigation, dialogue, quest and bestiary presentation, target selection, shared formatters and information screens | `ConsoleUI`, `ConsoleInput`, `TitleScreen`, `CharacterCreationMenu`, `PartyRescueScreen`, `CombatScenarioMenu`, `CityMenu`, `InventoryMenu`, `EquipmentMenu`, `ShopMenu`, `CraftingMenu`, `DialoguePresenter`, `QuestMenu`, `BestiaryMenu`, `QuestProgressPresenter`, `BattleScreen`, `CombatEffectFormatter` |
+| `rpg.ui` | Console input, centralized wrapping, heading composition and clearing, startup guidance, menus, character creation, navigation, dialogue, quest and bestiary presentation, target selection, shared formatters and information screens | `ConsoleUI`, `ConsoleInput`, `TitleScreen`, `CampaignSelectionMenu`, `TerminalSetupScreen`, `CharacterCreationMenu`, `PartyRescueScreen`, `CombatScenarioMenu`, `CityMenu`, `InventoryMenu`, `EquipmentMenu`, `ShopMenu`, `CraftingMenu`, `DialoguePresenter`, `QuestMenu`, `BestiaryMenu`, `QuestProgressPresenter`, `BattleScreen`, `CombatEffectFormatter` |
 
 ## Application initialization
 
@@ -84,7 +84,7 @@ External data is loaded before gameplay. Invalid definitions or unresolved refer
 
 INN definitions are loaded before combat-scenario definitions. This makes `InnCatalog` available to `CombatScenarioLoader`, which can reject rescue destinations that are not registered cities with a valid INN.
 
-During a normal run, `Main` repeatedly opens `TitleScreen` and `CharacterCreationMenu` until the player confirms a protagonist. The confirmed character is created as a level-1 Flagelo and becomes the only initial member and leader of the new `Party`. Cancelling character creation returns to the title screen without creating partial character state.
+During a normal run, `Main` displays the V8 `TitleScreen` once and uses `CampaignSelectionMenu` to continue a restored campaign or begin a new one. A confirmed new campaign opens `TerminalSetupScreen` before character creation; continuing a campaign and the `--dev-party` path skip that guidance. `Main` then reopens campaign selection if character creation is cancelled. The confirmed character is created as a level-1 Flagelo and becomes the only initial member and leader of the new `Party` without leaving partial state on cancellation.
 
 When the `--dev-party` argument is present, `Main` bypasses the normal title and creation flow and delegates party construction to `DevelopmentPartyFactory`. This development-only path supports one to four configured members with distinct classes, arbitrary positive levels, configurable initial gold and optional temporary reward modifiers while remaining isolated from normal new-game behavior.
 
@@ -1462,6 +1462,8 @@ Headings, options, prompts, blank lines, separators, status values, columns and 
 
 Every independent interactive or informational screen has one bracketed heading as its first visible line after clearing. Physical context and its qualifier share one composed heading instead of being stacked. Functional screens such as inventory, quest journal and party status remain independent from map context. `TitleScreen` is the application-branding exception.
 
+`TerminalSetupScreen` is the new-campaign sizing exception. It draws one ASCII-only frame with exactly 77 columns and 17 lines, instructs the player to resize the terminal until the complete border is visible and waits for Enter without printing an eighteenth line. It appears after the final New Game selection and before `CharacterCreationMenu`; Continue and `--dev-party` do not use it.
+
 `ConsoleUI.clearScreen()` owns the cursor movement, terminal clearing and flush required to apply the clear command. Ordinary screens do not scatter additional explicit flush calls. Timed dialogue, battle and transition output may define their own later presentation contracts.
 
 Important UI components include:
@@ -1486,6 +1488,8 @@ Important UI components include:
 - `PartyStatusMenu`
 - `CharacterStatusMenu`
 - `CharacterCreationMenu`
+- `CampaignSelectionMenu`
+- `TerminalSetupScreen`
 - `PlayableClassDetailFormatter`
 - `ClassPathQuestionnaireMenu`
 - `ClassPathTieMenu`

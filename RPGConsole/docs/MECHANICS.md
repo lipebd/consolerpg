@@ -1261,6 +1261,14 @@ After a successful stay, the player remains inside the INN. Feedback from succes
 
 City locations and city exits remain separate navigation paths. Adjacent exits reuse unlocked `TravelRouteDefinition` entries, preserve their display names and descriptions, and do not charge the party. Fixed city shops are available through the same location-selection flow as INNs, while paid transport remains a separate city action.
 
+## New-campaign terminal setup
+
+The normal startup identifies the application as V8 and then presents campaign selection. Continue activates the already restored campaign without additional setup.
+
+After the player definitively selects New Campaign, `TerminalSetupScreen` draws an ASCII-only frame with exactly 77 columns and 17 lines. The player resizes the terminal until the complete frame is visible and presses Enter to proceed. The bottom border is printed without a trailing line break so the sizing guide itself does not scroll to an eighteenth line.
+
+The screen appears before character creation. Cancelling character creation returns to campaign selection; choosing New Campaign again presents the sizing guide again. The `--dev-party` development path bypasses the title, campaign selection and terminal setup together.
+
 ## Initial character creation
 
 A normal new game creates only the protagonist. The protagonist:
@@ -1299,7 +1307,7 @@ Before confirmation, the interface displays:
 
 The internal beginner class is not presented as a separate path. Its visible name, symbol, base attributes, growth specializations and armor weight match the final Flagelo path.
 
-The player may confirm the character, change the proposed name or cancel. Changing the name returns to the manual-or-random choice. Cancelling returns to the title screen. No `PlayableCharacter` or `Party` is created until confirmation succeeds.
+The player may confirm the character, change the proposed name or cancel. Changing the name returns to the manual-or-random choice. Cancelling returns to campaign selection. No `PlayableCharacter` or `Party` is created until confirmation succeeds.
 
 Story-based ally recruitment, random ally classes and party-title acquisition are not part of the initial creation flow.
 

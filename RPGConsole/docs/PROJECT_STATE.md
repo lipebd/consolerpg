@@ -2,11 +2,11 @@
 
 ## Current version
 
-V7 is complete and preserved as the current released version.
+V7 is complete and preserved as the current released version. V8 is the current release candidate.
 
 Current stage:
 
-`V8 enemy combat — the V7 INN carryover, enemy levels, reusable enemy skills, initial enemy action choice, individual target profiles and Bestiary integration are implemented and verified. Remaining regional balance, regression and release checks remain pending.`
+`V8 release candidate — feature scope, dungeon level ranges, Bestiary persistence, V8 branding and new-campaign terminal guidance are implemented and verified. Final diff, portable-package and release checks remain pending.`
 
 Current Git branch:
 
@@ -698,7 +698,7 @@ The initial character-creation block is complete.
 - `CharacterNameCatalog` stores the validated names and `CharacterNameSelector` selects uniformly after exclusions.
 - `CharacterCreationMenu` supports manual naming, random naming, repeated randomization, name changes, confirmation and cancellation.
 - Character creation displays the Flagelo's complete class name, primary and secondary specializations and external description.
-- Cancelling returns to `TitleScreen` without constructing partial character or party state.
+- Cancelling returns to `CampaignSelectionMenu` without constructing partial character or party state.
 - A confirmed normal new game creates only one level-1 Flagelo with full resources.
 - The confirmed protagonist becomes the first member and leader of the new `Party`.
 - `Main` no longer contains a hardcoded normal party.
@@ -864,7 +864,7 @@ Current completed behavior:
 
 `QuestProgressRestorer` and `RecruitmentCandidateStateRestorer` provide single-use domain-local restoration gateways over package-private mutation APIs. The persistence orchestrator reconstructs all three narrative state holders before validating quest, flag, candidate, leader-class and party coherence.
 
-After the unchanged title screen, `CampaignSelectionMenu` distinguishes absent, unreadable, invalid and valid saves. Valid campaigns may be continued or replaced through the confirmed New Game flow. Every INN provides atomic Save and Continue and Save and Exit operations, while ordinary exits require confirmation and never save implicitly.
+After the V8 title screen, `CampaignSelectionMenu` distinguishes absent, unreadable, invalid and valid saves. Valid campaigns may be continued or replaced through the confirmed New Game flow. A definitive New Game selection opens the fixed 77-by-17 `TerminalSetupScreen` before character creation; Continue skips it. Every INN provides atomic Save and Continue and Save and Exit operations, while ordinary exits require confirmation and never save implicitly.
 
 Complete encrypted round trips, campaign reconstruction, valid and invalid startup flows, preservation of previous saves, INN saving, failed writes, exit-without-saving behavior and version-2 dungeon-progress restoration were manually validated before Part 9. Part 9 additionally validated explicit version-2 rejection and a complete version-3 save, restart, Continue, resave and second-restart cycle with empty narrative collections. Non-empty narrative persistence remains scheduled with canonical quest content.
 
@@ -994,6 +994,8 @@ Part 7 travel, exploration, INN-saving and battle-message presentation is comple
 Part 8 completed fixed and percentage-based recovery and revival items, battle-only attribute-stage items, selective normalization items and persistent EXP/GOLD reward potions. Additional skill effects, conditions, attribute-based damage scaling and independent random targeting were also implemented and tested. Ineffective item attempts preserve the item, applicable confirmations remain cancellable and successful outside-battle results return to the refreshed inventory.
 
 ## V8 enemy combat
+
+The title screen identifies the current build as V8. Normal New Game selection opens an ASCII-only 77-column by 17-line terminal-sizing guide before character creation. Continue and `--dev-party` skip that guide. Automated checks verify every line width, total height and the absence of a trailing eighteenth line; the complete visual flow was also verified in the target terminal.
 
 The V7 carryover for INN resting is complete. A successful rest uses a separate bounded result screen with shared wrapping and line animation; Enter reveals the complete result before a subsequent Enter returns to the INN.
 

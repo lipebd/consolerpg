@@ -100,6 +100,7 @@ import rpg.ui.ClassPathTieMenu;
 import rpg.ui.ClassPathTransitionFailurePresenter;
 import rpg.ui.ConsoleInput;
 import rpg.ui.ConsoleUI;
+import rpg.ui.TerminalSetupScreen;
 import rpg.ui.TitleScreen;
 import rpg.world.World;
 import rpg.world.WorldClock;
@@ -639,6 +640,8 @@ public class Main {
 
 						break;
 					}
+
+					TerminalSetupScreen.show(consoleInput);
 
                     Optional<Party> createdParty =
                             createNewGameParty(

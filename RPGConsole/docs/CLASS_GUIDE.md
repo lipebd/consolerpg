@@ -480,7 +480,9 @@ As classes deste pacote cuidam da apresentação e da entrada do jogador. Elas p
 |---|---|---|
 | `ConsoleInput` | Entrada compartilhada | Centraliza leitura UTF-8 por uma thread daemon e fila bloqueante. Permite descartar comandos durante pausas, trata `Ctrl+Z` recuperável no console Windows e substitui leitores independentes nos menus. |
 | `ConsoleUI` | Utilitário de interface | Centraliza operações gerais do console, como limpeza, pausa, disposição compartilhada de ações e quebra automática de texto em 90 colunas. Preserva quebras intencionais já existentes e não decide regras de domínio. |
-| `TitleScreen` | Tela | Exibe a apresentação inicial do jogo e controla a entrada necessária para começar. É chamada durante a inicialização antes de `World`. |
+| `TitleScreen` | Tela | Exibe a apresentação inicial identificada como V8 e controla a entrada necessária para começar. É chamada durante a inicialização antes de `World`. |
+| `CampaignSelectionMenu` | Menu inicial | Diferencia campanha ausente, inválida, ilegível ou restaurada; permite continuar uma campanha válida ou confirmar uma nova sem substituir o save imediatamente. |
+| `TerminalSetupScreen` | Tela de orientação | Aparece somente após a escolha definitiva de Nova Campanha e antes da criação do protagonista. Desenha uma moldura ASCII fixa de 77 colunas por 17 linhas, orienta o redimensionamento e aguarda Enter sem imprimir uma linha adicional. Continuar e `--dev-party` ignoram essa tela. |
 | `CharacterCreationMenu` | Menu de criação | Permite digitar ou sortear o nome do protagonista, repetir o sorteio, alterar a proposta, confirmar ou cancelar. Exibe nome e a apresentação completa do Flagelo iniciante por meio de `PlayableClassDetailFormatter`, mas devolve apenas o nome confirmado; `Main` cria o personagem e a `Party` posteriormente. |
 | `PartyRescueScreen` | Tela | Apresenta o resgate após a derrota completa da `Party`. Recebe o grupo, o `CombatScenario` derrotado, a cidade escolhida e o custo calculado; exibe narrativa, destino, restauração e custo por meio de `GameCurrency`, adapta a mensagem ao tamanho da party e exige ENTER. Não altera ouro, personagens, cenário ou progresso. |
 | `CombatScenarioMenu` | Menu de cenário de combate | Recebe as ações de `CombatScenarioAction` permitidas e o conjunto de ações com marcador derivado. Mantém numeração contínua, separa grupos visualmente, pode marcar `Seguir caminho` ou `Viajar` e oferece acesso ao diário sem avançar o tempo. Não é usado por cidades. |
@@ -855,7 +857,7 @@ World                   = mudança efetiva para a cidade escolhida
 | Inicialização e montagem | `Main` | loaders → catálogos → serviços → `World` |
 | Validação de nome jogável | `CharacterNameRules` | entrada ou arquivo externo → normalização → validação → nome canônico |
 | Nomes aleatórios | `CharacterNameSelector` | `character_names.txt` → loader → catálogo → exclusões → sorteio uniforme |
-| Criação inicial | `CharacterCreationMenu` | tela inicial → nome manual/aleatório → confirmação → `Main` → protagonista → `Party` |
+| Criação inicial | `Main` | `TitleScreen` → `CampaignSelectionMenu` → `TerminalSetupScreen` → `CharacterCreationMenu` → protagonista → `Party` |
 | Definições de caminhos finais | `ClassPathCatalog` | `class_paths.txt` → `ClassPathLoader` → classe final + arma e armadura introdutórias |
 | Questionário de caminhos | `ClassPathQuestionnaireCatalog` | perguntas + respostas externas → seleção sequencial → `ClassPathRecommendationService` |
 | Escolha final de caminho | `ClassPathChoiceCoordinator` | questionário → resultado direto ou desempate → recomendação ou seleção livre → classe confirmada |

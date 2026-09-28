@@ -141,6 +141,7 @@ Representative testing covered enemy physical skill damage, MP/SP consumption an
 
 ## 5. Content and release checks
 
+* [x] Update the application title to V8 and guide normal New Game players to the supported 77-column by 17-line terminal layout before character creation. Continue and `--dev-party` skip the guide.
 * [x] Migrate all current enemy base stats and level ranges away from their historical placeholder balance. Opening-region encounters and every dungeon boss/epic range are verified structurally; later random regional encounters remain preliminary.
 * [x] Assign enemy skills with concrete low-/mid-/late-game examples after the skill contract is frozen.
 * [x] Check two copies with distinct rolled levels and the fixed narrative-boss entry point.
