@@ -14,13 +14,17 @@ import rpg.characters.Enemy;
 import rpg.characters.Party;
 import rpg.enemies.EnemyDefinition;
 import rpg.enemies.EnemyDropCatalog;
+import rpg.enemies.EnemySpawn;
 import rpg.items.DropEntry;
 import rpg.items.Item;
 import rpg.quests.QuestProgressEvent;
 import rpg.quests.QuestProgressEventType;
+import rpg.skills.EnemySkillDefinition;
+import rpg.skills.EnemySkillsetCatalog;
 import rpg.ui.BattleRewardScreen;
 import rpg.ui.ConsoleInput;
 import rpg.ui.QuestProgressCoordinator;
+import rpg.world.bestiary.BestiaryStateCatalog;
 import rpg.world.scenarios.CombatScenario;
 
 // Coordinates battle creation, execution and victory rewards.
@@ -31,49 +35,58 @@ public final class BattleCoordinator {
 	private final Party party;
 	private final ConsoleInput consoleInput;
 	private final EnemyDropCatalog enemyDropCatalog;
+	private final EnemySkillsetCatalog enemySkillsetCatalog;
 	private final BattleRewardService rewardService;
 	private final BattleRewardScreen rewardScreen;
+	private final BestiaryStateCatalog bestiaryStateCatalog;
 
 	public BattleCoordinator(
 			Party party,
 			ConsoleInput consoleInput,
 			EnemyDropCatalog enemyDropCatalog,
+			EnemySkillsetCatalog enemySkillsetCatalog,
 			BattleRewardService rewardService,
 			BattleRewardScreen rewardScreen,
 			QuestProgressCoordinator questProgressCoordinator,
+			BestiaryStateCatalog bestiaryStateCatalog,
 			Random random
 	) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
 		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 		this.enemyDropCatalog = Objects.requireNonNull(enemyDropCatalog, "Enemy drop catalog cannot be null.");
+		this.enemySkillsetCatalog = Objects
+				.requireNonNull(enemySkillsetCatalog, "Enemy skillset catalog cannot be null.");
 		this.rewardService = Objects.requireNonNull(rewardService, "Battle reward service cannot be null.");
 		this.rewardScreen = Objects.requireNonNull(rewardScreen, "Battle reward screen cannot be null.");
 		this.random = Objects.requireNonNull(random, "Random generator cannot be null.");
 		this.questProgressCoordinator = Objects
 				.requireNonNull(questProgressCoordinator, "Quest progress coordinator cannot be null.");
+		this.bestiaryStateCatalog = Objects.requireNonNull(
+				bestiaryStateCatalog,
+				"Bestiary state catalog cannot be null."
+		);
 	}
 
-	public BattleResult start(EnemyDefinition enemyDefinition, CombatScenario combatScenario) {
-		Objects.requireNonNull(enemyDefinition, "Enemy definition cannot be null.");
+	public BattleResult start(EnemySpawn enemySpawn, CombatScenario combatScenario) {
+		Objects.requireNonNull(enemySpawn, "Enemy definition cannot be null.");
 
-		return start(List.of(enemyDefinition), combatScenario, BattleType.NORMAL);
+		return start(List.of(enemySpawn), combatScenario, BattleType.NORMAL);
 	}
 
-	public BattleResult start(List<EnemyDefinition> enemyDefinitions, CombatScenario combatScenario) {
-		return start(enemyDefinitions, combatScenario, BattleType.NORMAL);
+	public BattleResult start(List<EnemySpawn> enemySpawn, CombatScenario combatScenario) {
+		return start(enemySpawn, combatScenario, BattleType.NORMAL);
 	}
 
-	public BattleResult
-			start(List<EnemyDefinition> enemyDefinitions, CombatScenario combatScenario, BattleType battleType) {
-		Objects.requireNonNull(enemyDefinitions, "Enemy definition list cannot be null.");
+	public BattleResult start(List<EnemySpawn> enemySpawn, CombatScenario combatScenario, BattleType battleType) {
+		Objects.requireNonNull(enemySpawn, "Enemy definition list cannot be null.");
 		Objects.requireNonNull(combatScenario, "Combat scenario cannot be null.");
 		Objects.requireNonNull(battleType, "Battle type cannot be null.");
 
-		if (enemyDefinitions.isEmpty()) {
+		if (enemySpawn.isEmpty()) {
 			throw new IllegalArgumentException("Enemy definition list cannot be empty.");
 		}
 
-		List<Enemy> enemies = createEnemies(enemyDefinitions);
+		List<Enemy> enemies = createEnemies(enemySpawn);
 		EnemyBattleGroup enemyGroup = new EnemyBattleGroup(enemies);
 
 		Battle battle = new Battle(party, enemyGroup, consoleInput, random, battleType, combatScenario.getName());
@@ -81,7 +94,10 @@ public final class BattleCoordinator {
 
 		List<QuestProgressEvent> progressEvents = new ArrayList<>();
 
-		addAnalysisProgressEvents(progressEvents, battle.getAnalyzedEnemyIds());
+		List<String> analyzedEnemyIds = battle.getAnalyzedEnemyIds();
+
+		recordBestiaryDiscoveries(analyzedEnemyIds);
+		addAnalysisProgressEvents(progressEvents, analyzedEnemyIds);
 
 		if (result == BattleResult.VICTORY) {
 			BattleRewards rewards = grantVictoryRewards(enemies, combatScenario);
@@ -94,6 +110,12 @@ public final class BattleCoordinator {
 		}
 
 		return result;
+	}
+
+	private void recordBestiaryDiscoveries(List<String> analyzedEnemyIds) {
+		for (String enemyId : analyzedEnemyIds) {
+			bestiaryStateCatalog.discover(enemyId);
+		}
 	}
 
 	private static void
@@ -139,23 +161,50 @@ public final class BattleCoordinator {
 		}
 	}
 
-	private List<Enemy> createEnemies(List<EnemyDefinition> enemyDefinitions) {
+	private List<Enemy> createEnemies(List<EnemySpawn> enemySpawns) {
 		List<Enemy> enemies = new ArrayList<>();
 
-		for (EnemyDefinition enemyDefinition : enemyDefinitions) {
-
-			Objects.requireNonNull(enemyDefinition, "Enemy definition cannot be null.");
-
-			enemies.add(createEnemy(enemyDefinition));
+		for (EnemySpawn enemySpawn : enemySpawns) {
+			Objects.requireNonNull(enemySpawn, "Enemy spawn cannot be null.");
+			enemies.add(createEnemy(enemySpawn));
 		}
 
 		return List.copyOf(enemies);
 	}
 
-	private Enemy createEnemy(EnemyDefinition enemyDefinition) {
-		List<DropEntry> dropTable = enemyDropCatalog.getDropsByEnemyId(enemyDefinition.getId());
+	private Enemy createEnemy(EnemySpawn enemySpawn) {
+		EnemyDefinition definition = enemySpawn.definition();
+		List<DropEntry> dropTable = enemyDropCatalog.getDropsByEnemyId(definition.getId());
 
-		return enemyDefinition.createEnemy(dropTable);
+		List<EnemySkillDefinition> skillDefinitions = selectSkillDefinitions(definition, enemySpawn.level());
+
+		return definition.createEnemy(enemySpawn.level(), skillDefinitions, dropTable);
+	}
+
+	private List<EnemySkillDefinition> selectSkillDefinitions(EnemyDefinition definition, int enemyLevel) {
+		List<EnemySkillDefinition> eligibleSkills = new ArrayList<>(
+				enemySkillsetCatalog.getEligibleSkills(definition.getId(), enemyLevel)
+		);
+
+		if (eligibleSkills.isEmpty()) {
+			return List.of();
+		}
+
+		int maximumSkillCount = definition.getRank().getMaximumAdditionalSkillCount();
+
+		if (eligibleSkills.size() <= maximumSkillCount) {
+			return List.copyOf(eligibleSkills);
+		}
+
+		List<EnemySkillDefinition> selectedSkills = new ArrayList<>(maximumSkillCount);
+
+		while (selectedSkills.size() < maximumSkillCount) {
+			int selectedIndex = random.nextInt(eligibleSkills.size());
+
+			selectedSkills.add(eligibleSkills.remove(selectedIndex));
+		}
+
+		return List.copyOf(selectedSkills);
 	}
 
 	private BattleRewards grantVictoryRewards(List<Enemy> defeatedEnemies, CombatScenario combatScenario) {

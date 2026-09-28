@@ -47,7 +47,7 @@ public final class QuestRewardSummaryFormatter {
 
             case PARTY_EXP -> reward.getQuantity() + " EXP para cada integrante";
 
-            case ITEM -> formatItemReward(reward);
+            case ITEM -> "\u001B[33m" + formatItemReward(reward) + "\u001B[0m";
         };
     }
 

@@ -62,13 +62,13 @@ import rpg.persistence.CampaignLoadService;
 import rpg.persistence.CampaignSaveService;
 import rpg.persistence.CampaignSnapshotRestorer;
 import rpg.persistence.RestoredCampaign;
-import rpg.quests.effects.QuestTransportState;
 import rpg.quests.QuestCatalog;
 import rpg.quests.QuestLoader;
 import rpg.quests.QuestProgress;
 import rpg.quests.QuestProgressService;
 import rpg.quests.effects.QuestEffectCatalog;
 import rpg.quests.effects.QuestEffectLoader;
+import rpg.quests.effects.QuestTransportState;
 import rpg.quests.rewards.QuestRewardCatalog;
 import rpg.quests.rewards.QuestRewardLoader;
 import rpg.recruitment.AllyClassSelector;
@@ -83,6 +83,9 @@ import rpg.requirements.QuestAvailabilityValidator;
 import rpg.requirements.RequirementCatalog;
 import rpg.requirements.RequirementEvaluator;
 import rpg.requirements.RequirementLoader;
+import rpg.skills.EnemySkillCatalog;
+import rpg.skills.EnemySkillsetCatalog;
+import rpg.skills.EnemySkillsetLoader;
 import rpg.skills.SkillCatalog;
 import rpg.skills.SkillLoader;
 import rpg.ui.AllyRecruitmentMenu;
@@ -97,10 +100,12 @@ import rpg.ui.ClassPathTieMenu;
 import rpg.ui.ClassPathTransitionFailurePresenter;
 import rpg.ui.ConsoleInput;
 import rpg.ui.ConsoleUI;
+import rpg.ui.TerminalSetupScreen;
 import rpg.ui.TitleScreen;
 import rpg.world.World;
 import rpg.world.WorldClock;
 import rpg.world.WorldProgress;
+import rpg.world.bestiary.BestiaryStateCatalog;
 import rpg.world.branches.ScenarioBranchCatalog;
 import rpg.world.branches.ScenarioBranchLoader;
 import rpg.world.crafting.CrafterCatalog;
@@ -114,12 +119,12 @@ import rpg.world.inns.InnLoader;
 import rpg.world.rewards.ExplorationRewardCatalog;
 import rpg.world.rewards.ExplorationRewardLoader;
 import rpg.world.scenarios.CombatScenarioDefinitionCatalog;
+import rpg.world.scenarios.CombatScenarioDialogueCatalog;
+import rpg.world.scenarios.CombatScenarioDialogueLoader;
 import rpg.world.scenarios.CombatScenarioLoader;
 import rpg.world.scenarios.DungeonBossAccessResolver;
 import rpg.world.scenarios.DungeonBossGateCatalog;
 import rpg.world.scenarios.DungeonBossGateLoader;
-import rpg.world.scenarios.CombatScenarioDialogueCatalog;
-import rpg.world.scenarios.CombatScenarioDialogueLoader;
 import rpg.world.scenarios.DungeonDefinitionCatalog;
 import rpg.world.scenarios.DungeonLoader;
 import rpg.world.scenarios.DungeonProgress;
@@ -154,7 +159,9 @@ public class Main {
 			PlayableClassCatalog playableClassCatalog;
 			ClassPathCatalog classPathCatalog;
 			SkillCatalog skillCatalog;
+			EnemySkillCatalog enemySkillCatalog;
 			ClassPathQuestionnaireCatalog classPathQuestionnaireCatalog;
+			EnemySkillsetCatalog enemySkillsetCatalog;
 
 			ItemCatalog itemCatalog;
 			ItemDefinitionCatalog itemDefinitionCatalog;
@@ -202,6 +209,7 @@ public class Main {
 			QuestProgress questProgress;
 			CampaignFlags campaignFlags;
 			RecruitmentCandidateStateCatalog candidateStateCatalog;
+			BestiaryStateCatalog bestiaryStateCatalog;
 			CombatScenarioDialogueCatalog combatScenarioDialogueCatalog;
 			WorldProgress worldProgress;
 			DungeonProgress dungeonProgress;
@@ -221,16 +229,28 @@ public class Main {
 				ClassPathRequiredClassValidator.validate(playableClassCatalog);
 
 				SkillLoader skillLoader = new SkillLoader();
-				skillCatalog =
+
+				SkillLoader.LoadedCatalogs loadedSkillCatalogs =
 						skillLoader.load(
 								Path.of("data", "skills.txt"),
+								Path.of("data", "enemy_skills.txt"),
 								Path.of("data", "skill_effects.txt"),
 								playableClassCatalog);
+
+				skillCatalog = loadedSkillCatalogs.playableSkills();
+				enemySkillCatalog = loadedSkillCatalogs.enemySkills();
 
 				// Enemy definitions
 				EnemyLoader enemyLoader = new EnemyLoader();
 				enemyCatalog =
 						enemyLoader.load(Path.of("data", "enemies.txt"));
+
+				EnemySkillsetLoader enemySkillsetLoader = new EnemySkillsetLoader();
+				enemySkillsetCatalog =
+						enemySkillsetLoader.load(
+								Path.of("data", "enemy_skillsets.txt"),
+								enemyCatalog,
+								enemySkillCatalog);
 
 				// Item definitions and specialized item types
 				ItemLoader itemLoader = new ItemLoader();
@@ -566,6 +586,7 @@ public class Main {
 				questProgress = new QuestProgress(questCatalog);
 				campaignFlags = new CampaignFlags(flagCatalog);
 				candidateStateCatalog = new RecruitmentCandidateStateCatalog(questRecruitmentCatalog);
+				bestiaryStateCatalog = new BestiaryStateCatalog();
 			} else {
 				TitleScreen.show(consoleInput);
 				ConsoleUI.clearScreen();
@@ -586,7 +607,8 @@ public class Main {
                         characterGrowthCalculator,
                         questCatalog,
                         flagCatalog,
-                        questRecruitmentCatalog);
+						questRecruitmentCatalog,
+						enemyCatalog);
 
 				CampaignLoadService loadService = new CampaignLoadService(snapshotRestorer);
 				CampaignLoadResult loadResult = loadService.load();
@@ -614,9 +636,12 @@ public class Main {
 						questProgress = restoredCampaign.getQuestProgress();
 						campaignFlags = restoredCampaign.getCampaignFlags();
 						candidateStateCatalog = restoredCampaign.getCandidateStateCatalog();
+						bestiaryStateCatalog = restoredCampaign.getBestiaryStateCatalog();
 
 						break;
 					}
+
+					TerminalSetupScreen.show(consoleInput);
 
                     Optional<Party> createdParty =
                             createNewGameParty(
@@ -642,6 +667,7 @@ public class Main {
 					campaignFlags = new CampaignFlags(flagCatalog);
 					candidateStateCatalog =
 					        new RecruitmentCandidateStateCatalog(questRecruitmentCatalog);
+					bestiaryStateCatalog = new BestiaryStateCatalog();
 
 					ConsoleUI.clearScreen();
 					break;
@@ -765,6 +791,7 @@ public class Main {
 					campaignSaveService,
 					enemyCatalog,
 					enemyDropCatalog,
+					enemySkillsetCatalog,
 					encounterCatalog,
 					explorationRewardCatalog,
 					scenarioCatalog,
@@ -793,7 +820,8 @@ public class Main {
 					classPathTransitionFailurePresenter,
                     questCatalog,
                     questRewardCatalog,
-                    questDialogueCatalog);
+					questDialogueCatalog,
+					bestiaryStateCatalog);
 
 			world.start();
 

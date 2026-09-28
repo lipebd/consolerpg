@@ -1,9 +1,11 @@
-RPGCONSOLE — VERSÃO 7.0.0
+RPGCONSOLE — VERSÃO 8.0.0
 
 COMO EXECUTAR
 
 1. Extraia todo o conteúdo do arquivo ZIP para uma pasta.
 2. Execute RPGConsole.cmd.
+3. Ao iniciar uma Nova Campanha, redimensione a janela do terminal seguindo
+   a moldura apresentada pelo jogo e pressione ENTER para continuar.
 
 Não mova ou execute isoladamente os arquivos da pasta application. O jogo utiliza também a pasta data incluída neste pacote.
 
@@ -40,7 +42,12 @@ SALVAMENTO
 O jogo possui um único espaço de salvamento. Salve sua campanha nas estalagens.
 O arquivo save.txt será criado ao lado de RPGConsole.cmd após o primeiro salvamento.
 
-Antes de reutilizar um save.txt de outra versão, faça uma cópia de segurança.
+Saves de versões anteriores não são compatíveis com a V8. Antes de atualizar,
+faça uma cópia de segurança do save.txt existente.
+
+Um save incompatível é preservado, mas não pode ser carregado. Para manter
+campanhas de versões diferentes, utilize pastas separadas para cada versão.
+
 Para começar uma nova campanha, mova ou renomeie o save.txt da pasta do jogo
 antes de iniciar o RPGConsole.
 

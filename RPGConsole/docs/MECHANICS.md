@@ -149,15 +149,40 @@ This behavior is intentional for balance.
 
 ## Enemy target selection
 
-The current enemy strategy selects the living playable character with the lowest current HP.
+Every enemy species defines one `EnemyTargetProfile`, while each runtime enemy keeps its own target memory for the duration of the battle. Only living party members are eligible.
 
-Enemies:
+- `INSTINCTIVE` draws one living target uniformly and keeps it until that target is defeated.
+- `ERRATIC` draws uniformly before every individual action. The previous target receives no special treatment and may be drawn again.
+- `PREDATOR` uses a positive weighted score that favors missing-HP percentage and, for damaging actions, penalizes a character who is defending.
+- `TACTICAL` uses the same persistence and defending penalty, combines missing-HP percentage with vulnerability in the action's relevant effective defense and ignores defense when the action has no single physical or magical damage type.
 
-- Never select defeated allies.
-- Recalculate their target when their action begins.
-- May focus the same injured ally repeatedly.
+Predator score:
 
-Additional targeting strategies may be implemented in future versions.
+```text
+100 + 2 × missingHpPercent - defendingPenalty
+```
+
+Tactical score:
+
+```text
+100 + missingHpPercent + defensiveVulnerability - defendingPenalty
+```
+
+The defending penalty is 50. Physical actions compare effective DEF, magical actions compare effective RES, and the least defended living target receives the greatest vulnerability contribution. Mixed-damage and non-damaging actions do not compare DEF or RES; mixed-damage actions still consider defending.
+
+When a Predator or Tactical enemy has no valid remembered target, the positive scores are relative selection weights rather than a deterministic maximum. After acquisition, it changes targets only when the best alternative exceeds the current target's score by more than 40. Tied best alternatives are resolved uniformly. This gives scored profiles uncertainty at acquisition and stability afterward.
+
+Target behavior is independent from `EnemyRank`. Self, ally, group and explicit random target types preserve their existing resolution and do not use the individual opponent selector.
+
+The battle analysis identifies the enemy's target personality using the player-facing names Instintiva, Errática, Predadora and Tática. Rank and personality share one compact line so the analysis remains within the fixed 17-line battle layout.
+
+## Bestiary
+
+`Diário` provides a paginated bestiary containing every registered enemy definition in catalog order. Undiscovered entries display `???`; selecting one explains that the enemy must be analyzed in battle.
+
+A successful `Analisar` records the enemy's canonical definition ID once in the campaign bestiary. Repeated analyses remain idempotent. Discovery is preserved after victory, defeat or escape because the completed battle reports analyzed IDs independently from its final result.
+
+Discovered records show the enemy's name, rank, target personality, optional growth specializations, optional weakness, description, height in meters and weight in kilograms. The primary specialization uses `↑↑`, the secondary specialization uses `↑` and the weakness uses `↓`. Height and weight are descriptive definition data and do not modify battle calculations. Opening or navigating the bestiary does not advance world time.
 
 ## Fleeing
 
@@ -424,7 +449,9 @@ basePower =
     + effectiveOffensiveAttribute
 ```
 
-Player basic attacks use zero skill power, no conditional power modifier and the equipped weapon's full base damage. The weapon selects physical or magical damage; without a weapon, the attack falls back to physical damage with zero weapon power. Enemy basic attacks currently use physical damage and zero weapon power.
+Player basic attacks use zero skill power, no conditional power modifier and the equipped weapon's full base damage. The weapon selects physical or magical damage; without a weapon, the attack falls back to physical damage with zero weapon power.
+
+Enemy basic attacks always use physical damage, effective ATK against effective DEF, zero skill power and zero weapon base damage. Enemy skills also use zero weapon base damage, but each damaging component contributes its own power and declared physical or magical type. Physical enemy skills use ATK against DEF by default; magical enemy skills use MAG against RES by default. ATK therefore remains relevant even for primarily magical enemy species because it determines their free basic-attack damage.
 
 Every offensive skill also adds 100% of the equipped weapon's base damage. A skill remains usable without a weapon, in which case this term is zero. The skill component's damage type selects the target's DEF or RES independently of its optional offensive attribute and the weapon's damage type.
 
@@ -959,6 +986,154 @@ A character below level 20 retains only EXP lower than the requirement for the n
 
 At level 20, character status displays `Nível máximo` instead of progress toward an unavailable level 21.
 
+## Enemy levels and natural progression
+
+Every runtime enemy has a positive level. Enemy levels determine internal combat power and are not displayed to the player.
+
+Each enemy definition stores level-1 natural stats together with optional primary, secondary and weakness attributes. These three specializations are independent, but every attribute present must be distinct from the others.
+
+For a target level:
+
+```text
+gainedLevels = level - 1
+primaryGrowthOccurrences = floor(level / 2)
+secondaryGrowthOccurrences = floor(level / 3)
+weaknessGrowthOccurrences = floor(level / 2)
+```
+
+Natural HP grows by `10` for every gained level. Maximum MP and SP each grow by `5` for every gained level:
+
+```text
+maximumMP = baseMaximumMP + 5 × gainedLevels
+maximumSP = baseMaximumSP + 5 × gainedLevels
+```
+
+Enemy resource growth receives no rank multiplier and no primary-, secondary- or weakness-attribute adjustment.
+
+Regular-attribute growth for every gained level is:
+
+| Attribute | Growth |
+|---|---:|
+| `ATK` | `+3` |
+| `DEF` | `+1` |
+| `MAG` | `+3` |
+| `RES` | `+1` |
+| `VEL` | `+1` |
+| `LCK` | `+1` |
+
+The primary attribute receives one additional point at levels 2, 4, 6 and every two levels thereafter. The secondary attribute receives one additional point at levels 3, 6, 9 and every three levels thereafter.
+
+When an attribute is the enemy's weakness, its complete regular and specialization growth is replaced by one point at levels 2, 4, 6 and every two levels thereafter. Because all configured specialization attributes must be distinct, one attribute cannot simultaneously be primary, secondary and weakness.
+
+After natural level growth, rank multipliers affect maximum HP, ATK and MAG:
+
+| Enemy rank | HP | ATK and MAG |
+|---|---:|---:|
+| `COMMON` | 100% | 100% |
+| `VETERAN` | 130% | 110% |
+| `LEADER` | 200% | 120% |
+| `BOSS` | 300% | 130% |
+| `EPIC` | 400% | 140% |
+
+Rank does not multiply MP, SP, DEF, RES, VEL or LCK. Each multiplied result is rounded to the nearest integer, with an exact half rounded upward. `LEGENDARY` remains reserved and has no configured stat multipliers.
+
+Enemy progression has no global gameplay level cap. Every configured level must be positive, and growth uses exact arithmetic so overflow is rejected rather than wrapping. Encounter and dungeon loading calculate the highest configured level for every referenced enemy and reject invalid content during initialization.
+
+Enemy level does not change EXP, GOLD or drops in V8. Scenario rewards, rank reward multipliers and independent drop entries retain their existing behavior. Any future reward scaling requires a separate balance decision rather than following enemy level implicitly.
+
+## Enemy skill availability and action choice
+
+Enemy skills are reusable immutable combat definitions. They are not learned, do not occupy playable skill slots and do not participate in class progression or skill-scroll rules.
+
+Each enemy-to-skill link defines a positive minimum enemy level. When an enemy instance is created, only links whose minimum level is not greater than the spawned level enter its eligible pool.
+
+The linked species must be able to pay each skill at its own minimum level:
+
+```text
+availableResourceAtUnlock =
+    baseLevelOneResource
+    + 5 × (minimumLevel - 1)
+```
+
+This validation prevents permanently unusable links without requiring every skill to be affordable at level 1.
+
+### Runtime loadouts
+
+The basic attack is always available and remains outside the enemy skill loadout.
+
+Each enemy rank defines a maximum number of installed skills:
+
+| Enemy rank | Maximum installed skills |
+|---|---:|
+| `COMMON` | 2 |
+| `VETERAN` | 3 |
+| `LEADER` | 4 |
+| `BOSS` | 5 |
+| `EPIC` | 6 |
+
+If the eligible pool exceeds the rank maximum, `BattleCoordinator` selects a subset without repetition for that runtime enemy. Separate instances of the same species may therefore receive different loadouts. `LEGENDARY` remains reserved without an approved ceiling.
+
+Current first-pass content stays at or below the runtime ceilings:
+
+- Common enemies have one or two skills.
+- Veterans and leaders have two or three skills.
+- Boss and epic enemies have three skills.
+- Every current species has at least one damaging skill.
+- Three-skill veterans and leaders include self-support.
+- Boss and epic repertoires contain at least two damaging skills plus self-buffing or self-recovery.
+
+### Action selection
+
+On each enemy turn:
+
+1. Filter the installed skills by current MP and SP.
+2. Build a choice set containing the basic attack and every affordable skill.
+3. Select uniformly from that set.
+4. Resolve the selected action before selecting any action-specific target.
+5. Begin skill execution through the shared executor.
+6. Spend MP and SP only if the execution can consume the turn.
+7. If the selected skill cannot make a valid attempt, preserve resources and execute the basic attack as fallback.
+
+For an enemy with two affordable installed skills:
+
+```text
+1/3 basic attack
+1/3 first skill
+1/3 second skill
+```
+
+When no skill remains affordable, the basic attack is selected with certainty.
+
+The initial selector does not evaluate tactical usefulness. It has no weights, priorities, HP thresholds, action memory or species-specific decision code. An applicable recovery skill competes uniformly with offensive actions; an ineffective recovery selection falls back safely instead of spending resources or losing the turn.
+
+### Shared execution
+
+`CombatSkillDefinition` provides the common execution contract for playable and enemy skills. `SkillExecutionContext` accepts any `GameCharacter`, while playable acquisition and slot systems continue to use only playable definitions.
+
+Target types remain relative to the acting side:
+
+- `SELF` refers to the acting enemy.
+- Ally targets refer to enemies participating on the enemy side.
+- Enemy targets refer to party members.
+
+Enemy skill execution reuses the existing ordered phases, damage and recovery calculations, resistance, trigger chance, attribute stages, pending VEL behavior, defeat handling and result formatting.
+
+Enemy skills use no equipment contribution:
+
+```text
+enemySkillBasePower =
+    skillPower
+    + effectiveOffensiveAttribute
+```
+
+A physical component normally uses ATK against DEF. A magical component normally uses MAG against RES. Any explicit scaling attribute defined by the component continues to override only the offensive attribute, not the defense selected by its damage type.
+
+The current first-pass enemy content intentionally uses only clear single-target or self-targeted damage, attribute stages and self-recovery. More complex shared effects remain available for later discussion only when justified by concrete enemy content.
+
+### Targeting boundary
+
+Action selection remains separate from target selection. A `SINGLE_ENEMY` enemy action resolves through the acting enemy's `EnemyTargetProfile` only after the action and its relevant damage type are known. Self-targeted actions require no target decision, ally and group targets preserve their existing side-relative resolution, and shared random-target components perform their own draw during component execution. The complete individual profile rules are documented in **Enemy target selection** above.
+
 ## Skill acquisition and availability
 
 Every skill defines one acquisition type and a level requirement within the supported playable-character range, currently levels 1 through 20.
@@ -1086,6 +1261,14 @@ After a successful stay, the player remains inside the INN. Feedback from succes
 
 City locations and city exits remain separate navigation paths. Adjacent exits reuse unlocked `TravelRouteDefinition` entries, preserve their display names and descriptions, and do not charge the party. Fixed city shops are available through the same location-selection flow as INNs, while paid transport remains a separate city action.
 
+## New-campaign terminal setup
+
+The normal startup identifies the application as V8 and then presents campaign selection. Continue activates the already restored campaign without additional setup.
+
+After the player definitively selects New Campaign, `TerminalSetupScreen` draws an ASCII-only frame with exactly 77 columns and 17 lines. The player resizes the terminal until the complete frame is visible and presses Enter to proceed. The bottom border is printed without a trailing line break so the sizing guide itself does not scroll to an eighteenth line.
+
+The screen appears before character creation. Cancelling character creation returns to campaign selection; choosing New Campaign again presents the sizing guide again. The `--dev-party` development path bypasses the title, campaign selection and terminal setup together.
+
 ## Initial character creation
 
 A normal new game creates only the protagonist. The protagonist:
@@ -1124,7 +1307,7 @@ Before confirmation, the interface displays:
 
 The internal beginner class is not presented as a separate path. Its visible name, symbol, base attributes, growth specializations and armor weight match the final Flagelo path.
 
-The player may confirm the character, change the proposed name or cancel. Changing the name returns to the manual-or-random choice. Cancelling returns to the title screen. No `PlayableCharacter` or `Party` is created until confirmation succeeds.
+The player may confirm the character, change the proposed name or cancel. Changing the name returns to the manual-or-random choice. Cancelling returns to campaign selection. No `PlayableCharacter` or `Party` is created until confirmation succeeds.
 
 Story-based ally recruitment, random ally classes and party-title acquisition are not part of the initial creation flow.
 
@@ -1362,19 +1545,19 @@ Changing the visible name or symbol does not alter stored gold, prices or transa
 
 ## Campaign persistence foundation
 
-The implemented persistence foundation captures one immutable campaign snapshot containing party, inventory, equipment, learned scroll skills, reward modifiers, world progress, travel progress, permanent dungeon progress, fictional time, active shop states, quest progress, permanent flags and introduced recruitment candidates.
+The implemented persistence foundation captures one immutable campaign snapshot containing party, inventory, equipment, learned scroll skills, reward modifiers, world progress, travel progress, permanent dungeon progress, fictional time, active shop states, quest progress, permanent flags, introduced recruitment candidates and discovered bestiary enemy IDs.
 
 The snapshot is serialized through the versioned property schema defined in `SAVE_STATE.md`, encoded as UTF-8, authenticated and encrypted through AES-256-GCM and written through atomic save-file replacement.
 
 Loading decrypts and structurally validates the snapshot, validates every catalog-backed reference and reconstructs an isolated runtime candidate without modifying active gameplay state. A valid campaign may be continued after the title screen, while saving is available exclusively through INNs.
 
-The authenticated internal save format is version 3. It persists quest progress, permanent campaign flags and recruitment-candidate state alongside party, world, travel, dungeon, clock and shop state. Version-2 saves are rejected without migration.
+The authenticated internal save format is version 4. It adds discovered bestiary enemy IDs to the coordinated version-3 campaign state. Earlier internal versions are rejected without migration.
 
 Loading validates the relationships between the completed ceremony, the protagonist's class, recruitment quest progress, candidate state and the recruited party member before activating the restored campaign. Active exploration sessions, questionnaire answers, recommendations, uncommitted class choices and prepared recruitment plans remain transient.
 
-Internal version 2 is rejected without migration because its party snapshot cannot prove the quest, flag and candidate transaction that produced a recruited ally. Loading version 3 reconstructs quest, flag and candidate state in isolation and validates their coherence with the restored party before `World` receives the campaign.
+Internal version 2 remains incompatible because its party snapshot cannot prove the quest, flag and candidate transaction that produced a recruited ally. Version 3 is now also rejected because it contains no explicit bestiary state. Loading version 4 reconstructs quest, flag, candidate and bestiary state in isolation and validates catalog-backed references before `World` receives the campaign.
 
-A confirmed playable class belongs to persisted character state through its canonical class ID. Version-3 restoration validates the first ceremony across the completed recruitment quest, permanent ceremony flag, leader class, recruited candidate and second-position ally instead of storing another independent class-path decision.
+A confirmed playable class belongs to persisted character state through its canonical class ID. Version-4 restoration preserves the version-3 ceremony validations across the completed recruitment quest, permanent ceremony flag, leader class, recruited candidate and second-position ally instead of storing another independent class-path decision.
 
 ## World time and daily shop restocking
 
@@ -1829,9 +2012,12 @@ Exploration reward selection is independent from battle rewards. Every enemy dro
 Every dungeon defines:
 
 - A mandatory narrative boss group.
+- A fixed positive narrative-boss level.
 - A mandatory recurring boss group.
+- A positive recurring-boss minimum and maximum level.
 - A positive recurring-boss cooldown in fictional world hours.
 - A mandatory epic enemy group.
+- A positive epic minimum and maximum level.
 - An epic minimum position and area restriction.
 - A positive epic cooldown in fictional world hours.
 
@@ -1866,6 +2052,8 @@ Recurring-boss availability is evaluated when the party reaches the final positi
 
 Epic encounters begin initially available. Boss and epic respawn hours remain hidden from the player in V5.
 
+The narrative boss always uses its configured fixed level. A recurring-boss encounter rolls one inclusive level from its configured range when the encounter begins. An accepted epic encounter rolls one inclusive level from its configured range. Every enemy in the same boss or epic group receives that shared level.
+
 ## Random encounters
 
 Encounter entries are filtered by:
@@ -1874,6 +2062,8 @@ Encounter entries are filtered by:
 - Current exploration position.
 - Normal or special area.
 - Maximum copies of the same enemy.
+
+Each eligible entry also defines an inclusive minimum and maximum enemy level. After an entry is selected, every generated copy rolls its own level independently. Two copies of the same species in one battle may therefore have different natural stats.
 
 Enemy weights are relative selection weights.
 
@@ -1885,6 +2075,8 @@ The generated group size respects:
 - The scenario maximum.
 - The global enemy-group limit.
 - Each encounter entry's maximum copy count.
+
+Enemy level does not change entry eligibility, selection weight, group-size limits or copy limits.
 
 Repeated enemies receive numbered battle names, while unique enemies retain their regular display name.
 

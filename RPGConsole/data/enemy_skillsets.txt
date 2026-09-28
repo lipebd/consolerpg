@@ -1,0 +1,106 @@
+# enemyId;skillId;minimumLevel
+# -------------------------------------------------------------
+# COMMON
+# -------------------------------------------------------------
+lobermo;mordida_selvagem;1
+lobermo;furia_lupina;1
+passavento;vento_contrario;1
+goblin_catador;arremesso_de_sucata;1
+trepa_trepa;mordida_venenosa;1
+herbalistico_roxo;rajada_de_sementes;1
+goblin_mecanico;arremesso_de_sucata;1
+lumivaga;clarao_magico;1
+briselho;salto_de_vento;1
+conchinha_da_areia;pinca_de_areia;1
+pena_de_sal;rajada_salina;1
+sobresouro;picada_sobrenatural;1
+ourico_de_sal;espinhos_de_sal;1
+nada_nada;toque_entorpecente;1
+ossombracao;golpe_de_picareta;1
+mecanossos;golpe_mecanizado;1
+carcaca;chicote_de_raizes;1
+marcego;rasante_aquatico;1
+estrelume;pulso_estelar;1
+# -------------------------------------------------------------
+# VETERAN
+# -------------------------------------------------------------
+javardo_marrom;investida_brutal;1
+javardo_marrom;couro_endurecido;1
+goblin_saqueador;arremesso_de_sucata;1
+goblin_saqueador;golpe_oportunista;1
+aranhurso_do_mato;salto_de_emboscada;1
+aranhurso_do_mato;presa_venenosa;1
+herbatedor;rajada_de_sementes;1
+herbatedor;semente_carnivora;1
+goblin_engenheiro;pulso_eletrico;1
+goblin_engenheiro;armadilha_de_sucata;1
+passassombra;toque_sombrio;1
+passassombra;travessia_violenta;1
+passassombra;manto_escuro;1
+espantacao;golpe_de_palha;1
+espantacao;encantamento_persistente;1
+teiafunebre;descarga_da_teia;1
+teiafunebre;teia_luminosa;1
+cara_caranguejo;pinca_de_areia;1
+cara_caranguejo;carapaca_integral;1
+herbalistico_azul;rajada_de_sementes;1
+herbalistico_azul;semente_enfraquecedora;1
+carrascobot;serra_de_contencao;1
+carrascobot;protocolo_de_seguranca;1
+lobermo_miasmatico;mordida_selvagem;1
+lobermo_miasmatico;mordida_miasmatica;1
+lobermo_miasmatico;lamber_feridas;1
+cardumonstro;enxame_de_mordidas;1
+cardumonstro;perseguicao_incessante;1
+# -------------------------------------------------------------
+# LEADER
+# -------------------------------------------------------------
+corujaro;rasante_silencioso;1
+corujaro;pio_inaudivel;1
+goblin_amalgama;punho_amalgamado;1
+goblin_amalgama;descarga_improvisada;1
+entrechifres;investida_runica;1
+entrechifres;seiva_protetora;1
+rachatrilha;mandibulas_de_rocha;1
+rachatrilha;ruptura_do_solo;1
+rachatrilha;carapaca_mineral;1
+l1d3r;serra_de_comando;1
+l1d3r;protocolo_de_seguranca;1
+jorge;golpe_do_tridente;1
+jorge;juramento_das_ruinas;1
+arauto_madeira_morta;golpe_da_foice;1
+arauto_madeira_morta;raizes_de_madeira_morta;1
+arauto_madeira_morta;guarda_ancestral;1
+# -------------------------------------------------------------
+# EPIC
+# -------------------------------------------------------------
+relampagolem;punho_de_eletrorrocha;1
+relampagolem;descarga_trovejante;1
+relampagolem;nucleo_cintilante;1
+g3r3ntoss4uro;mordida_de_sucata;1
+g3r3ntoss4uro;cauda_demolidora;1
+g3r3ntoss4uro;recomposicao_mecanica;1
+lamorstain;lamina_invisivel;1
+lamorstain;mancha_da_alma;1
+lamorstain;absorver_luz;1
+colossangue;impacto_esmagador;1
+colossangue;jorro_rubro;1
+colossangue;metabolismo_rubro;1
+# -------------------------------------------------------------
+# BOSS
+# -------------------------------------------------------------
+mestre_eletrogoblin;raio_eletromagnetico;1
+mestre_eletrogoblin;golpe_indutivo;1
+mestre_eletrogoblin;fluido_eletromagnetico;1
+c3o;ordem_executiva;1
+c3o;demissao_sumaria;1
+c3o;promocao_postuma;1
+lich;raizes_sepulcrais;1
+lich;chamado_da_decomposicao;1
+lich;seiva_ancestral;1
+defleto;estilhaco_material;1
+defleto;compressao_petrea;1
+defleto;forma_inquebravel;1
+refrata;estilhaco_essencial;1
+refrata;feixe_refratado;1
+refrata;forma_prismatica;1

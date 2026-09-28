@@ -1,6 +1,6 @@
 # RPGConsole — Save State
 
-> **Implementation status:** Internal save format version 3 is fully integrated. The game creates one coordinated immutable snapshot containing party, world, shop, quest, permanent-flag and recruitment-candidate state; serializes and encrypts it into `save.txt`; atomically replaces the previous save; and validates and reconstructs an isolated complete campaign before runtime activation. Internal version-2 saves are rejected without migration. The empty-narrative V3 restart round trip and version-2 rejection have completed manual verification. The empty-narrative version-3 restart round trip, explicit version-2 rejection and loading of a campaign with an active canonical quest have been verified. A representative restart round trip after the Quest 5 recruitment and invalid narrative-payload cases remain pending.
+> **Implementation status:** Internal save format version 4 is fully integrated. The game creates one coordinated immutable snapshot containing party, world, shop, quest, permanent-flag, recruitment-candidate and bestiary-discovery state; serializes and encrypts it into `save.txt`; atomically replaces the previous save; and validates and reconstructs an isolated complete campaign before runtime activation. Earlier internal versions are rejected without migration. Version 4 preserves the implemented version-3 narrative contract and adds explicit discovered enemy IDs. The bestiary property round trip and strict earlier-version rejection have automated coverage; a representative full restart after the Quest 5 recruitment and invalid narrative-payload cases remain pending.
 
 ## Purpose
 
@@ -730,12 +730,12 @@ independently from the outer `containerVersion`.
 * Unknown properties are rejected unless a later format version explicitly permits them.
 * Duplicate property keys must be detected before ordinary `Properties` loading can overwrite them silently.
 
-### Version-3 property schema
+### Version-4 property schema
 
-The decrypted version-3 payload contains exactly the following property structures.
+The decrypted version-4 payload contains exactly the following property structures.
 
 ```properties
-save.formatVersion=3
+save.formatVersion=4
 
 party.gold=1250
 
@@ -807,6 +807,10 @@ recruitment.candidate.count=1
 recruitment.candidate.0.id=primeiro_aliado
 recruitment.candidate.0.name=Lina
 recruitment.candidate.0.recruited=false
+
+bestiary.discovered.count=2
+bestiary.discovered.0.id=lobermo
+bestiary.discovered.1.id=passavento
 ```
 
 The values above are illustrative and are not canonical campaign data.
@@ -817,7 +821,7 @@ Equipment-slot properties are always present. An empty value represents an unequ
 
 `party.member.<index>.learnedSkill.*` contains only explicitly learned scroll-skill IDs. Skills acquired automatically from class and level are reconstructed from current definitions and are not serialized.
 
-Party members, learned skills, inventory entries, shops, active offers, active quests, completed quests, current objectives, set flags and recruitment candidates preserve their stable runtime or catalog order. Discovered scenarios, unlocked routes and dungeon-progress entries are serialized in stable ID order.
+Party members, learned skills, inventory entries, shops, active offers, active quests, completed quests, current objectives, set flags, recruitment candidates and bestiary discoveries preserve their stable runtime or catalog order. Discovered scenarios, unlocked routes and dungeon-progress entries are serialized in stable ID order.
 
 Every repeated index starts at zero, is contiguous and is lower than its declared count. Missing indexes, additional indexes, duplicate IDs and duplicate property names invalidate the complete payload.
 
@@ -831,7 +835,9 @@ Every saved flag ID must resolve through `FlagCatalog` and appear at most once.
 
 Every saved candidate ID must resolve through `QuestRecruitmentCatalog` and appear at most once. Candidate names must satisfy `CharacterNameRules` and remain unique among candidate states. `recruited` accepts only canonical `true` or `false`.
 
-Properties outside the version-3 schema invalidate the payload. This prevents misspelled or unsupported fields from being silently ignored.
+Every `bestiary.discovered.<index>.id` must be unique and resolve through the current `EnemyCatalog`. The snapshot stores only canonical IDs; names, descriptions, ranks, target profiles, measurements and other immutable enemy-definition fields are reloaded from `enemies.txt`.
+
+Properties outside the version-4 schema invalidate the payload. This prevents misspelled or unsupported fields from being silently ignored.
 
 All numeric values use base-10 ASCII digits and must satisfy their documented domain boundaries.
 
@@ -841,7 +847,7 @@ The four reward-modifier properties are always present. An inactive modifier is 
 
 `shop.<index>.offer.count` must be positive because every valid runtime `ShopState` contains at least one active offer. Offers with zero remaining stock remain serialized.
 
-The version-3 payload contains no real-world timestamps, formatted values, derived period symbols, cryptographic fields, immutable quest or recruitment definitions, derived availability or transient runtime state.
+The version-4 payload contains no real-world timestamps, formatted values, derived period symbols, cryptographic fields, immutable quest, recruitment or enemy definitions, derived availability, enemy target memory or other transient runtime state.
 
 ## Save-format versioning
 
@@ -860,7 +866,7 @@ Rules:
 * Incompatible catalog-ID changes may require migration or intentional save incompatibility.
 * Raising the playable-character maximum level alone does not require a save-format change.
 
-The current implementation supports only internal format version 3. Internal versions 1 and 2 are rejected without migration. The encrypted outer-container format remains version 1 and is unchanged by this schema evolution.
+The current implementation supports only internal format version 4. Internal versions 1, 2 and 3 are rejected without migration. The encrypted outer-container format remains version 1 and is unchanged by this schema evolution.
 
 ### V6 Part 9 persistence boundary
 
@@ -872,7 +878,20 @@ The outer container, application encryption key usage, AES-GCM parameters, dupli
 
 `quest_recruitments.txt` remains immutable external definition data. Quest ID, step and configured ally level are reloaded from the current catalog and are not copied into the save payload.
 
-Questionnaire answers, recommendation scores, uncommitted selections, random uncommitted ally classes, constructed pending allies and prepared transaction plans remain transient in version 3.
+Questionnaire answers, recommendation scores, uncommitted selections, random uncommitted ally classes, constructed pending allies, prepared transaction plans and per-battle enemy target memory remain transient in version 4.
+
+### V8 Bestiary persistence boundary
+
+V8 evolves the authenticated internal payload from version 3 to version 4 by adding one ordered collection of discovered enemy IDs:
+
+```properties
+bestiary.discovered.count=<non-negative integer>
+bestiary.discovered.<index>.id=<canonical enemy ID>
+```
+
+`BestiaryStateCatalog` is mutable campaign state. `CampaignSnapshotFactory` captures its ordered IDs in `BestiarySnapshot`; strict properties preserve that order; `CampaignSnapshotRestorer` validates every ID through `EnemyCatalog` before constructing the restored state. Repeated analysis remains idempotent and therefore cannot create duplicated snapshot entries.
+
+Version 3 is intentionally rejected instead of silently supplying an empty bestiary. Changing the required property schema without changing `save.formatVersion` would make one numeric version describe two different strict contracts. The encrypted outer container, AES-GCM parameters, duplicate-key protection and atomic replacement flow remain unchanged.
 
 ## Atomic save operation
 
@@ -999,7 +1018,7 @@ A feature introducing persistent state must define:
 8. Restart-based verification tests.
 9. Documentation updates.
 
-Internal format version 3 adds the implemented V6 campaign state as one coordinated contract:
+Internal format version 3 added the implemented V6 narrative campaign state as one coordinated contract:
 
 * Active quest IDs.
 * Current quest steps.
@@ -1012,9 +1031,16 @@ Internal format version 3 adds the implemented V6 campaign state as one coordina
 
 Pending transaction plans, random uncommitted choices and derived availability remain excluded.
 
-The protagonist's confirmed class already uses the persisted canonical playable-class ID. Version-3 restoration validates that class against the permanent ceremony-completion flag and the restored recruitment transaction state instead of serializing a second independent class-path decision.
+Internal format version 4 preserves that complete contract and adds:
 
-Version-3 restoration validates:
+* Ordered discovered enemy IDs.
+* Catalog-backed bestiary restoration before campaign activation.
+
+Enemy names, ranks, descriptions, target profiles, height, weight, combat attributes and per-battle target memory remain excluded because they are immutable definition data or transient battle state.
+
+The protagonist's confirmed class already uses the persisted canonical playable-class ID. Version-4 restoration preserves the version-3 validation of that class against the permanent ceremony-completion flag and restored recruitment transaction state instead of serializing a second independent class-path decision.
+
+Version-4 restoration validates the existing narrative invariants:
 
 * Every restored candidate ID exists in `QuestRecruitmentCatalog`.
 * Candidate IDs are unique.
@@ -1027,6 +1053,8 @@ Version-3 restoration validates:
 * Party order remains leader first followed by recruited allies.
 * No transient preparation or random-selection state is reconstructed.
 
+It also requires every discovered bestiary ID to resolve through `EnemyCatalog` and appear only once in the strict snapshot.
+
 Every quest, flag and candidate object must be reconstructed and cross-validated in an isolated candidate campaign before `World` receives the restored state.
 
 Future schema evolution must continue to add snapshot structures only after their supporting gameplay systems exist.
@@ -1035,7 +1063,7 @@ Future schema evolution must continue to add snapshot structures only after thei
 
 Implementation verification must cover:
 
-Part 9 verified explicit version-2 rejection and a complete version-3 restart round trip with empty narrative collections. Part 10 also loaded a campaign with an active canonical quest. A representative save-and-restart round trip after recruitment, plus invalid narrative-payload cases, remain pending.
+Part 9 verified explicit version-2 rejection and a complete version-3 restart round trip with empty narrative collections. Part 10 also loaded a campaign with an active canonical quest. V8 automated coverage verifies version-4 bestiary serialization/deserialization, strict version-3 rejection and current enemy-data loading. A representative save-and-restart round trip after recruitment and bestiary discovery, plus invalid narrative-payload cases, remain pending.
 
 | Group | Required coverage |
 |---|---|
@@ -1052,6 +1080,7 @@ Part 9 verified explicit version-2 rejection and a complete version-3 restart ro
 | Shops | Ordered offers, zero stock, invalid entries and complete restoration |
 | Clock | Saved time, advancement boundaries and no load-triggered restock |
 | Narrative | Active counters, completed quests, set flags, pending candidates, recruited candidates and party coherence |
+| Bestiary | Empty and non-empty discovery, stable order, duplicate IDs, unknown enemies, strict version-3 rejection and restart preservation |
 | Cryptography | Invalid Base64, altered ciphertext, wrong tag and unsupported container |
 | Atomicity | Failed save preserves old file; failed load preserves runtime state |
 | Player flow | Continue, New Game confirmation, both INN save actions and exit confirmation |

@@ -7,18 +7,17 @@ import java.util.Map;
 import java.util.Objects;
 
 import rpg.characters.GameCharacter;
-import rpg.characters.PlayableCharacter;
 import rpg.skills.SkillTargetType;
 
 // Stores the acting character and the targets selected for one skill use.
 public final class SkillExecutionContext {
 
-	private final PlayableCharacter actingCharacter;
+	private final GameCharacter actingCharacter;
 	private final Map<SkillTargetType, List<GameCharacter>> targetsByType;
 	private final int weaponBaseDamage;
 
 	public SkillExecutionContext(
-			PlayableCharacter actingCharacter,
+			GameCharacter actingCharacter,
 			Map<SkillTargetType, List<GameCharacter>> targetsByType,
 			int weaponBaseDamage
 	) {
@@ -58,7 +57,7 @@ public final class SkillExecutionContext {
 		this.weaponBaseDamage = weaponBaseDamage;
 	}
 
-	public PlayableCharacter getActingCharacter() {
+	public GameCharacter getActingCharacter() {
 		return actingCharacter;
 	}
 

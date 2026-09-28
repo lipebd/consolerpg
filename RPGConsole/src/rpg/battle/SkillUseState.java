@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import rpg.characters.GameCharacter;
-import rpg.skills.SkillDefinition;
+import rpg.skills.CombatSkillDefinition;
 import rpg.skills.SkillEffectDefinition;
 import rpg.skills.SkillEffectType;
 import rpg.skills.SkillTargetType;
@@ -15,7 +15,7 @@ import rpg.skills.SkillTargetType;
 // Tracks the mutable execution of one skill use.
 public final class SkillUseState {
 
-	private final SkillDefinition skillDefinition;
+	private final CombatSkillDefinition skillDefinition;
 	private final SkillExecutionContext context;
 
 	private final List<SkillEffectResult> effectResults;
@@ -24,7 +24,7 @@ public final class SkillUseState {
 	private boolean canConsumeTurn;
 	private boolean postActionExecuted;
 
-	SkillUseState(SkillDefinition skill, SkillExecutionContext context) {
+	SkillUseState(CombatSkillDefinition skill, SkillExecutionContext context) {
 		this.skillDefinition = Objects.requireNonNull(skill, "Skill definition cannot be null.");
 
 		this.context = Objects.requireNonNull(context, "Skill execution context cannot be null.");
@@ -101,7 +101,7 @@ public final class SkillUseState {
 		return context;
 	}
 
-	public SkillDefinition getSkillDefinition() {
+	public CombatSkillDefinition getSkillDefinition() {
 		return skillDefinition;
 	}
 

@@ -19,6 +19,7 @@ import rpg.classes.PlayableClassDefinition;
 import rpg.enemies.EnemyCatalog;
 import rpg.enemies.EnemyDefinition;
 import rpg.enemies.EnemyDropCatalog;
+import rpg.enemies.EnemySpawn;
 import rpg.flags.CampaignFlags;
 import rpg.items.Item;
 import rpg.items.ItemCatalog;
@@ -66,8 +67,10 @@ import rpg.recruitment.RecruitmentCandidateStateCatalog;
 import rpg.requirements.RequirementCatalog;
 import rpg.requirements.RequirementEvaluator;
 import rpg.requirements.RequirementSetDefinition;
+import rpg.skills.EnemySkillsetCatalog;
 import rpg.ui.AllyRecruitmentMenu;
 import rpg.ui.BattleRewardScreen;
+import rpg.ui.BestiaryMenu;
 import rpg.ui.CityLocationMenu;
 import rpg.ui.CityMenu;
 import rpg.ui.CityTransportMenu;
@@ -96,6 +99,7 @@ import rpg.ui.ScenarioBranchMenu;
 import rpg.ui.ShopMenu;
 import rpg.world.branches.ScenarioBranchCatalog;
 import rpg.world.branches.ScenarioBranchDefinition;
+import rpg.world.bestiary.BestiaryStateCatalog;
 import rpg.world.crafting.CrafterCatalog;
 import rpg.world.crafting.CrafterDefinition;
 import rpg.world.crafting.CraftingRecipeCatalog;
@@ -119,6 +123,7 @@ import rpg.world.scenarios.DungeonBossAccess;
 import rpg.world.scenarios.DungeonBossAccessResolver;
 import rpg.world.scenarios.DungeonBossGateDefinition;
 import rpg.world.scenarios.DungeonProgress;
+import rpg.world.scenarios.DungeonSettings;
 import rpg.world.scenarios.Scenario;
 import rpg.world.scenarios.ScenarioCatalog;
 import rpg.world.shops.ShopAccessType;
@@ -142,6 +147,7 @@ public class World {
 	private final QuestNpcInteractionResolver questNpcInteractionResolver;
 	private final RecruitmentCandidateStateCatalog candidateStateCatalog;
 	private final RecruitmentCandidateIntroductionService candidateIntroductionService;
+	private final BestiaryStateCatalog bestiaryStateCatalog;
 
 	private final CityLocationMenu cityLocationMenu;
 	private final CityMenu cityMenu;
@@ -228,6 +234,7 @@ public class World {
 			CampaignSaveService campaignSaveService,
 			EnemyCatalog enemyCatalog,
 			EnemyDropCatalog enemyDropCatalog,
+			EnemySkillsetCatalog enemySkillsetCatalog,
 			EncounterCatalog encounterCatalog,
 			ExplorationRewardCatalog explorationRewardCatalog,
 			ScenarioCatalog scenarioCatalog,
@@ -256,11 +263,13 @@ public class World {
 			ClassPathTransitionFailurePresenter classPathTransitionFailurePresenter,
 			QuestCatalog questCatalog,
 			QuestRewardCatalog questRewardCatalog,
-			QuestDialogueCatalog questDialogueCatalog) {
+			QuestDialogueCatalog questDialogueCatalog,
+			BestiaryStateCatalog bestiaryStateCatalog) {
 
 		Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 		Objects.requireNonNull(enemyDropCatalog, "Enemy drop catalog cannot be null.");
 		Objects.requireNonNull(encounterCatalog, "Encounter catalog cannot be null.");
+		Objects.requireNonNull(enemySkillsetCatalog, "Enemy skillset catalog cannot be null.");
 
         // Core world state and shared data
         this.party = Objects.requireNonNull(party, "Party cannot be null.");
@@ -301,6 +310,10 @@ public class World {
 				Objects.requireNonNull(
 						candidateIntroductionService,
 						"Recruitment candidate introduction service cannot be null.");
+		this.bestiaryStateCatalog = Objects.requireNonNull(
+				bestiaryStateCatalog,
+				"Bestiary state catalog cannot be null."
+		);
         this.questCatalog = Objects.requireNonNull(questCatalog, "Quest catalog cannot be null.");
         this.questDialogueCatalog =
                 Objects.requireNonNull(
@@ -392,10 +405,14 @@ public class World {
                         this.party,
                         consoleInput,
                         enemyDropCatalog,
+                        enemySkillsetCatalog,
                         rewardService,
                         rewardScreen,
                         this.questProgressCoordinator,
+						this.bestiaryStateCatalog,
                         random);
+		BestiaryMenu bestiaryMenu =
+				new BestiaryMenu(consoleInput, this.enemyCatalog, this.bestiaryStateCatalog);
         this.questMenu =
                 new QuestMenu(
                         consoleInput,
@@ -403,7 +420,8 @@ public class World {
                         this.questProgress,
                         questRewardCatalog,
                         this.itemCatalog,
-                        this.questProgressCoordinator);
+						this.questProgressCoordinator,
+						bestiaryMenu);
         this.dialoguePresenter =
                 new DialoguePresenter(
                         consoleInput,
@@ -837,29 +855,13 @@ public class World {
                             shopStateCatalog,
 							questProgress,
 							campaignFlags,
-							candidateStateCatalog);
+							candidateStateCatalog,
+							bestiaryStateCatalog);
 		} catch (IllegalArgumentException | IllegalStateException | ArithmeticException exception) {
 			return CampaignSaveResult.ENCODING_FAILED;
 		}
 
 		return campaignSaveService.save(snapshot);
-	}
-
-	private void displaySaveFailure(CampaignSaveResult saveResult) {
-		System.out.println();
-
-		switch (saveResult) {
-            case ENCODING_FAILED ->
-                    System.out.println(
-                            "Não foi possível preparar os dados da campanha para salvar.");
-
-            case FILE_WRITE_FAILED ->
-                    System.out.println("Não foi possível gravar a campanha salva.");
-
-            case SUCCESS ->
-                    throw new IllegalArgumentException(
-                            "A successful save cannot be displayed as a failure.");
-		}
 	}
 
 	private void executeCombatScenarioMenu() {
@@ -1444,7 +1446,7 @@ public class World {
 
 		ExplorationSettings settings = combatScenario.getExplorationSettings();
 
-        List<EnemyDefinition> selectedDefinitions =
+        List<EnemySpawn> selectedDefinitions =
                 encounterGenerator.generateGroup(
 				currentScenario.getId(),
 				position,
@@ -1659,7 +1661,9 @@ public class World {
 			return true;
 		}
 
-		BattleResult result = startEncounter(epicDefinitions, BattleType.EPIC);
+		DungeonSettings settings = dungeon.getDungeonSettings();
+		int epicLevel = rollEnemyLevel(settings.getEpicMinLevel(), settings.getEpicMaxLevel());
+		BattleResult result = startEncounter(createEnemySpawns(epicDefinitions, epicLevel), BattleType.EPIC);
 
 		if (result == BattleResult.VICTORY) {
 			dungeonProgress.recordEpicVictory(dungeon.getId(), worldClock.getElapsedHours());
@@ -1687,7 +1691,7 @@ public class World {
 	}
 
 	private BattleResult startEncounter(
-			List<EnemyDefinition> enemyDefinitions,
+			List<EnemySpawn> enemySpawn,
 			BattleType battleType
 	) {
 		if (!(currentScenario instanceof CombatScenario combatScenario)) {
@@ -1695,7 +1699,7 @@ public class World {
 		}
 
 		BattleResult result =
-				battleCoordinator.start(enemyDefinitions, combatScenario, battleType);
+				battleCoordinator.start(enemySpawn, combatScenario, battleType);
 
 		if (result == BattleResult.VICTORY || result == BattleResult.DEFEAT) {
 			advanceWorldTime(HOURS_PER_FINISHED_BATTLE);
@@ -1905,16 +1909,18 @@ public class World {
 
 	private void executeBossEncounter(Dungeon dungeon) {
         String dungeonId = dungeon.getId();
-
+        DungeonSettings settings = dungeon.getDungeonSettings();
         boolean narrativeBoss = !dungeonProgress.isNarrativeBossDefeated(dungeonId);
 
         List<String> bossEnemyIds =
                 narrativeBoss
-                        ? dungeon.getDungeonSettings().getBossEnemyIds()
-                        : dungeon.getDungeonSettings().getRecurringBossEnemyIds();
+                        ? settings.getBossEnemyIds()
+                        : settings.getRecurringBossEnemyIds();
 
         List<EnemyDefinition> bossDefinitions = resolveEnemyDefinitions(bossEnemyIds);
-
+        int bossLevel = narrativeBoss
+                ? settings.getNarrativeBossLevel()
+                : rollEnemyLevel(settings.getRecurringBossMinLevel(), settings.getRecurringBossMaxLevel());
 		ConsoleUI.clearScreen();
 		ConsoleUI.displayHeading(dungeon.getName(), "Boss");
 
@@ -1925,7 +1931,7 @@ public class World {
 			System.out.println("- " + bossDefinition.getName());
 		}
 
-		BattleResult result = startEncounter(bossDefinitions, BattleType.BOSS);
+		BattleResult result = startEncounter(createEnemySpawns(bossDefinitions, bossLevel), BattleType.BOSS);
 
 		if (result == BattleResult.VICTORY) {
 			long elapsedHours = worldClock.getElapsedHours();
@@ -1975,6 +1981,16 @@ public class World {
 	private void terminateGame() {
 		System.out.println("\nObrigado por testar a versão atual!");
 		running = false;
+	}
+
+	private List<EnemySpawn> createEnemySpawns(List<EnemyDefinition> definitions, int level) {
+		return definitions.stream()
+				.map(definition -> new EnemySpawn(definition, level))
+				.toList();
+	}
+
+	private int rollEnemyLevel(int minLevel, int maxLevel) {
+	    return Math.toIntExact(random.nextLong(minLevel, (long) maxLevel + 1));
 	}
 
 	private List<CrafterDefinition> getCityCrafters(City city) {

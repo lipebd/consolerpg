@@ -90,10 +90,10 @@ public final class BattleScreen {
 			} else {
 				names.add(truncateToWidth(name, width));
 			}
-			hp.add("HP " + slot.getEnemy().getCurrentHp() + "/" + slot.getEnemy().getMaxHp());
+			hp.add(formatResource("HP", slot.getEnemy().getCurrentHp(), slot.getEnemy().getMaxHp()));
 			effects.add(
 					slot.isAlive() ? CombatEffectFormatter.formatCompactEffectSummary(slot.getEnemy(), width)
-							: "DERROTADO"
+							: "\u001B[31mDERROTADO\u001B[0m"
 			);
 		}
 
@@ -165,13 +165,13 @@ public final class BattleScreen {
 
 			int targetIndex = selectableAllies.indexOf(member);
 			String marker = targetIndex < 0 ? "" : "\u001B[33m[" + (targetIndex + 1) + "]\u001B[0m ";
-
+			String defending = member.isDefending() ? "\u001B[36m⛨\u001B[0m" : "";
 			int leftPadding = Math.max(
 					0,
-					PARTY_COLUMN_WIDTH - ConsoleUI.getVisibleLength(marker) - ConsoleUI.getVisibleLength(classAndLevel)
+					PARTY_COLUMN_WIDTH - ConsoleUI.getVisibleLength(defending) - ConsoleUI.getVisibleLength(marker) - ConsoleUI.getVisibleLength(classAndLevel)
 			);
 
-			classesAndLevels.add(marker + " ".repeat(leftPadding) + classAndLevel);
+			classesAndLevels.add(marker + defending + " ".repeat(leftPadding) + classAndLevel);
 
 			names.add(member.getName());
 			hp.add(formatResource("HP", member.getCurrentHp(), member.getMaxHp()));
@@ -180,7 +180,7 @@ public final class BattleScreen {
 
 			effects.add(
 					member.isAlive() ? CombatEffectFormatter.formatCompactEffectSummary(member, PARTY_COLUMN_WIDTH)
-							: "DERROTADO"
+							: "\u001B[31mDERROTADO\u001B[0m"
 			);
 		}
 
@@ -671,7 +671,12 @@ public final class BattleScreen {
 
 			System.out.println();
 			System.out.println(slot.getDisplayName());
-			System.out.println("Rank: " + enemy.getRank());
+			System.out.println(
+					"Rank: "
+							+ enemy.getRank()
+							+ "    Personalidade: "
+							+ enemy.getTargetProfile().getDisplayName()
+			);
 			System.out.println("HP: " + enemy.getCurrentHp() + "/" + enemy.getMaxHp());
 			System.out.println("ATK: " + enemy.getAttack() + "    DEF: " + enemy.getDefense());
 			System.out.println("MAG: " + enemy.getMagic() + "    RES: " + enemy.getResistance());

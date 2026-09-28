@@ -35,7 +35,7 @@ ciphertext=<Base64>
 
 The IV and authenticated ciphertext use canonical basic Base64 encoding. No campaign property is exposed outside the ciphertext.
 
-After authenticated AES-GCM decryption, the current internal version-3 campaign payload uses strict `name=value` properties encoded as UTF-8. In addition to the existing party, world, dungeon, clock and shop structures, version 3 contains:
+After authenticated AES-GCM decryption, the current internal version-4 campaign payload uses strict `name=value` properties encoded as UTF-8. In addition to party, world, dungeon, clock, shop, quest, permanent-flag and recruitment-candidate state, version 4 contains:
 
 ```properties
 quest.active.count=<non-negative integer>
@@ -55,9 +55,12 @@ recruitment.candidate.count=<non-negative integer>
 recruitment.candidate.<index>.id=<candidate ID>
 recruitment.candidate.<index>.name=<persistent character name>
 recruitment.candidate.<index>.recruited=<true or false>
+
+bestiary.discovered.count=<non-negative integer>
+bestiary.discovered.<index>.id=<enemy ID>
 ```
 
-`save.formatVersion=3` is the only supported internal version. Version 2 is rejected without migration, while the encrypted outer container remains at `containerVersion=1`. Property names, indexed collection structures, cross-state invariants and complete validation rules are defined centrally in `SAVE_STATE.md`.
+`save.formatVersion=4` is the only supported internal version. Earlier internal versions are rejected without migration, while the encrypted outer container remains at `containerVersion=1`. Property names, indexed collection structures, cross-state invariants and complete validation rules are defined centrally in `SAVE_STATE.md`.
 
 The encrypted codec, atomic file services, catalog-backed runtime reconstruction and gameplay integration are implemented.
 
@@ -187,7 +190,7 @@ File:
 
 `data/enemies.txt`
 
-Each valid enemy line contains exactly 13 fields:
+Each valid enemy line contains exactly 19 fields:
 
 | Position | Field | Java type | Example |
 |---:|---|---|---|
@@ -195,26 +198,32 @@ Each valid enemy line contains exactly 13 fields:
 | 2 | Name | `String` | `Lobermo` |
 | 3 | Maximum HP | `int` | `50` |
 | 4 | Maximum MP | `int` | `1` |
-| 5 | Maximum SP | `int` | `1` |
-| 6 | Attack | `int` | `8` |
-| 7 | Defense | `int` | `5` |
-| 8 | Magic | `int` | `1` |
-| 9 | Resistance | `int` | `1` |
-| 10 | Speed | `int` | `5` |
-| 11 | Luck | `int` | `1` |
-| 12 | Enemy rank | `EnemyRank` | `COMMON` |
-| 13 | Description | `String` | `Uma criatura lupina...` |
+| 5 | Maximum SP | `int` | `20` |
+| 6 | Attack | `int` | `9` |
+| 7 | Defense | `int` | `6` |
+| 8 | Magic | `int` | `5` |
+| 9 | Resistance | `int` | `6` |
+| 10 | Speed | `int` | `8` |
+| 11 | Luck | `int` | `4` |
+| 12 | Primary attribute | optional `CharacterAttribute` | `ATK` |
+| 13 | Secondary attribute | optional `CharacterAttribute` | empty |
+| 14 | Weakness attribute | optional `CharacterAttribute` | empty |
+| 15 | Enemy rank | `EnemyRank` | `COMMON` |
+| 16 | Target profile | `EnemyTargetProfile` | `PREDATOR` |
+| 17 | Description | `String` | `Uma criatura lupina...` |
+| 18 | Height in meters | `double` | `0.65` |
+| 19 | Weight in kilograms | `double` | `18` |
 
 Header:
 
 ```text
-# id;name;maxHp;maxMp;maxSp;attack;defense;magic;resistance;speed;luck;rank;description
+# id;name;maxHp;maxMp;maxSp;attack;defense;magic;resistance;speed;luck;primaryAttribute;secondaryAttribute;weaknessAttribute;rank;targetProfile;description;height;weight
 ```
 
 Example:
 
 ```text
-lobermo;Lobermo;50;1;1;8;5;1;1;5;1;COMMON;Uma criatura lupina que percorre os Verdes Ermos em busca de presas.
+lobermo;Lobermo;50;1;20;9;6;5;6;8;4;ATK;;;COMMON;PREDATOR;Uma criatura lupina que percorre os Verdes Ermos em busca de presas.;0.65;18
 ```
 
 Supported enemy ranks:
@@ -225,6 +234,13 @@ Supported enemy ranks:
 - `BOSS`
 - `EPIC`
 - `LEGENDARY`
+
+Supported target profiles:
+
+- `INSTINCTIVE`
+- `ERRATIC`
+- `PREDATOR`
+- `TACTICAL`
 
 Loading flow:
 
@@ -241,12 +257,20 @@ Rules:
 - Maximum HP must be positive.
 - Maximum MP and SP cannot be negative.
 - ATK, DEF, MAG, RES, VEL and LCK must be positive.
+- Numeric attributes represent the species' natural level-1 values before rank multipliers.
+- Maximum MP and SP also represent level-1 natural values. Each resource gains 5 points per acquired enemy level.
+- MP and SP growth is independent from enemy rank and primary, secondary or weakness attributes.
+- Primary, secondary and weakness attributes are independently optional. An absent value uses an empty field.
+- Every non-empty specialization field must be a valid `CharacterAttribute`.
+- Primary, secondary and weakness attributes must be pairwise distinct when present.
+- Target profile is required and controls only individual opponent selection; it is independent from enemy rank.
 - Literal `\n` sequences in descriptions are converted into line breaks.
+- Height and weight must be finite values greater than zero. They are descriptive bestiary data and do not change combat calculations.
 - Invalid definitions report their source line and enemy ID.
 
-`EnemyLoader` ignores blank lines and comments, requires exactly 13 fields, converts numeric values and `EnemyRank`, creates `CharacterStats`, and registers an `EnemyDefinition`.
+`EnemyLoader` ignores blank lines and comments, requires exactly 19 fields, converts numeric values, optional attributes, `EnemyRank` and `EnemyTargetProfile`, creates the level-1 `CharacterStats`, validates physical measurements and registers an `EnemyDefinition`.
 
-Enemy definitions contain reusable immutable data. Each battle creates a separate mutable `Enemy` instance from its definition.
+Enemy definitions contain reusable immutable species data. Each battle combines one definition with a positive runtime level, calculates its natural stats, including level-scaled MP and SP, and creates a separate mutable `Enemy` instance. `LEGENDARY` remains a recognized reserved rank, but its stat multipliers are not configured and stat calculation rejects it.
 
 ## Encounter definitions
 
@@ -254,28 +278,30 @@ File:
 
 `data/encounters.txt`
 
-Each valid encounter line contains exactly 7 fields:
+Each valid encounter line contains exactly 9 fields:
 
 | Position | Field | Java type | Example |
 |---:|---|---|---|
 | 1 | Scenario ID | `String` | `verdes_ermos` |
 | 2 | Enemy ID | `String` | `lobermo` |
 | 3 | Minimum position | `int` | `1` |
-| 4 | Maximum position | `int` | `5` |
-| 5 | Selection weight | `int` | `50` |
-| 6 | Maximum copies | `int` | `2` |
-| 7 | Area restriction | `ExplorationAreaRestriction` | `ANY` |
+| 4 | Maximum position | `int` | `2` |
+| 5 | Minimum enemy level | `int` | `1` |
+| 6 | Maximum enemy level | `int` | `2` |
+| 7 | Selection weight | `int` | `50` |
+| 8 | Maximum copies | `int` | `1` |
+| 9 | Area restriction | `ExplorationAreaRestriction` | `NORMAL_ONLY` |
 
 Header:
 
 ```text
-# scenarioId;enemyId;minPosition;maxPosition;weight;maxCopies;areaRestriction
+# scenarioId;enemyId;minPosition;maxPosition;minLevel;maxLevel;weight;maxCopies;areaRestriction
 ```
 
 Example:
 
 ```text
-verdes_ermos;lobermo;1;5;50;2;ANY
+verdes_ermos;lobermo;1;2;1;2;50;1;NORMAL_ONLY
 ```
 
 Area restriction values:
@@ -288,11 +314,14 @@ Rules:
 
 - `minPosition` is the first exploration position where the enemy may appear.
 - `maxPosition` is the last valid position.
+- `minLevel` and `maxLevel` must be positive, and the minimum cannot exceed the maximum.
+- Each generated copy rolls its level independently inside the inclusive configured range.
 - `weight` is relative and does not represent the chance that a battle occurs.
 - Weights are compared only among entries eligible for the current scenario, position and area type.
 - Eligible weights do not need to total 100.
 - `maxCopies` limits how many copies of the enemy may join one generated enemy group.
 - The referenced enemy ID must exist in `EnemyCatalog`.
+- The enemy's natural stats and rank multipliers must remain numerically valid at `maxLevel`; overflow rejects the encounter during loading.
 
 Loading flow:
 
@@ -301,8 +330,11 @@ encounters.txt
     -> EncounterLoader
     -> EncounterCatalog
     -> EncounterGenerator
-    -> EnemyDefinition
+    -> EnemySpawn
+    -> BattleCoordinator
 ```
+
+`EnemySpawn` pairs one immutable `EnemyDefinition` with one rolled positive level. It does not create or own mutable battle state.
 
 ## Exploration reward definitions
 
@@ -862,28 +894,33 @@ File:
 
 `data/dungeons.txt`
 
-Each active dungeon line contains exactly 8 fields:
+Each active dungeon line contains exactly 13 fields:
 
 ```text
-# scenarioId;bossEnemyIds;recurringBossEnemyIds;recurringBossCooldownHours;epicEnemyIds;epicMinPosition;epicAreaRestriction;epicEnemyCooldownHours
+# scenarioId;bossEnemyIds;narrativeBossLevel;recurringBossEnemyIds;recurringBossMinLevel;recurringBossMaxLevel;recurringBossCooldownHours;epicEnemyIds;epicMinLevel;epicMaxLevel;epicMinPosition;epicAreaRestriction;epicEnemyCooldownHours
 ```
 
 Example:
 
 ```text
-gruta_relamparrocha;mestre_eletrogoblin;mestre_eletrogoblin;4;relampagolem;1;ANY;6
+gruta_relamparrocha;mestre_eletrogoblin;2;mestre_eletrogoblin;2;3;4;relampagolem;4;5;1;ANY;6
 ```
 
 | Position | Field | Type | Example |
 |---|---|---|---|
 | 1 | Dungeon scenario ID | Stable ID | `gruta_relamparrocha` |
 | 2 | Narrative boss enemy IDs | Comma-separated ID group | `mestre_eletrogoblin` |
-| 3 | Recurring boss enemy IDs | Comma-separated ID group | `mestre_eletrogoblin` |
-| 4 | Recurring boss cooldown | Positive integer world hours | `4` |
-| 5 | Epic enemy IDs | Comma-separated ID group | `relampagolem` |
-| 6 | Epic minimum position | Positive integer | `1` |
-| 7 | Epic area restriction | `ExplorationAreaRestriction` | `ANY` |
-| 8 | Epic cooldown | Positive integer world hours | `6` |
+| 3 | Narrative boss level | Positive integer | `2` |
+| 4 | Recurring boss enemy IDs | Comma-separated ID group | `mestre_eletrogoblin` |
+| 5 | Recurring boss minimum level | Positive integer | `2` |
+| 6 | Recurring boss maximum level | Positive integer | `3` |
+| 7 | Recurring boss cooldown | Positive integer world hours | `4` |
+| 8 | Epic enemy IDs | Comma-separated ID group | `relampagolem` |
+| 9 | Epic minimum level | Positive integer | `4` |
+| 10 | Epic maximum level | Positive integer | `5` |
+| 11 | Epic minimum position | Positive integer | `1` |
+| 12 | Epic area restriction | `ExplorationAreaRestriction` | `ANY` |
+| 13 | Epic cooldown | Positive integer world hours | `6` |
 
 Rules:
 
@@ -896,6 +933,13 @@ Rules:
 - Narrative and recurring boss groups may reference the same enemy IDs.
 - An epic enemy cannot also belong to either boss group.
 - Empty IDs and duplicates inside the same group are invalid.
+- `narrativeBossLevel` must be positive and is fixed for every first-completion boss encounter.
+- Recurring-boss and epic minimum and maximum levels must be positive, and each minimum cannot exceed its maximum.
+- One recurring-boss level is rolled for the entire recurring group when that encounter begins.
+- One epic level is rolled for the entire epic group after the player accepts the encounter.
+- Every member of one boss or epic group uses the same rolled level.
+- Dungeon enemy levels affect combat growth and skill availability but do not change scenario EXP, GOLD, rank reward multipliers or independent drops in V8.
+- Natural stats and rank multipliers must remain numerically valid at the narrative level and at both configured maximum levels; overflow rejects the dungeon during loading.
 - `recurringBossCooldownHours` and `epicEnemyCooldownHours` must be positive.
 - `epicMinPosition` must be at least `1` and lower than the dungeon's final exploration position.
 - `epicAreaRestriction` must be `NORMAL_ONLY`, `SPECIAL_ONLY` or `ANY`.
@@ -1375,11 +1419,132 @@ skills.txt + skill_effects.txt
 
 `SkillLoader` creates every canonical `SkillDefinition` regardless of acquisition type. Automatic learning belongs to `PlayableCharacter`; `SCROLL` linkage and specialization completeness belong to `SkillScrollLoader`.
 
+## Enemy-skill definitions
+
+Reusable enemy skill headers are loaded from:
+
+`data/enemy_skills.txt`
+
+Header:
+
+```text
+# id;mpCost;spCost;name
+```
+
+Each valid line contains exactly 4 fields:
+
+| Position | Field | Java type | Example |
+|---:|---|---|---|
+| 1 | Skill ID | `String` | `mordida_selvagem` |
+| 2 | MP cost | `int` | `0` |
+| 3 | SP cost | `int` | `10` |
+| 4 | Name | `String` | `Mordida Selvagem` |
+
+Example:
+
+```text
+mordida_selvagem;0;10;Mordida Selvagem
+```
+
+Rules:
+
+- IDs must use stable lowercase identifiers.
+- Enemy and playable skill IDs share one global namespace and cannot collide.
+- MP and SP costs cannot be negative.
+- Names cannot be empty.
+- Every enemy skill must receive at least one ordered component from `skill_effects.txt`.
+- Enemy skills do not define playable class, acquisition type, level requirement, description or playable skill-slot ownership.
+- Every declared enemy skill must be linked to at least one enemy through `enemy_skillsets.txt`.
+- `REVIVE` is not supported for enemy skills.
+
+`SkillDefinition` and `EnemySkillDefinition` implement the shared `CombatSkillDefinition` execution contract. Playable progression, scroll learning and skill-slot rules continue to accept only playable `SkillDefinition` objects.
+
+Loading flow:
+
+```text
+skills.txt + enemy_skills.txt + skill_effects.txt
+    -> SkillLoader
+    -> SkillDefinition / EnemySkillDefinition
+    -> ordered SkillEffectDefinition components
+    -> SkillCatalog / EnemySkillCatalog
+```
+
+## Enemy-skillset definitions
+
+Enemy species are linked to reusable enemy skills through:
+
+`data/enemy_skillsets.txt`
+
+Header:
+
+```text
+# enemyId;skillId;minimumLevel
+```
+
+Each valid line contains exactly 3 fields:
+
+| Position | Field | Java type | Example |
+|---:|---|---|---|
+| 1 | Enemy ID | `String` | `lobermo` |
+| 2 | Enemy-skill ID | `String` | `mordida_selvagem` |
+| 3 | Minimum enemy level | `int` | `1` |
+
+Example:
+
+```text
+lobermo;mordida_selvagem;1
+```
+
+Rules:
+
+- `enemyId` must reference an existing `EnemyDefinition`.
+- `skillId` must reference an existing `EnemySkillDefinition`.
+- `minimumLevel` must be positive.
+- An enemy-skill pair cannot be duplicated.
+- One skill may be linked to multiple species.
+- One species may receive multiple linked skills.
+- Every enemy skill header must be referenced by at least one link.
+- The linked species must have enough natural MP and SP to pay the skill cost at `minimumLevel`.
+- Resource-capacity validation uses `EnemyDefinition.calculateNaturalStats(minimumLevel)`, preserving the same MP/SP growth used for runtime instances.
+- A link becomes eligible when the spawned enemy's level is greater than or equal to its `minimumLevel`.
+- `EnemyRank` limits the number of enemy skills installed in one runtime instance. Eligible skills are selected without repetition; the basic attack remains separate from this limit.
+- `LEGENDARY` remains reserved and has no approved runtime skill ceiling.
+
+Runtime ceilings:
+
+| Enemy rank | Maximum installed enemy skills |
+|---|---:|
+| `COMMON` | 2 |
+| `VETERAN` | 3 |
+| `LEADER` | 4 |
+| `BOSS` | 5 |
+| `EPIC` | 6 |
+
+Loading flow:
+
+```text
+enemies.txt
+    -> EnemyLoader
+    -> EnemyCatalog
+
+enemy_skills.txt + skill_effects.txt
+    -> SkillLoader
+    -> EnemySkillCatalog
+
+enemy_skillsets.txt + EnemyCatalog + EnemySkillCatalog
+    -> EnemySkillsetLoader
+    -> EnemySkillsetCatalog
+```
+
+`BattleCoordinator` filters links by enemy level, selects the per-instance loadout within the rank ceiling and passes the immutable definitions to the new runtime `Enemy`.
+
 ## Skill-effect definitions
 
 Ordered skill components are loaded from:
 
 `data/skill_effects.txt`
+
+The same file serves playable and enemy skills. Every component ID must resolve globally to exactly one header from `skills.txt` or `enemy_skills.txt`.
 
 Header:
 
@@ -1439,6 +1604,8 @@ Target types:
 - `ALL_ENEMIES`
 - `RANDOM_ENEMY`
 
+Target types are interpreted relative to the acting side. For an enemy user, `SELF` is the acting enemy, ally targets refer to battle enemies and enemy targets refer to party members.
+
 Rules:
 
 - `DAMAGE` requires a damage type and positive power. Its optional `attribute` selects any effective offensive attribute; an empty value defaults to ATK for physical damage or MAG for magical damage. Damage type still selects the target's DEF or RES.
@@ -1463,6 +1630,10 @@ Rules:
 - Each `RANDOM_ENEMY` or `RANDOM_ALLY` component draws independently when it executes. Enemy targets must still be alive; `REVIVE;RANDOM_ALLY` draws from defeated allies, while other random-ally effects draw from living allies. Conditions are checked after selection and do not cause another draw. A paired `PRIMARY` modifier and damage component share one target.
 - `NONE` leaves `conditionValue` empty. HP conditions use an integer percentage from `1` to `100` with strict `<` or `>` comparison: `SELF_HP_LESS_THAN_PERCENT`, `SELF_HP_GREATER_THAN_PERCENT`, `TARGET_HP_LESS_THAN_PERCENT` and `TARGET_HP_GREATER_THAN_PERCENT`.
 - `SELF_GREATER` and `SELF_LOWER` compare the user's effective attribute with the target's same effective attribute. Their `conditionValue` is one of `ATK`, `DEF`, `MAG`, `RES`, `VEL` or `LCK`; the effect's `attribute` field remains available for its own purpose.
+- Every component must reference a known playable or enemy skill ID.
+- Playable and enemy skill headers cannot use the same ID.
+- Every header in either catalog must receive at least one component.
+- The first authored enemy-content pass uses only `DAMAGE`, `ATTRIBUTE_STAGE` and `HP_RECOVERY` with `SINGLE_ENEMY` or `SELF`. This is a content boundary, not a reduction of the shared effect vocabulary.
 
 Examples:
 
@@ -1479,11 +1650,11 @@ distorcao_ancestral;1;PRIMARY;SPECIAL_STATE;SINGLE_ENEMY;;;;;;;DISTORTED_ATTRIBU
 Loading flow:
 
 ```text
-skills.txt + skill_effects.txt
+skills.txt + enemy_skills.txt + skill_effects.txt
     -> SkillLoader
-    -> SkillDefinition
+    -> SkillDefinition / EnemySkillDefinition
     -> ordered SkillEffectDefinition components
-    -> SkillCatalog
+    -> SkillCatalog / EnemySkillCatalog
 ```
 
 ## Quest definitions

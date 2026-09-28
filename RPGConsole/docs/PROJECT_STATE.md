@@ -2,15 +2,15 @@
 
 ## Current version
 
-V6 is complete and preserved as the current released version.
+V8 is complete and released as `v8.0.0`.
 
 Current stage:
 
-`V7 polish — Parts 1 through 9 complete; final verification and portable V7 release pending. Recovery, revival, selective normalization, attribute-stage and temporary EXP/GOLD reward items are implemented and tested. Additional skill effects, conditions and other adjustments are implemented and tested. A preliminary V8_ROADMAP.md was created based on V7 Part 9.`
+`V8 released — enemy levels and skills, target personalities, persistent Bestiary, dungeon level ranges, V8 branding and new-campaign terminal guidance are implemented and verified.`
 
 Current Git branch:
 
-`feature/v7-polish`
+`master`
 
 Preserved release tags:
 
@@ -20,6 +20,8 @@ Preserved release tags:
 * `v4.0.0`
 * `v5.0.0`
 * `v6.0.0`
+* `v7.0.0`
+* `v8.0.0`
 
 ## Project objective
 
@@ -697,7 +699,7 @@ The initial character-creation block is complete.
 - `CharacterNameCatalog` stores the validated names and `CharacterNameSelector` selects uniformly after exclusions.
 - `CharacterCreationMenu` supports manual naming, random naming, repeated randomization, name changes, confirmation and cancellation.
 - Character creation displays the Flagelo's complete class name, primary and secondary specializations and external description.
-- Cancelling returns to `TitleScreen` without constructing partial character or party state.
+- Cancelling returns to `CampaignSelectionMenu` without constructing partial character or party state.
 - A confirmed normal new game creates only one level-1 Flagelo with full resources.
 - The confirmed protagonist becomes the first member and leader of the new `Party`.
 - `Main` no longer contains a hardcoded normal party.
@@ -841,15 +843,15 @@ The fictional world clock and runtime shop-restocking cycle are functionally int
 
 ## Save and load
 
-The version-3 persistence foundation is implemented through `rpg.persistence`.
+The version-4 persistence foundation is implemented through `rpg.persistence`.
 
 Current completed behavior:
 
-- Immutable snapshots represent party, character, equipment, inventory, reward-modifier, world-time, discovery, travel, permanent dungeon progression, shop, quest, permanent-flag and recruitment-candidate state.
+- Immutable snapshots represent party, character, equipment, inventory, reward-modifier, world-time, discovery, travel, permanent dungeon progression, shop, quest, permanent-flag, recruitment-candidate and bestiary-discovery state.
 - The versioned campaign schema uses strict indexed Java properties encoded as UTF-8.
 - Canonical booleans accept only lowercase `true` and `false`.
 - Every registered dungeon requires exactly one valid progress entry.
-- Internal versions 1 and 2 are rejected without migration; the encrypted outer-container version remains unchanged.
+- Earlier internal versions are rejected without migration; the encrypted outer-container version remains unchanged.
 - AES-256-GCM encrypts and authenticates the complete campaign payload.
 - Every encryption uses a new secure random 12-byte IV and a 128-bit authentication tag.
 - The textual container exposes no campaign information outside authenticated ciphertext.
@@ -859,11 +861,11 @@ Current completed behavior:
 - Invalid save files are preserved instead of being deleted or corrected.
 - Snapshot, property, UTF-8, encryption, container, atomic-file and save/load service round trips were manually validated.
 
-`CampaignSnapshotRestorer` validates every catalog-backed reference and reconstructs a complete isolated `RestoredCampaign`, including party order, progression, learned scroll skills, equipment, resources, inventory, reward modifiers, world progress, travel progress, fictional time, finite shop stock, quest progress, permanent flags and candidate state. The reconstructed candidate becomes active only after every loading stage and every cross-state validation succeeds.
+`CampaignSnapshotRestorer` validates every catalog-backed reference and reconstructs a complete isolated `RestoredCampaign`, including party order, progression, learned scroll skills, equipment, resources, inventory, reward modifiers, world progress, travel progress, fictional time, finite shop stock, quest progress, permanent flags, candidate state and discovered bestiary IDs. The reconstructed candidate becomes active only after every loading stage and every cross-state validation succeeds.
 
 `QuestProgressRestorer` and `RecruitmentCandidateStateRestorer` provide single-use domain-local restoration gateways over package-private mutation APIs. The persistence orchestrator reconstructs all three narrative state holders before validating quest, flag, candidate, leader-class and party coherence.
 
-After the unchanged title screen, `CampaignSelectionMenu` distinguishes absent, unreadable, invalid and valid saves. Valid campaigns may be continued or replaced through the confirmed New Game flow. Every INN provides atomic Save and Continue and Save and Exit operations, while ordinary exits require confirmation and never save implicitly.
+After the V8 title screen, `CampaignSelectionMenu` distinguishes absent, unreadable, invalid and valid saves. Valid campaigns may be continued or replaced through the confirmed New Game flow. A definitive New Game selection opens the fixed 77-by-17 `TerminalSetupScreen` before character creation; Continue skips it. Every INN provides atomic Save and Continue and Save and Exit operations, while ordinary exits require confirmation and never save implicitly.
 
 Complete encrypted round trips, campaign reconstruction, valid and invalid startup flows, preservation of previous saves, INN saving, failed writes, exit-without-saving behavior and version-2 dungeon-progress restoration were manually validated before Part 9. Part 9 additionally validated explicit version-2 rejection and a complete version-3 save, restart, Continue, resave and second-restart cycle with empty narrative collections. Non-empty narrative persistence remains scheduled with canonical quest content.
 
@@ -971,7 +973,7 @@ Part 9 added immutable quest, flag and candidate snapshots; strict version-3 pro
 
 ## V7 interface polish
 
-Parts 1 through 6 are implemented and tested:
+V7 interface polish is implemented, tested and released:
 
 - Shared prose wrapping uses 75 visible columns, respects authored line breaks and ignores ANSI color codes when measuring text.
 - Console clearing and ordinary screen headings are centralized in `ConsoleUI`.
@@ -990,19 +992,98 @@ Parts 1 through 6 are implemented and tested:
 
 Part 7 travel, exploration, INN-saving and battle-message presentation is complete and visually verified. Route and branch menus resolve destination names from scenario IDs; route, branch and paid-transport descriptions animate after valid selection. Exploration results animate within the stable combat-scenario layout. Enter reveals complete travel, exploration and battle-message screens without terminal echo. Saving presents its animation and actual success or failure inside the INN screen.
 
-The first Part 8 block adds fixed or percentage-based recovery and revival items. Out-of-battle single-target use requests an ally, group use requests confirmation, and unsuccessful attempts preserve the item. Successful results animate and return to the refreshed inventory. The recovery and revival paths were tested, including cancellation and ineffective group use. Recovery, revival, selective normalization and attribute-stage items are implemented and tested. Persistent EXP/GOLD bonus items and additional skill effects remain pending.
+Part 8 completed fixed and percentage-based recovery and revival items, battle-only attribute-stage items, selective normalization items and persistent EXP/GOLD reward potions. Additional skill effects, conditions, attribute-based damage scaling and independent random targeting were also implemented and tested. Ineffective item attempts preserve the item, applicable confirmations remain cancellable and successful outside-battle results return to the refreshed inventory.
+
+## V8 enemy combat
+
+The title screen identifies the current build as V8. Normal New Game selection opens an ASCII-only 77-column by 17-line terminal-sizing guide before character creation. Continue and `--dev-party` skip that guide. Automated checks verify every line width, total height and the absence of a trailing eighteenth line; the complete visual flow was also verified in the target terminal.
+
+The V7 carryover for INN resting is complete. A successful rest uses a separate bounded result screen with shared wrapping and line animation; Enter reveals the complete result before a subsequent Enter returns to the INN.
+
+The first enemy-combat block is implemented and verified:
+
+- Every runtime `Enemy` has a positive level that remains hidden from the player.
+- `EnemyDefinition` stores level-1 natural stats and independently optional primary, secondary and weakness attributes.
+- `EnemyGrowthCalculator` centralizes enemy natural growth, weakness behavior, rank stat multipliers, rounding and exact arithmetic.
+- Enemy natural MP and SP grow by 5 per level and remain independent from rank and specialization bonuses.
+- Enemy ranks multiply HP and offensive attributes after natural level growth. `LEGENDARY` remains reserved without configured stat multipliers.
+- Random encounter entries define inclusive minimum and maximum levels. `EncounterGenerator` rolls each generated copy independently and carries the selected definition and level through `EnemySpawn`.
+- Dungeon data defines a fixed narrative-boss level and separate recurring-boss and epic ranges. Every enemy inside one boss or epic group shares the level selected for that encounter.
+- Encounter and dungeon loaders validate growth at every configured maximum level so invalid ranges and arithmetic overflow fail during initialization.
+- All current enemy species were rebased to intentional level-1 stats. Optional specializations and limited lore-specific base adjustments preserve distinct identities without using arbitrary historical values as the primary balancing mechanism.
+- Verdes Ermos and Gruta Relamparrocha were rebalanced and verified through normal campaign play. The Mestre Eletrogoblin narrative encounter was approved at level 2 after completion with a level-4 protagonist using the Adaga Improvisada and Gibão Comum.
+
+Enemy level does not change EXP, GOLD or drops in V8. Rewards continue to depend on the combat scenario, rank and independent drop entries.
+
+Current authored dungeon levels are:
+
+| Dungeon | Narrative boss | Recurring boss | Epic |
+|---|---:|---:|---:|
+| Gruta Relamparrocha | 2 | 2–3 | 4–5 |
+| Minas do Além-Túmulo | 10 | 9–11 | 12–14 |
+| Mata do Agouro | 13 | 12–14 | 14–16 |
+| Ruínas de Sanguemar | 15 | 14–16 | 16–18 |
+
+All four dungeon records pass startup validation at their configured maximum levels. Automated boundary coverage creates every narrative boss and both endpoints of each recurring and epic range. Random encounter ranges outside the verified opening regions remain preliminary content values for later representative regional play.
+
+The second enemy-combat block is also implemented and verified:
+
+- `enemy_skills.txt` stores reusable enemy skill headers with stable IDs, MP/SP costs and player-facing names.
+- `enemy_skillsets.txt` links enemy species to skills through positive minimum enemy levels.
+- `skill_effects.txt` now serves both playable and enemy skill catalogs through globally unique IDs and shared ordered components.
+- `CombatSkillDefinition` provides the minimal common execution contract implemented by `SkillDefinition` and `EnemySkillDefinition`.
+- `SkillExecutionContext`, `SkillExecutor` and `SkillUseState` accept the shared combat contract and any acting `GameCharacter` without generalizing playable progression, learning or slot ownership.
+- `EnemySkillsetLoader` validates cross-catalog references, duplicate links, complete enemy-skill coverage and resource capacity at each link's minimum level.
+- `EnemyRank` defines runtime loadout ceilings. `BattleCoordinator` filters links by level and selects per-instance skills without repetition before constructing each runtime `Enemy`.
+- Enemy MP and SP now gain 5 points per level without rank or specialization bonuses.
+- Enemy action selection is uniform between the basic attack and every currently affordable installed skill.
+- Resources are spent only after a shared execution can consume the turn. Ineffective selected skills preserve resources and fall back to the basic attack.
+- Enemy target meanings are resolved relative to the acting side while preserving the shared effect calculations, resistance, ordered phases, pending VEL and defeat behavior.
+- Enemy basic attacks remain physical, use ATK against DEF and receive zero weapon base damage. Enemy skills also receive zero weapon base damage and instead use their component power and declared physical or magical type.
+- All 47 current enemy species have authored skill content. The first pass contains 83 reusable enemy skill headers, 90 links and 123 effect components.
+- Current enemy content intentionally uses clear single-enemy or self-targeted damage, attribute stages and self-recovery. Related goblins, herbalísticos, lobermos, crustaceans and mine-security robots reuse appropriate general skills.
+
+Representative gameplay verified enemy physical skill damage, MP/SP consumption and exhaustion, playable-skill regression, self-buffing, resistible debuffs, pending VEL, multiple installed skills and basic-attack fallback. Negative startup tests verified global skill-ID uniqueness, unknown effect references, enemy skills without links and resource capacity at the linked minimum level.
+
+The third enemy-combat block is implemented and verified:
+
+- `EnemyTargetProfile` defines `INSTINCTIVE`, `ERRATIC`, `PREDATOR` and `TACTICAL` behavior independently from rank.
+- Every runtime `Enemy` retains its profile, while `EnemyTargetSelector` owns independent per-instance target memory during the battle.
+- Instinctive enemies acquire a uniform random living target and hold it until defeat.
+- Erratic enemies redraw uniformly before every individual action and may repeat their previous target.
+- Predator and Tactical enemies use positive weighted acquisition, missing-HP percentage and a penalty against defending targets for damaging actions.
+- Tactical enemies additionally compare the effective DEF or RES relevant to the selected action.
+- Scored profiles preserve their current valid target until the best alternative exceeds the frozen retarget margin.
+- Non-damaging and mixed-damage actions do not compare DEF/RES; mixed damage still considers Defend.
+- Self, ally, group and explicitly random target types preserve their previous resolution.
+- All 47 current species have one authored profile: 12 instinctive, 15 erratic, 9 predator and 11 tactical.
+- Enemy analysis exposes that profile as the player-facing personality Instintiva, Errática, Predadora or Tática while retaining the fixed 17-line battle layout.
+
+The contributed Bestiary has been adapted to the current V8 architecture:
+
+- `BestiaryStateCatalog` stores discovered canonical enemy IDs as mutable campaign state.
+- A successful analysis reuses the IDs already collected by `Battle`; `BattleCoordinator` records both bestiary discovery and quest analysis progress without changing `Battle`'s analysis rule.
+- `Diário` opens a paginated `BestiaryMenu`. Undiscovered entries show `???`; discovered entries show name, rank, target personality, optional specializations, optional weakness, description, height and weight.
+- All 47 V8 enemy records retain their current stats, growth attributes, skills and target profiles while receiving the contributed height and weight values.
+- `BestiarySnapshot` participates in snapshot creation, strict property serialization, isolated restoration and runtime injection.
+- Internal save format version 4 stores discovered enemy IDs and validates them through `EnemyCatalog`. Earlier internal versions are rejected; the encrypted outer container remains version 1.
+- The Bestiary and its feedback remain within the established 17-line interface boundary.
 
 ## Current limitations and temporary implementations
 
 - Permanent skill-scroll content and curated scroll drops remain absent while the draft skills await required combat mechanics and final content review.
 - Playable-class definitions, natural growth and the complete approved 30-skill roster are external; skill powers and resource costs remain provisional pending the general balance pass.
-- Enemy turns currently use basic attacks; enemy skill selection is deferred.
+- Enemy action selection is intentionally uniform and does not yet evaluate HP thresholds, tactical usefulness, action weights or species-specific preferences. Target profiles affect only the selected individual opponent after the action is chosen.
+- More complex enemy use of ally targeting, group targeting, purification, dissipation and other shared effects remains deferred until justified by concrete content.
+- Current enemy skill pools stay at or below their rank ceilings. Guaranteed moves for future pools above those ceilings remain undesigned.
+- Enemy-level reward scaling is intentionally absent from V8; any future scaling requires a separate economic balance decision.
+- Random encounter ranges outside Verdes Ermos and Gruta Relamparrocha remain preliminary until their regions receive representative playtesting. Dungeon narrative, recurring and epic ranges have a complete first authored pass but may still receive later tuning.
 - `RECRUIT` references are now validated through `QuestRecruitmentCatalog` and resolved through candidate state.
 - After a normal victory, defeated allies remain unavailable until revived by a skill, item or city INN; full-party defeat instead activates rescue and complete restoration.
 - Items sold by the player cannot be bought back.
 - Normal new games currently begin with only the protagonist. The first-ally runtime behavior is implemented; later allies remain future narrative content.
-- Candidate naming reuses the implemented shared external-name selection and preserves one generated name across the active campaign and version-3 save/load cycles.
-- The four current random character names remain temporary pending creative-team curation.
+- Candidate naming reuses the implemented shared external-name selection and preserves one generated name across the active campaign and version-4 save/load cycles.
+- The external character-name catalog has been expanded and can continue receiving content additions without code changes.
 - Party-title acquisition and character-history presentation remain future narrative work.
 - Initial crafting content is limited to two Bree crafters and two recipes pending broader creative and balance curation.
 - Crafters are currently restricted to city scenarios.
@@ -1011,11 +1092,11 @@ The first Part 8 block adds fixed or percentage-based recovery and revival items
 
 ## Current next step
 
-V6 is the latest packaged release as `v6.0.0`. V7 development continues on `feature/v7-polish`. Parts 1 through 7 are complete. The recovery and revival item block of Part 8 is implemented and tested; attribute items, normalization items, persistent battle-reward bonuses and skill effects remain pending. Part 9 and final V7 verification, packaging and release also remain pending.
+V8 was released as `v8.0.0` and integrated into `master` after complete diff review and verification of the freshly extracted Windows x64 package.
 
-Parts 1 through 6 are complete. Part 7 travel, exploration, saving and battle-message interruption have been implemented and tested; its text-polish review remains before closure. Parts 8 and 9 and the final V7 verification, packaging and release remain pending.
+The released scope includes the INN rest-result carryover, enemy levels, encounter strength, reusable enemy skills, first-pass skill content, initial uniform enemy action choice, individual target profiles, persistent Bestiary and new-campaign terminal guidance.
 
-The general inventory screen outside battle still needs the previously identified flush and incomplete-screen correction.
+Future work may include representative balance passes for later regions and more contextual enemy action intelligence. Those items are documented follow-up work rather than incomplete V8 release requirements.
 
 ## Important conventions
 

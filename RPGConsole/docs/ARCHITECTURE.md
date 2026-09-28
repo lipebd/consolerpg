@@ -26,31 +26,32 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.characters` | Character state, name validation and selection, playable-character level boundaries, natural and equipment-modified attributes, equipped slots, party ownership and enemy ranks | `GameCharacter`, `CharacterStats`, `CharacterEquipment`, `PlayableCharacter`, `PlayableCharacterLevelRules`, `Party`, `Enemy`, `EnemyRank`, `CharacterNameRules`, `CharacterNameCatalog`, `CharacterNameLoader`, `CharacterNameSelector` |
 | `rpg.classes` | Immutable playable-class definitions, symbols, external loading, lookup and natural-growth calculation | `PlayableClassDefinition`, `PlayableClassLoader`, `PlayableClassCatalog`, `CharacterGrowthCalculator` |
 | `rpg.development` | Isolated configurable party construction for development runs | `DevelopmentPartyFactory` |
-| `rpg.battle` | Battle coordination, skill execution and centralized combat calculations | `Battle`, `BattleResult`, `BattleCoordinator`, `SkillExecutor`, `SkillUseState`, `SkillExecutionContext`, `SkillEffectResult`, `DamageType`, `DamageCalculator`, `RecoveryCalculator`, `EffectResistanceCalculator`, `EnemyBattleGroup`, `BattleTurnOrder`, `BattleEscapeService`, `BattleType` |
+| `rpg.battle` | Battle coordination, enemy target selection, skill execution and centralized combat calculations | `Battle`, `BattleResult`, `BattleCoordinator`, `EnemyTargetSelector`, `SkillExecutor`, `SkillUseState`, `SkillExecutionContext`, `SkillEffectResult`, `DamageType`, `DamageCalculator`, `RecoveryCalculator`, `EffectResistanceCalculator`, `EnemyBattleGroup`, `BattleTurnOrder`, `BattleEscapeService`, `BattleType` |
 | `rpg.battle.rewards` | Reward calculation, temporary and equipment modifiers, immutable reward snapshots and individual progression results | `BattleRewardService`, `RewardCalculator`, `PartyRewardModifierState`, `BattleRewardModifiers`, `BattleRewards`, `CharacterProgressionResult` |
 | `rpg.effects` | Mutable combat-effect state and reusable attribute-stage rules | `CombatEffectState`, `AttributeStageState`, `AttributeStageRules`, `SpecialBattleStateType` |
-| `rpg.skills` | Immutable skill and component definitions, external loading and closed skill vocabularies | `SkillDefinition`, `SkillEffectDefinition`, `SkillLoader`, `SkillCatalog`, `SkillTargetType`, `SkillEffectType`, `SkillExecutionPhase`, `SkillConditionType` |
+| `rpg.skills` | Shared combat-skill contracts, immutable playable and enemy skill definitions, external loading, enemy-skillset links and closed skill vocabularies | `CombatSkillDefinition`, `SkillDefinition`, `EnemySkillDefinition`, `SkillEffectDefinition`, `SkillLoader`, `SkillCatalog`, `EnemySkillCatalog`, `EnemySkillsetEntry`, `EnemySkillsetLoader`, `EnemySkillsetCatalog`, `SkillTargetType`, `SkillEffectType`, `SkillExecutionPhase`, `SkillConditionType` |
 | `rpg.items` | External item definitions, runtime item behavior, shared inventory and individual drop rules | `ItemDefinition`, `ItemDefinitionCatalog`, `ItemLoader`, `RecoveryItemDefinition`, `RecoveryItemLoader`, `ItemFactory`, `Item`, `BasicItem`, `RecoveryItem`, `ItemCatalog`, `Inventory`, `DropEntry` |
 | `rpg.items.equipment` | Immutable equipment specialization, loading, lookup, compatibility vocabulary and inventory-to-character transfers | `EquipmentDefinition`, `WeaponDefinition`, `ArmorDefinition`, `TrinketDefinition`, `EquipmentLoader`, `EquipmentCatalog`, `EquipmentService`, `WeaponType`, `ArmorWeight`, `TrinketType` |
-| `rpg.enemies` | Enemy definitions and external enemy/drop loading | `EnemyDefinition`, `EnemyCatalog`, `EnemyLoader`, `EnemyDropCatalog`, `EnemyDropLoader` |
+| `rpg.enemies` | Enemy definitions, external enemy/drop loading, target-profile vocabulary and level/rank stat calculation | `EnemyDefinition`, `EnemyCatalog`, `EnemyLoader`, `EnemyGrowthCalculator`, `EnemyTargetProfile`, `EnemyDropCatalog`, `EnemyDropLoader` |
 | `rpg.flags` | Immutable permanent-flag definitions, external loading and mutable set-only campaign flag state | `FlagDefinition`, `FlagCatalog`, `FlagLoader`, `CampaignFlags` |
 | `rpg.requirements` | Immutable reusable requirement sets, external loading, pure runtime evaluation and quest-availability dependency validation | `RequirementDefinition`, `RequirementSetDefinition`, `RequirementCatalog`, `RequirementLoader`, `RequirementEvaluator`, `QuestAvailabilityValidator` |
 | `rpg.quests` | Immutable quest, step and objective definitions, mutable campaign progress, controlled persistence restoration, synchronous gameplay-event processing and NPC-interaction resolution | `QuestDefinition`, `QuestStepDefinition`, `QuestObjectiveDefinition`, `QuestCatalog`, `QuestLoader`, `QuestProgress`, `QuestProgressRestorer`, `QuestProgressService`, `QuestNpcInteractionResolver` |
 | `rpg.quests.effects` | Immutable permanent quest effects, trigger vocabulary, external loading and ordered lookup | `QuestEffectDefinition`, `QuestEffectCatalog`, `QuestEffectLoader`, `QuestEffectTrigger`, `QuestEffectType` |
 | `rpg.quests.rewards` | Immutable material quest rewards, external loading, ordered lookup and reward-type vocabulary | `QuestRewardDefinition`, `QuestRewardCatalog`, `QuestRewardLoader`, `QuestRewardType` |
 | `rpg.narrative` | Narrative locations, NPC identity and placement, linear dialogues, quest-dialogue associations, text processing and cross-catalog narrative validation | `NarrativeLocationDefinition`, `NarrativeLocationCatalog`, `NpcDefinition`, `NpcCatalog`, `NpcPlacementDefinition`, `NpcPlacementCatalog`, `DialogueDefinition`, `DialogueCatalog`, `QuestDialogueDefinition`, `QuestDialogueCatalog`, `NarrativeTextProcessor`, `NarrativeReferenceValidator` |
-| `rpg.persistence` | Immutable campaign snapshots, strict versioned property encoding, complete isolated campaign reconstruction, authenticated encrypted containers and atomic save-file access | `CampaignSnapshot`, `CampaignSnapshotFactory`, `CampaignSnapshotRestorer`, `RestoredCampaign`, `CampaignPropertiesSerializer`, `CampaignPropertiesDeserializer`, `CampaignSaveCodec`, `CampaignSaveService`, `CampaignLoadService` |
+| `rpg.persistence` | Immutable campaign snapshots, strict versioned property encoding, complete isolated campaign reconstruction, authenticated encrypted containers and atomic save-file access | `CampaignSnapshot`, `BestiarySnapshot`, `CampaignSnapshotFactory`, `CampaignSnapshotRestorer`, `RestoredCampaign`, `CampaignPropertiesSerializer`, `CampaignPropertiesDeserializer`, `CampaignSaveCodec`, `CampaignSaveService`, `CampaignLoadService` |
 | `rpg.recruitment` | Recruitment definitions, persistent candidate identity, controlled persistence restoration, ally construction, class selection and atomic recruitment composition | `QuestRecruitmentDefinition`, `QuestRecruitmentCatalog`, `RecruitmentCandidateState`, `RecruitmentCandidateStateCatalog`, `RecruitmentCandidateStateRestorer`, `AllyRecruitmentService`, `ClassPathRecruitmentService` |
 | `rpg.world` | Active world state, fictional world time, scenario discovery, rescue coordination, shop-restocking coordination, narrative interaction and high-level gameplay flow | `World`, `WorldClock`, `WorldProgress` |
+| `rpg.world.bestiary` | Mutable campaign-level enemy discovery state | `BestiaryStateCatalog` |
 | `rpg.world.scenarios` | External scenario and dungeon definitions, runtime scenario hierarchy, permanent dungeon progression and scenario creation | `ScenarioDefinition`, `ScenarioDefinitionCatalog`, `ScenarioLoader`, `CombatScenarioDefinition`, `CombatScenarioLoader`, `DungeonDefinition`, `DungeonLoader`, `ScenarioFactory`, `Scenario`, `CombatScenario`, `Field`, `Dungeon`, `DungeonSettings`, `DungeonProgress`, `City`, `ScenarioCatalog`, `CombatScenarioAction`, `CityAction` |
-| `rpg.world.encounters` | Encounter availability and weighted group generation | `EncounterEntry`, `EncounterCatalog`, `EncounterLoader`, `EncounterGenerator` |
+| `rpg.world.encounters` | Encounter availability, per-instance level selection and weighted group generation | `EncounterEntry`, `EncounterCatalog`, `EncounterLoader`, `EncounterGenerator`, `EnemySpawn` |
 | `rpg.world.exploration` | Exploration configuration, progress and event selection | `ExplorationSettings`, `ExplorationSession`, `ExplorationEventGenerator`, `ExplorationEventType`, `ExplorationAreaRestriction` |
 | `rpg.world.inns` | Immutable city-INN definitions, complete city coverage validation and lookup by stable or city scenario ID | `InnDefinition`, `InnCatalog`, `InnLoader` |
 | `rpg.world.shops` | External shop and offer definitions, runtime stock state, weighted offer generation and atomic commercial transactions | `ShopAccessType`, `ShopDefinition`, `ShopCatalog`, `ShopLoader`, `ShopStockEntry`, `ShopStockCatalog`, `ShopStockLoader`, `ShopOfferState`, `ShopState`, `ShopStateCatalog`, `ShopStateGenerator`, `ShopTransactionService`, `ShopPurchaseResult`, `ShopSaleResult` |
 | `rpg.world.rewards` | External exploration reward pools, validation and weighted selection | `ExplorationRewardEntry`, `ExplorationRewardCatalog`, `ExplorationRewardLoader`, `ExplorationRewardGenerator`, `ExplorationReward`, `ExplorationRewardType` |
 | `rpg.world.travel` | External directed-route definitions, loading and runtime unlock progress | `TravelRouteDefinition`, `TravelCatalog`, `TravelRouteLoader`, `TravelProgress` |
 | `rpg.world.transport` | External paid city-transport definitions, loading and destination lookup | `CityTransportDefinition`, `CityTransportCatalog`, `CityTransportLoader` |
-| `rpg.ui` | Console input, centralized wrapping, heading composition and clearing, menus, character creation, navigation, dialogue and quest presentation, target selection, shared formatters and information screens | `ConsoleUI`, `ConsoleInput`, `TitleScreen`, `CharacterCreationMenu`, `PartyRescueScreen`, `CombatScenarioMenu`, `CityMenu`, `InventoryMenu`, `EquipmentMenu`, `ShopMenu`, `CraftingMenu`, `DialoguePresenter`, `QuestMenu`, `QuestProgressPresenter`, `BattleScreen`, `CombatEffectFormatter` |
+| `rpg.ui` | Console input, centralized wrapping, heading composition and clearing, startup guidance, menus, character creation, navigation, dialogue, quest and bestiary presentation, target selection, shared formatters and information screens | `ConsoleUI`, `ConsoleInput`, `TitleScreen`, `CampaignSelectionMenu`, `TerminalSetupScreen`, `CharacterCreationMenu`, `PartyRescueScreen`, `CombatScenarioMenu`, `CityMenu`, `InventoryMenu`, `EquipmentMenu`, `ShopMenu`, `CraftingMenu`, `DialoguePresenter`, `QuestMenu`, `BestiaryMenu`, `QuestProgressPresenter`, `BattleScreen`, `CombatEffectFormatter` |
 
 ## Application initialization
 
@@ -61,20 +62,21 @@ Initialization includes:
 Initialization follows dependency order:
 
 1. Create the shared `ConsoleInput`.
-2. Load foundational character-name, playable-class, skill, enemy and item definitions.
-3. Load equipment, recovery-item, skill-scroll, enemy-drop and encounter definitions against their required foundational catalogs.
-4. Load common scenario, transport, INN, shop, crafting, exploration-reward, dungeon, branch and adjacent-route definitions.
-5. Load complete quest definitions from quest headers, sequential steps and ordered objectives.
-6. Load permanent-flag definitions and reusable requirement sets.
-7. Validate requirement references and quest-availability dependencies after quest, item and flag catalogs are available.
-8. Load ordered quest rewards and permanent quest effects after their item and route references are available.
-9. Load narrative locations, NPC identities, fixed NPC placements and linear dialogues.
-10. Load quest-dialogue associations and perform cross-catalog narrative validation, including speakers, starting NPCs, interaction objectives and dialogue contexts.
-11. Create runtime item, scenario, shop and other catalog-backed objects.
-12. Create an empty party, world, quest, flag and candidate state for New Game, or reconstruct their complete coordinated state from a valid version-3 campaign snapshot.
-13. Activate the selected campaign only after `CampaignSnapshotRestorer` has reconstructed and cross-validated its isolated `RestoredCampaign`.
-14. Construct the shared quest-progress, class-path, candidate-introduction and recruitment services.
-15. Construct `World` with the required immutable catalogs, mutable campaign state, generators, services, presenters and shared dependencies.
+2. Load foundational character-name, playable-class, playable-skill header, enemy-skill header, enemy and item definitions.
+3. Load and validate the shared ordered skill effects against both header catalogs, then load enemy-skillset links after the enemy and enemy-skill catalogs are available.
+4. Load equipment, recovery-item, skill-scroll, enemy-drop and encounter definitions against their required foundational catalogs.
+5. Load common scenario, transport, INN, shop, crafting, exploration-reward, dungeon, branch and adjacent-route definitions.
+6. Load complete quest definitions from quest headers, sequential steps and ordered objectives.
+7. Load permanent-flag definitions and reusable requirement sets.
+8. Validate requirement references and quest-availability dependencies after quest, item and flag catalogs are available.
+9. Load ordered quest rewards and permanent quest effects after their item and route references are available.
+10. Load narrative locations, NPC identities, fixed NPC placements and linear dialogues.
+11. Load quest-dialogue associations and perform cross-catalog narrative validation, including speakers, starting NPCs, interaction objectives and dialogue contexts.
+12. Create runtime item, scenario, shop and other catalog-backed objects.
+13. Create an empty party, world, quest, flag, candidate and bestiary state for New Game, or reconstruct their complete coordinated state from a valid version-4 campaign snapshot.
+14. Activate the selected campaign only after `CampaignSnapshotRestorer` has reconstructed and cross-validated its isolated `RestoredCampaign`.
+15. Construct the shared quest-progress, class-path, candidate-introduction and recruitment services.
+16. Construct `World` with the required immutable catalogs, mutable campaign state, generators, services, presenters and shared dependencies.
 
 Each loader builds a complete candidate result before returning its catalog. Cross-catalog validators run only after all definitions required by that validation are available.
 
@@ -82,7 +84,7 @@ External data is loaded before gameplay. Invalid definitions or unresolved refer
 
 INN definitions are loaded before combat-scenario definitions. This makes `InnCatalog` available to `CombatScenarioLoader`, which can reject rescue destinations that are not registered cities with a valid INN.
 
-During a normal run, `Main` repeatedly opens `TitleScreen` and `CharacterCreationMenu` until the player confirms a protagonist. The confirmed character is created as a level-1 Flagelo and becomes the only initial member and leader of the new `Party`. Cancelling character creation returns to the title screen without creating partial character state.
+During a normal run, `Main` displays the V8 `TitleScreen` once and uses `CampaignSelectionMenu` to continue a restored campaign or begin a new one. A confirmed new campaign opens `TerminalSetupScreen` before character creation; continuing a campaign and the `--dev-party` path skip that guidance. `Main` then reopens campaign selection if character creation is cancelled. The confirmed character is created as a level-1 Flagelo and becomes the only initial member and leader of the new `Party` without leaving partial state on cancellation.
 
 When the `--dev-party` argument is present, `Main` bypasses the normal title and creation flow and delegates party construction to `DevelopmentPartyFactory`. This development-only path supports one to four configured members with distinct classes, arbitrary positive levels, configurable initial gold and optional temporary reward modifiers while remaining isolated from normal new-game behavior.
 
@@ -165,6 +167,7 @@ The calculator derives the complete natural-stat snapshot directly from the clas
 
 `Enemy` adds:
 
+- Positive hidden level.
 - Enemy rank.
 - Description.
 - Runtime drop table.
@@ -267,9 +270,12 @@ Scenario
 `Dungeon` adds immutable `DungeonSettings`, including:
 
 - A required narrative boss group.
+- Its fixed positive level.
 - A required recurring boss group.
+- Its positive minimum and maximum levels.
 - The recurring-boss cooldown in fictional world hours.
 - A required epic enemy group.
+- Its positive minimum and maximum levels.
 - The epic minimum exploration position.
 - The epic normal, special or unrestricted area requirement.
 - The epic cooldown in fictional world hours.
@@ -282,16 +288,17 @@ Narrative and recurring boss groups may reuse the same canonical enemy IDs. Epic
 
 ## Definition and runtime separation
 
-Enemy data is separated into two layers:
+Enemy data is separated into three layers:
 
 | Layer | Example | Purpose |
 |---|---|---|
-| Definition | `EnemyDefinition` for `lobermo` | Reusable immutable template loaded once |
-| Runtime object | One Lobermo inside a battle | Mutable HP, resources and battle state |
+| Definition | `EnemyDefinition` for `lobermo` | Reusable immutable species template with level-1 stats, growth specializations, target profile and bestiary measurements |
+| Spawn request | `EnemySpawn` containing Lobermo and level 2 | Immutable pairing selected for one encounter |
+| Runtime object | One level-2 Lobermo inside a battle | Calculated natural stats, mutable resources and battle state |
 
-The same `EnemyDefinition` can create many independent `Enemy` objects without sharing mutable battle state.
+The same `EnemyDefinition` can participate in many `EnemySpawn` values and create independent `Enemy` objects without sharing mutable battle state. `EnemySpawn` carries only the selected definition and level; mutable combat state begins in `Enemy`.
 
-This distinction also permits repeated enemies in one battle. Two Lobermos created from the same definition have independent HP and defensive state.
+This distinction also permits repeated enemies in one battle. Two Lobermos created from the same definition may receive different encounter levels and always have independent HP and defensive state.
 
 The same separation applies to items, scenarios, playable classes and skills. Scenario definitions are transformed into runtime `City`, `Field` and `Dungeon` objects by `ScenarioFactory`. A `PlayableCharacter` references immutable class and skill definitions, while one mutable `SkillUseState` represents the state of a single skill use. A separate mutable `Skill` object is unnecessary because persistent per-use state does not belong to the definition.
 
@@ -329,6 +336,22 @@ Enemy runtime instance
 - Drop-reference validation.
 - Runtime enemy creation.
 
+`EnemyDefinition` owns the immutable level-1 stats, optional primary, secondary and weakness attributes, rank, target profile, description, height and weight. `EnemyGrowthCalculator` derives one complete natural-stat snapshot from that definition, rank and target level. `EnemyDefinition` then creates the runtime `Enemy` with the calculated stats, selected level and target profile. Height and weight remain definition-only bestiary data.
+
+```text
+EnemyDefinition + target level
+              ↓
+  EnemyGrowthCalculator
+              ↓
+       CharacterStats
+              ↓
+            Enemy
+```
+
+`EnemyDefinition.calculateNaturalStats(level)` exposes the same centralized calculation to runtime creation and minimum-level resource validation. `BattleCoordinator` combines the selected definition and level with the eligible links from `EnemySkillsetCatalog`, applies the `EnemyRank` loadout ceiling and passes the selected immutable enemy skill definitions into the new runtime `Enemy`. During battle, `EnemyTargetSelector` reads the runtime target profile and owns independent per-instance target memory without changing the immutable definition or party state.
+
+Each runtime `Enemy` therefore owns its mutable battle resources and effects while retaining immutable references to its canonical species data and selected skill definitions. Enemy skills are not copied into mutable per-instance definitions.
+
 ## Encounter data flow
 
 ```text
@@ -340,7 +363,7 @@ EncounterCatalog
         ↓
 EncounterGenerator
         ↓
-List<EnemyDefinition>
+List<EnemySpawn>
         ↓
 BattleCoordinator
         ↓
@@ -352,6 +375,8 @@ An `EncounterEntry` associates an enemy ID with:
 - Scenario ID.
 - Minimum exploration position.
 - Maximum exploration position.
+- Minimum enemy level.
+- Maximum enemy level.
 - Relative selection weight.
 - Maximum copies in one battle.
 - Normal, special or unrestricted area availability.
@@ -360,7 +385,7 @@ Encounter generation also uses the minimum and maximum enemy counts configured b
 
 Selection weights are relative and do not need to total 100.
 
-The generator creates a list of eligible enemy definitions while respecting:
+The generator creates a list of enemy spawns while respecting:
 
 - Scenario ID.
 - Exploration position.
@@ -370,6 +395,8 @@ The generator creates a list of eligible enemy definitions while respecting:
 - Scenario minimum group size.
 - Scenario maximum group size.
 - Global enemy-group limit.
+
+After selecting an eligible entry for each group position, `EncounterGenerator` independently rolls that copy's inclusive level range and creates an `EnemySpawn`. `BattleCoordinator` receives the resulting spawns and delegates natural-stat calculation and runtime creation to each definition.
 
 ## Enemy drop data flow
 
@@ -455,7 +482,9 @@ For dungeon events, `World` combines transient session state with permanent `Dun
 
 An ineligible epic result becomes a regular battle using the current area's encounter pool.
 
-The final dungeon position bypasses random event generation. `World` selects the narrative boss before first completion, the recurring boss after its cooldown, or an empty final resolution while the recurring boss remains unavailable.
+The final dungeon position bypasses random event generation. `World` selects the narrative boss before first completion, the recurring boss after its cooldown, or an empty final resolution while the recurring boss remains unavailable. The narrative group uses its fixed level; a recurring group receives one inclusive level rolled from its configured range.
+
+When the player accepts an eligible epic encounter, `World` rolls one inclusive level from the epic range. Every member of the same boss or epic group is represented by an `EnemySpawn` with that shared level before `BattleCoordinator` creates the runtime enemies.
 
 Boss and epic availability is not snapshotted when an exploration session begins. World-time advancement from battles earlier in the same session can make either encounter available later in that session.
 
@@ -504,7 +533,7 @@ The battle system is divided into the following responsibilities:
 - `Battle`
   - Coordinates the battle lifecycle, character actions, target-selection requests and results; delegates battle screens and menu input to `rpg.ui`.
 - `BattleCoordinator`
-  - Creates runtime enemies, receives the normal, boss or epic battle type, starts battles and grants victory rewards.
+  - Receives one or more `EnemySpawn` values, resolves drops and level-eligible enemy skills, selects each per-instance loadout within its rank ceiling, creates runtime enemies, starts normal, boss or epic battles and grants victory rewards.
 - `BattleType`
   - Identifies a normal, boss or epic battle for contextual presentation.
 - `BattleScreen`
@@ -512,11 +541,11 @@ The battle system is divided into the following responsibilities:
 - `CombatEffectFormatter`
   - Formats compact panel effects, tactical effect counts and the two-line attribute-stage overview.
 - `SkillExecutor`
-  - Evaluates component conditions and applicability, performs trigger and resistance tests and delegates each applied operation to its single domain owner.
+  - Executes any `CombatSkillDefinition`, evaluates component conditions and applicability, performs trigger and resistance tests and delegates each applied operation to its single domain owner.
 - `SkillUseState`
   - Preserves the mutable state and accumulated results of one skill use, including deferred `POST_ACTION` components and their reserved random targets.
 - `SkillExecutionContext`
-  - Stores the user, explicitly selected targets and a snapshot of equipped weapon base damage.
+  - Stores any acting `GameCharacter`, explicitly resolved targets and a weapon-base-damage snapshot. Playable execution supplies equipped weapon power; enemy execution supplies zero.
 - `SkillEffectResult` and `SkillEffectOutcome`
   - Report `APPLIED`, `RESISTED` or `NOT_TRIGGERED` without requiring the interface to infer what happened.
 - `DamageCalculator`
@@ -527,6 +556,8 @@ The battle system is divided into the following responsibilities:
   - Centralizes the LCK-against-RES resistance formula and its balance factor.
 - `EnemyBattleGroup`
   - Stores one to three enemy slots.
+- `Enemy`
+  - Retains the immutable per-instance enemy skill loadout selected during battle construction and exposes current MP and SP through the shared character resource contract.
 - `EnemyBattleSlot`
   - Associates one runtime enemy with a unique battle display name.
 - `BattleSide`
@@ -559,7 +590,7 @@ The battle system is divided into the following responsibilities:
 Current battle flow:
 
 ```text
-Enemy definitions
+EnemySpawn values
         ↓
 BattleCoordinator
         ↓
@@ -588,7 +619,7 @@ Battle presentation uses contextual headings for normal, boss and epic encounter
 
 Battle actions replace the action menu with paged messages inside the panel. Target-selection menus draw yellow numbered indicators in eligible participants' existing panel positions. `BattleItemMenu` keeps its consumable-only list and detail screens separate from the general inventory, while `RecoveryItemUseMenu` retains the shared item-use rules and sends battle results back for presentation in the panel.
 
-The tactical menu opens fixed-height resource and effect overviews, an effect legend, a dedicated enemy-analysis screen and the remaining-action preview. These screens retain feedback within their redraws. The battle-entry animation is the isolated use of direct cursor positioning; battle panels and menus use ordinary screen redraws.
+The tactical menu opens fixed-height resource and effect overviews, an effect legend, a dedicated enemy-analysis screen and the remaining-action preview. Enemy analysis presents the runtime combat values together with the target profile's player-facing personality, keeping rank and personality on one line to preserve the 17-line layout. These screens retain feedback within their redraws. The battle-entry animation is the isolated use of direct cursor positioning; battle panels and menus use ordinary screen redraws.
 
 ## Enemy battle groups
 
@@ -635,14 +666,33 @@ A revived ally does not exist in the current queue snapshot and therefore acts o
 
 ## Skill architecture
 
-Skill content is split between two external files and two immutable definition types:
+Skill content uses one shared component format with separate playable and enemy headers:
 
-- `skills.txt` defines the skill identity, class, acquisition type, level requirement, resource costs, name and description.
-- `skill_effects.txt` defines ordered components, execution phase, effect type, target type and effect-specific data.
-- `SkillDefinition` combines one header with its validated ordered components.
-- `SkillEffectDefinition` validates the fields permitted and required by each component type.
+- `skills.txt` defines playable skill identity, class, acquisition type, level requirement, resource costs, name and description.
+- `enemy_skills.txt` defines reusable enemy skill identity, resource costs and name.
+- `skill_effects.txt` defines ordered components, execution phase, effect type, target type and effect-specific data for both header catalogs.
+- `enemy_skillsets.txt` links enemy species to reusable enemy skills and minimum enemy levels.
 
-`SkillLoader` reads both files, validates cross-references and component ordering and registers complete definitions in `SkillCatalog`.
+`CombatSkillDefinition` is the minimal shared execution contract. `SkillDefinition` adds playable progression and presentation data; `EnemySkillDefinition` contains only enemy-combat header data and ordered effects. Neither definition type depends on the other side's ownership rules.
+
+`SkillLoader` loads both header types, enforces globally unique skill IDs, validates shared effect references and component ordering and registers complete immutable definitions in `SkillCatalog` and `EnemySkillCatalog`.
+
+`EnemySkillsetLoader` validates enemy and skill references, duplicate links, positive minimum levels, complete enemy-skill coverage and resource capacity at each link's minimum level before returning `EnemySkillsetCatalog`.
+
+```text
+skills.txt -----------\
+                       \
+enemy_skills.txt ------> SkillLoader
+                       /      |
+skill_effects.txt -----/       +--> SkillCatalog
+                              +--> EnemySkillCatalog
+
+enemies.txt -------------------\
+EnemySkillCatalog --------------> EnemySkillsetLoader
+enemy_skillsets.txt ------------/          |
+                                           v
+                                EnemySkillsetCatalog
+```
 
 `SkillAcquisitionType` distinguishes:
 
@@ -692,6 +742,10 @@ finishConsumedTurn
 execute deferred POST_ACTION components
 ```
 
+The executor operates on `CombatSkillDefinition` and `GameCharacter`, allowing both battle sides to reuse the same ordered execution state. Playable learning, class ownership, scroll replacement, status details and six-slot presentation remain typed to `SkillDefinition` and were not generalized.
+
+Enemy execution resolves target meanings relative to the acting side and supplies zero weapon base damage. Resource spending belongs to `GameCharacter`, so both playable characters and enemies use the same validated MP/SP mutation without moving playable progression behavior into the base class.
+
 For each component, `SkillExecutor` evaluates:
 
 ```text
@@ -710,6 +764,8 @@ Damage, recovery, attribute-stage mutation and resource changes remain owned by 
 A `PRE_ACTION` damage-power modifier accumulates for later compatible damage against the same target during this skill use. A `PRIMARY` modifier applies only to the immediately following `PRIMARY` damage component with the same `SINGLE_ENEMY` or `RANDOM_ENEMY` target type. A paired random modifier and damage component share one target selection. Multiple applicable modifiers add their percentages with overflow protection; modifier state never leaks into another skill use.
 
 Player basic attacks read the equipped weapon's damage type, normal-attack name and base weapon damage. Without a weapon, they fall back to physical damage and zero weapon power. Offensive skill components always add 100% of the equipped weapon's base damage. Physical damage targets DEF and uses ATK by default; magical damage targets RES and uses MAG by default. A damage component may specify a different offensive attribute without changing its damage type. `DamageType` therefore belongs to `rpg.battle`, where both attacks and skills consume it.
+
+Enemy basic attacks remain physical with zero weapon power and therefore use effective ATK against effective DEF. Enemy damaging skills also receive zero weapon power, but their components select physical or magical damage and contribute their own power. `Battle` chooses uniformly between the free basic attack and currently affordable installed enemy skills, then delegates valid skill execution to the same executor. An ineffective selected skill falls back to the basic attack without spending resources or consuming an extra turn.
 
 ## Equipment architecture
 
@@ -957,7 +1013,7 @@ data/inns.txt
 
 `InnCatalog` resolves INNs by stable ID and by city scenario ID and rejects multiple definitions for the same city. After loading, `InnLoader` verifies that every registered city has an INN; together, these rules guarantee exactly one INN per city.
 
-`InnMenu` owns the iterative resting interaction and uses the shared `Party` instance. It validates whether rest is necessary and affordable, requests confirmation, charges shared gold and delegates complete restoration to `Party.fullyRestoreMembers()`.
+`InnMenu` owns the iterative resting interaction and uses the shared `Party` instance. It validates whether rest is necessary and affordable, requests confirmation, charges shared gold and delegates complete restoration to `Party.fullyRestoreMembers()`. A successful rest displays a separate, bounded result screen using the shared wrapping and line animation before returning to the INN menu.
 
 `City`, location and INN navigation remain iterative. Returning from the INN leads back to location selection, and returning again leads back to the city menu without recursive menu calls.
 
@@ -1203,7 +1259,7 @@ The `[!]` marker is presentation-only derived state. It may propagate from actio
 
 ### Gameplay quest integration
 
-Runtime `Enemy` instances retain the canonical ID of their `EnemyDefinition`. `Battle` records successfully analyzed enemy IDs once per battle, while `BattleCoordinator` converts the completed battle into one ordered event batch. Analysis events are submitted first. A victory then contributes defeated-enemy quantities grouped by canonical ID, `BATTLE_WON`, and only the item quantities actually collected as rewards. Escape and defeat contribute confirmed analysis events only.
+Runtime `Enemy` instances retain the canonical ID of their `EnemyDefinition`. `Battle` records successfully analyzed enemy IDs once per battle, while `BattleCoordinator` reuses that result both to discover entries in `BestiaryStateCatalog` and to create the ordered quest-event batch. Analysis events are submitted first. A victory then contributes defeated-enemy quantities grouped by canonical ID, `BATTLE_WON`, and only the item quantities actually collected as rewards. Escape and defeat still preserve confirmed bestiary discoveries and analysis events.
 
 Item-producing flows submit `ITEM_OBTAINED` only after their mutation succeeds. Purchases, crafting, exploration rewards, collected battle drops and quest rewards are valid sources. Rejected operations, discarded rewards, rollback restoration, save restoration and internal transfers do not represent new acquisition.
 
@@ -1382,7 +1438,7 @@ The ally is inserted after quest rewards so the first ally remains at zero EXP a
 
 `AllyRecruitmentMenu` presents the prepared ally's persistent name and selected class with one mandatory action, `Aceitar sua companhia`. It does not offer a false refusal branch and does not mutate campaign state.
 
-Transient questionnaire answers, recommendations, confirmed class choice, random ally class, prepared ally and composite plans are not persisted. An introduced candidate's ID, generated name and recruited state are mutable campaign data included in the version-3 campaign snapshot.
+Transient questionnaire answers, recommendations, confirmed class choice, random ally class, prepared ally and composite plans are not persisted. An introduced candidate's ID, generated name and recruited state are mutable campaign data preserved by the current version-4 campaign snapshot together with the rest of the coordinated version-3 narrative state.
 
 ## UI boundaries
 
@@ -1405,6 +1461,8 @@ Headings, options, prompts, blank lines, separators, status values, columns and 
 `ConsoleUI.displayHeading(String)` and `ConsoleUI.displayHeading(String, String)` centralize ordinary screen headings. The single-component form produces `[CONTEXT]`; the composed form produces `[CONTEXT - QUALIFIER]`. Components must be non-null and non-blank and are converted with `Locale.ROOT`. `ConsoleUI` owns the brackets and separator, while callers own the surrounding vertical spacing.
 
 Every independent interactive or informational screen has one bracketed heading as its first visible line after clearing. Physical context and its qualifier share one composed heading instead of being stacked. Functional screens such as inventory, quest journal and party status remain independent from map context. `TitleScreen` is the application-branding exception.
+
+`TerminalSetupScreen` is the new-campaign sizing exception. It draws one ASCII-only frame with exactly 77 columns and 17 lines, instructs the player to resize the terminal until the complete border is visible and waits for Enter without printing an eighteenth line. It appears after the final New Game selection and before `CharacterCreationMenu`; Continue and `--dev-party` do not use it.
 
 `ConsoleUI.clearScreen()` owns the cursor movement, terminal clearing and flush required to apply the clear command. Ordinary screens do not scatter additional explicit flush calls. Timed dialogue, battle and transition output may define their own later presentation contracts.
 
@@ -1430,6 +1488,8 @@ Important UI components include:
 - `PartyStatusMenu`
 - `CharacterStatusMenu`
 - `CharacterCreationMenu`
+- `CampaignSelectionMenu`
+- `TerminalSetupScreen`
 - `PlayableClassDetailFormatter`
 - `ClassPathQuestionnaireMenu`
 - `ClassPathTieMenu`
@@ -1475,7 +1535,9 @@ Important UI components include:
 
 `QuestOfferMenu` owns only the generated accept-or-decline choice. External dialogue data provides the surrounding `OFFER`, optional `ACCEPT` and optional `DECLINE` sequences without defining a generic branching language.
 
-`QuestMenu` is a read-only view over `QuestProgress` and canonical quest and reward data. It separates active and completed quests. Active entries resolve the quest description, current step, current objective counters and material reward summaries; completed entries expose only the resolved quest description. A completed final step without `TALK_TO_NPC` may offer a manual completion retry through `QuestProgressCoordinator`. Menu navigation does not advance world time or mutate progress.
+`QuestMenu` coordinates the read-only `Diário`. It separates active and completed quests and opens `BestiaryMenu` as its third section. Active entries resolve the quest description, current step, current objective counters and material reward summaries; completed entries expose only the resolved quest description. A completed final step without `TALK_TO_NPC` may offer a manual completion retry through `QuestProgressCoordinator`.
+
+`BestiaryMenu` combines immutable `EnemyCatalog` definitions with mutable `BestiaryStateCatalog` discovery. It paginates every registered species in catalog order, hides undiscovered identities as `???` and displays rank, target personality, optional specializations, optional weakness, description, height and weight only for discovered entries. It reuses the player-facing target-profile names owned by `EnemyTargetProfile`; growth tendencies use the same `↑↑`, `↑` and `↓` notation already established by character presentation. Journal navigation does not advance world time or mutate discovery.
 
 `QuestProgressPresenter` displays grouped objective, step and quest updates returned by the domain. Simple progress produced during battle may be appended inline to the battle outcome, while quest completion, permanent effects and completion failures retain dedicated presentation. It also presents quest-start confirmation. Objective-completion notifications deliberately omit the full objective description.
 
@@ -1551,7 +1613,9 @@ CampaignSnapshot
 │   │   └── QuestObjectiveProgressSnapshot
 │   └── completed quest IDs
 ├── CampaignFlagsSnapshot
-└── RecruitmentCandidateSnapshot
+├── RecruitmentCandidateSnapshot
+└── BestiarySnapshot
+    └── discovered enemy IDs
 ```
 
 Snapshots contain only the canonical IDs and mutable values required to reconstruct the campaign. They do not contain catalog definitions, presentation values, cryptographic metadata or transient gameplay state.
@@ -1570,7 +1634,7 @@ CampaignSnapshot
     -> textual encrypted container
 ```
 
-The decoding flow performs the reverse transformation and produces a complete `CampaignSnapshot`. `CampaignSnapshotRestorer` then validates its catalog-backed references and reconstructs an isolated `RestoredCampaign`, including complete `DungeonProgress`, `QuestProgress`, `CampaignFlags` and `RecruitmentCandidateStateCatalog`, without modifying active runtime state. The candidate is activated only after the complete operation succeeds.
+The decoding flow performs the reverse transformation and produces a complete `CampaignSnapshot`. `CampaignSnapshotRestorer` then validates its catalog-backed references and reconstructs an isolated `RestoredCampaign`, including complete `DungeonProgress`, `QuestProgress`, `CampaignFlags`, `RecruitmentCandidateStateCatalog` and `BestiaryStateCatalog`, without modifying active runtime state. Every discovered enemy ID must resolve through the current `EnemyCatalog`. The candidate is activated only after the complete operation succeeds.
 
 `QuestProgressRestorer` belongs to `rpg.quests`, and `RecruitmentCandidateStateRestorer` belongs to `rpg.recruitment`. These domain-local restoration gateways may access package-private mutation APIs without exposing general gameplay bypasses. `CampaignSnapshotRestorer` remains the persistence orchestrator that feeds validated snapshot values into those gateways and then performs cross-domain coherence checks.
 
@@ -1586,20 +1650,20 @@ The decoding flow performs the reverse transformation and produces a complete `C
 
 `CampaignLoadService` reports success only after decryption, strict decoding, catalog-backed validation and complete runtime reconstruction succeed. The startup flow uses `CampaignSelectionMenu` to continue a valid campaign or begin a new one. Saving is exposed exclusively through INNs, and ordinary game exits require confirmation without performing an implicit save.
 
-Quest definitions, rewards, effects, requirements, narrative content, dialogue associations, recruitment definitions, class-path definitions and questionnaire content are immutable external data and do not belong in campaign snapshots. Mutable `QuestProgress`, `CampaignFlags` and `RecruitmentCandidateStateCatalog` are persisted together in internal format version 3. Questionnaire answers, recommendations, confirmed transient choices, random ally classes and prepared recruitment plans are never snapshot state.
+Quest definitions, rewards, effects, requirements, narrative content, dialogue associations, recruitment definitions, class-path definitions, questionnaire content and enemy definitions are immutable external data and do not belong in campaign snapshots. Mutable `QuestProgress`, `CampaignFlags`, `RecruitmentCandidateStateCatalog` and discovered bestiary IDs are persisted together in internal format version 4. Questionnaire answers, recommendations, confirmed transient choices, random ally classes, prepared recruitment plans and enemy target memory are never snapshot state.
 
-Version-3 restoration validates active objective structure and counters against current quest definitions, resolves set flags through `FlagCatalog`, restores introduced candidate identities and enforces cross-state coherence before activation. A pending candidate matches no party member; a recruited candidate matches exactly one non-leader ally; party classes remain distinct; and the first ceremony agrees across quest completion, permanent flag, leader class, candidate state and second party position. Extra development-party allies without candidates remain permitted.
+Version-4 restoration preserves the version-3 narrative validations and additionally validates every discovered bestiary ID through `EnemyCatalog` before activation. A pending candidate matches no party member; a recruited candidate matches exactly one non-leader ally; party classes remain distinct; and the first ceremony agrees across quest completion, permanent flag, leader class, candidate state and second party position. Extra development-party allies without candidates remain permitted.
 
 ## Current temporary boundaries
 
 The following implementations remain intentionally temporary:
 
 - `RewardModifierItemLoader` validates `data/reward_modifier_items.txt` against base consumable definitions and returns immutable definitions indexed by item ID. `ItemFactory` creates `RewardModifierItem` for those IDs and rejects overlapping item specializations. The item delegates atomic EXP/GOLD activation to `PartyRewardModifierState` and is consumed only after successful activation. `InventoryMenu` owns the cancellable confirmation, blocked-slot feedback and brief success presentation; `BattleItemMenu` does not list these outside-battle items.
-- `character_names.txt` currently contains only temporary entries pending creative-team curation.
+- `character_names.txt` contains an expanded external catalog and can continue receiving content additions without changing character-name selection code.
 - Playable-class definitions, natural class growth and the complete approved 30-skill class-progression roster are integrated; skill powers and resource costs remain provisional pending the general balance pass.
-- Enemy actions currently use basic attacks; enemy skill selection can reuse the skill executor later but is outside the current scope.
+- Enemy action selection remains intentionally uniform between the basic attack and affordable installed skills. Contextual action usefulness and species-specific action priorities remain outside the completed target-profile block.
 - The first recruitment composes with the level-7 class-path ceremony. Later recruitments remain narrative events and will reuse the generic recruitment components without repeating the ceremony.
-- Non-empty quest, flag and candidate restart verification remains pending canonical Part 10 content; the implemented version-3 schema and empty-narrative restart baseline are complete.
+- Representative non-empty quest, flag and candidate restart verification remains incomplete; the current version-4 schema preserves the implemented version-3 narrative contract and adds explicit bestiary state.
 - `Battle` remains large and may later be divided into more focused action services.
 - Permanent skill-scroll items, skills and curated enemy drops remain deferred until their draft effects receive the required combat mechanics and final content review. Scroll-skill preservation across class transition is structurally implemented but cannot yet be exercised with canonical content.
 - Only the first ceremony-composed recruitment currently has runtime orchestration. Although `quest_recruitments.txt` structurally accepts up to three definitions, second- and third-ally records must wait for their narrative recruitment dispatcher.

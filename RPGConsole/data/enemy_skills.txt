@@ -1,0 +1,99 @@
+# id;mpCost;spCost;name
+# -------------------------------------------------------------
+# SHARED AND COMMON
+# -------------------------------------------------------------
+mordida_selvagem;0;10;Mordida Selvagem
+furia_lupina;0;10;Fúria Lupina
+lamber_feridas;0;10;Lamber Feridas
+vento_contrario;10;0;Vento Contrário
+arremesso_de_sucata;0;10;Arremesso de Sucata
+mordida_venenosa;0;10;Mordida Venenosa
+rajada_de_sementes;10;0;Rajada de Sementes
+salto_de_vento;10;0;Salto de Vento
+clarao_magico;10;0;Clarão Mágico
+pinca_de_areia;0;10;Pinça de Areia
+rajada_salina;10;0;Rajada Salina
+picada_sobrenatural;10;0;Picada Sobrenatural
+espinhos_de_sal;0;10;Espinhos de Sal
+toque_entorpecente;10;0;Toque Entorpecente
+golpe_de_picareta;0;10;Golpe de Picareta
+golpe_mecanizado;0;10;Golpe Mecanizado
+chicote_de_raizes;0;10;Chicote de Raízes
+rasante_aquatico;0;10;Rasante Aquático
+pulso_estelar;10;0;Pulso Estelar
+# -------------------------------------------------------------
+# VETERAN
+# -------------------------------------------------------------
+investida_brutal;0;12;Investida Brutal
+couro_endurecido;0;10;Couro Endurecido
+golpe_oportunista;0;12;Golpe Oportunista
+salto_de_emboscada;0;12;Salto de Emboscada
+presa_venenosa;0;12;Presa Venenosa
+semente_carnivora;12;0;Semente Carnívora
+pulso_eletrico;12;0;Pulso Elétrico
+armadilha_de_sucata;10;0;Armadilha de Sucata
+toque_sombrio;12;0;Toque Sombrio
+travessia_violenta;12;0;Travessia Violenta
+manto_escuro;10;0;Manto Escuro
+golpe_de_palha;0;12;Golpe de Palha
+encantamento_persistente;10;0;Encantamento Persistente
+descarga_da_teia;12;0;Descarga da Teia
+teia_luminosa;10;0;Teia Luminosa
+carapaca_integral;0;10;Carapaça Integral
+semente_enfraquecedora;12;0;Semente Enfraquecedora
+serra_de_contencao;0;12;Serra de Contenção
+protocolo_de_seguranca;10;0;Protocolo de Segurança
+mordida_miasmatica;0;12;Mordida Miasmática
+enxame_de_mordidas;0;12;Enxame de Mordidas
+perseguicao_incessante;0;10;Perseguição Incessante
+# -------------------------------------------------------------
+# LEADER
+# -------------------------------------------------------------
+rasante_silencioso;0;15;Rasante Silencioso
+pio_inaudivel;15;0;Pio Inaudível
+punho_amalgamado;0;15;Punho Amalgamado
+descarga_improvisada;15;0;Descarga Improvisada
+investida_runica;0;15;Investida Rúnica
+seiva_protetora;15;0;Seiva Protetora
+mandibulas_de_rocha;0;15;Mandíbulas de Rocha
+ruptura_do_solo;15;0;Ruptura do Solo
+carapaca_mineral;0;15;Carapaça Mineral
+serra_de_comando;0;15;Serra de Comando
+golpe_do_tridente;0;15;Golpe do Tridente
+juramento_das_ruinas;15;0;Juramento das Ruínas
+golpe_da_foice;0;15;Golpe da Foice
+raizes_de_madeira_morta;15;0;Raízes de Madeira-Morta
+guarda_ancestral;15;0;Guarda Ancestral
+# -------------------------------------------------------------
+# EPIC
+# -------------------------------------------------------------
+punho_de_eletrorrocha;0;18;Punho de Eletrorrocha
+descarga_trovejante;18;0;Descarga Trovejante
+nucleo_cintilante;15;0;Núcleo Cintilante
+mordida_de_sucata;0;18;Mordida de Sucata
+cauda_demolidora;0;18;Cauda Demolidora
+recomposicao_mecanica;18;0;Recomposição Mecânica
+lamina_invisivel;18;0;Lâmina Invisível
+mancha_da_alma;18;0;Mancha da Alma
+absorver_luz;15;0;Absorver Luz
+impacto_esmagador;0;18;Impacto Esmagador
+jorro_rubro;18;0;Jorro Rubro
+metabolismo_rubro;15;0;Metabolismo Rubro
+# -------------------------------------------------------------
+# BOSS
+# -------------------------------------------------------------
+raio_eletromagnetico;20;0;Raio Eletromagnético
+golpe_indutivo;0;20;Golpe Indutivo
+fluido_eletromagnetico;15;0;Fluido Eletromagnético
+ordem_executiva;20;0;Ordem Executiva
+demissao_sumaria;0;20;Demissão Sumária
+promocao_postuma;15;0;Promoção Póstuma
+raizes_sepulcrais;20;0;Raízes Sepulcrais
+chamado_da_decomposicao;20;0;Chamado da Decomposição
+seiva_ancestral;15;0;Seiva Ancestral
+estilhaco_material;0;20;Estilhaço Material
+compressao_petrea;0;20;Compressão Pétrea
+forma_inquebravel;0;15;Forma Inquebrável
+estilhaco_essencial;20;0;Estilhaço Essencial
+feixe_refratado;20;0;Feixe Refratado
+forma_prismatica;15;0;Forma Prismática

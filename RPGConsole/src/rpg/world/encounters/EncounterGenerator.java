@@ -9,6 +9,7 @@ import java.util.Random;
 
 import rpg.enemies.EnemyCatalog;
 import rpg.enemies.EnemyDefinition;
+import rpg.enemies.EnemySpawn;
 
 // Selects enemy definitions using scenario encounter weights.
 public final class EncounterGenerator {
@@ -23,7 +24,7 @@ public final class EncounterGenerator {
 		this.random = random;
 	}
 
-	public Optional<EnemyDefinition> generate(String scenarioId, int position, boolean specialArea) {
+	public Optional<EnemySpawn> generate(String scenarioId, int position, boolean specialArea) {
 		List<EncounterEntry> availableEntries = encounterCatalog.getAvailableEntries(scenarioId, position, specialArea);
 
 		if (availableEntries.isEmpty()) {
@@ -34,11 +35,16 @@ public final class EncounterGenerator {
 
 		EnemyDefinition enemyDefinition = enemyCatalog.getById(selectedEntry.getEnemyId());
 
-		return Optional.of(enemyDefinition);
+		return Optional.of(new EnemySpawn(enemyDefinition, rollLevel(selectedEntry)));
 	}
 
-	public List<EnemyDefinition> generateGroup(String scenarioId, int position, boolean specialArea, int minimumEnemies,
-			int maximumEnemies) {
+	public List<EnemySpawn> generateGroup(
+			String scenarioId,
+			int position,
+			boolean specialArea,
+			int minimumEnemies,
+			int maximumEnemies
+			) {
 		validateGroupSize(minimumEnemies, maximumEnemies);
 
 		List<EncounterEntry> availableEntries = encounterCatalog.getAvailableEntries(scenarioId, position, specialArea);
@@ -55,7 +61,7 @@ public final class EncounterGenerator {
 
 		int groupSize = random.nextInt(effectiveMaximum - effectiveMinimum + 1) + effectiveMinimum;
 
-		List<EnemyDefinition> generatedGroup = new ArrayList<>();
+		List<EnemySpawn> generatedGroup = new ArrayList<>();
 
 		Map<String, Integer> selectedCopies = new HashMap<>();
 
@@ -73,12 +79,16 @@ public final class EncounterGenerator {
 
 			EnemyDefinition enemyDefinition = enemyCatalog.getById(enemyId);
 
-			generatedGroup.add(enemyDefinition);
+			generatedGroup.add(new EnemySpawn(enemyDefinition, rollLevel(selectedEntry)));
 
 			selectedCopies.merge(enemyId, 1, Integer::sum);
 		}
 
 		return List.copyOf(generatedGroup);
+	}
+
+	private int rollLevel(EncounterEntry entry) {
+		return Math.toIntExact(random.nextLong(entry.getMinLevel(), (long) entry.getMaxLevel() + 1));
 	}
 
 	private EncounterEntry selectWeightedEntry(List<EncounterEntry> entries) {

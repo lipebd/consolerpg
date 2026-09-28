@@ -38,6 +38,7 @@ public final class CampaignPropertiesDeserializer {
 		CampaignFlagsSnapshot campaignFlagsSnapshot = deserializeCampaignFlags(reader);
 		List<RecruitmentCandidateSnapshot> recruitmentCandidates =
 				deserializeRecruitmentCandidates(reader);
+		BestiarySnapshot bestiarySnapshot = deserializeBestiary(reader);
 
 		reader.rejectUnreadProperties();
 
@@ -47,8 +48,22 @@ public final class CampaignPropertiesDeserializer {
 				shopSnapshots,
 				questProgressSnapshot,
 				campaignFlagsSnapshot,
-				recruitmentCandidates
+				recruitmentCandidates,
+				bestiarySnapshot
 				);
+	}
+
+	private static BestiarySnapshot deserializeBestiary(StrictPropertyReader reader) {
+		int discoveredEnemyCount = reader.readCount("bestiary.discovered.count");
+		List<String> discoveredEnemyIds = new ArrayList<>();
+
+		for (int index = 0; index < discoveredEnemyCount; index++) {
+			discoveredEnemyIds.add(
+					reader.readRequired("bestiary.discovered." + index + ".id")
+			);
+		}
+
+		return new BestiarySnapshot(discoveredEnemyIds);
 	}
 
 	private static PartySnapshot deserializeParty(StrictPropertyReader reader) {
@@ -358,4 +373,4 @@ public final class CampaignPropertiesDeserializer {
 
 		return List.copyOf(candidates);
 	}
-}
+}

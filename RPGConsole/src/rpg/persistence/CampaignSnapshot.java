@@ -16,6 +16,7 @@ public final class CampaignSnapshot {
 	private final QuestProgressSnapshot questProgress;
 	private final CampaignFlagsSnapshot campaignFlags;
 	private final List<RecruitmentCandidateSnapshot> recruitmentCandidates;
+	private final BestiarySnapshot bestiary;
 
 	public CampaignSnapshot(
 			PartySnapshot party,
@@ -23,7 +24,8 @@ public final class CampaignSnapshot {
 			List<ShopSnapshot> shops,
 			QuestProgressSnapshot questProgress,
 			CampaignFlagsSnapshot campaignFlags,
-			List<RecruitmentCandidateSnapshot> recruitmentCandidates
+			List<RecruitmentCandidateSnapshot> recruitmentCandidates,
+			BestiarySnapshot bestiary
 	) {
 		this.party =
 				Objects.requireNonNull(
@@ -81,6 +83,8 @@ public final class CampaignSnapshot {
 
 		this.recruitmentCandidates =
 				List.copyOf(recruitmentCandidates);
+
+		this.bestiary = Objects.requireNonNull(bestiary, "Bestiary snapshot cannot be null.");
 	}
 
 	private static void validateRecruitmentCandidates(
@@ -148,5 +152,9 @@ public final class CampaignSnapshot {
 	public List<RecruitmentCandidateSnapshot>
 			getRecruitmentCandidates() {
 		return recruitmentCandidates;
+	}
+
+	public BestiarySnapshot getBestiary() {
+		return bestiary;
 	}
 }

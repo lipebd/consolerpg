@@ -17,6 +17,7 @@ import rpg.classes.CharacterGrowthCalculator;
 import rpg.classes.PlayableClassCatalog;
 import rpg.classes.PlayableClassDefinition;
 import rpg.classes.paths.ClassPathRules;
+import rpg.enemies.EnemyCatalog;
 import rpg.flags.CampaignFlags;
 import rpg.flags.FlagCatalog;
 import rpg.items.Inventory;
@@ -40,6 +41,7 @@ import rpg.skills.SkillDefinition;
 import rpg.skills.SkillLearningResult;
 import rpg.world.WorldClock;
 import rpg.world.WorldProgress;
+import rpg.world.bestiary.BestiaryStateCatalog;
 import rpg.world.branches.ScenarioBranchCatalog;
 import rpg.world.inns.InnCatalog;
 import rpg.world.scenarios.City;
@@ -75,6 +77,7 @@ public final class CampaignSnapshotRestorer {
 	private final FlagCatalog flagCatalog;
 	private final QuestRecruitmentCatalog recruitmentCatalog;
 	private final ShopStateGenerator shopStateGenerator;
+	private final EnemyCatalog enemyCatalog;
 
 	public CampaignSnapshotRestorer(
 			PlayableClassCatalog playableClassCatalog,
@@ -91,7 +94,8 @@ public final class CampaignSnapshotRestorer {
             CharacterGrowthCalculator growthCalculator,
             QuestCatalog questCatalog,
             FlagCatalog flagCatalog,
-            QuestRecruitmentCatalog recruitmentCatalog) {
+            QuestRecruitmentCatalog recruitmentCatalog,
+			EnemyCatalog enemyCatalog) {
         this.playableClassCatalog =
                 Objects.requireNonNull(
                         playableClassCatalog, "Playable class catalog cannot be null.");
@@ -122,6 +126,7 @@ public final class CampaignSnapshotRestorer {
                         scenarioBranchCatalog, "Scenario branch catalog cannot be null.");
         this.shopStateGenerator =
                 Objects.requireNonNull(shopStateGenerator, "Shop state generator cannot be null.");
+		this.enemyCatalog = Objects.requireNonNull(enemyCatalog, "Enemy catalog cannot be null.");
 	}
 
 	public RestoredCampaign restore(CampaignSnapshot snapshot) {
@@ -150,6 +155,8 @@ public final class CampaignSnapshotRestorer {
 		RecruitmentCandidateStateCatalog candidateStateCatalog =
 		        restoreRecruitmentCandidates(snapshot.getRecruitmentCandidates());
 
+		BestiaryStateCatalog bestiaryStateCatalog = restoreBestiary(snapshot.getBestiary());
+
 		validateNarrativeCoherence(
 		        party,
 		        questProgress,
@@ -166,7 +173,18 @@ public final class CampaignSnapshotRestorer {
 		        shopStateCatalog,
 		        questProgress,
 		        campaignFlags,
-		        candidateStateCatalog);
+		        candidateStateCatalog,
+				bestiaryStateCatalog);
+	}
+
+	private BestiaryStateCatalog restoreBestiary(BestiarySnapshot snapshot) {
+		Objects.requireNonNull(snapshot, "Bestiary snapshot cannot be null.");
+
+		for (String enemyId : snapshot.getDiscoveredEnemyIds()) {
+			enemyCatalog.getById(enemyId);
+		}
+
+		return new BestiaryStateCatalog(snapshot.getDiscoveredEnemyIds());
 	}
 
 	private QuestProgress restoreQuestProgress(QuestProgressSnapshot snapshot) {
@@ -814,4 +832,4 @@ public final class CampaignSnapshotRestorer {
                     "The first recruited candidate must be the second party member.");
         }
     }
-}
+}
