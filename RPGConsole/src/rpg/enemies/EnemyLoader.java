@@ -47,9 +47,9 @@ public class EnemyLoader {
 	private EnemyDefinition parseLine(String line) {
 		String[] fields = line.split(";", -1);
 
-		if (fields.length != 16) {
+		if (fields.length != 17) {
 			throw new IllegalArgumentException(
-					"Invalid enemy data. Expected 16 fields but found " + fields.length + ": " + line
+					"Invalid enemy data. Expected 17 fields but found " + fields.length + ": " + line
 			);
 		}
 
@@ -71,7 +71,9 @@ public class EnemyLoader {
 		CharacterAttribute weaknessAttribute = parseOptionalAttribute(fields[13], "weakness", id);
 
 		EnemyRank rank = EnemyRank.valueOf(fields[14].trim().toUpperCase(Locale.ROOT));
-		String description = fields[15].trim().replace("\\n", System.lineSeparator());
+		EnemyTargetProfile targetProfile = EnemyTargetProfile
+				.valueOf(fields[15].trim().toUpperCase(Locale.ROOT));
+		String description = fields[16].trim().replace("\\n", System.lineSeparator());
 
 		CharacterStats stats;
 
@@ -92,6 +94,7 @@ public class EnemyLoader {
 				secondaryAttribute,
 				weaknessAttribute,
 				rank,
+				targetProfile,
 				List.of(),
 				description
 		);

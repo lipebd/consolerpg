@@ -1,6 +1,7 @@
 package rpg.enemies;
 
 import java.util.List;
+import java.util.Objects;
 
 import rpg.characters.CharacterAttribute;
 import rpg.characters.CharacterStats;
@@ -23,6 +24,7 @@ public final class EnemyDefinition {
 	private final CharacterAttribute primaryAttribute;
 	private final CharacterAttribute secondaryAttribute;
 	private final CharacterAttribute weaknessAttribute;
+	private final EnemyTargetProfile targetProfile;
 
 	public EnemyDefinition(
 			String id,
@@ -32,6 +34,7 @@ public final class EnemyDefinition {
 			CharacterAttribute secondaryAttribute,
 			CharacterAttribute weaknessAttribute,
 			EnemyRank rank,
+			EnemyTargetProfile targetProfile,
 			List<DropEntry> dropTable,
 			String description
 	) {
@@ -46,6 +49,7 @@ public final class EnemyDefinition {
 		this.primaryAttribute = primaryAttribute;
 		this.secondaryAttribute = secondaryAttribute;
 		this.weaknessAttribute = weaknessAttribute;
+		this.targetProfile = Objects.requireNonNull(targetProfile, "Enemy target profile cannot be null.");
 	}
 
 	public Enemy createEnemy(
@@ -59,6 +63,7 @@ public final class EnemyDefinition {
 				calculateNaturalStats(level),
 				level,
 				rank,
+				targetProfile,
 				skillDefinitions,
 				dropTable,
 				description
@@ -110,5 +115,9 @@ public final class EnemyDefinition {
 
 	public CharacterAttribute getWeaknessAttribute() {
 		return weaknessAttribute;
+	}
+
+	public EnemyTargetProfile getTargetProfile() {
+		return targetProfile;
 	}
 }

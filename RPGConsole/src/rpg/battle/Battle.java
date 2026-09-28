@@ -1,7 +1,6 @@
 package rpg.battle;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
@@ -65,6 +64,7 @@ public class Battle {
 	private boolean partyFled;
 	private final BattleItemMenu battleItemMenu;
 	private final Random random;
+	private final EnemyTargetSelector enemyTargetSelector;
 
 	public Battle(
 			Party party,
@@ -75,6 +75,7 @@ public class Battle {
 			String scenarioName
 	) {
 		this.random = Objects.requireNonNull(random, "Random generator cannot be null.");
+		this.enemyTargetSelector = new EnemyTargetSelector(this.random);
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
 		this.enemyGroup = Objects.requireNonNull(enemyGroup, "Enemy battle group cannot be null.");
 		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
@@ -265,7 +266,8 @@ public class Battle {
 	}
 
 	private void executeEnemyBasicAttack(BattleTurnEntry actingEntry, Enemy attackingEnemy) {
-		PlayableCharacter target = selectEnemyTarget();
+		PlayableCharacter target = enemyTargetSelector
+				.selectTarget(attackingEnemy, party.getMembers(), true, DamageType.PHYSICAL);
 		int damage = applyBasicAttackDamage(attackingEnemy, target);
 
 		List<String> messages = new ArrayList<>();
@@ -636,13 +638,17 @@ public class Battle {
 				continue;
 			}
 
-			targetsByType.put(targetType, resolveEnemySkillTargets(actingEnemy, targetType));
+			targetsByType.put(targetType, resolveEnemySkillTargets(actingEnemy, skillDefinition, targetType));
 		}
 
 		return new SkillExecutionContext(actingEnemy, targetsByType, 0);
 	}
 
-	private List<GameCharacter> resolveEnemySkillTargets(Enemy actingEnemy, SkillTargetType targetType) {
+	private List<GameCharacter> resolveEnemySkillTargets(
+			Enemy actingEnemy,
+			EnemySkillDefinition skillDefinition,
+			SkillTargetType targetType
+	) {
 		return switch (targetType) {
 		case SELF -> throw new IllegalArgumentException("SELF targets are supplied automatically.");
 
@@ -654,10 +660,32 @@ public class Battle {
 		case ALL_BUT_SELF -> enemyGroup.getSlots().stream().map(EnemyBattleSlot::getEnemy)
 				.filter(enemy -> enemy != actingEnemy).map(enemy -> (GameCharacter) enemy).toList();
 
-		case SINGLE_ENEMY -> List.of(selectEnemyTarget());
+		case SINGLE_ENEMY -> List.of(selectEnemySkillTarget(actingEnemy, skillDefinition));
 
 		case ALL_ENEMIES, RANDOM_ENEMY -> party.getMembers().stream().map(member -> (GameCharacter) member).toList();
 		};
+	}
+
+	private PlayableCharacter selectEnemySkillTarget(
+			Enemy actingEnemy,
+			EnemySkillDefinition skillDefinition
+	) {
+		EnumSet<DamageType> singleTargetDamageTypes = EnumSet.noneOf(DamageType.class);
+
+		for (SkillEffectDefinition effect : skillDefinition.getEffects()) {
+			if (effect.getEffectType() == SkillEffectType.DAMAGE
+					&& effect.getTargetType() == SkillTargetType.SINGLE_ENEMY) {
+				singleTargetDamageTypes.add(effect.getDamageType());
+			}
+		}
+
+		boolean damagingAction = !singleTargetDamageTypes.isEmpty();
+		DamageType relevantDamageType = singleTargetDamageTypes.size() == 1
+				? singleTargetDamageTypes.iterator().next()
+				: null;
+
+		return enemyTargetSelector
+				.selectTarget(actingEnemy, party.getMembers(), damagingAction, relevantDamageType);
 	}
 
 	private Enemy selectEnemyAllyTarget() {
@@ -889,11 +917,6 @@ public class Battle {
 		}
 
 		return BattleResult.DEFEAT;
-	}
-
-	private PlayableCharacter selectEnemyTarget() {
-		return party.getLivingMembers().stream().min(Comparator.comparingInt(PlayableCharacter::getCurrentHp))
-				.orElseThrow(() -> new IllegalStateException("No living party member is available."));
 	}
 
 	private boolean hasMultiplePartyMembers() {
