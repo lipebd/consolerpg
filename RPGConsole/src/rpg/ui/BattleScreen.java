@@ -165,13 +165,13 @@ public final class BattleScreen {
 
 			int targetIndex = selectableAllies.indexOf(member);
 			String marker = targetIndex < 0 ? "" : "\u001B[33m[" + (targetIndex + 1) + "]\u001B[0m ";
-
+			String defending = member.isDefending() ? "\u001B[36m⛨\u001B[0m" : "";
 			int leftPadding = Math.max(
 					0,
-					PARTY_COLUMN_WIDTH - ConsoleUI.getVisibleLength(marker) - ConsoleUI.getVisibleLength(classAndLevel)
+					PARTY_COLUMN_WIDTH - ConsoleUI.getVisibleLength(defending) - ConsoleUI.getVisibleLength(marker) - ConsoleUI.getVisibleLength(classAndLevel)
 			);
 
-			classesAndLevels.add(marker + " ".repeat(leftPadding) + classAndLevel);
+			classesAndLevels.add(marker + defending + " ".repeat(leftPadding) + classAndLevel);
 
 			names.add(member.getName());
 			hp.add(formatResource("HP", member.getCurrentHp(), member.getMaxHp()));

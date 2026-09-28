@@ -25,37 +25,33 @@ public final class PartyRescueScreen {
 		if (rescueCost < 0) {
 			throw new IllegalArgumentException("Rescue cost cannot be negative.");
 		}
-		ConsoleUI.displayHeading("Derrota");
+		String rescueMessage = defeatedScenario.getRescueDescription()
+				+ "\n\nDestino: "
+				+ rescueDestination.getName()
+				+ "\n\n"
+				+ buildRestorationMessage(party)
+				+ "\n\nCusto do resgate e dos cuidados: "
+				+ GameCurrency.format(rescueCost);
 
-		System.out.println("\nPressione ENTER para continuar...");
+		ConsoleUI.displayScenarioTransition(
+				defeatedScenario.getName(),
+				"Derrota",
+				rescueMessage,
+				consoleInput
+		);
 
-		System.out.print("> ");
-		consoleInput.readLine();
-		ConsoleUI.displayWrappedText(defeatedScenario.getRescueDescription());
-
-		System.out.println();
-		System.out.println("Destino: " + rescueDestination.getName());
-
-		displayRestorationMessage(party);
-
-		System.out.println("Custo do resgate e dos cuidados: " + GameCurrency.format(rescueCost));
 		System.out.println();
 		System.out.println("Pressione ENTER para continuar...");
 		System.out.print("> ");
 		consoleInput.readLine();
 	}
 
-	private void displayRestorationMessage(Party party) {
-		System.out.println();
-
+	private String buildRestorationMessage(Party party) {
 		if (party.size() == 1) {
-			ConsoleUI.displayWrappedText(
-					party.getLeader().getName() + " foi resgatado e teve suas saúde restabelecida."
-			);
-
-			return;
+			return party.getLeader().getName()
+					+ " foi resgatado e teve sua saúde restabelecida.";
 		}
 
-		ConsoleUI.displayWrappedText("Todos os integrantes foram resgatados e tiveram a saúde restabelecida.");
+		return "Todos os integrantes foram resgatados e tiveram a saúde restabelecida.";
 	}
 }
