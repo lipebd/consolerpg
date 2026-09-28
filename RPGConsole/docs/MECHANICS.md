@@ -149,15 +149,40 @@ This behavior is intentional for balance.
 
 ## Enemy target selection
 
-The current enemy strategy selects the living playable character with the lowest current HP.
+Every enemy species defines one `EnemyTargetProfile`, while each runtime enemy keeps its own target memory for the duration of the battle. Only living party members are eligible.
 
-Enemies:
+- `INSTINCTIVE` draws one living target uniformly and keeps it until that target is defeated.
+- `ERRATIC` draws uniformly before every individual action. The previous target receives no special treatment and may be drawn again.
+- `PREDATOR` uses a positive weighted score that favors missing-HP percentage and, for damaging actions, penalizes a character who is defending.
+- `TACTICAL` uses the same persistence and defending penalty, combines missing-HP percentage with vulnerability in the action's relevant effective defense and ignores defense when the action has no single physical or magical damage type.
 
-- Never select defeated allies.
-- Recalculate their target when their action begins.
-- May focus the same injured ally repeatedly.
+Predator score:
 
-Additional targeting strategies may be implemented in future versions.
+```text
+100 + 2 × missingHpPercent - defendingPenalty
+```
+
+Tactical score:
+
+```text
+100 + missingHpPercent + defensiveVulnerability - defendingPenalty
+```
+
+The defending penalty is 50. Physical actions compare effective DEF, magical actions compare effective RES, and the least defended living target receives the greatest vulnerability contribution. Mixed-damage and non-damaging actions do not compare DEF or RES; mixed-damage actions still consider defending.
+
+When a Predator or Tactical enemy has no valid remembered target, the positive scores are relative selection weights rather than a deterministic maximum. After acquisition, it changes targets only when the best alternative exceeds the current target's score by more than 40. Tied best alternatives are resolved uniformly. This gives scored profiles uncertainty at acquisition and stability afterward.
+
+Target behavior is independent from `EnemyRank`. Self, ally, group and explicit random target types preserve their existing resolution and do not use the individual opponent selector.
+
+The battle analysis identifies the enemy's target personality using the player-facing names Instintiva, Errática, Predadora and Tática. Rank and personality share one compact line so the analysis remains within the fixed 17-line battle layout.
+
+## Bestiary
+
+`Diário` provides a paginated bestiary containing every registered enemy definition in catalog order. Undiscovered entries display `???`; selecting one explains that the enemy must be analyzed in battle.
+
+A successful `Analisar` records the enemy's canonical definition ID once in the campaign bestiary. Repeated analyses remain idempotent. Discovery is preserved after victory, defeat or escape because the completed battle reports analyzed IDs independently from its final result.
+
+Discovered records show the enemy's name, rank, target personality, optional growth specializations, optional weakness, description, height in meters and weight in kilograms. The primary specialization uses `↑↑`, the secondary specialization uses `↑` and the weakness uses `↓`. Height and weight are descriptive definition data and do not modify battle calculations. Opening or navigating the bestiary does not advance world time.
 
 ## Fleeing
 
@@ -1105,9 +1130,9 @@ A physical component normally uses ATK against DEF. A magical component normally
 
 The current first-pass enemy content intentionally uses only clear single-target or self-targeted damage, attribute stages and self-recovery. More complex shared effects remain available for later discussion only when justified by concrete enemy content.
 
-### Current targeting boundary
+### Targeting boundary
 
-Action selection is implemented before target selection, but individual target intelligence remains deferred. A current `SINGLE_ENEMY` enemy action still uses the existing living-party target rule. Self-targeted actions require no target decision, and shared random-target components perform their own draw during component execution.
+Action selection remains separate from target selection. A `SINGLE_ENEMY` enemy action resolves through the acting enemy's `EnemyTargetProfile` only after the action and its relevant damage type are known. Self-targeted actions require no target decision, ally and group targets preserve their existing side-relative resolution, and shared random-target components perform their own draw during component execution. The complete individual profile rules are documented in **Enemy target selection** above.
 
 ## Skill acquisition and availability
 
@@ -1512,19 +1537,19 @@ Changing the visible name or symbol does not alter stored gold, prices or transa
 
 ## Campaign persistence foundation
 
-The implemented persistence foundation captures one immutable campaign snapshot containing party, inventory, equipment, learned scroll skills, reward modifiers, world progress, travel progress, permanent dungeon progress, fictional time, active shop states, quest progress, permanent flags and introduced recruitment candidates.
+The implemented persistence foundation captures one immutable campaign snapshot containing party, inventory, equipment, learned scroll skills, reward modifiers, world progress, travel progress, permanent dungeon progress, fictional time, active shop states, quest progress, permanent flags, introduced recruitment candidates and discovered bestiary enemy IDs.
 
 The snapshot is serialized through the versioned property schema defined in `SAVE_STATE.md`, encoded as UTF-8, authenticated and encrypted through AES-256-GCM and written through atomic save-file replacement.
 
 Loading decrypts and structurally validates the snapshot, validates every catalog-backed reference and reconstructs an isolated runtime candidate without modifying active gameplay state. A valid campaign may be continued after the title screen, while saving is available exclusively through INNs.
 
-The authenticated internal save format is version 3. It persists quest progress, permanent campaign flags and recruitment-candidate state alongside party, world, travel, dungeon, clock and shop state. Version-2 saves are rejected without migration.
+The authenticated internal save format is version 4. It adds discovered bestiary enemy IDs to the coordinated version-3 campaign state. Earlier internal versions are rejected without migration.
 
 Loading validates the relationships between the completed ceremony, the protagonist's class, recruitment quest progress, candidate state and the recruited party member before activating the restored campaign. Active exploration sessions, questionnaire answers, recommendations, uncommitted class choices and prepared recruitment plans remain transient.
 
-Internal version 2 is rejected without migration because its party snapshot cannot prove the quest, flag and candidate transaction that produced a recruited ally. Loading version 3 reconstructs quest, flag and candidate state in isolation and validates their coherence with the restored party before `World` receives the campaign.
+Internal version 2 remains incompatible because its party snapshot cannot prove the quest, flag and candidate transaction that produced a recruited ally. Version 3 is now also rejected because it contains no explicit bestiary state. Loading version 4 reconstructs quest, flag, candidate and bestiary state in isolation and validates catalog-backed references before `World` receives the campaign.
 
-A confirmed playable class belongs to persisted character state through its canonical class ID. Version-3 restoration validates the first ceremony across the completed recruitment quest, permanent ceremony flag, leader class, recruited candidate and second-position ally instead of storing another independent class-path decision.
+A confirmed playable class belongs to persisted character state through its canonical class ID. Version-4 restoration preserves the version-3 ceremony validations across the completed recruitment quest, permanent ceremony flag, leader class, recruited candidate and second-position ally instead of storing another independent class-path decision.
 
 ## World time and daily shop restocking
 

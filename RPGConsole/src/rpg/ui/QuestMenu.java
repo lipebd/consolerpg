@@ -23,6 +23,7 @@ public final class QuestMenu {
     private final QuestRewardCatalog rewardCatalog;
     private final QuestRewardSummaryFormatter rewardSummaryFormatter;
     private final QuestProgressCoordinator questProgressCoordinator;
+	private final BestiaryMenu bestiaryMenu;
 
     public QuestMenu(
             ConsoleInput consoleInput,
@@ -30,7 +31,8 @@ public final class QuestMenu {
             QuestProgress questProgress,
             QuestRewardCatalog rewardCatalog,
             ItemCatalog itemCatalog,
-            QuestProgressCoordinator questProgressCoordinator) {
+            QuestProgressCoordinator questProgressCoordinator,
+			BestiaryMenu bestiaryMenu) {
         this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 
         this.party = Objects.requireNonNull(party, "Party cannot be null.");
@@ -48,6 +50,8 @@ public final class QuestMenu {
         this.questProgressCoordinator =
                 Objects.requireNonNull(
                         questProgressCoordinator, "Quest progress coordinator cannot be null.");
+
+		this.bestiaryMenu = Objects.requireNonNull(bestiaryMenu, "Bestiary menu cannot be null.");
     }
 
     public void open() {
@@ -66,6 +70,7 @@ public final class QuestMenu {
             System.out.println();
             System.out.println("[1] Missões ativas");
             System.out.println("[2] Missões concluídas");
+			System.out.println("[3] Bestiário");
             if (feedbackMessage != null) {
                 System.out.println();
                 ConsoleUI.displayWrappedText(feedbackMessage);
@@ -86,6 +91,11 @@ public final class QuestMenu {
                     openCompletedQuests();
                     feedbackMessage = null;
                 }
+
+				case "3" -> {
+					bestiaryMenu.open();
+					feedbackMessage = null;
+				}
 
                 case "0" -> {
                     return;

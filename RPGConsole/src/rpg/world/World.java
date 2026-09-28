@@ -70,6 +70,7 @@ import rpg.requirements.RequirementSetDefinition;
 import rpg.skills.EnemySkillsetCatalog;
 import rpg.ui.AllyRecruitmentMenu;
 import rpg.ui.BattleRewardScreen;
+import rpg.ui.BestiaryMenu;
 import rpg.ui.CityLocationMenu;
 import rpg.ui.CityMenu;
 import rpg.ui.CityTransportMenu;
@@ -98,6 +99,7 @@ import rpg.ui.ScenarioBranchMenu;
 import rpg.ui.ShopMenu;
 import rpg.world.branches.ScenarioBranchCatalog;
 import rpg.world.branches.ScenarioBranchDefinition;
+import rpg.world.bestiary.BestiaryStateCatalog;
 import rpg.world.crafting.CrafterCatalog;
 import rpg.world.crafting.CrafterDefinition;
 import rpg.world.crafting.CraftingRecipeCatalog;
@@ -145,6 +147,7 @@ public class World {
 	private final QuestNpcInteractionResolver questNpcInteractionResolver;
 	private final RecruitmentCandidateStateCatalog candidateStateCatalog;
 	private final RecruitmentCandidateIntroductionService candidateIntroductionService;
+	private final BestiaryStateCatalog bestiaryStateCatalog;
 
 	private final CityLocationMenu cityLocationMenu;
 	private final CityMenu cityMenu;
@@ -260,7 +263,8 @@ public class World {
 			ClassPathTransitionFailurePresenter classPathTransitionFailurePresenter,
 			QuestCatalog questCatalog,
 			QuestRewardCatalog questRewardCatalog,
-			QuestDialogueCatalog questDialogueCatalog) {
+			QuestDialogueCatalog questDialogueCatalog,
+			BestiaryStateCatalog bestiaryStateCatalog) {
 
 		Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 		Objects.requireNonNull(enemyDropCatalog, "Enemy drop catalog cannot be null.");
@@ -306,6 +310,10 @@ public class World {
 				Objects.requireNonNull(
 						candidateIntroductionService,
 						"Recruitment candidate introduction service cannot be null.");
+		this.bestiaryStateCatalog = Objects.requireNonNull(
+				bestiaryStateCatalog,
+				"Bestiary state catalog cannot be null."
+		);
         this.questCatalog = Objects.requireNonNull(questCatalog, "Quest catalog cannot be null.");
         this.questDialogueCatalog =
                 Objects.requireNonNull(
@@ -401,7 +409,10 @@ public class World {
                         rewardService,
                         rewardScreen,
                         this.questProgressCoordinator,
+						this.bestiaryStateCatalog,
                         random);
+		BestiaryMenu bestiaryMenu =
+				new BestiaryMenu(consoleInput, this.enemyCatalog, this.bestiaryStateCatalog);
         this.questMenu =
                 new QuestMenu(
                         consoleInput,
@@ -409,7 +420,8 @@ public class World {
                         this.questProgress,
                         questRewardCatalog,
                         this.itemCatalog,
-                        this.questProgressCoordinator);
+						this.questProgressCoordinator,
+						bestiaryMenu);
         this.dialoguePresenter =
                 new DialoguePresenter(
                         consoleInput,
@@ -843,7 +855,8 @@ public class World {
                             shopStateCatalog,
 							questProgress,
 							campaignFlags,
-							candidateStateCatalog);
+							candidateStateCatalog,
+							bestiaryStateCatalog);
 		} catch (IllegalArgumentException | IllegalStateException | ArithmeticException exception) {
 			return CampaignSaveResult.ENCODING_FAILED;
 		}

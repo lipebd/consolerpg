@@ -24,6 +24,7 @@ import rpg.skills.EnemySkillsetCatalog;
 import rpg.ui.BattleRewardScreen;
 import rpg.ui.ConsoleInput;
 import rpg.ui.QuestProgressCoordinator;
+import rpg.world.bestiary.BestiaryStateCatalog;
 import rpg.world.scenarios.CombatScenario;
 
 // Coordinates battle creation, execution and victory rewards.
@@ -37,6 +38,7 @@ public final class BattleCoordinator {
 	private final EnemySkillsetCatalog enemySkillsetCatalog;
 	private final BattleRewardService rewardService;
 	private final BattleRewardScreen rewardScreen;
+	private final BestiaryStateCatalog bestiaryStateCatalog;
 
 	public BattleCoordinator(
 			Party party,
@@ -46,6 +48,7 @@ public final class BattleCoordinator {
 			BattleRewardService rewardService,
 			BattleRewardScreen rewardScreen,
 			QuestProgressCoordinator questProgressCoordinator,
+			BestiaryStateCatalog bestiaryStateCatalog,
 			Random random
 	) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
@@ -58,6 +61,10 @@ public final class BattleCoordinator {
 		this.random = Objects.requireNonNull(random, "Random generator cannot be null.");
 		this.questProgressCoordinator = Objects
 				.requireNonNull(questProgressCoordinator, "Quest progress coordinator cannot be null.");
+		this.bestiaryStateCatalog = Objects.requireNonNull(
+				bestiaryStateCatalog,
+				"Bestiary state catalog cannot be null."
+		);
 	}
 
 	public BattleResult start(EnemySpawn enemySpawn, CombatScenario combatScenario) {
@@ -87,7 +94,10 @@ public final class BattleCoordinator {
 
 		List<QuestProgressEvent> progressEvents = new ArrayList<>();
 
-		addAnalysisProgressEvents(progressEvents, battle.getAnalyzedEnemyIds());
+		List<String> analyzedEnemyIds = battle.getAnalyzedEnemyIds();
+
+		recordBestiaryDiscoveries(analyzedEnemyIds);
+		addAnalysisProgressEvents(progressEvents, analyzedEnemyIds);
 
 		if (result == BattleResult.VICTORY) {
 			BattleRewards rewards = grantVictoryRewards(enemies, combatScenario);
@@ -100,6 +110,12 @@ public final class BattleCoordinator {
 		}
 
 		return result;
+	}
+
+	private void recordBestiaryDiscoveries(List<String> analyzedEnemyIds) {
+		for (String enemyId : analyzedEnemyIds) {
+			bestiaryStateCatalog.discover(enemyId);
+		}
 	}
 
 	private static void

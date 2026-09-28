@@ -35,7 +35,7 @@ ciphertext=<Base64>
 
 The IV and authenticated ciphertext use canonical basic Base64 encoding. No campaign property is exposed outside the ciphertext.
 
-After authenticated AES-GCM decryption, the current internal version-3 campaign payload uses strict `name=value` properties encoded as UTF-8. In addition to the existing party, world, dungeon, clock and shop structures, version 3 contains:
+After authenticated AES-GCM decryption, the current internal version-4 campaign payload uses strict `name=value` properties encoded as UTF-8. In addition to party, world, dungeon, clock, shop, quest, permanent-flag and recruitment-candidate state, version 4 contains:
 
 ```properties
 quest.active.count=<non-negative integer>
@@ -55,9 +55,12 @@ recruitment.candidate.count=<non-negative integer>
 recruitment.candidate.<index>.id=<candidate ID>
 recruitment.candidate.<index>.name=<persistent character name>
 recruitment.candidate.<index>.recruited=<true or false>
+
+bestiary.discovered.count=<non-negative integer>
+bestiary.discovered.<index>.id=<enemy ID>
 ```
 
-`save.formatVersion=3` is the only supported internal version. Version 2 is rejected without migration, while the encrypted outer container remains at `containerVersion=1`. Property names, indexed collection structures, cross-state invariants and complete validation rules are defined centrally in `SAVE_STATE.md`.
+`save.formatVersion=4` is the only supported internal version. Earlier internal versions are rejected without migration, while the encrypted outer container remains at `containerVersion=1`. Property names, indexed collection structures, cross-state invariants and complete validation rules are defined centrally in `SAVE_STATE.md`.
 
 The encrypted codec, atomic file services, catalog-backed runtime reconstruction and gameplay integration are implemented.
 
@@ -187,7 +190,7 @@ File:
 
 `data/enemies.txt`
 
-Each valid enemy line contains exactly 16 fields:
+Each valid enemy line contains exactly 19 fields:
 
 | Position | Field | Java type | Example |
 |---:|---|---|---|
@@ -206,18 +209,21 @@ Each valid enemy line contains exactly 16 fields:
 | 13 | Secondary attribute | optional `CharacterAttribute` | empty |
 | 14 | Weakness attribute | optional `CharacterAttribute` | empty |
 | 15 | Enemy rank | `EnemyRank` | `COMMON` |
-| 16 | Description | `String` | `Uma criatura lupina...` |
+| 16 | Target profile | `EnemyTargetProfile` | `PREDATOR` |
+| 17 | Description | `String` | `Uma criatura lupina...` |
+| 18 | Height in meters | `double` | `0.65` |
+| 19 | Weight in kilograms | `double` | `18` |
 
 Header:
 
 ```text
-# id;name;maxHp;maxMp;maxSp;attack;defense;magic;resistance;speed;luck;primaryAttribute;secondaryAttribute;weaknessAttribute;rank;description
+# id;name;maxHp;maxMp;maxSp;attack;defense;magic;resistance;speed;luck;primaryAttribute;secondaryAttribute;weaknessAttribute;rank;targetProfile;description;height;weight
 ```
 
 Example:
 
 ```text
-lobermo;Lobermo;50;1;20;9;6;5;6;8;4;ATK;;;COMMON;Uma criatura lupina que percorre os Verdes Ermos em busca de presas.
+lobermo;Lobermo;50;1;20;9;6;5;6;8;4;ATK;;;COMMON;PREDATOR;Uma criatura lupina que percorre os Verdes Ermos em busca de presas.;0.65;18
 ```
 
 Supported enemy ranks:
@@ -228,6 +234,13 @@ Supported enemy ranks:
 - `BOSS`
 - `EPIC`
 - `LEGENDARY`
+
+Supported target profiles:
+
+- `INSTINCTIVE`
+- `ERRATIC`
+- `PREDATOR`
+- `TACTICAL`
 
 Loading flow:
 
@@ -250,10 +263,12 @@ Rules:
 - Primary, secondary and weakness attributes are independently optional. An absent value uses an empty field.
 - Every non-empty specialization field must be a valid `CharacterAttribute`.
 - Primary, secondary and weakness attributes must be pairwise distinct when present.
+- Target profile is required and controls only individual opponent selection; it is independent from enemy rank.
 - Literal `\n` sequences in descriptions are converted into line breaks.
+- Height and weight must be finite values greater than zero. They are descriptive bestiary data and do not change combat calculations.
 - Invalid definitions report their source line and enemy ID.
 
-`EnemyLoader` ignores blank lines and comments, requires exactly 16 fields, converts numeric values, optional attributes and `EnemyRank`, creates the level-1 `CharacterStats`, and registers an `EnemyDefinition`.
+`EnemyLoader` ignores blank lines and comments, requires exactly 19 fields, converts numeric values, optional attributes, `EnemyRank` and `EnemyTargetProfile`, creates the level-1 `CharacterStats`, validates physical measurements and registers an `EnemyDefinition`.
 
 Enemy definitions contain reusable immutable species data. Each battle combines one definition with a positive runtime level, calculates its natural stats, including level-scaled MP and SP, and creates a separate mutable `Enemy` instance. `LEGENDARY` remains a recognized reserved rank, but its stat multipliers are not configured and stat calculation rejects it.
 

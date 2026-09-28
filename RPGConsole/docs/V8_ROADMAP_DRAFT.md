@@ -1,6 +1,6 @@
 # RPGConsole V8 Roadmap — Draft for discussion
 
-> **Status: active roadmap with individually frozen blocks.** The INN carryover, enemy levels, reusable enemy skills and initial enemy action choice are implemented and verified. Individual target selection and later combat-intelligence refinements remain pending.
+> **Status: active roadmap with individually frozen blocks.** The INN carryover, enemy levels, reusable enemy skills, initial enemy action choice and individual target selection are implemented and verified. The contributed Bestiary has also been adapted to the current V8 architecture. Later combat-intelligence refinements, remaining balance and release verification remain pending.
 
 ## Release aim and boundaries
 
@@ -14,7 +14,7 @@ V8 does not require a clever general-purpose AI. Keep enemy decisions explainabl
 2. [x] Implement enemy levels and per-encounter stat generation.
 3. [x] Add reusable enemy skill headers, enemy-to-skill links and shared ordered effects.
 4. [x] Add enemy action choice, execution and player feedback.
-5. [ ] Add individual target selection and a small set of behavior profiles.
+5. [x] Add individual target selection and a small set of behavior profiles.
 6. [ ] Complete remaining content balancing, regression and release verification.
 
 The order is intentional: target choice must know what action will be performed and whether it requires a physical, magical, ally, self, group or random target.
@@ -113,15 +113,31 @@ Representative testing covered enemy physical skill damage, MP/SP consumption an
 
 ## 4. Enemy target choice
 
-* [ ] Replace the current rule that always targets the living party member with the lowest **absolute current HP**.
-* [ ] Study a small number of per-enemy behavior profiles: `INSTINCTIVE` (draw and hold), `PREDATOR` (prefer a wounded or unguarded target) and `TACTICAL` (also consider the defense relevant to the selected action). These names and weights are proposals, not a final TXT contract.
-* [ ] Let each enemy instance keep its own chosen target while that target remains valid. Draw a new one if defeated; permit voluntary retargeting only when the profile's meaningful improvement rule is met.
-* [ ] Compare lost-HP **percentage**, not raw HP, so a naturally low-HP class is not automatically the focus while healthy.
-* [ ] Use effective DEF for physical attacks and effective RES for magical attacks when the selected profile examines defenses. Consider the current defend state without reproducing attribute-stage or damage formulas.
-* [ ] Keep some uncertainty when a target is acquired, while making target persistence and retargeting understandable. Recheck cases where several enemies independently act in the same round.
-* [ ] Keep `EnemyRank` independent from target behavior. Do not add historic damage, healing, critical hits, party roles, coordination, taunt or spatial positioning to the initial selector.
+* [x] Replace the absolute-lowest-HP rule with the external `EnemyTargetProfile` contract.
+* [x] Implement `INSTINCTIVE`, `ERRATIC`, `PREDATOR` and `TACTICAL` without coupling behavior to `EnemyRank`.
+* [x] Give every runtime enemy independent target memory. Instinctive enemies hold a uniformly drawn target until defeat; erratic enemies redraw uniformly before every individual action.
+* [x] Score Predator acquisition with a positive base, twice the missing-HP percentage and a penalty against defending targets for damaging actions.
+* [x] Score Tactical acquisition with missing-HP percentage, the relevant effective DEF/RES vulnerability and the same defending penalty.
+* [x] Treat acquisition scores as relative weights rather than deterministic maximum selection.
+* [x] Keep Predator and Tactical targets until the best alternative exceeds the current score by more than the frozen retarget margin.
+* [x] Ignore DEF/RES for non-damaging or mixed-damage actions while still considering Defend for mixed damage.
+* [x] Preserve existing `SELF`, ally, group and explicitly random target resolution outside the individual selector.
+* [x] Assign one approved profile to every current enemy species, including the fourth `ERRATIC` personality requested during freezing.
+* [x] Expose the player-facing target personality in enemy analysis without exceeding its fixed 17-line layout.
 
-**Open decisions:** final profile list and weights; acquisition and retarget threshold; interaction with Defend, which currently remains active until its owner is hit; targets of non-damaging skills. The selector should serve single-opponent actions and avoid being forced into self, ally or area actions.
+> **Enemy target choice completed and verified.** Compilation and deterministic coverage validate loaders, all four profiles, independent memory, defeated-target invalidation, weighted acquisition, retarget margins, Defend, effective DEF/RES, attribute stages and ties. The current 47 species use 12 `INSTINCTIVE`, 15 `ERRATIC`, 9 `PREDATOR` and 11 `TACTICAL` profiles.
+
+## Integrated Bestiary contribution
+
+* [x] Adapt the contributed Bestiary to the current V8 source instead of replacing newer classes from its older branch.
+* [x] Reuse `Battle.getAnalyzedEnemyIds()` so one confirmed analysis feeds both quest progress and bestiary discovery without duplicating analysis rules.
+* [x] Add campaign-level `BestiaryStateCatalog` and immutable `BestiarySnapshot` using canonical enemy IDs.
+* [x] Add the Bestiary as a paginated third section of `Diário`, hiding undiscovered names and presenting rank, target personality, optional specializations, optional weakness, description, height and weight for discovered species.
+* [x] Preserve the current enemy stats, growth attributes, skill data and target profiles while importing only the contributed height and weight values.
+* [x] Evolve the strict internal save payload to version 4 and validate restored bestiary IDs through `EnemyCatalog` before activation.
+* [x] Keep the encrypted outer-container version unchanged.
+
+> **Bestiary integration completed and verified.** The complete source compiles, all 47 enemy definitions retain their V8 combat fields and receive positive measurements, menu pagination remains within the 17-line interface boundary, and bestiary properties complete a strict serialization round trip.
 
 ## 5. Content and release checks
 
@@ -138,8 +154,7 @@ Representative testing covered enemy physical skill damage, MP/SP consumption an
 
 ## Questions remaining for later V8 blocks
 
-1. Which target profiles and retarget thresholds are frozen after action choice?
-2. How should the selector evaluate contextual usefulness, if action intelligence is expanded beyond uniform choice?
-3. When a future authored pool exceeds its rank ceiling, which moves must be guaranteed and which positions may be randomized?
-4. Before release, should enemy level adjust EXP or GOLD through a bounded rule?
-5. Which later shared effect and target combinations are justified by concrete enemy content?
+1. How should the selector evaluate contextual usefulness, if action intelligence is expanded beyond uniform choice?
+2. When a future authored pool exceeds its rank ceiling, which moves must be guaranteed and which positions may be randomized?
+3. Before release, should enemy level adjust EXP or GOLD through a bounded rule?
+4. Which later shared effect and target combinations are justified by concrete enemy content?

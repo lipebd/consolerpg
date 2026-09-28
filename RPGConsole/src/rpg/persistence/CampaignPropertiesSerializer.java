@@ -22,8 +22,25 @@ public final class CampaignPropertiesSerializer {
         serializeQuestProgress(properties, campaignSnapshot.getQuestProgress());
         serializeCampaignFlags(properties, campaignSnapshot.getCampaignFlags());
         serializeRecruitmentCandidates(properties, campaignSnapshot.getRecruitmentCandidates());
+		serializeBestiary(properties, campaignSnapshot.getBestiary());
 
 		return properties;
+	}
+
+	private static void serializeBestiary(Properties properties, BestiarySnapshot snapshot) {
+		List<String> discoveredEnemyIds = snapshot.getDiscoveredEnemyIds();
+
+		properties.setProperty(
+				"bestiary.discovered.count",
+				Integer.toString(discoveredEnemyIds.size())
+		);
+
+		for (int index = 0; index < discoveredEnemyIds.size(); index++) {
+			properties.setProperty(
+					"bestiary.discovered." + index + ".id",
+					discoveredEnemyIds.get(index)
+			);
+		}
 	}
 
 	private static void serializeParty(Properties properties, PartySnapshot partySnapshot) {
@@ -321,4 +338,4 @@ public final class CampaignPropertiesSerializer {
 			);
 		}
 	}
-}
+}

@@ -47,9 +47,9 @@ public class EnemyLoader {
 	private EnemyDefinition parseLine(String line) {
 		String[] fields = line.split(";", -1);
 
-		if (fields.length != 17) {
+		if (fields.length != 19) {
 			throw new IllegalArgumentException(
-					"Invalid enemy data. Expected 17 fields but found " + fields.length + ": " + line
+					"Invalid enemy data. Expected 19 fields but found " + fields.length + ": " + line
 			);
 		}
 
@@ -74,6 +74,8 @@ public class EnemyLoader {
 		EnemyTargetProfile targetProfile = EnemyTargetProfile
 				.valueOf(fields[15].trim().toUpperCase(Locale.ROOT));
 		String description = fields[16].trim().replace("\\n", System.lineSeparator());
+		double height = parsePositiveDecimal(fields[17], "height", id);
+		double weight = parsePositiveDecimal(fields[18], "weight", id);
 
 		CharacterStats stats;
 
@@ -96,8 +98,31 @@ public class EnemyLoader {
 				rank,
 				targetProfile,
 				List.of(),
-				description
+				description,
+				height,
+				weight
 		);
+	}
+
+	private double parsePositiveDecimal(String field, String propertyName, String enemyId) {
+		double value;
+
+		try {
+			value = Double.parseDouble(field.trim());
+		} catch (NumberFormatException exception) {
+			throw new IllegalArgumentException(
+					"Invalid " + propertyName + " for enemy '" + enemyId + "': " + field.trim(),
+					exception
+			);
+		}
+
+		if (!Double.isFinite(value) || value <= 0) {
+			throw new IllegalArgumentException(
+					"Enemy " + propertyName + " must be finite and greater than zero: " + enemyId
+			);
+		}
+
+		return value;
 	}
 
 	private CharacterAttribute parseOptionalAttribute(String field, String position, String enemyId) {

@@ -20,6 +20,7 @@ import rpg.recruitment.RecruitmentCandidateStateCatalog;
 import rpg.skills.SkillDefinition;
 import rpg.world.WorldClock;
 import rpg.world.WorldProgress;
+import rpg.world.bestiary.BestiaryStateCatalog;
 import rpg.world.scenarios.DungeonProgress;
 import rpg.world.scenarios.Scenario;
 import rpg.world.shops.ShopOfferState;
@@ -42,7 +43,8 @@ public final class CampaignSnapshotFactory {
 			ShopStateCatalog shopStateCatalog,
 			QuestProgress questProgress,
 			CampaignFlags campaignFlags,
-			RecruitmentCandidateStateCatalog candidateStateCatalog
+			RecruitmentCandidateStateCatalog candidateStateCatalog,
+			BestiaryStateCatalog bestiaryStateCatalog
 			) {
 		Objects.requireNonNull(party, "Party cannot be null.");
 		Objects.requireNonNull(currentScenario, "Current scenario cannot be null.");
@@ -54,6 +56,7 @@ public final class CampaignSnapshotFactory {
 		Objects.requireNonNull(questProgress, "Quest progress cannot be null.");
 		Objects.requireNonNull(campaignFlags, "Campaign flags cannot be null.");
 		Objects.requireNonNull(candidateStateCatalog, "Candidate state catalog cannot be null.");
+		Objects.requireNonNull(bestiaryStateCatalog, "Bestiary state catalog cannot be null.");
 
 		PartySnapshot partySnapshot = createPartySnapshot(party);
 
@@ -78,13 +81,17 @@ public final class CampaignSnapshotFactory {
 						candidateStateCatalog
 						);
 
+		BestiarySnapshot bestiarySnapshot =
+				new BestiarySnapshot(bestiaryStateCatalog.getDiscoveredEnemyIds());
+
 		return new CampaignSnapshot(
 				partySnapshot,
 				worldSnapshot,
 				shopSnapshots,
 				questProgressSnapshot,
 				campaignFlagsSnapshot,
-				candidateSnapshots
+				candidateSnapshots,
+				bestiarySnapshot
 				);
 	}
 
@@ -305,4 +312,4 @@ public final class CampaignSnapshotFactory {
 
 		return List.copyOf(snapshots);
 	}
-}
+}

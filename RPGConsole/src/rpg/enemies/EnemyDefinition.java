@@ -25,6 +25,8 @@ public final class EnemyDefinition {
 	private final CharacterAttribute secondaryAttribute;
 	private final CharacterAttribute weaknessAttribute;
 	private final EnemyTargetProfile targetProfile;
+	private final double height;
+	private final double weight;
 
 	public EnemyDefinition(
 			String id,
@@ -36,9 +38,19 @@ public final class EnemyDefinition {
 			EnemyRank rank,
 			EnemyTargetProfile targetProfile,
 			List<DropEntry> dropTable,
-			String description
+			String description,
+			double height,
+			double weight
 	) {
 		GROWTH_CALCULATOR.validateGrowthAttributes(primaryAttribute, secondaryAttribute, weaknessAttribute);
+
+		if (!Double.isFinite(height) || height <= 0) {
+			throw new IllegalArgumentException("Enemy height must be finite and greater than zero.");
+		}
+
+		if (!Double.isFinite(weight) || weight <= 0) {
+			throw new IllegalArgumentException("Enemy weight must be finite and greater than zero.");
+		}
 
 		this.id = id;
 		this.name = name;
@@ -50,6 +62,8 @@ public final class EnemyDefinition {
 		this.secondaryAttribute = secondaryAttribute;
 		this.weaknessAttribute = weaknessAttribute;
 		this.targetProfile = Objects.requireNonNull(targetProfile, "Enemy target profile cannot be null.");
+		this.height = height;
+		this.weight = weight;
 	}
 
 	public Enemy createEnemy(
@@ -119,5 +133,13 @@ public final class EnemyDefinition {
 
 	public EnemyTargetProfile getTargetProfile() {
 		return targetProfile;
+	}
+
+	public double getHeight() {
+		return height;
+	}
+
+	public double getWeight() {
+		return weight;
 	}
 }

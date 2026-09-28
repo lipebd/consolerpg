@@ -671,7 +671,12 @@ public final class BattleScreen {
 
 			System.out.println();
 			System.out.println(slot.getDisplayName());
-			System.out.println("Rank: " + enemy.getRank());
+			System.out.println(
+					"Rank: "
+							+ enemy.getRank()
+							+ "    Personalidade: "
+							+ enemy.getTargetProfile().getDisplayName()
+			);
 			System.out.println("HP: " + enemy.getCurrentHp() + "/" + enemy.getMaxHp());
 			System.out.println("ATK: " + enemy.getAttack() + "    DEF: " + enemy.getDefense());
 			System.out.println("MAG: " + enemy.getMagic() + "    RES: " + enemy.getResistance());

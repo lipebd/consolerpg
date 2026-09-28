@@ -8,6 +8,7 @@ import rpg.quests.QuestProgress;
 import rpg.recruitment.RecruitmentCandidateStateCatalog;
 import rpg.world.WorldClock;
 import rpg.world.WorldProgress;
+import rpg.world.bestiary.BestiaryStateCatalog;
 import rpg.world.scenarios.DungeonProgress;
 import rpg.world.scenarios.Scenario;
 import rpg.world.shops.ShopStateCatalog;
@@ -26,6 +27,7 @@ public final class RestoredCampaign {
 	private final TravelProgress travelProgress;
 	private final WorldClock worldClock;
 	private final ShopStateCatalog shopStateCatalog;
+	private final BestiaryStateCatalog bestiaryStateCatalog;
 
 	public RestoredCampaign(
 			Party party,
@@ -37,7 +39,8 @@ public final class RestoredCampaign {
 			ShopStateCatalog shopStateCatalog,
 			QuestProgress questProgress,
 			CampaignFlags campaignFlags,
-			RecruitmentCandidateStateCatalog candidateStateCatalog) {
+			RecruitmentCandidateStateCatalog candidateStateCatalog,
+			BestiaryStateCatalog bestiaryStateCatalog) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
 		this.currentScenario =
 				Objects.requireNonNull(currentScenario, "Current scenario cannot be null.");
@@ -57,6 +60,10 @@ public final class RestoredCampaign {
 		this.candidateStateCatalog =
 				Objects.requireNonNull(
 						candidateStateCatalog, "Candidate state catalog cannot be null.");
+		this.bestiaryStateCatalog = Objects.requireNonNull(
+				bestiaryStateCatalog,
+				"Bestiary state catalog cannot be null."
+		);
 	}
 
 	public QuestProgress getQuestProgress() {
@@ -98,4 +105,8 @@ public final class RestoredCampaign {
 	public ShopStateCatalog getShopStateCatalog() {
 		return shopStateCatalog;
 	}
-}
+
+	public BestiaryStateCatalog getBestiaryStateCatalog() {
+		return bestiaryStateCatalog;
+	}
+}

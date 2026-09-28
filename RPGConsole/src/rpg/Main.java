@@ -104,6 +104,7 @@ import rpg.ui.TitleScreen;
 import rpg.world.World;
 import rpg.world.WorldClock;
 import rpg.world.WorldProgress;
+import rpg.world.bestiary.BestiaryStateCatalog;
 import rpg.world.branches.ScenarioBranchCatalog;
 import rpg.world.branches.ScenarioBranchLoader;
 import rpg.world.crafting.CrafterCatalog;
@@ -207,6 +208,7 @@ public class Main {
 			QuestProgress questProgress;
 			CampaignFlags campaignFlags;
 			RecruitmentCandidateStateCatalog candidateStateCatalog;
+			BestiaryStateCatalog bestiaryStateCatalog;
 			CombatScenarioDialogueCatalog combatScenarioDialogueCatalog;
 			WorldProgress worldProgress;
 			DungeonProgress dungeonProgress;
@@ -583,6 +585,7 @@ public class Main {
 				questProgress = new QuestProgress(questCatalog);
 				campaignFlags = new CampaignFlags(flagCatalog);
 				candidateStateCatalog = new RecruitmentCandidateStateCatalog(questRecruitmentCatalog);
+				bestiaryStateCatalog = new BestiaryStateCatalog();
 			} else {
 				TitleScreen.show(consoleInput);
 				ConsoleUI.clearScreen();
@@ -603,7 +606,8 @@ public class Main {
                         characterGrowthCalculator,
                         questCatalog,
                         flagCatalog,
-                        questRecruitmentCatalog);
+						questRecruitmentCatalog,
+						enemyCatalog);
 
 				CampaignLoadService loadService = new CampaignLoadService(snapshotRestorer);
 				CampaignLoadResult loadResult = loadService.load();
@@ -631,6 +635,7 @@ public class Main {
 						questProgress = restoredCampaign.getQuestProgress();
 						campaignFlags = restoredCampaign.getCampaignFlags();
 						candidateStateCatalog = restoredCampaign.getCandidateStateCatalog();
+						bestiaryStateCatalog = restoredCampaign.getBestiaryStateCatalog();
 
 						break;
 					}
@@ -659,6 +664,7 @@ public class Main {
 					campaignFlags = new CampaignFlags(flagCatalog);
 					candidateStateCatalog =
 					        new RecruitmentCandidateStateCatalog(questRecruitmentCatalog);
+					bestiaryStateCatalog = new BestiaryStateCatalog();
 
 					ConsoleUI.clearScreen();
 					break;
@@ -811,7 +817,8 @@ public class Main {
 					classPathTransitionFailurePresenter,
                     questCatalog,
                     questRewardCatalog,
-                    questDialogueCatalog);
+					questDialogueCatalog,
+					bestiaryStateCatalog);
 
 			world.start();
 

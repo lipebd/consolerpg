@@ -6,7 +6,7 @@ V7 is complete and preserved as the current released version.
 
 Current stage:
 
-`V8 enemy combat — the V7 INN carryover, enemy levels, reusable enemy skills and initial enemy action choice are implemented and verified. Individual target selection and later combat-intelligence refinements remain pending.`
+`V8 enemy combat — the V7 INN carryover, enemy levels, reusable enemy skills, initial enemy action choice, individual target profiles and Bestiary integration are implemented and verified. Remaining regional balance, regression and release checks remain pending.`
 
 Current Git branch:
 
@@ -842,15 +842,15 @@ The fictional world clock and runtime shop-restocking cycle are functionally int
 
 ## Save and load
 
-The version-3 persistence foundation is implemented through `rpg.persistence`.
+The version-4 persistence foundation is implemented through `rpg.persistence`.
 
 Current completed behavior:
 
-- Immutable snapshots represent party, character, equipment, inventory, reward-modifier, world-time, discovery, travel, permanent dungeon progression, shop, quest, permanent-flag and recruitment-candidate state.
+- Immutable snapshots represent party, character, equipment, inventory, reward-modifier, world-time, discovery, travel, permanent dungeon progression, shop, quest, permanent-flag, recruitment-candidate and bestiary-discovery state.
 - The versioned campaign schema uses strict indexed Java properties encoded as UTF-8.
 - Canonical booleans accept only lowercase `true` and `false`.
 - Every registered dungeon requires exactly one valid progress entry.
-- Internal versions 1 and 2 are rejected without migration; the encrypted outer-container version remains unchanged.
+- Earlier internal versions are rejected without migration; the encrypted outer-container version remains unchanged.
 - AES-256-GCM encrypts and authenticates the complete campaign payload.
 - Every encryption uses a new secure random 12-byte IV and a 128-bit authentication tag.
 - The textual container exposes no campaign information outside authenticated ciphertext.
@@ -860,7 +860,7 @@ Current completed behavior:
 - Invalid save files are preserved instead of being deleted or corrected.
 - Snapshot, property, UTF-8, encryption, container, atomic-file and save/load service round trips were manually validated.
 
-`CampaignSnapshotRestorer` validates every catalog-backed reference and reconstructs a complete isolated `RestoredCampaign`, including party order, progression, learned scroll skills, equipment, resources, inventory, reward modifiers, world progress, travel progress, fictional time, finite shop stock, quest progress, permanent flags and candidate state. The reconstructed candidate becomes active only after every loading stage and every cross-state validation succeeds.
+`CampaignSnapshotRestorer` validates every catalog-backed reference and reconstructs a complete isolated `RestoredCampaign`, including party order, progression, learned scroll skills, equipment, resources, inventory, reward modifiers, world progress, travel progress, fictional time, finite shop stock, quest progress, permanent flags, candidate state and discovered bestiary IDs. The reconstructed candidate becomes active only after every loading stage and every cross-state validation succeeds.
 
 `QuestProgressRestorer` and `RecruitmentCandidateStateRestorer` provide single-use domain-local restoration gateways over package-private mutation APIs. The persistence orchestrator reconstructs all three narrative state holders before validating quest, flag, candidate, leader-class and party coherence.
 
@@ -1031,12 +1031,35 @@ The second enemy-combat block is also implemented and verified:
 
 Representative gameplay verified enemy physical skill damage, MP/SP consumption and exhaustion, playable-skill regression, self-buffing, resistible debuffs, pending VEL, multiple installed skills and basic-attack fallback. Negative startup tests verified global skill-ID uniqueness, unknown effect references, enemy skills without links and resource capacity at the linked minimum level.
 
+The third enemy-combat block is implemented and verified:
+
+- `EnemyTargetProfile` defines `INSTINCTIVE`, `ERRATIC`, `PREDATOR` and `TACTICAL` behavior independently from rank.
+- Every runtime `Enemy` retains its profile, while `EnemyTargetSelector` owns independent per-instance target memory during the battle.
+- Instinctive enemies acquire a uniform random living target and hold it until defeat.
+- Erratic enemies redraw uniformly before every individual action and may repeat their previous target.
+- Predator and Tactical enemies use positive weighted acquisition, missing-HP percentage and a penalty against defending targets for damaging actions.
+- Tactical enemies additionally compare the effective DEF or RES relevant to the selected action.
+- Scored profiles preserve their current valid target until the best alternative exceeds the frozen retarget margin.
+- Non-damaging and mixed-damage actions do not compare DEF/RES; mixed damage still considers Defend.
+- Self, ally, group and explicitly random target types preserve their previous resolution.
+- All 47 current species have one authored profile: 12 instinctive, 15 erratic, 9 predator and 11 tactical.
+- Enemy analysis exposes that profile as the player-facing personality Instintiva, Errática, Predadora or Tática while retaining the fixed 17-line battle layout.
+
+The contributed Bestiary has been adapted to the current V8 architecture:
+
+- `BestiaryStateCatalog` stores discovered canonical enemy IDs as mutable campaign state.
+- A successful analysis reuses the IDs already collected by `Battle`; `BattleCoordinator` records both bestiary discovery and quest analysis progress without changing `Battle`'s analysis rule.
+- `Diário` opens a paginated `BestiaryMenu`. Undiscovered entries show `???`; discovered entries show name, rank, target personality, optional specializations, optional weakness, description, height and weight.
+- All 47 V8 enemy records retain their current stats, growth attributes, skills and target profiles while receiving the contributed height and weight values.
+- `BestiarySnapshot` participates in snapshot creation, strict property serialization, isolated restoration and runtime injection.
+- Internal save format version 4 stores discovered enemy IDs and validates them through `EnemyCatalog`. Earlier internal versions are rejected; the encrypted outer container remains version 1.
+- The Bestiary and its feedback remain within the established 17-line interface boundary.
+
 ## Current limitations and temporary implementations
 
 - Permanent skill-scroll content and curated scroll drops remain absent while the draft skills await required combat mechanics and final content review.
 - Playable-class definitions, natural growth and the complete approved 30-skill roster are external; skill powers and resource costs remain provisional pending the general balance pass.
-- Enemy action selection is intentionally uniform and does not yet evaluate HP thresholds, tactical usefulness, action weights or species-specific preferences.
-- Individual target intelligence remains deferred; current single-party-target enemy actions continue using the existing target rule.
+- Enemy action selection is intentionally uniform and does not yet evaluate HP thresholds, tactical usefulness, action weights or species-specific preferences. Target profiles affect only the selected individual opponent after the action is chosen.
 - More complex enemy use of ally targeting, group targeting, purification, dissipation and other shared effects remains deferred until justified by concrete content.
 - Current enemy skill pools stay at or below their rank ceilings. Guaranteed moves for future pools above those ceilings remain undesigned.
 - Enemy-level reward scaling remains undecided; current rewards continue to depend on scenario and rank.
@@ -1045,7 +1068,7 @@ Representative gameplay verified enemy physical skill damage, MP/SP consumption 
 - After a normal victory, defeated allies remain unavailable until revived by a skill, item or city INN; full-party defeat instead activates rescue and complete restoration.
 - Items sold by the player cannot be bought back.
 - Normal new games currently begin with only the protagonist. The first-ally runtime behavior is implemented; later allies remain future narrative content.
-- Candidate naming reuses the implemented shared external-name selection and preserves one generated name across the active campaign and version-3 save/load cycles.
+- Candidate naming reuses the implemented shared external-name selection and preserves one generated name across the active campaign and version-4 save/load cycles.
 - The external character-name catalog has been expanded and can continue receiving content additions without code changes.
 - Party-title acquisition and character-history presentation remain future narrative work.
 - Initial crafting content is limited to two Bree crafters and two recipes pending broader creative and balance curation.
@@ -1057,9 +1080,9 @@ Representative gameplay verified enemy physical skill damage, MP/SP consumption 
 
 V7 was released as `v7.0.0` and integrated into `master`. V8 development continues on `feature/v8-enemy-combat`.
 
-The INN rest-result carryover, enemy levels, encounter strength, reusable enemy skills, first-pass skill content and initial uniform enemy action choice are implemented and verified.
+The INN rest-result carryover, enemy levels, encounter strength, reusable enemy skills, first-pass skill content, initial uniform enemy action choice, individual target profiles and Bestiary integration are implemented and verified.
 
-The next block is individual enemy target selection. It must begin after the action has been selected so physical, magical, self-targeted and non-damaging actions can resolve only the target information they actually require. Later contextual action intelligence remains separate from this first targeting block.
+The next work is the remaining regional balance, regression and release verification defined by the active V8 roadmap. Later contextual action intelligence remains separate from the completed target-profile block.
 
 ## Important conventions
 
