@@ -2,15 +2,15 @@
 
 ## Current version
 
-V7 is complete and preserved as the current released version. V8 is the current release candidate.
+V8 is complete and released as `v8.0.0`.
 
 Current stage:
 
-`V8 release candidate — feature scope, dungeon level ranges, Bestiary persistence, V8 branding and new-campaign terminal guidance are implemented and verified. Final diff, portable-package and release checks remain pending.`
+`V8 released — enemy levels and skills, target personalities, persistent Bestiary, dungeon level ranges, V8 branding and new-campaign terminal guidance are implemented and verified.`
 
 Current Git branch:
 
-`feature/v8-enemy-combat`
+`master`
 
 Preserved release tags:
 
@@ -21,6 +21,7 @@ Preserved release tags:
 * `v5.0.0`
 * `v6.0.0`
 * `v7.0.0`
+* `v8.0.0`
 
 ## Project objective
 
@@ -1091,11 +1092,11 @@ The contributed Bestiary has been adapted to the current V8 architecture:
 
 ## Current next step
 
-V7 was released as `v7.0.0` and integrated into `master`. V8 development continues on `feature/v8-enemy-combat`.
+V8 was released as `v8.0.0` and integrated into `master` after complete diff review and verification of the freshly extracted Windows x64 package.
 
-The INN rest-result carryover, enemy levels, encounter strength, reusable enemy skills, first-pass skill content, initial uniform enemy action choice, individual target profiles and Bestiary integration are implemented and verified.
+The released scope includes the INN rest-result carryover, enemy levels, encounter strength, reusable enemy skills, first-pass skill content, initial uniform enemy action choice, individual target profiles, persistent Bestiary and new-campaign terminal guidance.
 
-V8 is feature-complete. The next work is the remaining representative regional regression, complete diff review, portable-package verification and release procedure defined by the active roadmap. Later contextual action intelligence remains separate from the completed target-profile block.
+Future work may include representative balance passes for later regions and more contextual enemy action intelligence. Those items are documented follow-up work rather than incomplete V8 release requirements.
 
 ## Important conventions
 

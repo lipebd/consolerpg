@@ -1,6 +1,6 @@
-# RPGConsole V8 Roadmap — Draft for discussion
+# RPGConsole V8 Roadmap
 
-> **Status: feature-complete; final regression and release verification pending.** The INN carryover, enemy levels, reusable enemy skills, initial enemy action choice, individual target selection, dungeon level ranges and contributed Bestiary are implemented, documented and verified. Later combat-intelligence refinements remain outside the frozen V8 scope.
+> **Status: released as `v8.0.0`.** The INN carryover, enemy levels, reusable enemy skills, initial enemy action choice, individual target selection, dungeon level ranges, contributed Bestiary and new-campaign terminal guide are implemented, documented and verified. Later regional balance passes and combat-intelligence refinements remain outside the frozen V8 scope.
 
 ## Release aim and boundaries
 
@@ -15,7 +15,7 @@ V8 does not require a clever general-purpose AI. Keep enemy decisions explainabl
 3. [x] Add reusable enemy skill headers, enemy-to-skill links and shared ordered effects.
 4. [x] Add enemy action choice, execution and player feedback.
 5. [x] Add individual target selection and a small set of behavior profiles.
-6. [ ] Complete remaining content balancing, regression and release verification.
+6. [x] Complete the frozen content balance, regression and release verification.
 
 The order is intentional: target choice must know what action will be performed and whether it requires a physical, magical, ally, self, group or random target.
 
@@ -42,7 +42,7 @@ The order is intentional: target choice must know what action will be performed 
 * [x] Rebase all current enemy species to level-1 stats and configure their approved optional specializations.
 * [x] Rebalance and verify Verdes Ermos and Gruta Relamparrocha through normal campaign play, including the level-2 Mestre Eletrogoblin narrative encounter.
 
-### Remaining balance work
+### Deferred follow-up balance
 
 * [x] Keep enemy level independent from EXP, GOLD and drops in V8. Rewards continue to depend on scenario, rank and independent drop entries; future scaling requires a separate economic balance decision.
 * [ ] Validate and tune random encounter ranges outside Verdes Ermos and Gruta Relamparrocha through representative regional play.
@@ -145,15 +145,29 @@ Representative testing covered enemy physical skill damage, MP/SP consumption an
 * [x] Migrate all current enemy base stats and level ranges away from their historical placeholder balance. Opening-region encounters and every dungeon boss/epic range are verified structurally; later random regional encounters remain preliminary.
 * [x] Assign enemy skills with concrete low-/mid-/late-game examples after the skill contract is frozen.
 * [x] Check two copies with distinct rolled levels and the fixed narrative-boss entry point.
-* [ ] Check one species reused in early and late regions plus recurring-boss and epic level-range entry points during their regional balance passes.
+* [ ] During future regional balance passes, check one species reused in early and late regions plus recurring-boss and epic level-range entry points through representative gameplay.
 * [x] Test representative enemy damage, resource consumption and exhaustion, basic-attack fallback, magical damage, self-buffs, resistible debuffs, pending VEL and playable-skill regression.
-* [ ] Expand representative regional playtesting for the complete first-pass enemy-skill content, including later bosses and epics.
-* [ ] Revisit purification, dissipation, ally-targeting and other shared combinations only if later enemy content actually requires them.
-* [ ] Check progression pacing, initiative/action counts, EXP/GOLD, drops and normal/boss/epic battle outcomes. Preserve existing playable skill, inventory and save/load behavior.
+* [ ] During future regional balance passes, expand representative playtesting for the complete first-pass enemy-skill content, including later bosses and epics.
+* [ ] Revisit purification, dissipation, ally-targeting and other shared combinations only if future enemy content actually requires them.
+* [ ] During future regional balance passes, revisit progression pacing, initiative/action counts, EXP/GOLD, drops and normal/boss/epic battle outcomes. Preserve existing playable skill, inventory and save/load behavior.
 * [x] Update architecture, mechanics, data formats, class guides and project state after each approved block is implemented and verified. Do not describe deferred legendary abilities as implemented.
-* [ ] Review the complete diff, package a portable release and check Unicode text and representative playthroughs before tagging V8.
+* [x] Review the complete diff, package a portable release and check Unicode text and representative gameplay before tagging V8.
 
-## Questions remaining for later V8 blocks
+### Release verification
+
+The complete `master...feature/v8-enemy-combat` diff was reviewed before release. The Windows x64 package compiled successfully, and a freshly extracted copy launched through `RPGConsole.cmd` with V8 branding, correct accented text and class symbols, the new-campaign terminal guide and basic gameplay functioning as expected.
+
+Release artifact:
+
+`RPGConsole-v8.0.0-windows-x64.zip`
+
+SHA-256:
+
+`A9A1ED03E0995D2733E5654238DE9E20EE7DE5C1F1990CBBFD3A0892263689E5`
+
+Unchecked regional items above are documented follow-up balance work and do not block the frozen V8 release scope.
+
+## Deferred design questions
 
 1. How should the selector evaluate contextual usefulness, if action intelligence is expanded beyond uniform choice?
 2. When a future authored pool exceeds its rank ceiling, which moves must be guaranteed and which positions may be randomized?
