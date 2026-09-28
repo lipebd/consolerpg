@@ -903,7 +903,7 @@ Each active dungeon line contains exactly 13 fields:
 Example:
 
 ```text
-gruta_relamparrocha;mestre_eletrogoblin;2;mestre_eletrogoblin;1;1;4;relampagolem;1;1;1;ANY;6
+gruta_relamparrocha;mestre_eletrogoblin;2;mestre_eletrogoblin;2;3;4;relampagolem;4;5;1;ANY;6
 ```
 
 | Position | Field | Type | Example |
@@ -912,12 +912,12 @@ gruta_relamparrocha;mestre_eletrogoblin;2;mestre_eletrogoblin;1;1;4;relampagolem
 | 2 | Narrative boss enemy IDs | Comma-separated ID group | `mestre_eletrogoblin` |
 | 3 | Narrative boss level | Positive integer | `2` |
 | 4 | Recurring boss enemy IDs | Comma-separated ID group | `mestre_eletrogoblin` |
-| 5 | Recurring boss minimum level | Positive integer | `1` |
-| 6 | Recurring boss maximum level | Positive integer | `1` |
+| 5 | Recurring boss minimum level | Positive integer | `2` |
+| 6 | Recurring boss maximum level | Positive integer | `3` |
 | 7 | Recurring boss cooldown | Positive integer world hours | `4` |
 | 8 | Epic enemy IDs | Comma-separated ID group | `relampagolem` |
-| 9 | Epic minimum level | Positive integer | `1` |
-| 10 | Epic maximum level | Positive integer | `1` |
+| 9 | Epic minimum level | Positive integer | `4` |
+| 10 | Epic maximum level | Positive integer | `5` |
 | 11 | Epic minimum position | Positive integer | `1` |
 | 12 | Epic area restriction | `ExplorationAreaRestriction` | `ANY` |
 | 13 | Epic cooldown | Positive integer world hours | `6` |
@@ -938,6 +938,7 @@ Rules:
 - One recurring-boss level is rolled for the entire recurring group when that encounter begins.
 - One epic level is rolled for the entire epic group after the player accepts the encounter.
 - Every member of one boss or epic group uses the same rolled level.
+- Dungeon enemy levels affect combat growth and skill availability but do not change scenario EXP, GOLD, rank reward multipliers or independent drops in V8.
 - Natural stats and rank multipliers must remain numerically valid at the narrative level and at both configured maximum levels; overflow rejects the dungeon during loading.
 - `recurringBossCooldownHours` and `epicEnemyCooldownHours` must be positive.
 - `epicMinPosition` must be at least `1` and lower than the dungeon's final exploration position.

@@ -1010,7 +1010,18 @@ The first enemy-combat block is implemented and verified:
 - All current enemy species were rebased to intentional level-1 stats. Optional specializations and limited lore-specific base adjustments preserve distinct identities without using arbitrary historical values as the primary balancing mechanism.
 - Verdes Ermos and Gruta Relamparrocha were rebalanced and verified through normal campaign play. The Mestre Eletrogoblin narrative encounter was approved at level 2 after completion with a level-4 protagonist using the Adaga Improvisada and Gibão Comum.
 
-Enemy level currently does not change EXP, GOLD or drops. Encounter ranges outside the verified opening regions remain preliminary content values for later regional balance passes.
+Enemy level does not change EXP, GOLD or drops in V8. Rewards continue to depend on the combat scenario, rank and independent drop entries.
+
+Current authored dungeon levels are:
+
+| Dungeon | Narrative boss | Recurring boss | Epic |
+|---|---:|---:|---:|
+| Gruta Relamparrocha | 2 | 2–3 | 4–5 |
+| Minas do Além-Túmulo | 10 | 9–11 | 12–14 |
+| Mata do Agouro | 13 | 12–14 | 14–16 |
+| Ruínas de Sanguemar | 15 | 14–16 | 16–18 |
+
+All four dungeon records pass startup validation at their configured maximum levels. Automated boundary coverage creates every narrative boss and both endpoints of each recurring and epic range. Random encounter ranges outside the verified opening regions remain preliminary content values for later representative regional play.
 
 The second enemy-combat block is also implemented and verified:
 
@@ -1062,8 +1073,8 @@ The contributed Bestiary has been adapted to the current V8 architecture:
 - Enemy action selection is intentionally uniform and does not yet evaluate HP thresholds, tactical usefulness, action weights or species-specific preferences. Target profiles affect only the selected individual opponent after the action is chosen.
 - More complex enemy use of ally targeting, group targeting, purification, dissipation and other shared effects remains deferred until justified by concrete content.
 - Current enemy skill pools stay at or below their rank ceilings. Guaranteed moves for future pools above those ceilings remain undesigned.
-- Enemy-level reward scaling remains undecided; current rewards continue to depend on scenario and rank.
-- Encounter and dungeon level ranges outside Verdes Ermos and Gruta Relamparrocha remain preliminary until their regions receive representative playtesting.
+- Enemy-level reward scaling is intentionally absent from V8; any future scaling requires a separate economic balance decision.
+- Random encounter ranges outside Verdes Ermos and Gruta Relamparrocha remain preliminary until their regions receive representative playtesting. Dungeon narrative, recurring and epic ranges have a complete first authored pass but may still receive later tuning.
 - `RECRUIT` references are now validated through `QuestRecruitmentCatalog` and resolved through candidate state.
 - After a normal victory, defeated allies remain unavailable until revived by a skill, item or city INN; full-party defeat instead activates rescue and complete restoration.
 - Items sold by the player cannot be bought back.
@@ -1082,7 +1093,7 @@ V7 was released as `v7.0.0` and integrated into `master`. V8 development continu
 
 The INN rest-result carryover, enemy levels, encounter strength, reusable enemy skills, first-pass skill content, initial uniform enemy action choice, individual target profiles and Bestiary integration are implemented and verified.
 
-The next work is the remaining regional balance, regression and release verification defined by the active V8 roadmap. Later contextual action intelligence remains separate from the completed target-profile block.
+V8 is feature-complete. The next work is the remaining representative regional regression, complete diff review, portable-package verification and release procedure defined by the active roadmap. Later contextual action intelligence remains separate from the completed target-profile block.
 
 ## Important conventions
 

@@ -1,6 +1,6 @@
 # RPGConsole V8 Roadmap — Draft for discussion
 
-> **Status: active roadmap with individually frozen blocks.** The INN carryover, enemy levels, reusable enemy skills, initial enemy action choice and individual target selection are implemented and verified. The contributed Bestiary has also been adapted to the current V8 architecture. Later combat-intelligence refinements, remaining balance and release verification remain pending.
+> **Status: feature-complete; final regression and release verification pending.** The INN carryover, enemy levels, reusable enemy skills, initial enemy action choice, individual target selection, dungeon level ranges and contributed Bestiary are implemented, documented and verified. Later combat-intelligence refinements remain outside the frozen V8 scope.
 
 ## Release aim and boundaries
 
@@ -33,7 +33,7 @@ The order is intentional: target choice must know what action will be performed 
 * [x] Treat every numeric stat in `enemies.txt` as an intentional level-1 natural value. Use shared authoring profiles only as a balancing reference; keep the file as the single source of species data and use lore-specific base adjustments sparingly.
 * [x] Give every runtime enemy a positive hidden level. Enemy levels may exceed the playable level-20 boundary and have no global gameplay cap.
 * [x] Store independently optional primary, secondary and weakness attributes in each enemy definition. Every configured attribute must be distinct from the others.
-* * [x] Centralize enemy growth in `EnemyGrowthCalculator`. HP gains 10 per level; MP and SP each gain 5 per level; ATK and MAG gain 3 per level; DEF, RES, VEL and LCK gain 1 per level; primary and secondary bonuses follow the existing two- and three-level schedules; weakness replaces ordinary growth with one point every two levels. MP and SP do not receive rank, primary-attribute or secondary-attribute bonuses.
+* [x] Centralize enemy growth in `EnemyGrowthCalculator`. HP gains 10 per level; MP and SP each gain 5 per level; ATK and MAG gain 3 per level; DEF, RES, VEL and LCK gain 1 per level; primary and secondary bonuses follow the existing two- and three-level schedules; weakness replaces ordinary growth with one point every two levels. MP and SP do not receive rank, primary-attribute or secondary-attribute bonuses.
 * [x] Apply rank stat multipliers after natural growth. Ranks modify HP, ATK and MAG while leaving other stats unchanged. `LEGENDARY` remains reserved without configured stat multipliers.
 * [x] Add inclusive `minLevel` and `maxLevel` fields to encounter entries and roll every generated copy independently. Preserve position, area, weight, copy and group-size behavior.
 * [x] Carry each selected definition and level through immutable `EnemySpawn` values until `BattleCoordinator` creates runtime enemies.
@@ -44,11 +44,11 @@ The order is intentional: target choice must know what action will be performed 
 
 ### Remaining balance work
 
-* [ ] Decide whether enemy level changes EXP or GOLD. Current rewards continue to depend on scenario and rank, while drops remain independent entries.
-* [ ] Validate and tune encounter ranges outside Verdes Ermos and Gruta Relamparrocha through representative regional play.
+* [x] Keep enemy level independent from EXP, GOLD and drops in V8. Rewards continue to depend on scenario, rank and independent drop entries; future scaling requires a separate economic balance decision.
+* [ ] Validate and tune random encounter ranges outside Verdes Ermos and Gruta Relamparrocha through representative regional play.
 * [ ] Revisit high-level VEL, initiative and the usefulness of an authored content ceiling when later regions receive final level ranges.
 
-> **Enemy levels and opening-region balance completed and verified.** The implemented formulas and rank multipliers are recorded in `MECHANICS.md`; external fields and validation rules are recorded in `DATA_FORMATS.md`.
+> **Enemy levels, reward boundary and dungeon ranges completed and verified.** The implemented formulas and rank multipliers are recorded in `MECHANICS.md`; external fields and validation rules are recorded in `DATA_FORMATS.md`. Narrative, recurring and epic ranges for all four dungeons pass startup and boundary validation. Random regional encounters outside the opening remain subject to representative playtesting.
 
 ## 2. Enemy skills using shared effects
 
@@ -141,7 +141,7 @@ Representative testing covered enemy physical skill damage, MP/SP consumption an
 
 ## 5. Content and release checks
 
-* [x] Migrate all current enemy base stats and encounter level ranges away from their historical placeholder balance. Opening-region values are verified; later regional ranges remain preliminary.
+* [x] Migrate all current enemy base stats and level ranges away from their historical placeholder balance. Opening-region encounters and every dungeon boss/epic range are verified structurally; later random regional encounters remain preliminary.
 * [x] Assign enemy skills with concrete low-/mid-/late-game examples after the skill contract is frozen.
 * [x] Check two copies with distinct rolled levels and the fixed narrative-boss entry point.
 * [ ] Check one species reused in early and late regions plus recurring-boss and epic level-range entry points during their regional balance passes.
@@ -149,12 +149,11 @@ Representative testing covered enemy physical skill damage, MP/SP consumption an
 * [ ] Expand representative regional playtesting for the complete first-pass enemy-skill content, including later bosses and epics.
 * [ ] Revisit purification, dissipation, ally-targeting and other shared combinations only if later enemy content actually requires them.
 * [ ] Check progression pacing, initiative/action counts, EXP/GOLD, drops and normal/boss/epic battle outcomes. Preserve existing playable skill, inventory and save/load behavior.
-* [ ] Update architecture, mechanics, data formats, class guides and project state after each approved block is implemented and verified. Do not describe deferred legendary abilities as implemented.
+* [x] Update architecture, mechanics, data formats, class guides and project state after each approved block is implemented and verified. Do not describe deferred legendary abilities as implemented.
 * [ ] Review the complete diff, package a portable release and check Unicode text and representative playthroughs before tagging V8.
 
 ## Questions remaining for later V8 blocks
 
 1. How should the selector evaluate contextual usefulness, if action intelligence is expanded beyond uniform choice?
 2. When a future authored pool exceeds its rank ceiling, which moves must be guaranteed and which positions may be randomized?
-3. Before release, should enemy level adjust EXP or GOLD through a bounded rule?
-4. Which later shared effect and target combinations are justified by concrete enemy content?
+3. Which later shared effect and target combinations are justified by concrete enemy content?

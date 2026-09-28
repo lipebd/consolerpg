@@ -1,5 +1,5 @@
 # scenarioId;bossEnemyIds;narrativeBossLevel;recurringBossEnemyIds;recurringBossMinLevel;recurringBossMaxLevel;recurringBossCooldownHours;epicEnemyIds;epicMinLevel;epicMaxLevel;epicMinPosition;epicAreaRestriction;epicEnemyCooldownHours
-gruta_relamparrocha;mestre_eletrogoblin;2;mestre_eletrogoblin;1;1;4;relampagolem;1;1;1;ANY;6
-ruinas_sanguemar;defleto,refrata;1;defleto,refrata;1;1;4;colossangue;1;1;1;ANY;6
-minas_alem_tumulo;c3o;1;c3o;1;1;4;g3r3ntoss4uro;1;1;1;ANY;6
-mata_agouro;lich;1;lich;1;1;4;lamorstain;1;1;1;ANY;6
+gruta_relamparrocha;mestre_eletrogoblin;2;mestre_eletrogoblin;2;3;4;relampagolem;4;5;1;ANY;6
+ruinas_sanguemar;defleto,refrata;15;defleto,refrata;14;16;4;colossangue;16;18;1;ANY;6
+minas_alem_tumulo;c3o;10;c3o;9;11;4;g3r3ntoss4uro;12;14;1;ANY;6
+mata_agouro;lich;13;lich;12;14;4;lamorstain;14;16;1;ANY;6

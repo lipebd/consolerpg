@@ -1039,7 +1039,7 @@ Rank does not multiply MP, SP, DEF, RES, VEL or LCK. Each multiplied result is r
 
 Enemy progression has no global gameplay level cap. Every configured level must be positive, and growth uses exact arithmetic so overflow is rejected rather than wrapping. Encounter and dungeon loading calculate the highest configured level for every referenced enemy and reject invalid content during initialization.
 
-Enemy level currently does not change EXP, GOLD or drops. Scenario rewards, rank reward multipliers and independent drop entries retain their existing behavior.
+Enemy level does not change EXP, GOLD or drops in V8. Scenario rewards, rank reward multipliers and independent drop entries retain their existing behavior. Any future reward scaling requires a separate balance decision rather than following enemy level implicitly.
 
 ## Enemy skill availability and action choice
 
