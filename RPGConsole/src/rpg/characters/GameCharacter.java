@@ -388,4 +388,12 @@ public abstract class GameCharacter {
 		return combatEffectState.hasDistortedAttributes();
 	}
 
+	public boolean isDefending() {
+		return defending;
+	}
+
+	public void stopDefending() {
+		defending = false;
+	}
+
 }

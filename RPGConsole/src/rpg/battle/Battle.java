@@ -20,6 +20,8 @@ import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
 import rpg.items.RecoveryItem;
 import rpg.items.equipment.WeaponDefinition;
+import rpg.skills.CombatSkillDefinition;
+import rpg.skills.EnemySkillDefinition;
 import rpg.skills.SkillDefinition;
 import rpg.skills.SkillEffectDefinition;
 import rpg.skills.SkillEffectType;
@@ -62,6 +64,7 @@ public class Battle {
 	private PlayableCharacter pendingPostActionTarget;
 	private boolean partyFled;
 	private final BattleItemMenu battleItemMenu;
+	private final Random random;
 
 	public Battle(
 			Party party,
@@ -71,6 +74,7 @@ public class Battle {
 			BattleType battleType,
 			String scenarioName
 	) {
+		this.random = Objects.requireNonNull(random, "Random generator cannot be null.");
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
 		this.enemyGroup = Objects.requireNonNull(enemyGroup, "Enemy battle group cannot be null.");
 		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
@@ -79,7 +83,7 @@ public class Battle {
 				damageCalculator,
 				new RecoveryCalculator(),
 				new EffectResistanceCalculator(),
-				random
+				this.random
 		);
 		this.pendingPostActionExecution = null;
 		this.partyFled = false;
@@ -106,9 +110,9 @@ public class Battle {
 				this::schedulePostActionItemStage
 		);
 		this.allyTargetMenu = new AllyTargetMenu(consoleInput);
-		this.turnOrderGenerator = new BattleTurnOrderGenerator(random);
 		this.turnOrderScreen = new BattleTurnOrderScreen();
-		this.escapeService = new BattleEscapeService(random);
+		this.turnOrderGenerator = new BattleTurnOrderGenerator(this.random);
+		this.escapeService = new BattleEscapeService(this.random);
 		this.analyzedEnemyIds = new LinkedHashSet<>();
 		this.enemyTargetMenu = new EnemyTargetMenu(consoleInput, battleScreen, party, scenarioName, battleType);
 	}
@@ -206,12 +210,68 @@ public class Battle {
 	}
 
 	private void executeEnemyTurn(BattleTurnEntry actingEntry) {
-		Enemy attackingEnemy = (Enemy) actingEntry.getCharacter();
+		Enemy actingEnemy = (Enemy) actingEntry.getCharacter();
+
+		List<EnemySkillDefinition> usableSkills = actingEnemy.getSkillDefinitions().stream()
+				.filter(skill -> hasResourcesForSkill(actingEnemy, skill)).toList();
+
+		int selectedActionIndex = random.nextInt(usableSkills.size() + 1);
+
+		if (selectedActionIndex > 0) {
+			EnemySkillDefinition selectedSkill = usableSkills.get(selectedActionIndex - 1);
+
+			if (executeEnemySkill(actingEntry, actingEnemy, selectedSkill)) {
+				return;
+			}
+		}
+
+		executeEnemyBasicAttack(actingEntry, actingEnemy);
+	}
+
+	private boolean hasResourcesForSkill(Enemy actingEnemy, EnemySkillDefinition skillDefinition) {
+		return actingEnemy.getCurrentMp() >= skillDefinition.getMpCost()
+				&& actingEnemy.getCurrentSp() >= skillDefinition.getSpCost();
+	}
+
+	private boolean
+			executeEnemySkill(BattleTurnEntry actingEntry, Enemy actingEnemy, EnemySkillDefinition skillDefinition) {
+		SkillExecutionContext context = createEnemySkillExecutionContext(actingEnemy, skillDefinition);
+
+		List<PlayableCharacter> livingPartyBeforeExecution = List.copyOf(party.getLivingMembers());
+
+		SkillUseState execution = skillExecutor.beginExecution(skillDefinition, context);
+
+		if (!execution.canConsumeTurn()) {
+			return false;
+		}
+
+		spendSkillResources(actingEnemy, skillDefinition);
+
+		List<String> messages = new ArrayList<>();
+
+		messages.add(actingEntry.getDisplayName() + " usou " + skillDefinition.getName() + "!");
+
+		messages.addAll(formatSkillEffectResults(execution.getEffectResults()));
+
+		addNewlyDefeatedPartyMessages(livingPartyBeforeExecution, messages);
+
+		displayActionMessages(messages);
+
+		if (!skillDefinition.getEffectsByPhase(SkillExecutionPhase.POST_ACTION).isEmpty()) {
+			pendingPostActionExecution = execution;
+		}
+
+		return true;
+	}
+
+	private void executeEnemyBasicAttack(BattleTurnEntry actingEntry, Enemy attackingEnemy) {
 		PlayableCharacter target = selectEnemyTarget();
 		int damage = applyBasicAttackDamage(attackingEnemy, target);
 
 		List<String> messages = new ArrayList<>();
+
 		messages.add(actingEntry.getDisplayName() + " atacou " + target.getName() + "!");
+
 		messages.add(target.getName() + " sofreu " + damage + " de dano.");
 
 		if (!target.isAlive()) {
@@ -223,6 +283,21 @@ public class Battle {
 		}
 
 		displayActionMessages(messages);
+	}
+
+	private void
+			addNewlyDefeatedPartyMessages(List<PlayableCharacter> livingPartyBeforeExecution, List<String> messages) {
+		for (PlayableCharacter character : livingPartyBeforeExecution) {
+			if (character.isAlive()) {
+				continue;
+			}
+
+			lastDefeatedCharacter = character;
+
+			if (!party.isDefeated()) {
+				messages.add(character.getName() + " chegou a 0 HP!");
+			}
+		}
 	}
 
 	private void executeCharacterTurn(BattleTurnEntry actingEntry) {
@@ -423,6 +498,7 @@ public class Battle {
 	}
 
 	private void executeTurn(BattleTurnEntry actingEntry) {
+		actingEntry.getCharacter().stopDefending();
 		switch (actingEntry.getSide()) {
 		case PARTY -> executeCharacterTurn(actingEntry);
 
@@ -485,13 +561,18 @@ public class Battle {
 			actingEntry.getCharacter().finishConsumedTurn();
 
 			if (pendingPostActionExecution != null) {
+				List<PlayableCharacter> livingPartyBeforePostAction = List.copyOf(party.getLivingMembers());
+
 				List<SkillEffectResult> postActionResults = skillExecutor.executePostAction(pendingPostActionExecution);
 
-				List<String> postActionMessages = formatSkillEffectResults(postActionResults);
+				List<String> postActionMessages = new ArrayList<>(formatSkillEffectResults(postActionResults));
+
+				addNewlyDefeatedPartyMessages(livingPartyBeforePostAction, postActionMessages);
 
 				if (!postActionMessages.isEmpty()) {
 					displayActionMessages(postActionMessages);
 				}
+
 				updateFinishingCharacter(pendingPostActionExecution);
 			}
 
@@ -540,6 +621,53 @@ public class Battle {
 		updateFinishingCharacter(execution);
 
 		return true;
+	}
+
+	private SkillExecutionContext
+			createEnemySkillExecutionContext(Enemy actingEnemy, EnemySkillDefinition skillDefinition) {
+		Map<SkillTargetType, List<GameCharacter>> targetsByType = new EnumMap<>(SkillTargetType.class);
+
+		EnumSet<SkillTargetType> resolvedTargetTypes = EnumSet.noneOf(SkillTargetType.class);
+
+		for (SkillEffectDefinition effect : skillDefinition.getEffects()) {
+			SkillTargetType targetType = effect.getTargetType();
+
+			if (targetType == SkillTargetType.SELF || !resolvedTargetTypes.add(targetType)) {
+				continue;
+			}
+
+			targetsByType.put(targetType, resolveEnemySkillTargets(actingEnemy, targetType));
+		}
+
+		return new SkillExecutionContext(actingEnemy, targetsByType, 0);
+	}
+
+	private List<GameCharacter> resolveEnemySkillTargets(Enemy actingEnemy, SkillTargetType targetType) {
+		return switch (targetType) {
+		case SELF -> throw new IllegalArgumentException("SELF targets are supplied automatically.");
+
+		case SINGLE_ALLY -> List.of(selectEnemyAllyTarget());
+
+		case ALL_ALLIES, RANDOM_ALLY ->
+			enemyGroup.getSlots().stream().map(slot -> (GameCharacter) slot.getEnemy()).toList();
+
+		case ALL_BUT_SELF -> enemyGroup.getSlots().stream().map(EnemyBattleSlot::getEnemy)
+				.filter(enemy -> enemy != actingEnemy).map(enemy -> (GameCharacter) enemy).toList();
+
+		case SINGLE_ENEMY -> List.of(selectEnemyTarget());
+
+		case ALL_ENEMIES, RANDOM_ENEMY -> party.getMembers().stream().map(member -> (GameCharacter) member).toList();
+		};
+	}
+
+	private Enemy selectEnemyAllyTarget() {
+		List<EnemyBattleSlot> livingSlots = enemyGroup.getLivingSlots();
+
+		if (livingSlots.isEmpty()) {
+			throw new IllegalStateException("No living enemy ally is available.");
+		}
+
+		return livingSlots.get(random.nextInt(livingSlots.size())).getEnemy();
 	}
 
 	private Optional<SkillExecutionContext>
@@ -738,9 +866,17 @@ public class Battle {
 	}
 
 	private void updateFinishingCharacter(SkillUseState execution) {
-		if (enemyGroup.isDefeated()) {
-			finishingCharacter = execution.getContext().getActingCharacter();
+		if (!enemyGroup.isDefeated()) {
+			return;
 		}
+
+		GameCharacter actingCharacter = execution.getContext().getActingCharacter();
+
+		if (!(actingCharacter instanceof PlayableCharacter playableCharacter)) {
+			throw new IllegalStateException("Only a playable character can finish the enemy group.");
+		}
+
+		finishingCharacter = playableCharacter;
 	}
 
 	private BattleResult determineBattleResult() {
@@ -764,7 +900,7 @@ public class Battle {
 		return party.size() > 1;
 	}
 
-	private void spendSkillResources(PlayableCharacter actingCharacter, SkillDefinition skill) {
+	private void spendSkillResources(GameCharacter actingCharacter, CombatSkillDefinition skill) {
 		if (skill.getMpCost() > 0) {
 			actingCharacter.spendMp(skill.getMpCost());
 		}

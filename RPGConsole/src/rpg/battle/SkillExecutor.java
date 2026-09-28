@@ -11,7 +11,7 @@ import rpg.characters.CharacterAttribute;
 import rpg.characters.GameCharacter;
 import rpg.effects.AttributeStageRules;
 import rpg.effects.SpecialBattleStateType;
-import rpg.skills.SkillDefinition;
+import rpg.skills.CombatSkillDefinition;
 import rpg.skills.SkillEffectDefinition;
 import rpg.skills.SkillEffectType;
 import rpg.skills.SkillExecutionPhase;
@@ -41,7 +41,7 @@ public final class SkillExecutor {
 		this.random = Objects.requireNonNull(random, "Random generator cannot be null.");
 	}
 
-	public SkillUseState beginExecution(SkillDefinition skill, SkillExecutionContext context) {
+	public SkillUseState beginExecution(CombatSkillDefinition skill, SkillExecutionContext context) {
 		SkillUseState execution = new SkillUseState(skill, context);
 
 		executePhase(execution, SkillExecutionPhase.PRE_ACTION);
@@ -155,9 +155,7 @@ public final class SkillExecutor {
 						? execution.takeReservedPostActionTargets(effect)
 						: null;
 
-				selectedTargets = reservedTargets == null
-						? selectTargets(execution, effect)
-						: reservedTargets;
+				selectedTargets = reservedTargets == null ? selectTargets(execution, effect) : reservedTargets;
 			}
 
 			boolean primaryPairedModifier = effect.getPhase() == SkillExecutionPhase.PRIMARY

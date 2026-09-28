@@ -29,7 +29,7 @@ The architecture evolves incrementally. The current goal is to keep domain rules
 | `rpg.battle` | Battle coordination, skill execution and centralized combat calculations | `Battle`, `BattleResult`, `BattleCoordinator`, `SkillExecutor`, `SkillUseState`, `SkillExecutionContext`, `SkillEffectResult`, `DamageType`, `DamageCalculator`, `RecoveryCalculator`, `EffectResistanceCalculator`, `EnemyBattleGroup`, `BattleTurnOrder`, `BattleEscapeService`, `BattleType` |
 | `rpg.battle.rewards` | Reward calculation, temporary and equipment modifiers, immutable reward snapshots and individual progression results | `BattleRewardService`, `RewardCalculator`, `PartyRewardModifierState`, `BattleRewardModifiers`, `BattleRewards`, `CharacterProgressionResult` |
 | `rpg.effects` | Mutable combat-effect state and reusable attribute-stage rules | `CombatEffectState`, `AttributeStageState`, `AttributeStageRules`, `SpecialBattleStateType` |
-| `rpg.skills` | Immutable skill and component definitions, external loading and closed skill vocabularies | `SkillDefinition`, `SkillEffectDefinition`, `SkillLoader`, `SkillCatalog`, `SkillTargetType`, `SkillEffectType`, `SkillExecutionPhase`, `SkillConditionType` |
+| `rpg.skills` | Shared combat-skill contracts, immutable playable and enemy skill definitions, external loading, enemy-skillset links and closed skill vocabularies | `CombatSkillDefinition`, `SkillDefinition`, `EnemySkillDefinition`, `SkillEffectDefinition`, `SkillLoader`, `SkillCatalog`, `EnemySkillCatalog`, `EnemySkillsetEntry`, `EnemySkillsetLoader`, `EnemySkillsetCatalog`, `SkillTargetType`, `SkillEffectType`, `SkillExecutionPhase`, `SkillConditionType` |
 | `rpg.items` | External item definitions, runtime item behavior, shared inventory and individual drop rules | `ItemDefinition`, `ItemDefinitionCatalog`, `ItemLoader`, `RecoveryItemDefinition`, `RecoveryItemLoader`, `ItemFactory`, `Item`, `BasicItem`, `RecoveryItem`, `ItemCatalog`, `Inventory`, `DropEntry` |
 | `rpg.items.equipment` | Immutable equipment specialization, loading, lookup, compatibility vocabulary and inventory-to-character transfers | `EquipmentDefinition`, `WeaponDefinition`, `ArmorDefinition`, `TrinketDefinition`, `EquipmentLoader`, `EquipmentCatalog`, `EquipmentService`, `WeaponType`, `ArmorWeight`, `TrinketType` |
 | `rpg.enemies` | Enemy definitions, external enemy/drop loading and level/rank stat calculation | `EnemyDefinition`, `EnemyCatalog`, `EnemyLoader`, `EnemyGrowthCalculator`, `EnemyDropCatalog`, `EnemyDropLoader` |
@@ -61,20 +61,21 @@ Initialization includes:
 Initialization follows dependency order:
 
 1. Create the shared `ConsoleInput`.
-2. Load foundational character-name, playable-class, skill, enemy and item definitions.
-3. Load equipment, recovery-item, skill-scroll, enemy-drop and encounter definitions against their required foundational catalogs.
-4. Load common scenario, transport, INN, shop, crafting, exploration-reward, dungeon, branch and adjacent-route definitions.
-5. Load complete quest definitions from quest headers, sequential steps and ordered objectives.
-6. Load permanent-flag definitions and reusable requirement sets.
-7. Validate requirement references and quest-availability dependencies after quest, item and flag catalogs are available.
-8. Load ordered quest rewards and permanent quest effects after their item and route references are available.
-9. Load narrative locations, NPC identities, fixed NPC placements and linear dialogues.
-10. Load quest-dialogue associations and perform cross-catalog narrative validation, including speakers, starting NPCs, interaction objectives and dialogue contexts.
-11. Create runtime item, scenario, shop and other catalog-backed objects.
-12. Create an empty party, world, quest, flag and candidate state for New Game, or reconstruct their complete coordinated state from a valid version-3 campaign snapshot.
-13. Activate the selected campaign only after `CampaignSnapshotRestorer` has reconstructed and cross-validated its isolated `RestoredCampaign`.
-14. Construct the shared quest-progress, class-path, candidate-introduction and recruitment services.
-15. Construct `World` with the required immutable catalogs, mutable campaign state, generators, services, presenters and shared dependencies.
+2. Load foundational character-name, playable-class, playable-skill header, enemy-skill header, enemy and item definitions.
+3. Load and validate the shared ordered skill effects against both header catalogs, then load enemy-skillset links after the enemy and enemy-skill catalogs are available.
+4. Load equipment, recovery-item, skill-scroll, enemy-drop and encounter definitions against their required foundational catalogs.
+5. Load common scenario, transport, INN, shop, crafting, exploration-reward, dungeon, branch and adjacent-route definitions.
+6. Load complete quest definitions from quest headers, sequential steps and ordered objectives.
+7. Load permanent-flag definitions and reusable requirement sets.
+8. Validate requirement references and quest-availability dependencies after quest, item and flag catalogs are available.
+9. Load ordered quest rewards and permanent quest effects after their item and route references are available.
+10. Load narrative locations, NPC identities, fixed NPC placements and linear dialogues.
+11. Load quest-dialogue associations and perform cross-catalog narrative validation, including speakers, starting NPCs, interaction objectives and dialogue contexts.
+12. Create runtime item, scenario, shop and other catalog-backed objects.
+13. Create an empty party, world, quest, flag and candidate state for New Game, or reconstruct their complete coordinated state from a valid version-3 campaign snapshot.
+14. Activate the selected campaign only after `CampaignSnapshotRestorer` has reconstructed and cross-validated its isolated `RestoredCampaign`.
+15. Construct the shared quest-progress, class-path, candidate-introduction and recruitment services.
+16. Construct `World` with the required immutable catalogs, mutable campaign state, generators, services, presenters and shared dependencies.
 
 Each loader builds a complete candidate result before returning its catalog. Cross-catalog validators run only after all definitions required by that validation are available.
 
@@ -346,7 +347,9 @@ EnemyDefinition + target level
             Enemy
 ```
 
-The calculator owns enemy growth and rank stat multipliers. It validates specialization conflicts in one place and uses exact arithmetic so invalid high-level content fails during initialization or runtime creation instead of wrapping.
+`EnemyDefinition.calculateNaturalStats(level)` exposes the same centralized calculation to runtime creation and minimum-level resource validation. `BattleCoordinator` combines the selected definition and level with the eligible links from `EnemySkillsetCatalog`, applies the `EnemyRank` loadout ceiling and passes the selected immutable enemy skill definitions into the new runtime `Enemy`.
+
+Each runtime `Enemy` therefore owns its mutable battle resources and effects while retaining immutable references to its canonical species data and selected skill definitions. Enemy skills are not copied into mutable per-instance definitions.
 
 ## Encounter data flow
 
@@ -529,7 +532,7 @@ The battle system is divided into the following responsibilities:
 - `Battle`
   - Coordinates the battle lifecycle, character actions, target-selection requests and results; delegates battle screens and menu input to `rpg.ui`.
 - `BattleCoordinator`
-  - Receives one or more `EnemySpawn` values, creates runtime enemies at their selected levels, receives the normal, boss or epic battle type, starts battles and grants victory rewards.
+  - Receives one or more `EnemySpawn` values, resolves drops and level-eligible enemy skills, selects each per-instance loadout within its rank ceiling, creates runtime enemies, starts normal, boss or epic battles and grants victory rewards.
 - `BattleType`
   - Identifies a normal, boss or epic battle for contextual presentation.
 - `BattleScreen`
@@ -537,11 +540,11 @@ The battle system is divided into the following responsibilities:
 - `CombatEffectFormatter`
   - Formats compact panel effects, tactical effect counts and the two-line attribute-stage overview.
 - `SkillExecutor`
-  - Evaluates component conditions and applicability, performs trigger and resistance tests and delegates each applied operation to its single domain owner.
+  - Executes any `CombatSkillDefinition`, evaluates component conditions and applicability, performs trigger and resistance tests and delegates each applied operation to its single domain owner.
 - `SkillUseState`
   - Preserves the mutable state and accumulated results of one skill use, including deferred `POST_ACTION` components and their reserved random targets.
 - `SkillExecutionContext`
-  - Stores the user, explicitly selected targets and a snapshot of equipped weapon base damage.
+  - Stores any acting `GameCharacter`, explicitly resolved targets and a weapon-base-damage snapshot. Playable execution supplies equipped weapon power; enemy execution supplies zero.
 - `SkillEffectResult` and `SkillEffectOutcome`
   - Report `APPLIED`, `RESISTED` or `NOT_TRIGGERED` without requiring the interface to infer what happened.
 - `DamageCalculator`
@@ -552,6 +555,8 @@ The battle system is divided into the following responsibilities:
   - Centralizes the LCK-against-RES resistance formula and its balance factor.
 - `EnemyBattleGroup`
   - Stores one to three enemy slots.
+- `Enemy`
+  - Retains the immutable per-instance enemy skill loadout selected during battle construction and exposes current MP and SP through the shared character resource contract.
 - `EnemyBattleSlot`
   - Associates one runtime enemy with a unique battle display name.
 - `BattleSide`
@@ -660,14 +665,33 @@ A revived ally does not exist in the current queue snapshot and therefore acts o
 
 ## Skill architecture
 
-Skill content is split between two external files and two immutable definition types:
+Skill content uses one shared component format with separate playable and enemy headers:
 
-- `skills.txt` defines the skill identity, class, acquisition type, level requirement, resource costs, name and description.
-- `skill_effects.txt` defines ordered components, execution phase, effect type, target type and effect-specific data.
-- `SkillDefinition` combines one header with its validated ordered components.
-- `SkillEffectDefinition` validates the fields permitted and required by each component type.
+- `skills.txt` defines playable skill identity, class, acquisition type, level requirement, resource costs, name and description.
+- `enemy_skills.txt` defines reusable enemy skill identity, resource costs and name.
+- `skill_effects.txt` defines ordered components, execution phase, effect type, target type and effect-specific data for both header catalogs.
+- `enemy_skillsets.txt` links enemy species to reusable enemy skills and minimum enemy levels.
 
-`SkillLoader` reads both files, validates cross-references and component ordering and registers complete definitions in `SkillCatalog`.
+`CombatSkillDefinition` is the minimal shared execution contract. `SkillDefinition` adds playable progression and presentation data; `EnemySkillDefinition` contains only enemy-combat header data and ordered effects. Neither definition type depends on the other side's ownership rules.
+
+`SkillLoader` loads both header types, enforces globally unique skill IDs, validates shared effect references and component ordering and registers complete immutable definitions in `SkillCatalog` and `EnemySkillCatalog`.
+
+`EnemySkillsetLoader` validates enemy and skill references, duplicate links, positive minimum levels, complete enemy-skill coverage and resource capacity at each link's minimum level before returning `EnemySkillsetCatalog`.
+
+```text
+skills.txt -----------\
+                       \
+enemy_skills.txt ------> SkillLoader
+                       /      |
+skill_effects.txt -----/       +--> SkillCatalog
+                              +--> EnemySkillCatalog
+
+enemies.txt -------------------\
+EnemySkillCatalog --------------> EnemySkillsetLoader
+enemy_skillsets.txt ------------/          |
+                                           v
+                                EnemySkillsetCatalog
+```
 
 `SkillAcquisitionType` distinguishes:
 
@@ -717,6 +741,10 @@ finishConsumedTurn
 execute deferred POST_ACTION components
 ```
 
+The executor operates on `CombatSkillDefinition` and `GameCharacter`, allowing both battle sides to reuse the same ordered execution state. Playable learning, class ownership, scroll replacement, status details and six-slot presentation remain typed to `SkillDefinition` and were not generalized.
+
+Enemy execution resolves target meanings relative to the acting side and supplies zero weapon base damage. Resource spending belongs to `GameCharacter`, so both playable characters and enemies use the same validated MP/SP mutation without moving playable progression behavior into the base class.
+
 For each component, `SkillExecutor` evaluates:
 
 ```text
@@ -735,6 +763,8 @@ Damage, recovery, attribute-stage mutation and resource changes remain owned by 
 A `PRE_ACTION` damage-power modifier accumulates for later compatible damage against the same target during this skill use. A `PRIMARY` modifier applies only to the immediately following `PRIMARY` damage component with the same `SINGLE_ENEMY` or `RANDOM_ENEMY` target type. A paired random modifier and damage component share one target selection. Multiple applicable modifiers add their percentages with overflow protection; modifier state never leaks into another skill use.
 
 Player basic attacks read the equipped weapon's damage type, normal-attack name and base weapon damage. Without a weapon, they fall back to physical damage and zero weapon power. Offensive skill components always add 100% of the equipped weapon's base damage. Physical damage targets DEF and uses ATK by default; magical damage targets RES and uses MAG by default. A damage component may specify a different offensive attribute without changing its damage type. `DamageType` therefore belongs to `rpg.battle`, where both attacks and skills consume it.
+
+Enemy basic attacks remain physical with zero weapon power and therefore use effective ATK against effective DEF. Enemy damaging skills also receive zero weapon power, but their components select physical or magical damage and contribute their own power. `Battle` chooses uniformly between the free basic attack and currently affordable installed enemy skills, then delegates valid skill execution to the same executor. An ineffective selected skill falls back to the basic attack without spending resources or consuming an extra turn.
 
 ## Equipment architecture
 

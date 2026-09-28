@@ -80,6 +80,11 @@ Scenario           = cenário de execução usado por World
 SkillDefinition = conteúdo imutável e reutilizável da habilidade
 SkillUseState  = estado temporário de uma única utilização
 
+CombatSkillDefinition = contrato mínimo compartilhado de execução
+SkillDefinition       = habilidade pertencente ao sistema jogável
+EnemySkillDefinition  = habilidade reutilizável de inimigos
+EnemySkillsetEntry     = vínculo entre espécie, habilidade e nível mínimo
+
 SkillScrollDefinition = vínculo imutável entre item, habilidade e classe
 SkillScroll           = item especializado criado para o inventário
 ```
@@ -121,10 +126,10 @@ BattleCoordinator
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
 | `CharacterStats` | Dados imutáveis validados | Agrupa HP, MP, SP, ataque, defesa, magia, resistência, velocidade e sorte. Exige HP máximo e todos os atributos regulares positivos; MP e SP máximos podem ser zero. É usado na criação de `PlayableCharacter`, `Enemy` e `EnemyDefinition`. |
-| `GameCharacter` | Classe-base de execução | Guarda os atributos naturais, HP, MP e SP atuais e o estado temporário de combate compartilhado por aliados e inimigos. Os getters públicos combinam valores naturais, bônus estruturais fornecidos pela subclasse e efeitos temporários. Também expõe uma cópia imutável apenas dos atributos naturais. O cálculo de ataques pertence a `DamageCalculator`. |
+| `GameCharacter` | Classe-base de execução | Guarda os atributos naturais, HP, MP e SP atuais e o estado temporário de combate compartilhado por aliados e inimigos. Os getters públicos combinam valores naturais, bônus estruturais fornecidos pela subclasse e efeitos temporários. Centraliza restauração e gasto validado de MP/SP para ambos os lados da batalha. Também expõe uma cópia imutável apenas dos atributos naturais. O cálculo de ataques pertence a `DamageCalculator`. |
+| `Enemy` | Inimigo de execução | Estende `GameCharacter` e representa uma ocorrência mutável de um inimigo dentro de uma batalha. Retém o ID canônico de `EnemyDefinition`, nível positivo oculto, rank, descrição, tabela de drops e lista imutável das `EnemySkillDefinition` selecionadas para aquela instância. Vários objetos `Enemy` podem nascer da mesma definição e nível sem compartilhar HP, recursos, efeitos ou loadout. |
+| `EnemyRank` | Enum de domínio | Define os ranks válidos dos inimigos e centraliza seus multiplicadores de recompensa, HP e poder ofensivo, além do teto de skills instaladas em uma instância. `LEGENDARY` permanece reconhecido, mas sem multiplicadores de atributos ou teto de skills configurados. É usado por loaders, definições, crescimento, seleção de loadout, recompensas e validações de dungeon. |
 | `CharacterEquipment` | Estado de equipamentos | Guarda as definições da arma, armadura e berloque equipados por um personagem. Expõe slots opcionais, soma bônus estruturais e fornece os modificadores de recompensa do berloque. A mutação direta é restrita ao pacote de personagens. |
-| `Enemy` | Inimigo de execução | Estende `GameCharacter` e representa uma ocorrência mutável de um inimigo dentro de uma batalha. Retém o ID canônico de `EnemyDefinition`, nível positivo oculto, rank, descrição e tabela de drops, e é colocado em `EnemyBattleSlot`. Vários objetos `Enemy` podem nascer da mesma definição e nível sem compartilhar HP. |
-| `EnemyRank` | Enum de domínio | Define os ranks válidos dos inimigos e centraliza seus multiplicadores de recompensa, HP e poder ofensivo. `LEGENDARY` permanece reconhecido, mas sem multiplicadores de atributos configurados. É usado por loaders, definições, crescimento, recompensas e validações de dungeon. |
 | `PlayableCharacter` | Personagem jogável | Estende `GameCharacter` com nome normalizado validado, nível, EXP, definição mutável de classe, equipamentos, definições de habilidade e IDs das habilidades efetivamente aprendidas. Aprende automaticamente habilidades `LEVEL`, permite aprender ou substituir habilidades `SCROLL`, preserva sua ordem e limita pergaminhos a duas vagas. Expõe seis posições opcionais de habilidade: quatro naturais e duas de pergaminho, sem revelar habilidades futuras. Ao ganhar níveis, recalcula os atributos naturais por meio de `CharacterGrowthCalculator`. Sua transição controlada de classe exige equipamentos vazios, preserva nível, EXP e habilidades de pergaminho, substitui a classe e o repertório natural, recalcula os atributos e restaura completamente os recursos. |
 | `Party` | Estado compartilhado do grupo | Armazena de um a quatro `PlayableCharacter`, inventário, ouro e modificadores temporários compartilhados. Rejeita integrantes repetidos e nomes equivalentes sem diferenciar maiúsculas e minúsculas; o primeiro integrante é o líder. Também soma os bônus de GOLD dos berloques equipados e centraliza, por meio de `fullyRestoreMembers()`, a ressurreição e a restauração completa de HP, MP e SP de todos os integrantes. `canAddMember()` expõe a mesma validação sem mutação para planos transacionais, enquanto `addMember()` reutiliza essa validação antes da inserção. |
 | `CharacterNameRules` | Regras de domínio | Centraliza normalização NFC, limite de 16 pontos de código Unicode, caracteres permitidos, validação e comparação sem diferenciação de maiúsculas e minúsculas para nomes de personagens jogáveis. |
@@ -203,8 +208,8 @@ BattleCoordinator
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
 | `EnemyLoader` | Carregamento de dados | Lê `enemies.txt`, ignora comentários e linhas vazias, converte atributos-base, especializações opcionais e rank, interpreta quebras literais `\n` e cria `EnemyDefinition`. Registra cada definição em `EnemyCatalog` e acrescenta linha e ID ao erro quando os dados são inválidos. |
-| `EnemyDefinition` | Definição imutável | Armazena ID, nome, atributos naturais de nível 1, atributos primário, secundário e de fraqueza opcionais, rank e descrição de uma espécie. Ao receber um nível positivo, usa `EnemyGrowthCalculator` para criar um `Enemy` mutável com seus atributos naturais completos. |
-| `EnemyGrowthCalculator` | Calculador de domínio | Valida conflitos entre especializações e calcula atributos naturais completos a partir da definição, do rank e do nível-alvo. Centraliza crescimento, fraqueza, multiplicadores de HP/ATK/MAG, arredondamento e proteção contra overflow. |
+| `EnemyDefinition` | Definição imutável | Armazena ID, nome, atributos naturais de nível 1, atributos primário, secundário e de fraqueza opcionais, rank e descrição de uma espécie. `calculateNaturalStats(level)` delega o cálculo completo ao `EnemyGrowthCalculator`; `createEnemy` combina esses atributos com nível, loadout imutável e drops selecionados para produzir um `Enemy` mutável. |
+| `EnemyGrowthCalculator` | Calculador de domínio | Valida conflitos entre especializações e calcula atributos naturais completos a partir da definição, do rank e do nível-alvo. Centraliza crescimento de HP, MP, SP e atributos regulares, fraqueza, multiplicadores de HP/ATK/MAG, arredondamento e proteção contra overflow. MP e SP crescem cinco pontos por nível sem bônus de rank ou especialização. |
 | `EnemyCatalog` | Catálogo | Registra `EnemyDefinition` por ID estável, rejeita IDs duplicados e permite recuperar a definição de um inimigo. É usado por loaders que validam referências, por `EncounterGenerator`, por dungeons e por `BattleCoordinator`. |
 | `EnemyDropLoader` | Carregamento de dados | Lê `enemy_drops.txt`, valida os IDs de inimigos usando `EnemyCatalog`, resolve os itens completos no `ItemCatalog` recebido, cria `DropEntry` e registra as entradas em `EnemyDropCatalog`. |
 | `EnemyDropCatalog` | Catálogo de relações | Associa cada ID de inimigo à sua lista imutável de `DropEntry`. É consultado pelo `BattleCoordinator` quando cria os inimigos de execução que participarão da batalha. |
@@ -216,7 +221,8 @@ EnemyLoader           -> lê o arquivo
 EnemyDefinition       -> guarda o modelo reutilizável
 EnemyCatalog          -> localiza o modelo por ID
 EnemyGrowthCalculator -> calcula atributos no nível escolhido
-Enemy                 -> luta e perde HP durante uma batalha
+BattleCoordinator     -> combina nível, skills e drops
+Enemy                 -> luta, gasta recursos e perde HP
 ```
 
 ---
@@ -379,14 +385,20 @@ Identidade, posicionamento e fala são conceitos separados. Um NPC pode existir 
 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
-| `SkillDefinition` | Definição imutável | Combina identidade, classe, tipo de aquisição, requisito de nível, custos, nome, descrição e lista ordenada de componentes. Pode ser referenciada diretamente pelo personagem porque o estado mutável de cada uso fica em `SkillUseState`. |
-| `SkillEffectDefinition` | Definição imutável de componente | Representa um componente de dano, recuperação, estágio, purificação, dissipação, modificador ou estado especial. Valida quais campos são obrigatórios, opcionais ou proibidos para cada tipo. |
-| `SkillLoader` | Carregamento de dados | Lê `skills.txt` e `skill_effects.txt`, interpreta `LEVEL` e `SCROLL`, valida requisitos de nível, IDs de classe, cabeçalhos, componentes, sequência, fases e referências cruzadas e registra habilidades completas. |
-| `SkillCatalog` | Catálogo | Registra `SkillDefinition` por ID estável e oferece as definições carregadas aos personagens e sistemas consumidores. |
-| `SkillAcquisitionType` | Enum de aquisição | Distingue habilidades aprendidas automaticamente por nível (`LEVEL`) e habilidades ensinadas exclusivamente por pergaminho (`SCROLL`). |
+| `CombatSkillDefinition` | Interface de domínio | Expõe somente ID, custos, nome, componentes ordenados e consulta por fase necessários à execução em batalha. É implementada por `SkillDefinition` e `EnemySkillDefinition`; não contém regras de aprendizagem, classe ou slots. |
+| `SkillDefinition` | Definição jogável imutável | Implementa `CombatSkillDefinition` e acrescenta classe jogável, tipo de aquisição, requisito de nível e descrição. Continua sendo o único tipo aceito por progressão, pergaminhos, status e slots de personagens jogáveis. |
+| `EnemySkillDefinition` | Definição inimiga imutável | Implementa `CombatSkillDefinition` com ID, custos, nome e componentes ordenados. Não possui classe, aquisição, requisito próprio de nível, descrição ou propriedade por personagem jogável. Rejeita combinações explicitamente proibidas para inimigos, como `REVIVE`. |
+| `SkillEffectDefinition` | Definição imutável de componente | Representa um componente de dano, recuperação, estágio, purificação, dissipação, modificador ou estado especial. Valida quais campos são obrigatórios, opcionais ou proibidos para cada tipo, independentemente do lado que executará a skill. |
+| `SkillLoader` | Carregamento compartilhado | Lê `skills.txt`, `enemy_skills.txt` e `skill_effects.txt`; valida cabeçalhos, IDs globalmente únicos, classes jogáveis, aquisição, componentes, sequência, fases e referências cruzadas; registra definições completas em `SkillCatalog` e `EnemySkillCatalog`. |
+| `SkillCatalog` | Catálogo jogável | Registra `SkillDefinition` por ID estável e oferece exclusivamente as definições jogáveis aos personagens, pergaminhos e sistemas de apresentação. |
+| `EnemySkillCatalog` | Catálogo inimigo | Registra `EnemySkillDefinition` por ID estável, rejeita duplicatas e oferece as definições inimigas ao carregamento dos vínculos e à criação de loadouts. |
+| `EnemySkillsetEntry` | Relação imutável | Associa um ID de espécie a uma `EnemySkillDefinition` e a um nível mínimo positivo. Não representa uma skill instalada nem contém estado de batalha. |
+| `EnemySkillsetLoader` | Carregamento de relações | Lê `enemy_skillsets.txt`, resolve inimigos e skills nos catálogos, rejeita vínculos duplicados e referências inválidas, exige cobertura para toda skill inimiga e valida MP/SP naturais no nível mínimo antes de registrar cada entrada. |
+| `EnemySkillsetCatalog` | Catálogo de relações | Agrupa `EnemySkillsetEntry` por ID de inimigo e devolve as skills elegíveis para um nível. É consultado por `BattleCoordinator` antes da criação de cada `Enemy`. |
+| `SkillAcquisitionType` | Enum de aquisição | Distingue habilidades aprendidas automaticamente por nível (`LEVEL`) e habilidades ensinadas exclusivamente por pergaminho (`SCROLL`). Aplica-se apenas a `SkillDefinition`. |
 | `SkillLearningResult` | Enum de resultado | Representa aprendizagem, substituição e rejeições por duplicidade, classe incompatível, nível insuficiente ou limite de pergaminhos. Permite que domínio, serviço e interface compartilhem o mesmo resultado sem depender de mensagens. |
 | `SkillEffectType` | Enum de domínio | Define os tipos fechados de componente reconhecidos pelo executor. |
-| `SkillTargetType` | Enum de alvo | Define alvos como usuário, aliado, inimigo, grupos completos ou alvos aleatórios. Orienta a seleção feita uma única vez para a execução. |
+| `SkillTargetType` | Enum de alvo | Define usuário, aliado, inimigo, grupos completos ou alvos aleatórios. Seu significado é relativo ao lado do usuário da skill. |
 | `SkillExecutionPhase` | Enum de fase | Ordena componentes em `PRE_ACTION`, `PRIMARY` e `POST_ACTION`. |
 | `SkillConditionType` | Enum de condição | Define condições opcionais avaliadas antes da aplicabilidade e dos testes probabilísticos. |
 
@@ -408,7 +420,7 @@ Identidade, posicionamento e fala são conceitos separados. Um NPC pode existir 
 | Classe | Categoria | Finalidade e relações principais |
 |---|---|---|
 | `Battle` | Controlador da batalha | Executa o ciclo completo de combate: rodadas, turnos, ações de aliados, ações inimigas, alvos, habilidades, itens, análise, defesa e fuga. Recebe `Party` e `EnemyBattleGroup`, usa menus e serviços auxiliares e devolve `BattleResult`. |
-| `BattleCoordinator` | Coordenador | Faz a ponte entre mundo e batalha. Recebe um ou mais `EnemySpawn`, cria inimigos independentes nos níveis selecionados e com seus drops, monta `EnemyBattleGroup`, inicia `Battle` e, em caso de vitória, usa `BattleRewardService` e `BattleRewardScreen`. Devolve o resultado para `World`. |
+| `BattleCoordinator` | Coordenador | Faz a ponte entre mundo e batalha. Recebe um ou mais `EnemySpawn`, resolve os drops e vínculos de skill, filtra skills pelo nível, seleciona cada loadout sem repetição dentro do teto do rank, cria inimigos independentes e monta `EnemyBattleGroup`. Depois inicia `Battle` e, em caso de vitória, usa `BattleRewardService` e `BattleRewardScreen`. |
 | `BattleResult` | Enum de resultado | Representa as três conclusões possíveis da batalha: vitória, derrota ou fuga. É retornado por `Battle` e interpretado por `BattleCoordinator` e `World`. |
 | `BattleSide` | Enum de apoio | Identifica se uma entrada da ordem de turnos pertence ao grupo de aliados ou ao grupo inimigo. Evita depender apenas do tipo concreto do personagem ao processar a fila. |
 | `BattleTurnEntry` | Entrada de fila | Representa uma ação disponível para um participante dentro da ordem da rodada. Associa o combatente ao seu lado e aos dados necessários para identificar aquela ação na fila. |
@@ -423,9 +435,9 @@ Identidade, posicionamento e fala são conceitos separados. Um NPC pode existir 
 | `DamageType` | Enum de domínio | Distingue dano físico e mágico para ataques básicos e habilidades, selecionando ATK/DEF ou MAG/RES. Pertence a `rpg.battle` porque não é exclusivo de habilidades. |
 | `RecoveryCalculator` | Calculador de domínio | Calcula recuperação de HP e ressurreição a partir do poder e do ATK ou MAG efetivo indicado pelo componente. MP e SP permanecem fixos. |
 | `EffectResistanceCalculator` | Calculador de domínio | Calcula e sorteia a resistência baseada na LCK efetiva do aplicador e na RES efetiva do alvo. Mantém `KR` e o teto de chance em um único lugar. |
-| `SkillExecutor` | Executor de domínio | Orquestra condições, aplicabilidade, um trigger por componente, resistência individual e aplicação. Reutiliza calculadores e operações de `GameCharacter` sem repetir suas fórmulas. |
-| `SkillUseState` | Estado de uma utilização | Preserva os resultados, modificadores acumulados e componentes `POST_ACTION` de uma única utilização de habilidade. |
-| `SkillExecutionContext` | Contexto imutável | Agrupa o usuário, os alvos escolhidos manualmente e o poder-base da arma equipado no início da habilidade. Os alvos aleatórios são sorteados por componente. |
+| `SkillExecutor` | Executor de domínio | Executa qualquer `CombatSkillDefinition`, orquestra condições, aplicabilidade, um trigger por componente, resistência individual e aplicação. Reutiliza calculadores e operações de `GameCharacter` sem repetir suas fórmulas. |
+| `SkillUseState` | Estado de uma utilização | Preserva a `CombatSkillDefinition`, o contexto, os resultados, modificadores acumulados e componentes `POST_ACTION` de uma única utilização. Não pertence permanentemente ao personagem nem à definição. |
+| `SkillExecutionContext` | Contexto imutável | Agrupa qualquer usuário `GameCharacter`, os alvos resolvidos relativamente ao lado atuante e o poder-base da arma capturado no início da skill. Personagens jogáveis fornecem o DBA equipado; inimigos fornecem zero. Os alvos aleatórios são sorteados por componente. |
 | `SkillEffectResult` | Resultado imutável | Associa componente, alvo, desfecho e valor produzido para que `Battle` apenas apresente o resultado. |
 | `SkillEffectOutcome` | Enum de resultado | Distingue `APPLIED`, `RESISTED` e `NOT_TRIGGERED`. |
 
@@ -434,10 +446,11 @@ Identidade, posicionamento e fala são conceitos separados. Um NPC pode existir 
 ```text
 World
     -> BattleCoordinator
-    -> EnemyDefinition vira Enemy
+    -> EnemySpawn + skills elegíveis + drops
+    -> Enemy
     -> EnemyBattleGroup
     -> Battle
-    -> SkillExecutor, quando a ação é uma habilidade
+    -> ataque básico ou SkillExecutor
     -> BattleResult
     -> World
 ```
@@ -842,10 +855,12 @@ World                   = mudança efetiva para a cidade escolhida
 | Dados de uma classe jogável | `PlayableClassDefinition` | `playable_classes.txt` → `PlayableClassLoader` → `PlayableClassCatalog` |
 | Apresentação de uma classe | `PlayableClassDetailFormatter` | `PlayableClassDefinition` → símbolo, nome, armadura, especializações e descrição → criação/cerimônia/status |
 | Crescimento natural de um personagem | `CharacterGrowthCalculator` | definição de classe + nível → `CharacterStats` → `PlayableCharacter` |
-| Inimigo perdendo HP | `Enemy` | `EnemyDefinition` → `BattleCoordinator` → `Enemy` |
+| Inimigo em batalha | `Enemy` | `EnemyDefinition` + nível + loadout + drops → `BattleCoordinator` → `Enemy` |
 | Sorteio de inimigos | `EncounterGenerator` | `EncounterCatalog` → filtros/pesos → definições |
 | Execução da luta | `Battle` | ordem de turnos → ações → `BattleResult` |
-| Definição de uma habilidade | `SkillDefinition` | `skills.txt` + `skill_effects.txt` → `SkillLoader` → `SkillCatalog` |
+| Definição de uma habilidade jogável | `SkillDefinition` | `skills.txt` + `skill_effects.txt` → `SkillLoader` → `SkillCatalog` |
+| Definição de uma habilidade inimiga | `EnemySkillDefinition` | `enemy_skills.txt` + `skill_effects.txt` → `SkillLoader` → `EnemySkillCatalog` |
+| Skills disponíveis para uma espécie | `EnemySkillsetCatalog` | inimigo + nível → vínculos elegíveis → teto de `EnemyRank` → loadout da instância |
 | Especialização de um pergaminho | `SkillScrollDefinition` | item + habilidade + classe → `SkillScrollLoader` → `SkillScrollDefinitionCatalog` |
 | Aprender por pergaminho | `SkillScrollService` | inventário → `SkillScrollUseMenu` → `PlayableCharacter` → consumo condicional |
 | Uma utilização de habilidade | `SkillUseState` | `Battle` → contexto e alvos → `SkillExecutor` → resultados → `Battle` |

@@ -62,13 +62,13 @@ import rpg.persistence.CampaignLoadService;
 import rpg.persistence.CampaignSaveService;
 import rpg.persistence.CampaignSnapshotRestorer;
 import rpg.persistence.RestoredCampaign;
-import rpg.quests.effects.QuestTransportState;
 import rpg.quests.QuestCatalog;
 import rpg.quests.QuestLoader;
 import rpg.quests.QuestProgress;
 import rpg.quests.QuestProgressService;
 import rpg.quests.effects.QuestEffectCatalog;
 import rpg.quests.effects.QuestEffectLoader;
+import rpg.quests.effects.QuestTransportState;
 import rpg.quests.rewards.QuestRewardCatalog;
 import rpg.quests.rewards.QuestRewardLoader;
 import rpg.recruitment.AllyClassSelector;
@@ -83,6 +83,9 @@ import rpg.requirements.QuestAvailabilityValidator;
 import rpg.requirements.RequirementCatalog;
 import rpg.requirements.RequirementEvaluator;
 import rpg.requirements.RequirementLoader;
+import rpg.skills.EnemySkillCatalog;
+import rpg.skills.EnemySkillsetCatalog;
+import rpg.skills.EnemySkillsetLoader;
 import rpg.skills.SkillCatalog;
 import rpg.skills.SkillLoader;
 import rpg.ui.AllyRecruitmentMenu;
@@ -114,12 +117,12 @@ import rpg.world.inns.InnLoader;
 import rpg.world.rewards.ExplorationRewardCatalog;
 import rpg.world.rewards.ExplorationRewardLoader;
 import rpg.world.scenarios.CombatScenarioDefinitionCatalog;
+import rpg.world.scenarios.CombatScenarioDialogueCatalog;
+import rpg.world.scenarios.CombatScenarioDialogueLoader;
 import rpg.world.scenarios.CombatScenarioLoader;
 import rpg.world.scenarios.DungeonBossAccessResolver;
 import rpg.world.scenarios.DungeonBossGateCatalog;
 import rpg.world.scenarios.DungeonBossGateLoader;
-import rpg.world.scenarios.CombatScenarioDialogueCatalog;
-import rpg.world.scenarios.CombatScenarioDialogueLoader;
 import rpg.world.scenarios.DungeonDefinitionCatalog;
 import rpg.world.scenarios.DungeonLoader;
 import rpg.world.scenarios.DungeonProgress;
@@ -154,7 +157,9 @@ public class Main {
 			PlayableClassCatalog playableClassCatalog;
 			ClassPathCatalog classPathCatalog;
 			SkillCatalog skillCatalog;
+			EnemySkillCatalog enemySkillCatalog;
 			ClassPathQuestionnaireCatalog classPathQuestionnaireCatalog;
+			EnemySkillsetCatalog enemySkillsetCatalog;
 
 			ItemCatalog itemCatalog;
 			ItemDefinitionCatalog itemDefinitionCatalog;
@@ -221,16 +226,28 @@ public class Main {
 				ClassPathRequiredClassValidator.validate(playableClassCatalog);
 
 				SkillLoader skillLoader = new SkillLoader();
-				skillCatalog =
+
+				SkillLoader.LoadedCatalogs loadedSkillCatalogs =
 						skillLoader.load(
 								Path.of("data", "skills.txt"),
+								Path.of("data", "enemy_skills.txt"),
 								Path.of("data", "skill_effects.txt"),
 								playableClassCatalog);
+
+				skillCatalog = loadedSkillCatalogs.playableSkills();
+				enemySkillCatalog = loadedSkillCatalogs.enemySkills();
 
 				// Enemy definitions
 				EnemyLoader enemyLoader = new EnemyLoader();
 				enemyCatalog =
 						enemyLoader.load(Path.of("data", "enemies.txt"));
+
+				EnemySkillsetLoader enemySkillsetLoader = new EnemySkillsetLoader();
+				enemySkillsetCatalog =
+						enemySkillsetLoader.load(
+								Path.of("data", "enemy_skillsets.txt"),
+								enemyCatalog,
+								enemySkillCatalog);
 
 				// Item definitions and specialized item types
 				ItemLoader itemLoader = new ItemLoader();
@@ -765,6 +782,7 @@ public class Main {
 					campaignSaveService,
 					enemyCatalog,
 					enemyDropCatalog,
+					enemySkillsetCatalog,
 					encounterCatalog,
 					explorationRewardCatalog,
 					scenarioCatalog,

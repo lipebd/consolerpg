@@ -1,7 +1,10 @@
 package rpg.characters;
 
 import java.util.List;
+import java.util.Objects;
+
 import rpg.items.DropEntry;
+import rpg.skills.EnemySkillDefinition;
 
 // Represents an enemy controlled by the game.
 public class Enemy extends GameCharacter {
@@ -11,6 +14,7 @@ public class Enemy extends GameCharacter {
 	private final List<DropEntry> dropTable;
 	private String description;
 	private final EnemyRank rank;
+	private final List<EnemySkillDefinition> skillDefinitions;
 
 	public Enemy(
 			String id,
@@ -18,6 +22,7 @@ public class Enemy extends GameCharacter {
 			CharacterStats stats,
 			int level,
 			EnemyRank rank,
+			List<EnemySkillDefinition> skillDefinitions,
 			List<DropEntry> dropTable,
 			String description
 	) {
@@ -33,6 +38,11 @@ public class Enemy extends GameCharacter {
 
 		this.id = id.trim();
 		this.rank = rank;
+
+		this.skillDefinitions = List.copyOf(
+				Objects.requireNonNull(skillDefinitions, "Enemy skill definitions cannot be null.")
+		);
+
 		this.dropTable = dropTable;
 		this.description = description;
 	}
@@ -55,5 +65,9 @@ public class Enemy extends GameCharacter {
 
 	public List<DropEntry> getDropTable() {
 		return dropTable;
+	}
+
+	public List<EnemySkillDefinition> getSkillDefinitions() {
+		return skillDefinitions;
 	}
 }

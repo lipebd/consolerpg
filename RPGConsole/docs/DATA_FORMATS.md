@@ -195,7 +195,7 @@ Each valid enemy line contains exactly 16 fields:
 | 2 | Name | `String` | `Lobermo` |
 | 3 | Maximum HP | `int` | `50` |
 | 4 | Maximum MP | `int` | `1` |
-| 5 | Maximum SP | `int` | `1` |
+| 5 | Maximum SP | `int` | `20` |
 | 6 | Attack | `int` | `9` |
 | 7 | Defense | `int` | `6` |
 | 8 | Magic | `int` | `5` |
@@ -217,7 +217,7 @@ Header:
 Example:
 
 ```text
-lobermo;Lobermo;50;1;1;9;6;5;6;8;4;ATK;;;COMMON;Uma criatura lupina que percorre os Verdes Ermos em busca de presas.
+lobermo;Lobermo;50;1;20;9;6;5;6;8;4;ATK;;;COMMON;Uma criatura lupina que percorre os Verdes Ermos em busca de presas.
 ```
 
 Supported enemy ranks:
@@ -245,6 +245,8 @@ Rules:
 - Maximum MP and SP cannot be negative.
 - ATK, DEF, MAG, RES, VEL and LCK must be positive.
 - Numeric attributes represent the species' natural level-1 values before rank multipliers.
+- Maximum MP and SP also represent level-1 natural values. Each resource gains 5 points per acquired enemy level.
+- MP and SP growth is independent from enemy rank and primary, secondary or weakness attributes.
 - Primary, secondary and weakness attributes are independently optional. An absent value uses an empty field.
 - Every non-empty specialization field must be a valid `CharacterAttribute`.
 - Primary, secondary and weakness attributes must be pairwise distinct when present.
@@ -253,7 +255,7 @@ Rules:
 
 `EnemyLoader` ignores blank lines and comments, requires exactly 16 fields, converts numeric values, optional attributes and `EnemyRank`, creates the level-1 `CharacterStats`, and registers an `EnemyDefinition`.
 
-Enemy definitions contain reusable immutable species data. Each battle combines one definition with a positive runtime level, calculates its natural stats and creates a separate mutable `Enemy` instance. `LEGENDARY` remains a recognized reserved rank, but its stat multipliers are not configured and stat calculation rejects it.
+Enemy definitions contain reusable immutable species data. Each battle combines one definition with a positive runtime level, calculates its natural stats, including level-scaled MP and SP, and creates a separate mutable `Enemy` instance. `LEGENDARY` remains a recognized reserved rank, but its stat multipliers are not configured and stat calculation rejects it.
 
 ## Encounter definitions
 
@@ -1401,11 +1403,132 @@ skills.txt + skill_effects.txt
 
 `SkillLoader` creates every canonical `SkillDefinition` regardless of acquisition type. Automatic learning belongs to `PlayableCharacter`; `SCROLL` linkage and specialization completeness belong to `SkillScrollLoader`.
 
+## Enemy-skill definitions
+
+Reusable enemy skill headers are loaded from:
+
+`data/enemy_skills.txt`
+
+Header:
+
+```text
+# id;mpCost;spCost;name
+```
+
+Each valid line contains exactly 4 fields:
+
+| Position | Field | Java type | Example |
+|---:|---|---|---|
+| 1 | Skill ID | `String` | `mordida_selvagem` |
+| 2 | MP cost | `int` | `0` |
+| 3 | SP cost | `int` | `10` |
+| 4 | Name | `String` | `Mordida Selvagem` |
+
+Example:
+
+```text
+mordida_selvagem;0;10;Mordida Selvagem
+```
+
+Rules:
+
+- IDs must use stable lowercase identifiers.
+- Enemy and playable skill IDs share one global namespace and cannot collide.
+- MP and SP costs cannot be negative.
+- Names cannot be empty.
+- Every enemy skill must receive at least one ordered component from `skill_effects.txt`.
+- Enemy skills do not define playable class, acquisition type, level requirement, description or playable skill-slot ownership.
+- Every declared enemy skill must be linked to at least one enemy through `enemy_skillsets.txt`.
+- `REVIVE` is not supported for enemy skills.
+
+`SkillDefinition` and `EnemySkillDefinition` implement the shared `CombatSkillDefinition` execution contract. Playable progression, scroll learning and skill-slot rules continue to accept only playable `SkillDefinition` objects.
+
+Loading flow:
+
+```text
+skills.txt + enemy_skills.txt + skill_effects.txt
+    -> SkillLoader
+    -> SkillDefinition / EnemySkillDefinition
+    -> ordered SkillEffectDefinition components
+    -> SkillCatalog / EnemySkillCatalog
+```
+
+## Enemy-skillset definitions
+
+Enemy species are linked to reusable enemy skills through:
+
+`data/enemy_skillsets.txt`
+
+Header:
+
+```text
+# enemyId;skillId;minimumLevel
+```
+
+Each valid line contains exactly 3 fields:
+
+| Position | Field | Java type | Example |
+|---:|---|---|---|
+| 1 | Enemy ID | `String` | `lobermo` |
+| 2 | Enemy-skill ID | `String` | `mordida_selvagem` |
+| 3 | Minimum enemy level | `int` | `1` |
+
+Example:
+
+```text
+lobermo;mordida_selvagem;1
+```
+
+Rules:
+
+- `enemyId` must reference an existing `EnemyDefinition`.
+- `skillId` must reference an existing `EnemySkillDefinition`.
+- `minimumLevel` must be positive.
+- An enemy-skill pair cannot be duplicated.
+- One skill may be linked to multiple species.
+- One species may receive multiple linked skills.
+- Every enemy skill header must be referenced by at least one link.
+- The linked species must have enough natural MP and SP to pay the skill cost at `minimumLevel`.
+- Resource-capacity validation uses `EnemyDefinition.calculateNaturalStats(minimumLevel)`, preserving the same MP/SP growth used for runtime instances.
+- A link becomes eligible when the spawned enemy's level is greater than or equal to its `minimumLevel`.
+- `EnemyRank` limits the number of enemy skills installed in one runtime instance. Eligible skills are selected without repetition; the basic attack remains separate from this limit.
+- `LEGENDARY` remains reserved and has no approved runtime skill ceiling.
+
+Runtime ceilings:
+
+| Enemy rank | Maximum installed enemy skills |
+|---|---:|
+| `COMMON` | 2 |
+| `VETERAN` | 3 |
+| `LEADER` | 4 |
+| `BOSS` | 5 |
+| `EPIC` | 6 |
+
+Loading flow:
+
+```text
+enemies.txt
+    -> EnemyLoader
+    -> EnemyCatalog
+
+enemy_skills.txt + skill_effects.txt
+    -> SkillLoader
+    -> EnemySkillCatalog
+
+enemy_skillsets.txt + EnemyCatalog + EnemySkillCatalog
+    -> EnemySkillsetLoader
+    -> EnemySkillsetCatalog
+```
+
+`BattleCoordinator` filters links by enemy level, selects the per-instance loadout within the rank ceiling and passes the immutable definitions to the new runtime `Enemy`.
+
 ## Skill-effect definitions
 
 Ordered skill components are loaded from:
 
 `data/skill_effects.txt`
+
+The same file serves playable and enemy skills. Every component ID must resolve globally to exactly one header from `skills.txt` or `enemy_skills.txt`.
 
 Header:
 
@@ -1465,6 +1588,8 @@ Target types:
 - `ALL_ENEMIES`
 - `RANDOM_ENEMY`
 
+Target types are interpreted relative to the acting side. For an enemy user, `SELF` is the acting enemy, ally targets refer to battle enemies and enemy targets refer to party members.
+
 Rules:
 
 - `DAMAGE` requires a damage type and positive power. Its optional `attribute` selects any effective offensive attribute; an empty value defaults to ATK for physical damage or MAG for magical damage. Damage type still selects the target's DEF or RES.
@@ -1489,6 +1614,10 @@ Rules:
 - Each `RANDOM_ENEMY` or `RANDOM_ALLY` component draws independently when it executes. Enemy targets must still be alive; `REVIVE;RANDOM_ALLY` draws from defeated allies, while other random-ally effects draw from living allies. Conditions are checked after selection and do not cause another draw. A paired `PRIMARY` modifier and damage component share one target.
 - `NONE` leaves `conditionValue` empty. HP conditions use an integer percentage from `1` to `100` with strict `<` or `>` comparison: `SELF_HP_LESS_THAN_PERCENT`, `SELF_HP_GREATER_THAN_PERCENT`, `TARGET_HP_LESS_THAN_PERCENT` and `TARGET_HP_GREATER_THAN_PERCENT`.
 - `SELF_GREATER` and `SELF_LOWER` compare the user's effective attribute with the target's same effective attribute. Their `conditionValue` is one of `ATK`, `DEF`, `MAG`, `RES`, `VEL` or `LCK`; the effect's `attribute` field remains available for its own purpose.
+- Every component must reference a known playable or enemy skill ID.
+- Playable and enemy skill headers cannot use the same ID.
+- Every header in either catalog must receive at least one component.
+- The first authored enemy-content pass uses only `DAMAGE`, `ATTRIBUTE_STAGE` and `HP_RECOVERY` with `SINGLE_ENEMY` or `SELF`. This is a content boundary, not a reduction of the shared effect vocabulary.
 
 Examples:
 
@@ -1505,11 +1634,11 @@ distorcao_ancestral;1;PRIMARY;SPECIAL_STATE;SINGLE_ENEMY;;;;;;;DISTORTED_ATTRIBU
 Loading flow:
 
 ```text
-skills.txt + skill_effects.txt
+skills.txt + enemy_skills.txt + skill_effects.txt
     -> SkillLoader
-    -> SkillDefinition
+    -> SkillDefinition / EnemySkillDefinition
     -> ordered SkillEffectDefinition components
-    -> SkillCatalog
+    -> SkillCatalog / EnemySkillCatalog
 ```
 
 ## Quest definitions

@@ -67,6 +67,7 @@ import rpg.recruitment.RecruitmentCandidateStateCatalog;
 import rpg.requirements.RequirementCatalog;
 import rpg.requirements.RequirementEvaluator;
 import rpg.requirements.RequirementSetDefinition;
+import rpg.skills.EnemySkillsetCatalog;
 import rpg.ui.AllyRecruitmentMenu;
 import rpg.ui.BattleRewardScreen;
 import rpg.ui.CityLocationMenu;
@@ -230,6 +231,7 @@ public class World {
 			CampaignSaveService campaignSaveService,
 			EnemyCatalog enemyCatalog,
 			EnemyDropCatalog enemyDropCatalog,
+			EnemySkillsetCatalog enemySkillsetCatalog,
 			EncounterCatalog encounterCatalog,
 			ExplorationRewardCatalog explorationRewardCatalog,
 			ScenarioCatalog scenarioCatalog,
@@ -263,6 +265,7 @@ public class World {
 		Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 		Objects.requireNonNull(enemyDropCatalog, "Enemy drop catalog cannot be null.");
 		Objects.requireNonNull(encounterCatalog, "Encounter catalog cannot be null.");
+		Objects.requireNonNull(enemySkillsetCatalog, "Enemy skillset catalog cannot be null.");
 
         // Core world state and shared data
         this.party = Objects.requireNonNull(party, "Party cannot be null.");
@@ -394,6 +397,7 @@ public class World {
                         this.party,
                         consoleInput,
                         enemyDropCatalog,
+                        enemySkillsetCatalog,
                         rewardService,
                         rewardScreen,
                         this.questProgressCoordinator,

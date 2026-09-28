@@ -10,57 +10,49 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
+import rpg.battle.DamageType;
 import rpg.characters.CharacterAttribute;
 import rpg.classes.PlayableClassCatalog;
 import rpg.effects.SpecialBattleStateType;
-import rpg.battle.DamageType;
 
-// Loads complete skill definitions from the skill and effect files.
+// Loads complete playable and enemy skill definitions from their shared data files.
 public final class SkillLoader {
 
-	private static final int SKILL_FIELD_COUNT = 8;
+	private static final int PLAYABLE_SKILL_FIELD_COUNT = 8;
+	private static final int ENEMY_SKILL_FIELD_COUNT = 4;
 	private static final int EFFECT_FIELD_COUNT = 14;
 
-	public SkillCatalog load(Path skillFilePath, Path effectFilePath, PlayableClassCatalog playableClassCatalog)
-			throws IOException {
+	public LoadedCatalogs load(
+			Path skillFilePath,
+			Path enemySkillFilePath,
+			Path effectFilePath,
+			PlayableClassCatalog playableClassCatalog
+	) throws IOException {
 		Objects.requireNonNull(skillFilePath, "Skill file path cannot be null.");
-
+		Objects.requireNonNull(enemySkillFilePath, "Enemy skill file path cannot be null.");
 		Objects.requireNonNull(effectFilePath, "Skill-effect file path cannot be null.");
-
 		Objects.requireNonNull(playableClassCatalog, "Playable-class catalog cannot be null.");
 
-		Map<String, SkillHeader> headersById = loadSkillHeaders(skillFilePath, playableClassCatalog);
+		Map<String, SkillHeader> playableHeadersById = loadPlayableSkillHeaders(skillFilePath, playableClassCatalog);
 
-		Map<String, List<SkillEffectDefinition>> effectsBySkillId = loadSkillEffects(effectFilePath, headersById);
+		Map<String, EnemySkillHeader> enemyHeadersById = loadEnemySkillHeaders(enemySkillFilePath);
 
-		SkillCatalog catalog = new SkillCatalog();
+		validateUniqueSkillIds(playableHeadersById, enemyHeadersById);
 
-		for (SkillHeader header : headersById.values()) {
-			List<SkillEffectDefinition> effects = effectsBySkillId.get(header.id);
+		Map<String, List<SkillEffectDefinition>> effectsBySkillId = loadSkillEffects(
+				effectFilePath,
+				playableHeadersById,
+				enemyHeadersById
+		);
 
-			if (effects == null || effects.isEmpty()) {
-				throw new IllegalArgumentException("Skill does not define any effects: " + header.id);
-			}
+		SkillCatalog playableSkillCatalog = createPlayableSkillCatalog(playableHeadersById, effectsBySkillId);
 
-			SkillDefinition skillDefinition = new SkillDefinition(
-					header.id,
-					header.classId,
-					header.acquisitionType,
-					header.levelRequirement,
-					header.mpCost,
-					header.spCost,
-					header.name,
-					header.description,
-					effects
-			);
+		EnemySkillCatalog enemySkillCatalog = createEnemySkillCatalog(enemyHeadersById, effectsBySkillId);
 
-			catalog.register(skillDefinition);
-		}
-
-		return catalog;
+		return new LoadedCatalogs(playableSkillCatalog, enemySkillCatalog);
 	}
 
-	private Map<String, SkillHeader> loadSkillHeaders(Path filePath, PlayableClassCatalog playableClassCatalog)
+	private Map<String, SkillHeader> loadPlayableSkillHeaders(Path filePath, PlayableClassCatalog playableClassCatalog)
 			throws IOException {
 		Map<String, SkillHeader> headersById = new LinkedHashMap<>();
 
@@ -73,7 +65,7 @@ public final class SkillLoader {
 				continue;
 			}
 
-			SkillHeader header = parseSkillHeader(line);
+			SkillHeader header = parsePlayableSkillHeader(line);
 
 			if (headersById.containsKey(header.id)) {
 				throw new IllegalArgumentException("Skill ID is duplicated in skills data: " + header.id);
@@ -91,17 +83,40 @@ public final class SkillLoader {
 		return headersById;
 	}
 
-	private SkillHeader parseSkillHeader(String line) {
+	private Map<String, EnemySkillHeader> loadEnemySkillHeaders(Path filePath) throws IOException {
+		Map<String, EnemySkillHeader> headersById = new LinkedHashMap<>();
+
+		List<String> lines = Files.readAllLines(filePath);
+
+		for (String line : lines) {
+			line = line.trim();
+
+			if (line.isBlank() || line.startsWith("#")) {
+				continue;
+			}
+
+			EnemySkillHeader header = parseEnemySkillHeader(line);
+
+			if (headersById.containsKey(header.id)) {
+				throw new IllegalArgumentException("Enemy skill ID is duplicated in enemy skill data: " + header.id);
+			}
+
+			headersById.put(header.id, header);
+		}
+
+		return headersById;
+	}
+
+	private SkillHeader parsePlayableSkillHeader(String line) {
 		String[] fields = line.split(";", -1);
 
-		if (fields.length != SKILL_FIELD_COUNT) {
+		if (fields.length != PLAYABLE_SKILL_FIELD_COUNT) {
 			throw new IllegalArgumentException(
-					"Invalid skill field count. Expected " + SKILL_FIELD_COUNT + " fields: " + line
+					"Invalid skill field count. Expected " + PLAYABLE_SKILL_FIELD_COUNT + " fields: " + line
 			);
 		}
 
 		String id = fields[0].trim();
-
 		String classId = fields[1].trim();
 
 		SkillAcquisitionType acquisitionType = parseRequiredEnum(
@@ -112,20 +127,49 @@ public final class SkillLoader {
 		);
 
 		int levelRequirement = parseRequiredInteger(fields[3], "level requirement", id);
-
 		int mpCost = parseRequiredInteger(fields[4], "MP cost", id);
-
 		int spCost = parseRequiredInteger(fields[5], "SP cost", id);
-
 		String name = fields[6].trim();
-
 		String description = fields[7].trim().replace("\\n", System.lineSeparator());
 
 		return new SkillHeader(id, classId, acquisitionType, levelRequirement, mpCost, spCost, name, description);
 	}
 
-	private Map<String, List<SkillEffectDefinition>>
-			loadSkillEffects(Path filePath, Map<String, SkillHeader> headersById) throws IOException {
+	private EnemySkillHeader parseEnemySkillHeader(String line) {
+		String[] fields = line.split(";", -1);
+
+		if (fields.length != ENEMY_SKILL_FIELD_COUNT) {
+			throw new IllegalArgumentException(
+					"Invalid enemy skill field count. Expected " + ENEMY_SKILL_FIELD_COUNT + " fields: " + line
+			);
+		}
+
+		String id = fields[0].trim();
+		int mpCost = parseRequiredInteger(fields[1], "MP cost", id);
+		int spCost = parseRequiredInteger(fields[2], "SP cost", id);
+		String name = fields[3].trim();
+
+		return new EnemySkillHeader(id, mpCost, spCost, name);
+	}
+
+	private void validateUniqueSkillIds(
+			Map<String, SkillHeader> playableHeadersById,
+			Map<String, EnemySkillHeader> enemyHeadersById
+	) {
+		for (String enemySkillId : enemyHeadersById.keySet()) {
+			if (playableHeadersById.containsKey(enemySkillId)) {
+				throw new IllegalArgumentException(
+						"Skill ID is duplicated across playable and enemy skill data: " + enemySkillId
+				);
+			}
+		}
+	}
+
+	private Map<String, List<SkillEffectDefinition>> loadSkillEffects(
+			Path filePath,
+			Map<String, SkillHeader> playableHeadersById,
+			Map<String, EnemySkillHeader> enemyHeadersById
+	) throws IOException {
 		Map<String, List<SkillEffectDefinition>> effectsBySkillId = new LinkedHashMap<>();
 
 		List<String> lines = Files.readAllLines(filePath);
@@ -147,7 +191,7 @@ public final class SkillLoader {
 
 			String skillId = fields[0].trim();
 
-			if (!headersById.containsKey(skillId)) {
+			if (!playableHeadersById.containsKey(skillId) && !enemyHeadersById.containsKey(skillId)) {
 				throw new IllegalArgumentException("Skill effect references an unknown skill: " + skillId);
 			}
 
@@ -157,6 +201,67 @@ public final class SkillLoader {
 		}
 
 		return effectsBySkillId;
+	}
+
+	private SkillCatalog createPlayableSkillCatalog(
+			Map<String, SkillHeader> headersById,
+			Map<String, List<SkillEffectDefinition>> effectsBySkillId
+	) {
+		SkillCatalog catalog = new SkillCatalog();
+
+		for (SkillHeader header : headersById.values()) {
+			List<SkillEffectDefinition> effects = requireSkillEffects(header.id, effectsBySkillId);
+
+			SkillDefinition skillDefinition = new SkillDefinition(
+					header.id,
+					header.classId,
+					header.acquisitionType,
+					header.levelRequirement,
+					header.mpCost,
+					header.spCost,
+					header.name,
+					header.description,
+					effects
+			);
+
+			catalog.register(skillDefinition);
+		}
+
+		return catalog;
+	}
+
+	private EnemySkillCatalog createEnemySkillCatalog(
+			Map<String, EnemySkillHeader> headersById,
+			Map<String, List<SkillEffectDefinition>> effectsBySkillId
+	) {
+		EnemySkillCatalog catalog = new EnemySkillCatalog();
+
+		for (EnemySkillHeader header : headersById.values()) {
+			List<SkillEffectDefinition> effects = requireSkillEffects(header.id, effectsBySkillId);
+
+			EnemySkillDefinition skillDefinition = new EnemySkillDefinition(
+					header.id,
+					header.mpCost,
+					header.spCost,
+					header.name,
+					effects
+			);
+
+			catalog.register(skillDefinition);
+		}
+
+		return catalog;
+	}
+
+	private List<SkillEffectDefinition>
+			requireSkillEffects(String skillId, Map<String, List<SkillEffectDefinition>> effectsBySkillId) {
+		List<SkillEffectDefinition> effects = effectsBySkillId.get(skillId);
+
+		if (effects == null || effects.isEmpty()) {
+			throw new IllegalArgumentException("Skill does not define any effects: " + skillId);
+		}
+
+		return effects;
 	}
 
 	private SkillEffectDefinition parseSkillEffect(String[] fields, String skillId) {
@@ -175,7 +280,6 @@ public final class SkillLoader {
 		CharacterAttribute attribute = parseOptionalEnum(fields[7], CharacterAttribute.class, "attribute", skillId);
 
 		Integer stages = parseOptionalInteger(fields[8], "stages", skillId);
-
 		Integer duration = parseOptionalInteger(fields[9], "duration", skillId);
 
 		Integer configuredTriggerChancePercent = parseOptionalInteger(fields[10], "trigger chance percentage", skillId);
@@ -271,6 +375,13 @@ public final class SkillLoader {
 		return parseRequiredEnum(value, enumType, fieldName, skillId);
 	}
 
+	public record LoadedCatalogs(SkillCatalog playableSkills, EnemySkillCatalog enemySkills) {
+		public LoadedCatalogs {
+			Objects.requireNonNull(playableSkills, "Playable skill catalog cannot be null.");
+			Objects.requireNonNull(enemySkills, "Enemy skill catalog cannot be null.");
+		}
+	}
+
 	private static final class SkillHeader {
 
 		private final String id;
@@ -300,6 +411,21 @@ public final class SkillLoader {
 			this.spCost = spCost;
 			this.name = name;
 			this.description = description;
+		}
+	}
+
+	private static final class EnemySkillHeader {
+
+		private final String id;
+		private final int mpCost;
+		private final int spCost;
+		private final String name;
+
+		private EnemySkillHeader(String id, int mpCost, int spCost, String name) {
+			this.id = id;
+			this.mpCost = mpCost;
+			this.spCost = spCost;
+			this.name = name;
 		}
 	}
 }

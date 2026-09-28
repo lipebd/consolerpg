@@ -6,7 +6,7 @@ V7 is complete and preserved as the current released version.
 
 Current stage:
 
-`V8 enemy combat — the V7 INN carryover and the enemy-level, natural-growth, rank-strength and encounter-level block are implemented and verified. Enemy skills, action choice and target choice remain pending.`
+`V8 enemy combat — the V7 INN carryover, enemy levels, reusable enemy skills and initial enemy action choice are implemented and verified. Individual target selection and later combat-intelligence refinements remain pending.`
 
 Current Git branch:
 
@@ -993,7 +993,7 @@ Part 7 travel, exploration, INN-saving and battle-message presentation is comple
 
 Part 8 completed fixed and percentage-based recovery and revival items, battle-only attribute-stage items, selective normalization items and persistent EXP/GOLD reward potions. Additional skill effects, conditions, attribute-based damage scaling and independent random targeting were also implemented and tested. Ineffective item attempts preserve the item, applicable confirmations remain cancellable and successful outside-battle results return to the refreshed inventory.
 
-## V8 enemy levels and encounter strength
+## V8 enemy combat
 
 The V7 carryover for INN resting is complete. A successful rest uses a separate bounded result screen with shared wrapping and line animation; Enter reveals the complete result before a subsequent Enter returns to the INN.
 
@@ -1002,6 +1002,7 @@ The first enemy-combat block is implemented and verified:
 - Every runtime `Enemy` has a positive level that remains hidden from the player.
 - `EnemyDefinition` stores level-1 natural stats and independently optional primary, secondary and weakness attributes.
 - `EnemyGrowthCalculator` centralizes enemy natural growth, weakness behavior, rank stat multipliers, rounding and exact arithmetic.
+- Enemy natural MP and SP grow by 5 per level and remain independent from rank and specialization bonuses.
 - Enemy ranks multiply HP and offensive attributes after natural level growth. `LEGENDARY` remains reserved without configured stat multipliers.
 - Random encounter entries define inclusive minimum and maximum levels. `EncounterGenerator` rolls each generated copy independently and carries the selected definition and level through `EnemySpawn`.
 - Dungeon data defines a fixed narrative-boss level and separate recurring-boss and epic ranges. Every enemy inside one boss or epic group shares the level selected for that encounter.
@@ -1011,11 +1012,33 @@ The first enemy-combat block is implemented and verified:
 
 Enemy level currently does not change EXP, GOLD or drops. Encounter ranges outside the verified opening regions remain preliminary content values for later regional balance passes.
 
+The second enemy-combat block is also implemented and verified:
+
+- `enemy_skills.txt` stores reusable enemy skill headers with stable IDs, MP/SP costs and player-facing names.
+- `enemy_skillsets.txt` links enemy species to skills through positive minimum enemy levels.
+- `skill_effects.txt` now serves both playable and enemy skill catalogs through globally unique IDs and shared ordered components.
+- `CombatSkillDefinition` provides the minimal common execution contract implemented by `SkillDefinition` and `EnemySkillDefinition`.
+- `SkillExecutionContext`, `SkillExecutor` and `SkillUseState` accept the shared combat contract and any acting `GameCharacter` without generalizing playable progression, learning or slot ownership.
+- `EnemySkillsetLoader` validates cross-catalog references, duplicate links, complete enemy-skill coverage and resource capacity at each link's minimum level.
+- `EnemyRank` defines runtime loadout ceilings. `BattleCoordinator` filters links by level and selects per-instance skills without repetition before constructing each runtime `Enemy`.
+- Enemy MP and SP now gain 5 points per level without rank or specialization bonuses.
+- Enemy action selection is uniform between the basic attack and every currently affordable installed skill.
+- Resources are spent only after a shared execution can consume the turn. Ineffective selected skills preserve resources and fall back to the basic attack.
+- Enemy target meanings are resolved relative to the acting side while preserving the shared effect calculations, resistance, ordered phases, pending VEL and defeat behavior.
+- Enemy basic attacks remain physical, use ATK against DEF and receive zero weapon base damage. Enemy skills also receive zero weapon base damage and instead use their component power and declared physical or magical type.
+- All 47 current enemy species have authored skill content. The first pass contains 83 reusable enemy skill headers, 90 links and 123 effect components.
+- Current enemy content intentionally uses clear single-enemy or self-targeted damage, attribute stages and self-recovery. Related goblins, herbalísticos, lobermos, crustaceans and mine-security robots reuse appropriate general skills.
+
+Representative gameplay verified enemy physical skill damage, MP/SP consumption and exhaustion, playable-skill regression, self-buffing, resistible debuffs, pending VEL, multiple installed skills and basic-attack fallback. Negative startup tests verified global skill-ID uniqueness, unknown effect references, enemy skills without links and resource capacity at the linked minimum level.
+
 ## Current limitations and temporary implementations
 
 - Permanent skill-scroll content and curated scroll drops remain absent while the draft skills await required combat mechanics and final content review.
 - Playable-class definitions, natural growth and the complete approved 30-skill roster are external; skill powers and resource costs remain provisional pending the general balance pass.
-- Enemy turns currently use basic attacks; enemy skill selection is deferred.
+- Enemy action selection is intentionally uniform and does not yet evaluate HP thresholds, tactical usefulness, action weights or species-specific preferences.
+- Individual target intelligence remains deferred; current single-party-target enemy actions continue using the existing target rule.
+- More complex enemy use of ally targeting, group targeting, purification, dissipation and other shared effects remains deferred until justified by concrete content.
+- Current enemy skill pools stay at or below their rank ceilings. Guaranteed moves for future pools above those ceilings remain undesigned.
 - Enemy-level reward scaling remains undecided; current rewards continue to depend on scenario and rank.
 - Encounter and dungeon level ranges outside Verdes Ermos and Gruta Relamparrocha remain preliminary until their regions receive representative playtesting.
 - `RECRUIT` references are now validated through `QuestRecruitmentCatalog` and resolved through candidate state.
@@ -1032,7 +1055,11 @@ Enemy level currently does not change EXP, GOLD or drops. Encounter ranges outsi
 
 ## Current next step
 
-V7 was released as `v7.0.0` and integrated into `master`. V8 development continues on `feature/v8-enemy-combat`. The INN rest-result carryover and the first enemy-level and encounter-strength block are implemented, balanced for the opening regions and verified. The next block is the discussion and implementation of reusable enemy skills; action choice and target choice remain later roadmap work.
+V7 was released as `v7.0.0` and integrated into `master`. V8 development continues on `feature/v8-enemy-combat`.
+
+The INN rest-result carryover, enemy levels, encounter strength, reusable enemy skills, first-pass skill content and initial uniform enemy action choice are implemented and verified.
+
+The next block is individual enemy target selection. It must begin after the action has been selected so physical, magical, self-targeted and non-damaging actions can resolve only the target information they actually require. Later contextual action intelligence remains separate from this first targeting block.
 
 ## Important conventions
 

@@ -6,7 +6,7 @@ import java.util.Objects;
 import rpg.characters.PlayableCharacterLevelRules;
 
 // Stores the complete immutable definition of a playable skill.
-public final class SkillDefinition {
+public final class SkillDefinition implements CombatSkillDefinition {
 
 	private static final String ID_PATTERN = "[a-z0-9]+(?:_[a-z0-9]+)*";
 
@@ -49,18 +49,9 @@ public final class SkillDefinition {
 			throw new IllegalArgumentException("Skill description cannot be empty: " + this.id);
 		}
 
-		Objects.requireNonNull(effects, "Skill effects cannot be null.");
+		this.effects = List.copyOf(Objects.requireNonNull(effects, "Skill effects cannot be null."));
 
-		if (effects.isEmpty()) {
-			throw new IllegalArgumentException("Skill must contain at least one effect: " + this.id);
-		}
-
-		this.effects = List.copyOf(effects);
-
-		validateEffectOrder();
-		validateEffectiveComponents();
-		validateDamagePowerModifiers();
-		validateRecoilDamageEffects();
+		CombatSkillDefinition.validateEffects(this.id, this.effects);
 
 		this.levelRequirement = levelRequirement;
 		this.mpCost = mpCost;
@@ -83,102 +74,6 @@ public final class SkillDefinition {
 		}
 
 		return trimmedValue;
-	}
-
-	private void validateEffectOrder() {
-		int previousSequence = 0;
-		SkillExecutionPhase previousPhase = null;
-
-		for (SkillEffectDefinition effect : effects) {
-			if (effect.getSequence() <= previousSequence) {
-				throw new IllegalArgumentException(
-						"Skill effect sequences must be positive, unique and declared in ascending order: " + id
-				);
-			}
-
-			if (previousPhase != null && getPhaseOrder(effect.getPhase()) < getPhaseOrder(previousPhase)) {
-				throw new IllegalArgumentException("Skill effect phases cannot move backwards: " + id);
-			}
-
-			previousSequence = effect.getSequence();
-			previousPhase = effect.getPhase();
-		}
-	}
-
-	private int getPhaseOrder(SkillExecutionPhase phase) {
-		return switch (phase) {
-		case PRE_ACTION -> 0;
-		case PRIMARY -> 1;
-		case POST_ACTION -> 2;
-		};
-	}
-
-	private void validateEffectiveComponents() {
-		boolean hasEffectiveComponent = effects.stream()
-				.anyMatch(effect -> effect.getEffectType() != SkillEffectType.DAMAGE_POWER_MODIFIER);
-
-		if (!hasEffectiveComponent) {
-			throw new IllegalArgumentException("Skill must contain an effect capable of affecting a target: " + id);
-		}
-	}
-
-	private void validateDamagePowerModifiers() {
-		for (int index = 0; index < effects.size(); index++) {
-			SkillEffectDefinition effect = effects.get(index);
-
-			if (effect.getEffectType() != SkillEffectType.DAMAGE_POWER_MODIFIER) {
-				continue;
-			}
-
-			if (effect.getPhase() == SkillExecutionPhase.PRIMARY) {
-				if (index + 1 >= effects.size()) {
-					throw new IllegalArgumentException(
-							"A PRIMARY damage-power modifier must immediately precede damage with the same target type: "
-									+ id
-					);
-				}
-
-				SkillEffectDefinition nextEffect = effects.get(index + 1);
-
-				if (nextEffect.getPhase() != SkillExecutionPhase.PRIMARY
-						|| nextEffect.getEffectType() != SkillEffectType.DAMAGE
-						|| nextEffect.getTargetType() != effect.getTargetType()) {
-					throw new IllegalArgumentException(
-							"A PRIMARY damage-power modifier must immediately precede damage with the same target type: "
-									+ id
-					);
-				}
-
-				continue;
-			}
-
-			boolean hasCompatibleLaterDamage = false;
-
-			for (int laterIndex = index + 1; laterIndex < effects.size(); laterIndex++) {
-				SkillEffectDefinition laterEffect = effects.get(laterIndex);
-
-				if (laterEffect.getEffectType() == SkillEffectType.DAMAGE
-						&& laterEffect.getTargetType() == effect.getTargetType()) {
-					hasCompatibleLaterDamage = true;
-					break;
-				}
-			}
-
-			if (!hasCompatibleLaterDamage) {
-				throw new IllegalArgumentException(
-						"Damage-power modifier must precede a damage effect with the same target: " + id
-				);
-			}
-		}
-	}
-
-	private void validateRecoilDamageEffects() {
-		for (SkillEffectDefinition effect : effects) {
-			if (effect.getEffectType() == SkillEffectType.RECOIL_DAMAGE) {
-
-				getRecoilSourceEffect(effect);
-			}
-		}
 	}
 
 	public String getId() {

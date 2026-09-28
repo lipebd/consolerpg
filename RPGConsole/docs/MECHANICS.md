@@ -424,7 +424,9 @@ basePower =
     + effectiveOffensiveAttribute
 ```
 
-Player basic attacks use zero skill power, no conditional power modifier and the equipped weapon's full base damage. The weapon selects physical or magical damage; without a weapon, the attack falls back to physical damage with zero weapon power. Enemy basic attacks currently use physical damage and zero weapon power.
+Player basic attacks use zero skill power, no conditional power modifier and the equipped weapon's full base damage. The weapon selects physical or magical damage; without a weapon, the attack falls back to physical damage with zero weapon power.
+
+Enemy basic attacks always use physical damage, effective ATK against effective DEF, zero skill power and zero weapon base damage. Enemy skills also use zero weapon base damage, but each damaging component contributes its own power and declared physical or magical type. Physical enemy skills use ATK against DEF by default; magical enemy skills use MAG against RES by default. ATK therefore remains relevant even for primarily magical enemy species because it determines their free basic-attack damage.
 
 Every offensive skill also adds 100% of the equipped weapon's base damage. A skill remains usable without a weapon, in which case this term is zero. The skill component's damage type selects the target's DEF or RES independently of its optional offensive attribute and the weapon's damage type.
 
@@ -974,7 +976,14 @@ secondaryGrowthOccurrences = floor(level / 3)
 weaknessGrowthOccurrences = floor(level / 2)
 ```
 
-Natural HP grows by `10` for every gained level. Maximum MP and SP retain their level-1 values.
+Natural HP grows by `10` for every gained level. Maximum MP and SP each grow by `5` for every gained level:
+
+```text
+maximumMP = baseMaximumMP + 5 × gainedLevels
+maximumSP = baseMaximumSP + 5 × gainedLevels
+```
+
+Enemy resource growth receives no rank multiplier and no primary-, secondary- or weakness-attribute adjustment.
 
 Regular-attribute growth for every gained level is:
 
@@ -1006,6 +1015,99 @@ Rank does not multiply MP, SP, DEF, RES, VEL or LCK. Each multiplied result is r
 Enemy progression has no global gameplay level cap. Every configured level must be positive, and growth uses exact arithmetic so overflow is rejected rather than wrapping. Encounter and dungeon loading calculate the highest configured level for every referenced enemy and reject invalid content during initialization.
 
 Enemy level currently does not change EXP, GOLD or drops. Scenario rewards, rank reward multipliers and independent drop entries retain their existing behavior.
+
+## Enemy skill availability and action choice
+
+Enemy skills are reusable immutable combat definitions. They are not learned, do not occupy playable skill slots and do not participate in class progression or skill-scroll rules.
+
+Each enemy-to-skill link defines a positive minimum enemy level. When an enemy instance is created, only links whose minimum level is not greater than the spawned level enter its eligible pool.
+
+The linked species must be able to pay each skill at its own minimum level:
+
+```text
+availableResourceAtUnlock =
+    baseLevelOneResource
+    + 5 × (minimumLevel - 1)
+```
+
+This validation prevents permanently unusable links without requiring every skill to be affordable at level 1.
+
+### Runtime loadouts
+
+The basic attack is always available and remains outside the enemy skill loadout.
+
+Each enemy rank defines a maximum number of installed skills:
+
+| Enemy rank | Maximum installed skills |
+|---|---:|
+| `COMMON` | 2 |
+| `VETERAN` | 3 |
+| `LEADER` | 4 |
+| `BOSS` | 5 |
+| `EPIC` | 6 |
+
+If the eligible pool exceeds the rank maximum, `BattleCoordinator` selects a subset without repetition for that runtime enemy. Separate instances of the same species may therefore receive different loadouts. `LEGENDARY` remains reserved without an approved ceiling.
+
+Current first-pass content stays at or below the runtime ceilings:
+
+- Common enemies have one or two skills.
+- Veterans and leaders have two or three skills.
+- Boss and epic enemies have three skills.
+- Every current species has at least one damaging skill.
+- Three-skill veterans and leaders include self-support.
+- Boss and epic repertoires contain at least two damaging skills plus self-buffing or self-recovery.
+
+### Action selection
+
+On each enemy turn:
+
+1. Filter the installed skills by current MP and SP.
+2. Build a choice set containing the basic attack and every affordable skill.
+3. Select uniformly from that set.
+4. Resolve the selected action before selecting any action-specific target.
+5. Begin skill execution through the shared executor.
+6. Spend MP and SP only if the execution can consume the turn.
+7. If the selected skill cannot make a valid attempt, preserve resources and execute the basic attack as fallback.
+
+For an enemy with two affordable installed skills:
+
+```text
+1/3 basic attack
+1/3 first skill
+1/3 second skill
+```
+
+When no skill remains affordable, the basic attack is selected with certainty.
+
+The initial selector does not evaluate tactical usefulness. It has no weights, priorities, HP thresholds, action memory or species-specific decision code. An applicable recovery skill competes uniformly with offensive actions; an ineffective recovery selection falls back safely instead of spending resources or losing the turn.
+
+### Shared execution
+
+`CombatSkillDefinition` provides the common execution contract for playable and enemy skills. `SkillExecutionContext` accepts any `GameCharacter`, while playable acquisition and slot systems continue to use only playable definitions.
+
+Target types remain relative to the acting side:
+
+- `SELF` refers to the acting enemy.
+- Ally targets refer to enemies participating on the enemy side.
+- Enemy targets refer to party members.
+
+Enemy skill execution reuses the existing ordered phases, damage and recovery calculations, resistance, trigger chance, attribute stages, pending VEL behavior, defeat handling and result formatting.
+
+Enemy skills use no equipment contribution:
+
+```text
+enemySkillBasePower =
+    skillPower
+    + effectiveOffensiveAttribute
+```
+
+A physical component normally uses ATK against DEF. A magical component normally uses MAG against RES. Any explicit scaling attribute defined by the component continues to override only the offensive attribute, not the defense selected by its damage type.
+
+The current first-pass enemy content intentionally uses only clear single-target or self-targeted damage, attribute stages and self-recovery. More complex shared effects remain available for later discussion only when justified by concrete enemy content.
+
+### Current targeting boundary
+
+Action selection is implemented before target selection, but individual target intelligence remains deferred. A current `SINGLE_ENEMY` enemy action still uses the existing living-party target rule. Self-targeted actions require no target decision, and shared random-target components perform their own draw during component execution.
 
 ## Skill acquisition and availability
 

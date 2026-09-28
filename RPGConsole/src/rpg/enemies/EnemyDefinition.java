@@ -7,6 +7,7 @@ import rpg.characters.CharacterStats;
 import rpg.characters.Enemy;
 import rpg.characters.EnemyRank;
 import rpg.items.DropEntry;
+import rpg.skills.EnemySkillDefinition;
 
 // Represents the data required to create an enemy.
 public final class EnemyDefinition {
@@ -47,11 +48,32 @@ public final class EnemyDefinition {
 		this.weaknessAttribute = weaknessAttribute;
 	}
 
-	public Enemy createEnemy(int level, List<DropEntry> dropTable) {
-		CharacterStats naturalStats = GROWTH_CALCULATOR
-				.calculateNaturalStats(stats, primaryAttribute, secondaryAttribute, weaknessAttribute, rank, level);
+	public Enemy createEnemy(
+			int level,
+			List<EnemySkillDefinition> skillDefinitions,
+			List<DropEntry> dropTable
+	) {
+		return new Enemy(
+				id,
+				name,
+				calculateNaturalStats(level),
+				level,
+				rank,
+				skillDefinitions,
+				dropTable,
+				description
+		);
+	}
 
-		return new Enemy(id, name, naturalStats, level, rank, dropTable, description);
+	public CharacterStats calculateNaturalStats(int level) {
+		return GROWTH_CALCULATOR.calculateNaturalStats(
+				stats,
+				primaryAttribute,
+				secondaryAttribute,
+				weaknessAttribute,
+				rank,
+				level
+		);
 	}
 
 	public String getId() {

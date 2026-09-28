@@ -46,6 +46,18 @@ public enum EnemyRank {
 		};
 	}
 
+	public int getMaximumAdditionalSkillCount() {
+		return switch (this) {
+		case COMMON -> 2;
+		case VETERAN -> 3;
+		case LEADER -> 4;
+		case BOSS -> 5;
+		case EPIC -> 6;
+		case LEGENDARY ->
+			throw new IllegalArgumentException("Skill limit is not configured for LEGENDARY enemies.");
+		};
+	}
+
 	@Override
 	public String toString() {
 		return displayName;

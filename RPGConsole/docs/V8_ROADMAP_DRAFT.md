@@ -1,6 +1,6 @@
 # RPGConsole V8 Roadmap — Draft for discussion
 
-> **Status: active roadmap with individually frozen blocks.** The INN carryover and enemy-level block are implemented and verified. Enemy skills, action choice and target choice remain proposals until their gameplay rules are discussed and frozen.
+> **Status: active roadmap with individually frozen blocks.** The INN carryover, enemy levels, reusable enemy skills and initial enemy action choice are implemented and verified. Individual target selection and later combat-intelligence refinements remain pending.
 
 ## Release aim and boundaries
 
@@ -12,8 +12,8 @@ V8 does not require a clever general-purpose AI. Keep enemy decisions explainabl
 
 1. [x] Resolve the known INN rest-display issue carried over from V7.
 2. [x] Implement enemy levels and per-encounter stat generation.
-3. [ ] Add reusable enemy skill headers, enemy-to-skill links and shared ordered effects.
-4. [ ] Add enemy action choice, execution and player feedback.
+3. [x] Add reusable enemy skill headers, enemy-to-skill links and shared ordered effects.
+4. [x] Add enemy action choice, execution and player feedback.
 5. [ ] Add individual target selection and a small set of behavior profiles.
 6. [ ] Complete remaining content balancing, regression and release verification.
 
@@ -33,7 +33,7 @@ The order is intentional: target choice must know what action will be performed 
 * [x] Treat every numeric stat in `enemies.txt` as an intentional level-1 natural value. Use shared authoring profiles only as a balancing reference; keep the file as the single source of species data and use lore-specific base adjustments sparingly.
 * [x] Give every runtime enemy a positive hidden level. Enemy levels may exceed the playable level-20 boundary and have no global gameplay cap.
 * [x] Store independently optional primary, secondary and weakness attributes in each enemy definition. Every configured attribute must be distinct from the others.
-* [x] Centralize enemy growth in `EnemyGrowthCalculator`. HP gains 10 per level; MP and SP remain fixed; ATK and MAG gain 3 per level; DEF, RES, VEL and LCK gain 1 per level; primary and secondary bonuses follow the existing two- and three-level schedules; weakness replaces ordinary growth with one point every two levels.
+* * [x] Centralize enemy growth in `EnemyGrowthCalculator`. HP gains 10 per level; MP and SP each gain 5 per level; ATK and MAG gain 3 per level; DEF, RES, VEL and LCK gain 1 per level; primary and secondary bonuses follow the existing two- and three-level schedules; weakness replaces ordinary growth with one point every two levels. MP and SP do not receive rank, primary-attribute or secondary-attribute bonuses.
 * [x] Apply rank stat multipliers after natural growth. Ranks modify HP, ATK and MAG while leaving other stats unchanged. `LEGENDARY` remains reserved without configured stat multipliers.
 * [x] Add inclusive `minLevel` and `maxLevel` fields to encounter entries and roll every generated copy independently. Preserve position, area, weight, copy and group-size behavior.
 * [x] Carry each selected definition and level through immutable `EnemySpawn` values until `BattleCoordinator` creates runtime enemies.
@@ -52,42 +52,64 @@ The order is intentional: target choice must know what action will be performed 
 
 ## 2. Enemy skills using shared effects
 
-### Working direction
+### Frozen and implemented rules
 
-* [ ] Investigate `enemy_skills.txt` for reusable enemy skill headers without playable class, acquisition type or per-enemy ownership. Skill name, resource costs and description remain available when needed for feedback.
-* [ ] Investigate `enemy_skillsets.txt` to link enemy IDs to skill IDs and minimum enemy level. A skill can be shared by multiple enemy species without copying its effect lines.
-* [ ] Reuse `skill_effects.txt` and its ordered, validated components for both playable and enemy skill IDs. Enforce unique skill IDs across both catalogs and reject effects without a matching skill header.
-* [ ] Preserve the existing meaning of `SELF`, ally and enemy **relative to the acting side**: for an enemy user, their allies are enemies in battle, and their adversaries are party members. Avoid duplicating effect calculations and status logic.
-* [ ] Review player-only assumptions in skill header validation, execution context, target selection, weapon snapshot, UI and skill-slot ownership before adapting shared execution. Preserve the playable six-slot and scroll contracts.
-* [ ] Decide how enemy attacks obtain their base damage. Currently an enemy's basic attack uses zero skill power and zero weapon base damage; skill damage can add its own `DAMAGE` power. Compare leaving the weapon contribution at zero while tuning ATK/MAG, adding a base-damage value to the enemy itself, and relying on component power for individual skills. Do not fix DBA at zero or add an enemy stat before comparing normal-attack and skill damage across representative levels and enemy species. Power defined only in a shared enemy skill does not strengthen that species' basic attack.
-* [ ] Decide which effects and target types enemies may author initially. Reusing a shared effect parser need not imply enabling every combination in enemy content immediately.
+* [x] Store reusable enemy skill headers in `enemy_skills.txt` with stable ID, MP cost, SP cost and player-facing name. Enemy skills do not define playable class, acquisition type, level requirement, description or skill-slot ownership.
+* [x] Introduce `CombatSkillDefinition` as the shared execution contract implemented by playable and enemy skill definitions without weakening the playable-only progression and six-slot contracts.
+* [x] Store enemy-to-skill links in `enemy_skillsets.txt` with enemy ID, skill ID and positive minimum enemy level. One skill may be shared by multiple species.
+* [x] Reuse ordered `skill_effects.txt` components across both skill catalogs. Skill IDs are globally unique, and every effect must reference exactly one known playable or enemy skill.
+* [x] Reject duplicate headers, duplicate enemy-skill links, unknown references, enemy skills without any species link and effectless skills during initialization.
+* [x] Validate that each species can pay every linked skill at that link's `minimumLevel`. Resource validation uses the same natural-stat calculation used to create runtime enemies.
+* [x] Build the eligible skill pool from links whose minimum level is not greater than the spawned enemy level.
+* [x] Select each runtime enemy's loadout without repetition and cap it through `EnemyRank`. The basic attack remains separate and does not occupy a skill position.
+* [x] Preserve `SELF`, ally and enemy meanings relative to the acting side. Enemy users treat other enemies as allies and party members as adversaries.
+* [x] Generalize `SkillExecutionContext`, `SkillExecutor` and `SkillUseState` only as far as required to execute the shared `CombatSkillDefinition` contract with any `GameCharacter`.
+* [x] Keep enemy weapon base damage at zero. Enemy skill damage uses the component's declared `power`, ATK or MAG and the existing physical or magical defense formula.
+* [x] Keep enemy basic attacks physical, using ATK against DEF with zero weapon base damage. Magical enemy identity is expressed through skills; ATK therefore remains relevant even for primarily magical species.
+* [x] Restrict the initial authored enemy content to clear `SINGLE_ENEMY` and `SELF` uses of damage, attribute stages and self-recovery. Shared engine support does not require every playable effect or target combination to appear in the first enemy content pass.
+* [x] Give every current enemy species at least one skill. The first content pass contains 83 reusable headers, 90 enemy-skill links and 123 ordered effect components across 47 species.
 
-> **Frozen resource direction:** enemies retain finite MP and SP, and enemy skills consume their configured resources. The basic attack remains available without MP or SP cost and provides a safe fallback when no skill is usable. Exact skill costs, resource pools and action-selection frequency remain part of the enemy-skill balance pass.
+### Runtime skill ceilings and current authored content
 
-### Proposed available-skill ceilings, including the ever-available basic attack
+| Enemy rank | Runtime maximum | Current first-pass content |
+|---|---:|---:|
+| `COMMON` | 2 | 1–2 |
+| `VETERAN` | 3 | 2–3 |
+| `LEADER` | 4 | 2–3 |
+| `BOSS` | 5 | 3 |
+| `EPIC` | 6 | 3 |
+| `LEGENDARY` | Deferred | None |
 
-| Enemy rank | Maximum additional available skills, subject to discussion |
-|---|---:|
-| `COMMON` | 2 |
-| `VETERAN` | 3 |
-| `LEADER` | 4 |
-| `BOSS` | 5 |
-| `EPIC` | 6 |
-| `LEGENDARY` | Deferred; no number approved. |
+The runtime values are maximum additional skills and do not include the ever-available basic attack. Current content intentionally stays at or below those ceilings. No current species requires guaranteed-move handling because its authored pool does not exceed its runtime maximum.
 
-These are **maximums**, not required counts. Distinguish all skills registered for a species from the skills available to one spawned instance. If a boss can draw a subset from a larger pool, decide whether defining moves must be guaranteed and how many remaining places are randomized. Do not permit a random loadout to omit a move required by the encounter design.
+Common enemies with one skill use a damaging move. A two-skill common combines damage with self-buffing or self-recovery. Veterans and leaders have at least two skills; three-skill definitions include self-support. Epic and boss enemies currently use two damaging skills plus one self-buff or self-recovery skill.
 
-**Open decisions:** exact enemy skill header; link format; fixed versus variable loadouts; guaranteed skills and random subset behavior; initial supported effects; per-instance skill selection timing; resource costs and pools; enemy DBA or equivalent base-attack power. The final boss's proposed party-skill copying is separate, later design work.
+Related species reuse appropriate general techniques without losing their specialized actions. Current examples include goblins, herbalísticos, lobermos, crustaceans and mine-security robots.
+
+> **Enemy skills completed and verified.** Header loading, shared effects, minimum-level links, rank ceilings, per-instance loadouts, global ID validation, resource-capacity validation and current content coverage are implemented. Later content may use higher minimum levels or pools above the runtime ceiling only after guaranteed-move behavior is explicitly designed.
 
 ## 3. Enemy action choice
 
-* [ ] Decide how an enemy chooses from basic attack and its currently available, usable skills. Action selection happens **before** target selection.
-* [ ] Make unavailable resources, missing eligible targets and ineffective conditional actions safe: the enemy must be able to fall back to a valid basic attack instead of losing a turn accidentally or looping.
-* [ ] Implement physical and magical damage through the existing damage rules. Apply buffs/debuffs, recovery, purification and dissipation through shared effect behavior only when their enemy-side targeting and feedback are defined.
-* [ ] Respect the existing `PRE_ACTION`, `PRIMARY`, `POST_ACTION`, resistance, trigger, duration, pending VEL and defeat rules when enemies use applicable effects.
-* [ ] Show the action and its result clearly to the player without exposing hidden enemy level, skill selection weights or target scores.
+### Frozen and implemented rules
 
-**Open decisions:** initial action-selection policy and any per-enemy tuning; whether enemy skills consume MP/SP as playable skills do; whether basic magical attacks exist separately from magical skills; selection frequency with multiple actions per round.
+* [x] Choose the enemy action before resolving its targets.
+* [x] Keep the basic attack permanently available as action index zero.
+* [x] Filter linked skills by the acting enemy's current MP and SP before action selection.
+* [x] Select uniformly between the basic attack and every currently affordable skill. The initial implementation has no action weights, priorities, memory or species-specific decision code.
+* [x] Build enemy-side execution targets relative to the acting side and let the shared executor resolve random effect targets where applicable.
+* [x] Begin execution before spending resources. If the selected skill cannot produce a valid attempt, preserve MP, SP and the turn, then execute the basic attack as fallback.
+* [x] Spend MP and SP only after the shared execution state confirms that the action can consume the turn.
+* [x] Reuse shared damage, recovery, resistance, attribute-stage, duration, pending-VEL, trigger and ordered-phase behavior without duplicating combat formulas.
+* [x] Preserve defeats caused by enemy primary and post-action effects, including the existing battle-ending and zero-HP feedback rules.
+* [x] Present the enemy's selected skill name followed by the shared formatted effect results.
+* [x] Keep playable skill execution unchanged through the same generalized contract.
+* [x] Keep the current individual enemy-target rule unchanged until the dedicated target-choice block. Initial action selection does not inspect HP thresholds, defenses or tactical usefulness.
+
+The simple selector prevents invalid turns but does not attempt to choose the best action. A recovery skill may be selected while ineffective and fall back to a basic attack; while applicable, it competes uniformly with the other affordable actions. Contextual usefulness, action weights and species-specific preferences remain later refinements rather than hidden exceptions.
+
+Representative testing covered enemy physical skill damage, MP/SP consumption and exhaustion, playable-skill regression, self-buffing, resistible enemy debuffs, pending VEL, multiple skills in one loadout, fallback behavior and startup rejection of invalid cross-catalog content. Self-recovery and pools above a rank ceiling are structurally covered and may receive additional opportunistic gameplay observation without blocking this block.
+
+> **Initial enemy action choice completed and verified.** Individual target selection remains the next independent combat block.
 
 ## 4. Enemy target choice
 
@@ -104,20 +126,20 @@ These are **maximums**, not required counts. Distinguish all skills registered f
 ## 5. Content and release checks
 
 * [x] Migrate all current enemy base stats and encounter level ranges away from their historical placeholder balance. Opening-region values are verified; later regional ranges remain preliminary.
-* [ ] Assign enemy skills with concrete low-/mid-/late-game examples after the skill contract is frozen.
+* [x] Assign enemy skills with concrete low-/mid-/late-game examples after the skill contract is frozen.
 * [x] Check two copies with distinct rolled levels and the fixed narrative-boss entry point.
 * [ ] Check one species reused in early and late regions plus recurring-boss and epic level-range entry points during their regional balance passes.
-* [ ] Test resource exhaustion, fallback basic attack, enemy magic, buffs/debuffs, purification/dissipation, targeting each side, defeated targets, random loadouts and target persistence.
+* [x] Test representative enemy damage, resource consumption and exhaustion, basic-attack fallback, magical damage, self-buffs, resistible debuffs, pending VEL and playable-skill regression.
+* [ ] Expand representative regional playtesting for the complete first-pass enemy-skill content, including later bosses and epics.
+* [ ] Revisit purification, dissipation, ally-targeting and other shared combinations only if later enemy content actually requires them.
 * [ ] Check progression pacing, initiative/action counts, EXP/GOLD, drops and normal/boss/epic battle outcomes. Preserve existing playable skill, inventory and save/load behavior.
 * [ ] Update architecture, mechanics, data formats, class guides and project state after each approved block is implemented and verified. Do not describe deferred legendary abilities as implemented.
 * [ ] Review the complete diff, package a portable release and check Unicode text and representative playthroughs before tagging V8.
 
 ## Questions remaining for later V8 blocks
 
-1. What exact fields belong in enemy skill headers and enemy-to-skill links?
-2. Which skills are guaranteed, and which may be randomly selected for one spawned enemy?
-3. Which shared effects and target types are enabled in the first enemy-skill content pass?
-4. Should an enemy contribute its own base damage to basic and skill attacks, or should ATK/MAG and per-skill power suffice?
-5. What is the smallest explainable action-selection rule before individual tuning?
-6. Which target profiles and retarget thresholds are frozen after action choice exists?
-7. Before release, should enemy level adjust EXP or GOLD through a bounded rule?
+1. Which target profiles and retarget thresholds are frozen after action choice?
+2. How should the selector evaluate contextual usefulness, if action intelligence is expanded beyond uniform choice?
+3. When a future authored pool exceeds its rank ceiling, which moves must be guaranteed and which positions may be randomized?
+4. Before release, should enemy level adjust EXP or GOLD through a bounded rule?
+5. Which later shared effect and target combinations are justified by concrete enemy content?
