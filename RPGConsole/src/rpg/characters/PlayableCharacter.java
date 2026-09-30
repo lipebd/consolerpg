@@ -1,112 +1,371 @@
 package rpg.characters;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
-import rpg.skills.Skill;
+import rpg.classes.CharacterGrowthCalculator;
+import rpg.classes.PlayableClassDefinition;
+import rpg.items.equipment.ArmorDefinition;
+import rpg.items.equipment.EquipmentDefinition;
+import rpg.items.equipment.TrinketDefinition;
+import rpg.items.equipment.WeaponDefinition;
+import rpg.skills.SkillDefinition;
+import rpg.skills.SkillLearningResult;
 
 // Represents a character controlled by the player.
 public class PlayableCharacter extends GameCharacter {
-	
-	private static final int BASE_EXPERIENCE_REQUIREMENT = 50;
+
+	private static final int MAXIMUM_LEARNED_SCROLL_SKILLS = 2;
+
+	private final CharacterEquipment equipment;
+	private final PlayableClassDefinition classDefinition;
+	private final CharacterGrowthCalculator growthCalculator;
+	private final List<SkillDefinition> classSkillDefinitions;
+	private final Set<String> learnedSkillIds;
 
 	private int experience;
 	private int level;
-	private List<Skill> skills;
 
-	public PlayableCharacter(String name, CharacterStats stats) {
-	    super(name, stats);
-		
-		this.level = 1;
-		this.skills = new ArrayList<>();
-		this.experience = 0;
+	public PlayableCharacter(
+			String name,
+			PlayableClassDefinition classDefinition,
+			List<SkillDefinition> classSkillDefinitions,
+			CharacterGrowthCalculator growthCalculator
+	) {
+		this(name, classDefinition, classSkillDefinitions, growthCalculator, PlayableCharacterLevelRules.MINIMUM_LEVEL);
 	}
 
-	public boolean learnSkill(Skill skill) {
-		if (level < skill.getRequiredLevel()) {
-			return false;
-		}
+	public PlayableCharacter(
+			String name,
+			PlayableClassDefinition classDefinition,
+			List<SkillDefinition> classSkillDefinitions,
+			CharacterGrowthCalculator growthCalculator,
+			int level
+	) {
+		super(
+				CharacterNameRules.requireValid(name),
+				Objects.requireNonNull(classDefinition, "Playable class definition cannot be null.").getBaseStats()
+		);
 
-		for (Skill knownSkill : skills) {
-			if (knownSkill.getName().equals(skill.getName())) {
-				return false;
+		PlayableCharacterLevelRules.validateLevel(level);
+
+		this.classDefinition = classDefinition;
+		this.classSkillDefinitions = List
+				.copyOf(Objects.requireNonNull(classSkillDefinitions, "Class skill definitions cannot be null."));
+		this.learnedSkillIds = new LinkedHashSet<>();
+		this.growthCalculator = Objects.requireNonNull(growthCalculator, "Character growth calculator cannot be null.");
+		this.equipment = new CharacterEquipment();
+		this.level = level;
+		this.experience = 0;
+
+		CharacterStats naturalStats = this.growthCalculator.calculateNaturalStats(this.classDefinition, this.level);
+
+		replaceNaturalStats(naturalStats);
+		restoreAllResources();
+		learnAutomaticallyAvailableSkills();
+	}
+
+	public List<SkillDefinition> getUnlockedSkillDefinitions() {
+		List<SkillDefinition> learnedSkillDefinitions = new ArrayList<>();
+
+		for (SkillDefinition skillDefinition : classSkillDefinitions) {
+			if (!skillDefinition.isScrollSkill() && learnedSkillIds.contains(skillDefinition.getId())) {
+				learnedSkillDefinitions.add(skillDefinition);
 			}
 		}
 
-		skills.add(skill);
-		return true;
+		for (String skillId : learnedSkillIds) {
+			SkillDefinition skillDefinition = getClassSkillDefinition(skillId);
+
+			if (skillDefinition.isScrollSkill()) {
+				learnedSkillDefinitions.add(skillDefinition);
+			}
+		}
+
+		return List.copyOf(learnedSkillDefinitions);
 	}
 
-	public int usePhysicalSkill(Skill skill, GameCharacter target) {
-	    int damage = getAttack()
-	            + skill.getBaseDamage()
-	            - target.getDefense();
+	public SkillLearningResult learnSkill(SkillDefinition skillDefinition) {
+		Objects.requireNonNull(skillDefinition, "Skill definition cannot be null.");
 
-	    if (damage < 1) {
-	        damage = 1;
-	    }
+		if (!skillDefinition.getClassId().equals(classDefinition.getId())) {
+			return SkillLearningResult.INCOMPATIBLE_CLASS;
+		}
 
-	    return target.takeDamage(damage);
+		SkillDefinition canonicalSkillDefinition = getClassSkillDefinition(skillDefinition.getId());
+
+		if (learnedSkillIds.contains(canonicalSkillDefinition.getId())) {
+			return SkillLearningResult.ALREADY_LEARNED;
+		}
+
+		if (level < canonicalSkillDefinition.getLevelRequirement()) {
+			return SkillLearningResult.LEVEL_TOO_LOW;
+		}
+
+		if (canonicalSkillDefinition.isScrollSkill() && getLearnedScrollSkillCount() >= MAXIMUM_LEARNED_SCROLL_SKILLS) {
+			return SkillLearningResult.SCROLL_LIMIT_REACHED;
+		}
+
+		learnedSkillIds.add(canonicalSkillDefinition.getId());
+
+		return SkillLearningResult.LEARNED;
 	}
 
-	public int useRecoverySkill(
-	        Skill skill,
-	        PlayableCharacter target
-	) {
-	    if (skill == null || target == null) {
-	        throw new IllegalArgumentException(
-	                "Skill and target cannot be null."
-	        );
-	    }
+	public SkillLearningResult
+			replaceLearnedScrollSkill(SkillDefinition replacedSkillDefinition, SkillDefinition newSkillDefinition) {
+		Objects.requireNonNull(replacedSkillDefinition, "Replaced skill definition cannot be null.");
 
-	    return switch (skill.getRecoveryType()) {
-	        case HEAL ->
-	            target.recoverHp(skill.getBaseHealing());
+		Objects.requireNonNull(newSkillDefinition, "New skill definition cannot be null.");
 
-	        case REVIVE ->
-	            target.revive(skill.getBaseHealing());
+		if (!newSkillDefinition.getClassId().equals(classDefinition.getId())) {
+			return SkillLearningResult.INCOMPATIBLE_CLASS;
+		}
 
-	        case NONE ->
-	            throw new IllegalArgumentException(
-	                    "The selected skill has no recovery effect."
-	            );
-	    };
+		SkillDefinition canonicalReplacedSkill = getClassSkillDefinition(replacedSkillDefinition.getId());
+
+		SkillDefinition canonicalNewSkill = getClassSkillDefinition(newSkillDefinition.getId());
+
+		if (!canonicalReplacedSkill.isScrollSkill() || !canonicalNewSkill.isScrollSkill()) {
+			throw new IllegalArgumentException("Only scroll skills can participate in scroll-skill replacement.");
+		}
+
+		if (!learnedSkillIds.contains(canonicalReplacedSkill.getId())) {
+			throw new IllegalArgumentException(
+					"Replaced scroll skill is not currently learned: " + canonicalReplacedSkill.getId()
+			);
+		}
+
+		if (learnedSkillIds.contains(canonicalNewSkill.getId())) {
+			return SkillLearningResult.ALREADY_LEARNED;
+		}
+
+		if (level < canonicalNewSkill.getLevelRequirement()) {
+			return SkillLearningResult.LEVEL_TOO_LOW;
+		}
+
+		learnedSkillIds.remove(canonicalReplacedSkill.getId());
+
+		learnedSkillIds.add(canonicalNewSkill.getId());
+
+		return SkillLearningResult.REPLACED;
 	}
-	
-	public List<Skill> getSkills() {
-		return List.copyOf(skills);
+
+	public boolean hasLearnedSkill(String skillId) {
+		if (skillId == null || skillId.isBlank()) {
+			throw new IllegalArgumentException("Skill ID cannot be empty.");
+		}
+
+		return learnedSkillIds.contains(skillId);
+	}
+
+	public List<SkillDefinition> getLearnedScrollSkillDefinitions() {
+		return learnedSkillIds.stream().map(this::getClassSkillDefinition).filter(SkillDefinition::isScrollSkill)
+				.toList();
+	}
+
+	public int getLearnedScrollSkillCount() {
+		return getLearnedScrollSkillDefinitions().size();
+	}
+
+// Grants as much experience as supported and returns the amount accepted.
+	public int gainExperience(int amount) {
+		if (amount <= 0 || isMaximumLevel()) {
+			return 0;
+		}
+
+		long pendingExperience = (long) experience + amount;
+
+		int previousLevel = level;
+
+		while (!isMaximumLevel() && pendingExperience >= getExperienceRequiredForNextLevel()) {
+			pendingExperience -= getExperienceRequiredForNextLevel();
+
+			level = Math.incrementExact(level);
+		}
+
+		int acceptedExperience = amount;
+
+		if (isMaximumLevel()) {
+			acceptedExperience = Math.toIntExact((long) amount - pendingExperience);
+			pendingExperience = 0;
+		}
+
+		experience = Math.toIntExact(pendingExperience);
+
+		if (level > previousLevel) {
+			CharacterStats naturalStats = growthCalculator.calculateNaturalStats(classDefinition, level);
+
+			replaceNaturalStats(naturalStats);
+			learnAutomaticallyAvailableSkills();
+		}
+
+		return acceptedExperience;
+	}
+
+	private void learnAutomaticallyAvailableSkills() {
+		for (SkillDefinition skillDefinition : classSkillDefinitions) {
+			if (skillDefinition.isScrollSkill() || level < skillDefinition.getLevelRequirement()) {
+				continue;
+			}
+
+			SkillLearningResult result = learnSkill(skillDefinition);
+
+			if (result != SkillLearningResult.LEARNED && result != SkillLearningResult.ALREADY_LEARNED) {
+				throw new IllegalStateException(
+						"Automatically available skill could not be learned: " + skillDefinition.getId()
+				);
+			}
+		}
+	}
+
+	private SkillDefinition getClassSkillDefinition(String skillId) {
+		return classSkillDefinitions.stream().filter(skillDefinition -> skillDefinition.getId().equals(skillId))
+				.findFirst().orElseThrow(
+						() -> new IllegalArgumentException(
+								"Skill does not belong to the character's class definitions: " + skillId
+						)
+				);
+	}
+
+	public boolean canEquip(EquipmentDefinition definition) {
+		if (definition == null || level < definition.getLevelRequirement()) {
+			return false;
+		}
+
+		if (definition instanceof ArmorDefinition armorDefinition) {
+			return armorDefinition.getArmorWeight() == classDefinition.getArmorWeight();
+		}
+
+		return definition instanceof WeaponDefinition || definition instanceof TrinketDefinition;
+	}
+
+	public Optional<WeaponDefinition> equipWeapon(WeaponDefinition weaponDefinition) {
+		Objects.requireNonNull(weaponDefinition, "Weapon definition cannot be null.");
+
+		validateLevelRequirement(weaponDefinition);
+
+		WeaponDefinition previousWeapon = equipment.equipWeapon(weaponDefinition);
+
+		clampCurrentResourcesToMaximums();
+
+		return Optional.ofNullable(previousWeapon);
+	}
+
+	public Optional<ArmorDefinition> equipArmor(ArmorDefinition armorDefinition) {
+		Objects.requireNonNull(armorDefinition, "Armor definition cannot be null.");
+
+		validateLevelRequirement(armorDefinition);
+
+		if (armorDefinition.getArmorWeight() != classDefinition.getArmorWeight()) {
+			throw new IllegalArgumentException(
+					"Armor weight is incompatible with " + getName() + ": " + armorDefinition.getItemId()
+			);
+		}
+
+		ArmorDefinition previousArmor = equipment.equipArmor(armorDefinition);
+
+		clampCurrentResourcesToMaximums();
+
+		return Optional.ofNullable(previousArmor);
+	}
+
+	public Optional<TrinketDefinition> equipTrinket(TrinketDefinition trinketDefinition) {
+		Objects.requireNonNull(trinketDefinition, "Trinket definition cannot be null.");
+
+		validateLevelRequirement(trinketDefinition);
+
+		TrinketDefinition previousTrinket = equipment.equipTrinket(trinketDefinition);
+
+		clampCurrentResourcesToMaximums();
+
+		return Optional.ofNullable(previousTrinket);
+	}
+
+	public Optional<WeaponDefinition> unequipWeapon() {
+		WeaponDefinition previousWeapon = equipment.unequipWeapon();
+
+		clampCurrentResourcesToMaximums();
+
+		return Optional.ofNullable(previousWeapon);
+	}
+
+	public Optional<ArmorDefinition> unequipArmor() {
+		ArmorDefinition previousArmor = equipment.unequipArmor();
+
+		clampCurrentResourcesToMaximums();
+
+		return Optional.ofNullable(previousArmor);
+	}
+
+	public Optional<TrinketDefinition> unequipTrinket() {
+		TrinketDefinition previousTrinket = equipment.unequipTrinket();
+
+		clampCurrentResourcesToMaximums();
+
+		return Optional.ofNullable(previousTrinket);
+	}
+
+	private void validateLevelRequirement(EquipmentDefinition definition) {
+		if (level < definition.getLevelRequirement()) {
+			throw new IllegalArgumentException(
+					getName() + " must be at least level " + definition.getLevelRequirement() + " to equip "
+							+ definition.getItemId() + "."
+			);
+		}
+	}
+
+	@Override
+	protected int getStructuralMaxHpBonus() {
+		return equipment.getHpBonus();
+	}
+
+	@Override
+	protected int getStructuralMaxMpBonus() {
+		return equipment.getMpBonus();
+	}
+
+	@Override
+	protected int getStructuralMaxSpBonus() {
+		return equipment.getSpBonus();
+	}
+
+	@Override
+	protected int getStructuralAttributeBonus(CharacterAttribute attribute) {
+		return switch (attribute) {
+		case ATK -> equipment.getAttackBonus();
+		case DEF -> equipment.getDefenseBonus();
+		case MAG -> equipment.getMagicBonus();
+		case RES -> equipment.getResistanceBonus();
+		case VEL -> equipment.getSpeedBonus();
+		case LCK -> equipment.getLuckBonus();
+		};
+	}
+
+	public CharacterEquipment getEquipment() {
+		return equipment;
+	}
+
+	public int getExperienceRequiredForNextLevel() {
+		return PlayableCharacterLevelRules.getExperienceRequiredForNextLevel(level);
+	}
+
+	public boolean isMaximumLevel() {
+		return PlayableCharacterLevelRules.isMaximumLevel(level);
+	}
+
+	public PlayableClassDefinition getPlayableClassDefinition() {
+		return classDefinition;
+	}
+
+	public int getExperience() {
+		return experience;
 	}
 
 	public int getLevel() {
 		return level;
 	}
-	
-	public int gainExperience(int amount) {
-	    if (amount <= 0) {
-	        return 0;
-	    }
-
-	    experience = experience + amount;
-
-	    int levelsGained = 0;
-
-	    while (experience >= getExperienceRequiredForNextLevel()) {
-	        experience =
-	                experience - getExperienceRequiredForNextLevel();
-
-	        level++;
-	        levelsGained++;
-	    }
-
-	    return levelsGained;
-	}
-
-	public int getExperienceRequiredForNextLevel() {
-	    return BASE_EXPERIENCE_REQUIREMENT * level;
-	}
-
-	public int getExperience() {
-	    return experience;
-	}
-
 }

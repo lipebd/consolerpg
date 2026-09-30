@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.OptionalInt;
-import java.util.Scanner;
 
 import rpg.GameCurrency;
 import rpg.characters.Party;
@@ -16,6 +15,7 @@ import rpg.world.shops.ShopState;
 import rpg.world.shops.ShopTransactionService;
 import rpg.items.ItemCategory;
 import rpg.world.shops.ShopSaleResult;
+import rpg.world.WorldClock;
 
 // Displays a shop and its currently available offers.
 public final class ShopMenu {
@@ -23,13 +23,15 @@ public final class ShopMenu {
 	private static final int ITEMS_PER_PAGE = 8;
 	private static final int PRICE_WIDTH = 14;
 
+	private final WorldClock worldClock;
 	private final Party party;
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 	private final ShopTransactionService transactionService;
 
-	public ShopMenu(Party party, Scanner scanner) {
+	public ShopMenu(Party party, ConsoleInput consoleInput, WorldClock worldClock) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
+		this.worldClock = Objects.requireNonNull(worldClock, "World clock cannot be null.");
 		this.transactionService = new ShopTransactionService(this.party);
 	}
 
@@ -41,7 +43,7 @@ public final class ShopMenu {
 		while (true) {
 			displayMainMenu(shopState, feedbackMessage);
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			switch (choice) {
 			case "1" -> {
@@ -65,7 +67,9 @@ public final class ShopMenu {
 
 	private void displayMainMenu(ShopState shopState, String feedbackMessage) {
 		System.out.println("\n[" + shopState.getDefinition().getName().toUpperCase(Locale.ROOT) + "]");
-
+		System.out.println();
+		System.out.println(WorldTimeFormatter.formatCurrentTime(worldClock));
+		System.out.println("Próxima reposição: " + WorldTimeFormatter.formatNextRestockingTime(worldClock));
 		System.out.println();
 		System.out.println(shopState.getDefinition().getDescription());
 
@@ -107,7 +111,7 @@ public final class ShopMenu {
 
 			displayPurchasePage(availableOffers, firstIndex, lastIndex, currentPage, totalPages, feedbackMessage);
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return;
@@ -192,7 +196,7 @@ public final class ShopMenu {
 			System.out.println("[0] Cancelar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return OptionalInt.empty();
@@ -238,7 +242,7 @@ public final class ShopMenu {
 			System.out.println("[0] Cancelar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			switch (choice) {
 			case "1" -> {
@@ -285,7 +289,7 @@ public final class ShopMenu {
 		while (true) {
 			displaySaleCategoryMenu(categories);
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return;
@@ -352,7 +356,7 @@ public final class ShopMenu {
 					feedbackMessage
 			);
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return;
@@ -435,7 +439,7 @@ public final class ShopMenu {
 			System.out.println("[0] Cancelar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return OptionalInt.empty();
@@ -479,7 +483,7 @@ public final class ShopMenu {
 			System.out.println("[0] Cancelar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			switch (choice) {
 			case "1" -> {
@@ -605,7 +609,7 @@ public final class ShopMenu {
 			System.out.println("[0] Voltar às categorias");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return;
@@ -724,7 +728,7 @@ public final class ShopMenu {
 			System.out.println("[0] Voltar à loja");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			if (choice.equals("0")) {
 				return;

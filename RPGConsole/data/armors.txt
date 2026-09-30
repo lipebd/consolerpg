@@ -1,0 +1,26 @@
+# itemId;armorWeight;levelRequirement;hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus
+vestes_comuns;LIGHT;1;25;;;;2;;;1;
+vestes_reforcadas;LIGHT;5;50;;;;2;;2;1;
+robe_de_brim;LIGHT;7;75;;;;5;;2;1;
+traje_do_assassino;LIGHT;10;100;;;;2;;2;5;
+traje_do_arcano;LIGHT;15;150;;;;2;;5;5;
+regalia_de_merlin;LIGHT;20;250;;;;5;;10;5;
+uniforme_comum;MEDIUM;1;25;;;;2;;;1;
+uniforme_reforcado;MEDIUM;5;50;;;;3;;;2;
+macacao_de_couro;MEDIUM;7;75;;;;4;;1;2;
+conjunto_do_vigilante;MEDIUM;10;100;;;;4;;2;3;
+conjunto_do_rastreador;MEDIUM;15;150;;;;4;;3;5;
+indumentaria_de_robin;MEDIUM;20;250;;;;8;;4;8;
+gibao_comum;HEAVY;1;25;;;;3;;;;
+gibao_reforcado;HEAVY;5;50;;;;5;;;;
+cota_de_aco;HEAVY;7;75;;;;5;;2;;
+armadura_do_barbaro;HEAVY;10;100;;;;5;;4;;
+armadura_do_templario;HEAVY;15;150;;;;6;;4;2;
+arnes_de_arthur;HEAVY;20;250;;;;10;;7;3;
+veu_da_sombra;LIGHT;20;350;;;;5;;5;15;
+manto_do_menestrel;LIGHT;20;;;;;;;;15;15
+pele_dos_mil_rostos;LIGHT;20;;;;;;15;;;15
+tunica_das_estacoes;MEDIUM;20;;;;;10;;10;10;
+jaqueta_do_falcao;MEDIUM;20;;;;5;;5;;20;
+panoplia_do_invicto;HEAVY;20;;;;;15;;10;;
+cota_do_silencio;HEAVY;20;;;;;;15;10;;

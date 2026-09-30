@@ -2,7 +2,6 @@ package rpg.ui;
 
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Scanner;
 
 import rpg.characters.Party;
 import rpg.characters.PlayableCharacter;
@@ -13,14 +12,14 @@ import rpg.GameCurrency;
 public final class InnMenu {
 
 	private final Party party;
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 
-	public InnMenu(Party party, Scanner scanner) {
+	public InnMenu(Party party, ConsoleInput consoleInput) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
-		this.scanner = Objects.requireNonNull(scanner, "Scanner cannot be null.");
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 	}
 
-	public void open(InnDefinition innDefinition) {
+	public Selection open(InnDefinition innDefinition) {
 		Objects.requireNonNull(innDefinition, "Inn definition cannot be null.");
 
 		String feedbackMessage = null;
@@ -28,18 +27,30 @@ public final class InnMenu {
 		while (true) {
 			displayInn(innDefinition, feedbackMessage);
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			switch (choice) {
 			case "0" -> {
-				return;
+				return Selection.BACK;
 			}
 
 			case "1" -> feedbackMessage = tryRest(innDefinition);
 
+			case "2" -> {
+				return Selection.SAVE_AND_CONTINUE;
+			}
+
+			case "3" -> {
+				return Selection.SAVE_AND_EXIT;
+			}
+
 			default -> feedbackMessage = "Opção inválida.";
 			}
 		}
+	}
+
+	public enum Selection {
+		BACK, SAVE_AND_CONTINUE, SAVE_AND_EXIT
 	}
 
 	private void displayInn(InnDefinition innDefinition, String feedbackMessage) {
@@ -61,6 +72,8 @@ public final class InnMenu {
 
 		System.out.println();
 		System.out.println("[1] Descansar");
+		System.out.println("[2] Salvar e continuar");
+		System.out.println("[3] Salvar e encerrar");
 		System.out.println("[0] Voltar");
 		System.out.print("> ");
 	}
@@ -82,7 +95,7 @@ public final class InnMenu {
 			throw new IllegalStateException("Party gold changed before Inn payment.");
 		}
 
-		restoreParty();
+		party.fullyRestoreMembers();
 
 		return "Após uma noite de descanso, todos despertam com as forças completamente renovadas.";
 	}
@@ -96,7 +109,7 @@ public final class InnMenu {
 			System.out.println("[0] Cancelar");
 			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
+			String choice = consoleInput.readTrimmedLine();
 
 			switch (choice) {
 			case "1" -> {
@@ -121,15 +134,5 @@ public final class InnMenu {
 		}
 
 		return true;
-	}
-
-	private void restoreParty() {
-		for (PlayableCharacter member : party.getMembers()) {
-			if (!member.isAlive()) {
-				member.revive(member.getMaxHp());
-			}
-
-			member.restoreAllResources();
-		}
 	}
 }

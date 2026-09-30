@@ -1,169 +1,70 @@
 package rpg.marketplace;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.ArrayList;
-import java.util.Map;
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import rpg.characters.Party;
 import rpg.items.Item;
 import rpg.items.ItemCatalog;
-import rpg.marketplace.repository.MarketplaceRepository;
-import rpg.marketplace.api.CreateListingRequest;
 import rpg.marketplace.api.MarketplaceApiClient;
 import rpg.marketplace.api.MarketplaceApiException;
-import rpg.marketplace.api.MarketplaceListingResponse;
 
-public class MarketplaceTransactionService {
+// Coordinates remote marketplace state with the current campaign's local resources.
+public final class MarketplaceTransactionService {
 
 	private final Party party;
 	private final ItemCatalog itemCatalog;
 	private final String playerId;
-	private final MarketplaceRepository repository;
-	private final MarketplaceApiClient marketplaceApiClient;
+	private final MarketplaceApiClient apiClient;
 
 	public MarketplaceTransactionService(
 			Party party,
 			ItemCatalog itemCatalog,
 			String playerId,
-			MarketplaceRepository repository,
-			MarketplaceApiClient marketplaceApiClient) {
-
-		this.party = Objects.requireNonNull(
-				party,
-				"Party cannot be null."
-				);
-
-		this.itemCatalog = Objects.requireNonNull(
-				itemCatalog,
-				"Item catalog cannot be null."
-				);
-
-		this.playerId = Objects.requireNonNull(
-				playerId,
-				"Player ID cannot be null."
-				);
-
-		this.repository = Objects.requireNonNull(
-				repository,
-				"Marketplace repository cannot be null."
-				);
-
-		this.marketplaceApiClient = Objects.requireNonNull(
-				marketplaceApiClient,
-				"Marketplace API client cannot be null."
-				);
+			MarketplaceApiClient apiClient) {
+		this.party = Objects.requireNonNull(party, "Party cannot be null.");
+		this.itemCatalog = Objects.requireNonNull(itemCatalog, "Item catalog cannot be null.");
+		if (playerId == null || playerId.isBlank()) {
+			throw new IllegalArgumentException("Marketplace player ID cannot be empty.");
+		}
+		this.playerId = playerId;
+		this.apiClient = Objects.requireNonNull(apiClient, "Marketplace API client cannot be null.");
 	}
 
-	public MarketplacePurchaseResult purchase(
-			MarketplaceListing listing) {
-
-		if (listing == null) {
-			return MarketplacePurchaseResult.INVALID_LISTING;
-		}
-
-		if (listing.getStatus() != ListingStatus.ACTIVE) {
-			return MarketplacePurchaseResult.LISTING_NOT_ACTIVE;
-		}
-
-		if (listing.getSellerId().equals(playerId)) {
-			return MarketplacePurchaseResult.CANNOT_BUY_OWN_LISTING;
-		}
-
-		int totalPrice;
-
-		try {
-			totalPrice = Math.multiplyExact(
-					listing.getUnitPrice(),
-					listing.getQuantity()
-					);
-		} catch (ArithmeticException exception) {
-			return MarketplacePurchaseResult.INVALID_LISTING;
-		}
-
-		if (party.getGold() < totalPrice) {
-			return MarketplacePurchaseResult.INSUFFICIENT_GOLD;
-		}
-
-		Item item = itemCatalog.getById(
-				listing.getItemId()
-				);
-
-		if (!party.spendGold(totalPrice)) {
-			return MarketplacePurchaseResult.INSUFFICIENT_GOLD;
-		}
-
-		if (!party.getInventory().addItem(
-				item,
-				listing.getQuantity())) {
-
-			party.addGold(totalPrice);
-
-			return MarketplacePurchaseResult.INVENTORY_ERROR;
-		}
-
-		listing.markAsSold();
-
-		createTransactionAndReward(
-				listing,
-				totalPrice
-				);
-
-		return MarketplacePurchaseResult.SUCCESS;
+	public List<MarketplaceListing> getActiveListings()
+			throws IOException, InterruptedException {
+		return apiClient.getActiveListings();
 	}
 
-	private void createTransactionAndReward(
-			MarketplaceListing listing,
-			int totalPrice) {
+	public List<MarketplaceListing> getListingsForCurrentPlayer()
+			throws IOException, InterruptedException {
+		return apiClient.getListingsForSeller(playerId);
+	}
 
-		String transactionId =
-				"transaction-" + (repository.getAllTransactions().size() + 1);
+	public List<PendingReward> getPendingRewardsForCurrentPlayer()
+			throws IOException, InterruptedException {
+		return apiClient.getPendingRewards(playerId);
+	}
 
-		MarketplaceTransaction transaction =
-				new MarketplaceTransaction(
-						transactionId,
-						listing.getId(),
-						playerId,
-						listing.getSellerId(),
-						listing.getItemId(),
-						listing.getQuantity(),
-						listing.getUnitPrice()
-						);
+	public Map<Item, Integer> getInventoryItemsForListing() {
+		Map<Item, Integer> tradableItems = new LinkedHashMap<>();
 
-		repository.addTransaction(transaction);
+		for (Map.Entry<Item, Integer> entry : party.getInventory().getContents().entrySet()) {
+			if (entry.getKey().isPlayerTradable()) {
+				tradableItems.put(entry.getKey(), entry.getValue());
+			}
+		}
 
-		String rewardId =
-				"reward-" + (repository.getAllPendingRewards().size() + 1);
-
-		PendingReward reward =
-				new PendingReward(
-						rewardId,
-						transactionId,
-						listing.getSellerId(),
-						totalPrice
-						);
-
-		repository.addPendingReward(reward);
+		return Map.copyOf(tradableItems);
 	}
 
 	public MarketplaceListingCreationResult createListing(
 			String itemId,
 			int quantity,
 			int unitPrice) {
-
-		if (itemId == null || itemId.isBlank()) {
-			return MarketplaceListingCreationResult.INVALID_ITEM;
-		}
-
-		if (quantity <= 0) {
-			return MarketplaceListingCreationResult.INVALID_QUANTITY;
-		}
-
-		if (unitPrice <= 0) {
-			return MarketplaceListingCreationResult.INVALID_UNIT_PRICE;
-		}
-
 		Item item;
 
 		try {
@@ -172,204 +73,196 @@ public class MarketplaceTransactionService {
 			return MarketplaceListingCreationResult.INVALID_ITEM;
 		}
 
+		if (!item.isPlayerTradable()) {
+			return MarketplaceListingCreationResult.ITEM_NOT_TRADABLE;
+		}
+		if (quantity <= 0) {
+			return MarketplaceListingCreationResult.INVALID_QUANTITY;
+		}
+		if (unitPrice <= 0) {
+			return MarketplaceListingCreationResult.INVALID_UNIT_PRICE;
+		}
 		if (party.getInventory().getQuantity(item) < quantity) {
 			return MarketplaceListingCreationResult.INSUFFICIENT_ITEMS;
 		}
+		try {
+			Math.multiplyExact(quantity, unitPrice);
+		} catch (ArithmeticException exception) {
+			return MarketplaceListingCreationResult.INVALID_UNIT_PRICE;
+		}
 
 		if (!party.getInventory().removeItem(item, quantity)) {
-			return MarketplaceListingCreationResult.INVENTORY_ERROR;
+			return MarketplaceListingCreationResult.INSUFFICIENT_ITEMS;
 		}
-
-		CreateListingRequest request =
-				new CreateListingRequest(
-						playerId,
-						itemId,
-						quantity,
-						unitPrice
-						);
-
-		MarketplaceListingResponse response;
 
 		try {
-			response = marketplaceApiClient.createListing(request);
-
+			apiClient.createListing(playerId, itemId, quantity, unitPrice);
+			return MarketplaceListingCreationResult.SUCCESS;
 		} catch (InterruptedException exception) {
 			Thread.currentThread().interrupt();
-
-			party.getInventory().addItem(item, quantity);
-
+			rollbackRemovedItem(item, quantity);
 			return MarketplaceListingCreationResult.API_UNAVAILABLE;
-
-		} catch (IOException exception) {
-			party.getInventory().addItem(item, quantity);
-
+		} catch (MarketplaceApiException exception) {
+			rollbackRemovedItem(item, quantity);
+			return MarketplaceListingCreationResult.SERVER_REJECTED;
+		} catch (IOException | IllegalArgumentException exception) {
+			rollbackRemovedItem(item, quantity);
 			return MarketplaceListingCreationResult.API_UNAVAILABLE;
 		}
-
-		MarketplaceListing listing =
-				response.toMarketplaceListing();
-
-		repository.addListing(listing);
-
-		return MarketplaceListingCreationResult.SUCCESS;
 	}
 
-	public List<MarketplaceListing> getListingsForCurrentPlayer() {
-		List<MarketplaceListing> playerListings =
-				new ArrayList<>();
+	public MarketplacePurchaseResult purchase(MarketplaceListing listing) {
+		if (listing == null) {
+			return MarketplacePurchaseResult.INVALID_LISTING;
+		}
+		if (listing.status() != ListingStatus.ACTIVE) {
+			return MarketplacePurchaseResult.LISTING_NOT_ACTIVE;
+		}
+		if (listing.sellerId().equals(playerId)) {
+			return MarketplacePurchaseResult.CANNOT_BUY_OWN_LISTING;
+		}
 
-		for (MarketplaceListing listing : repository.getAllListings()) {
+		Item item;
+		try {
+			item = itemCatalog.getById(listing.itemId());
+		} catch (IllegalArgumentException exception) {
+			return MarketplacePurchaseResult.INVALID_LISTING;
+		}
 
-			if (listing.getSellerId().equals(playerId)
-					&& listing.getStatus() != ListingStatus.CANCELLED) {
+		if (party.getGold() < listing.totalPrice()) {
+			return MarketplacePurchaseResult.INSUFFICIENT_GOLD;
+		}
+		if (party.getInventory().getRemainingCapacity(item) < listing.quantity()) {
+			return MarketplacePurchaseResult.INVENTORY_CAPACITY_EXCEEDED;
+		}
 
-				playerListings.add(listing);
+		try {
+			apiClient.purchaseListing(listing.id(), playerId);
+		} catch (InterruptedException exception) {
+			Thread.currentThread().interrupt();
+			return MarketplacePurchaseResult.API_UNAVAILABLE;
+		} catch (MarketplaceApiException exception) {
+			if (exception.getStatusCode() == 409) {
+				return MarketplacePurchaseResult.LISTING_NOT_ACTIVE;
 			}
+			if (exception.getStatusCode() == 403) {
+				return MarketplacePurchaseResult.CANNOT_BUY_OWN_LISTING;
+			}
+			if (exception.getStatusCode() == 404) {
+				return MarketplacePurchaseResult.INVALID_LISTING;
+			}
+			return MarketplacePurchaseResult.SERVER_REJECTED;
+		} catch (IOException | IllegalArgumentException exception) {
+			return MarketplacePurchaseResult.API_UNAVAILABLE;
 		}
 
-		return playerListings;
+		if (!party.spendGold(listing.totalPrice())) {
+			throw new IllegalStateException("Party gold changed during marketplace purchase.");
+		}
+		if (!party.getInventory().addItem(item, listing.quantity())) {
+			boolean goldRestored = party.addGold(listing.totalPrice());
+			if (!goldRestored) {
+				throw new IllegalStateException("Marketplace purchase rollback failed.");
+			}
+			throw new IllegalStateException("Inventory changed during marketplace purchase.");
+		}
+
+		return MarketplacePurchaseResult.SUCCESS;
 	}
 
-	public List<MarketplaceListing> getActiveListings()
-			throws IOException, InterruptedException {
-
-		return marketplaceApiClient
-				.getActiveListings()
-				.stream()
-				.map(
-						MarketplaceListingResponse
-						::toMarketplaceListing
-						)
-
-				.toList();
-	}
-
-	public MarketplaceListingCancellationResult cancelListing(
-			MarketplaceListing listing) {
-
+	public MarketplaceListingCancellationResult cancelListing(MarketplaceListing listing) {
 		if (listing == null) {
 			return MarketplaceListingCancellationResult.INVALID_LISTING;
 		}
-
-		if (!listing.getSellerId().equals(playerId)) {
+		if (!listing.sellerId().equals(playerId)) {
 			return MarketplaceListingCancellationResult.NOT_LISTING_OWNER;
 		}
-
-		if (listing.getStatus() != ListingStatus.ACTIVE) {
+		if (listing.status() != ListingStatus.ACTIVE) {
 			return MarketplaceListingCancellationResult.LISTING_NOT_ACTIVE;
 		}
 
 		Item item;
-
 		try {
-			item = itemCatalog.getById(listing.getItemId());
+			item = itemCatalog.getById(listing.itemId());
 		} catch (IllegalArgumentException exception) {
 			return MarketplaceListingCancellationResult.INVALID_LISTING;
 		}
 
-		MarketplaceListingResponse response;
+		if (party.getInventory().getRemainingCapacity(item) < listing.quantity()) {
+			return MarketplaceListingCancellationResult.INVENTORY_CAPACITY_EXCEEDED;
+		}
 
 		try {
-			response = marketplaceApiClient.cancelListing(
-					listing.getId(),
-					playerId
-					);
-
-		} catch (MarketplaceApiException exception) {
-			return switch (exception.getStatusCode()) {
-			case 404 ->
-			MarketplaceListingCancellationResult.INVALID_LISTING;
-
-			case 403 ->
-			MarketplaceListingCancellationResult.NOT_LISTING_OWNER;
-
-			case 409 ->
-			MarketplaceListingCancellationResult.LISTING_NOT_ACTIVE;
-
-			default ->
-			MarketplaceListingCancellationResult.API_UNAVAILABLE;
-			};
-
+			apiClient.cancelListing(listing.id(), playerId);
 		} catch (InterruptedException exception) {
 			Thread.currentThread().interrupt();
-
 			return MarketplaceListingCancellationResult.API_UNAVAILABLE;
-
-		} catch (IOException exception) {
+		} catch (MarketplaceApiException exception) {
+			if (exception.getStatusCode() == 409) {
+				return MarketplaceListingCancellationResult.LISTING_NOT_ACTIVE;
+			}
+			if (exception.getStatusCode() == 403) {
+				return MarketplaceListingCancellationResult.NOT_LISTING_OWNER;
+			}
+			if (exception.getStatusCode() == 404) {
+				return MarketplaceListingCancellationResult.INVALID_LISTING;
+			}
+			return MarketplaceListingCancellationResult.SERVER_REJECTED;
+		} catch (IOException | IllegalArgumentException exception) {
 			return MarketplaceListingCancellationResult.API_UNAVAILABLE;
 		}
 
-		if (!response.status().equals("CANCELLED")) {
-			return MarketplaceListingCancellationResult.API_UNAVAILABLE;
+		if (!party.getInventory().addItem(item, listing.quantity())) {
+			throw new IllegalStateException("Inventory changed during marketplace cancellation.");
 		}
-
-		if (!party.getInventory().addItem(
-				item,
-				listing.getQuantity())) {
-
-			return MarketplaceListingCancellationResult.INVENTORY_ERROR;
-		}
-
-		listing.cancel();
 
 		return MarketplaceListingCancellationResult.SUCCESS;
 	}
 
-	public Map<Item, Integer> getInventoryItemsForListing() {
-		return party.getInventory().getContents();
-	}
-
-	public MarketplaceRewardClaimResult claimReward(
-			PendingReward reward) {
-
+	public MarketplaceRewardClaimResult claimReward(PendingReward reward) {
 		if (reward == null) {
 			return MarketplaceRewardClaimResult.INVALID_REWARD;
 		}
-
-		if (reward.getStatus() != RewardStatus.PENDING) {
-			return MarketplaceRewardClaimResult.REWARD_NOT_PENDING;
-		}
-
-		if (!reward.getSellerId().equals(playerId)) {
+		if (!reward.sellerId().equals(playerId)) {
 			return MarketplaceRewardClaimResult.NOT_REWARD_OWNER;
 		}
-
-		int resultingGold;
-
-		try {
-			resultingGold = Math.addExact(
-					party.getGold(),
-					reward.getAmount()
-					);
-		} catch (ArithmeticException exception) {
+		if (reward.status() != RewardStatus.PENDING) {
+			return MarketplaceRewardClaimResult.REWARD_NOT_PENDING;
+		}
+		if (party.getRemainingGoldCapacity() < reward.amount()) {
 			return MarketplaceRewardClaimResult.GOLD_CAPACITY_EXCEEDED;
 		}
 
-		party.addGold(reward.getAmount());
-
-		if (party.getGold() != resultingGold) {
-			throw new IllegalStateException(
-					"Party gold changed while claiming marketplace reward."
-					);
+		try {
+			apiClient.claimReward(reward.id(), playerId);
+		} catch (InterruptedException exception) {
+			Thread.currentThread().interrupt();
+			return MarketplaceRewardClaimResult.API_UNAVAILABLE;
+		} catch (MarketplaceApiException exception) {
+			if (exception.getStatusCode() == 409) {
+				return MarketplaceRewardClaimResult.REWARD_NOT_PENDING;
+			}
+			if (exception.getStatusCode() == 403) {
+				return MarketplaceRewardClaimResult.NOT_REWARD_OWNER;
+			}
+			if (exception.getStatusCode() == 404) {
+				return MarketplaceRewardClaimResult.INVALID_REWARD;
+			}
+			return MarketplaceRewardClaimResult.SERVER_REJECTED;
+		} catch (IOException | IllegalArgumentException exception) {
+			return MarketplaceRewardClaimResult.API_UNAVAILABLE;
 		}
 
-		reward.claim();
+		if (!party.addGold(reward.amount())) {
+			throw new IllegalStateException("Party gold changed during marketplace reward claim.");
+		}
 
 		return MarketplaceRewardClaimResult.SUCCESS;
 	}
 
-	public List<PendingReward> getPendingRewardsForCurrentPlayer() {
-		List<PendingReward> playerRewards = new ArrayList<>();
-
-		for (PendingReward reward : repository.getAllPendingRewards()) {
-			if (reward.getStatus() == RewardStatus.PENDING
-					&& reward.getSellerId().equals(playerId)) {
-
-				playerRewards.add(reward);
-			}
+	private void rollbackRemovedItem(Item item, int quantity) {
+		if (!party.getInventory().addItem(item, quantity)) {
+			throw new IllegalStateException("Marketplace listing rollback failed.");
 		}
-
-		return playerRewards;
 	}
-
 }

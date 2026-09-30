@@ -16,8 +16,11 @@ public final class ExplorationRewardLoader {
 
 	private static final int EXPECTED_FIELD_COUNT = 7;
 
-	public ExplorationRewardCatalog load(Path filePath, CombatScenarioDefinitionCatalog combatScenarioDefinitionCatalog,
-			ItemCatalog itemCatalog) throws IOException {
+    public ExplorationRewardCatalog load(
+            Path filePath,
+            CombatScenarioDefinitionCatalog combatScenarioDefinitionCatalog,
+            ItemCatalog itemCatalog)
+            throws IOException {
 		ExplorationRewardCatalog rewardCatalog = new ExplorationRewardCatalog();
 
 		List<String> lines = Files.readAllLines(filePath);
@@ -37,13 +40,21 @@ public final class ExplorationRewardLoader {
 		return rewardCatalog;
 	}
 
-	private void registerEntry(String line, CombatScenarioDefinitionCatalog combatScenarioDefinitionCatalog,
-			ItemCatalog itemCatalog, ExplorationRewardCatalog rewardCatalog) {
+    private void registerEntry(
+            String line,
+            CombatScenarioDefinitionCatalog combatScenarioDefinitionCatalog,
+            ItemCatalog itemCatalog,
+            ExplorationRewardCatalog rewardCatalog) {
 		String[] fields = line.split(";", -1);
 
 		if (fields.length != EXPECTED_FIELD_COUNT) {
-			throw new IllegalArgumentException("Invalid exploration reward data. Expected " + EXPECTED_FIELD_COUNT
-					+ " fields but found " + fields.length + ": " + line);
+            throw new IllegalArgumentException(
+                    "Invalid exploration reward data. Expected "
+                            + EXPECTED_FIELD_COUNT
+                            + " fields but found "
+                            + fields.length
+                            + ": "
+                            + line);
 		}
 
 		String scenarioId = fields[0].trim();
@@ -58,7 +69,8 @@ public final class ExplorationRewardLoader {
 
 		int weight = parseInteger(fields[5], "reward weight");
 
-		ExplorationAreaRestriction areaRestriction = ExplorationAreaRestriction.valueOf(fields[6].trim().toUpperCase());
+        ExplorationAreaRestriction areaRestriction =
+                ExplorationAreaRestriction.valueOf(fields[6].trim().toUpperCase());
 
 		combatScenarioDefinitionCatalog.getByScenarioId(scenarioId);
 
@@ -66,35 +78,46 @@ public final class ExplorationRewardLoader {
 			itemCatalog.getById(rewardId);
 		}
 
-		ExplorationRewardEntry rewardEntry = new ExplorationRewardEntry(type, rewardId, minQuantity, maxQuantity,
-				weight, areaRestriction);
+        ExplorationRewardEntry rewardEntry =
+                new ExplorationRewardEntry(
+                        type, rewardId, minQuantity, maxQuantity, weight, areaRestriction);
 
 		rewardCatalog.register(scenarioId, rewardEntry);
 	}
 
-	private void validateRequiredPools(CombatScenarioDefinitionCatalog combatScenarioDefinitionCatalog,
+    private void validateRequiredPools(
+            CombatScenarioDefinitionCatalog combatScenarioDefinitionCatalog,
 			ExplorationRewardCatalog rewardCatalog) {
 		for (CombatScenarioDefinition definition : combatScenarioDefinitionCatalog.getAll()) {
 			ExplorationSettings settings = definition.getExplorationSettings();
-
-			if (settings.getRewardChance() <= 0) {
-				continue;
-			}
-
 			String scenarioId = definition.getScenarioId();
 
-			boolean normalAreaPossible = settings.getSpecialAreaChance() < 100;
+            int totalEventChance =
+                    settings.getBattleChance()
+                            + settings.getRewardChance()
+                            + settings.getMerchantChance()
+                            + settings.getEpicEncounterChance();
 
 			boolean specialAreaPossible = settings.getSpecialAreaChance() > 0;
 
-			if (normalAreaPossible && rewardCatalog.getAvailableEntries(scenarioId, false).isEmpty()) {
+            boolean specialRewardPossible =
+                    settings.getRewardChance() > 0
+                            || settings.getMerchantChance() > 0
+                            || totalEventChance < 100;
+
+            if (settings.getRewardChance() > 0
+                    && rewardCatalog.getAvailableEntries(scenarioId, false).isEmpty()) {
 				throw new IllegalArgumentException(
-						"Exploration reward pool is empty for normal areas of scenario: " + scenarioId);
+                        "Exploration reward pool is empty for normal areas of scenario: "
+                                + scenarioId);
 			}
 
-			if (specialAreaPossible && rewardCatalog.getAvailableEntries(scenarioId, true).isEmpty()) {
+            if (specialAreaPossible
+                    && specialRewardPossible
+                    && rewardCatalog.getAvailableEntries(scenarioId, true).isEmpty()) {
 				throw new IllegalArgumentException(
-						"Exploration reward pool is empty for special areas of scenario: " + scenarioId);
+                        "Exploration reward pool is empty for special areas of scenario: "
+                                + scenarioId);
 			}
 		}
 	}
@@ -106,4 +129,4 @@ public final class ExplorationRewardLoader {
 			throw new IllegalArgumentException("Invalid " + fieldName + ": " + value.trim());
 		}
 	}
-}
+}

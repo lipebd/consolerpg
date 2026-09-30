@@ -4,9 +4,9 @@ package rpg.world.scenarios;
 public enum CityAction {
 
 	VISIT_LOCATION("Visitar um local"),
+	MARKETPLACE("Posto de Trocas"),
 	LEAVE_CITY("Sair da cidade"),
 	CITY_TRANSPORT("Viajar"),
-	MARKETPLACE("Posto de Trocas"),
 	INVENTORY("Inventário"),
 	VIEW_STATUS("Ver status");
 

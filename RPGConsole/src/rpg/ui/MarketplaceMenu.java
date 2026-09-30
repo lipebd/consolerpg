@@ -1,732 +1,404 @@
 package rpg.ui;
 
-import java.util.Objects;
-import java.util.Scanner;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
-import rpg.marketplace.MarketplaceListing;
-import rpg.marketplace.MarketplaceTransactionService;
-import rpg.marketplace.MarketplaceListingCreationResult;
-import rpg.marketplace.MarketplaceListingCancellationResult;
-import rpg.marketplace.MarketplacePurchaseResult;
-import rpg.marketplace.PendingReward;
-import rpg.marketplace.ListingStatus;
-import rpg.marketplace.MarketplaceRewardClaimResult;
-import rpg.items.ItemCatalog;
+import rpg.GameCurrency;
 import rpg.items.Item;
+import rpg.items.ItemCatalog;
+import rpg.marketplace.ListingStatus;
+import rpg.marketplace.MarketplaceListing;
+import rpg.marketplace.MarketplaceListingCancellationResult;
+import rpg.marketplace.MarketplaceListingCreationResult;
+import rpg.marketplace.MarketplacePurchaseResult;
+import rpg.marketplace.MarketplaceRewardClaimResult;
+import rpg.marketplace.MarketplaceTransactionService;
+import rpg.marketplace.PendingReward;
 
-// Displays the marketplace main menu.
+// Displays the online marketplace available from every city.
 public final class MarketplaceMenu {
 
-	private final Scanner scanner;
+	private final ConsoleInput consoleInput;
 	private final ItemCatalog itemCatalog;
 	private final MarketplaceTransactionService transactionService;
 
-	public MarketplaceMenu(Scanner scanner,
+	public MarketplaceMenu(
+			ConsoleInput consoleInput,
 			ItemCatalog itemCatalog,
 			MarketplaceTransactionService transactionService) {
-
-		this.scanner = Objects.requireNonNull(
-				scanner,
-				"Scanner cannot be null."
-				);
-		this.itemCatalog = Objects.requireNonNull(
-				itemCatalog,
-				"Item catalog cannot be null."
-				);
+		this.consoleInput = Objects.requireNonNull(consoleInput, "Console input cannot be null.");
+		this.itemCatalog = Objects.requireNonNull(itemCatalog, "Item catalog cannot be null.");
 		this.transactionService = Objects.requireNonNull(
-				transactionService,
-				"Transaction service cannot be null."
-				);
+				transactionService, "Marketplace transaction service cannot be null.");
 	}
-
 
 	public void open() {
 		while (true) {
-			displayMenu();
+			System.out.println("\n[POSTO DE TROCAS]");
+			System.out.println("\nCompre e venda itens com outros jogadores.");
+			System.out.println("\n[1] Ver anúncios");
+			System.out.println("[2] Criar anúncio");
+			System.out.println("[3] Minhas vendas");
+			System.out.println("[4] Recompensas");
+			System.out.println("\n[0] Voltar");
+			System.out.print("> ");
 
-			String choice = scanner.nextLine().trim();
-
-			switch (choice) {
-			case "1" -> showListings();
-
-			case "2" -> createListing();
-
-			case "3" -> showMySales();
-
-			case "4" -> showRewards();
-
-			case "0" -> {
-				return;
-			}
-
-			default -> System.out.println("\nOpção inválida.");
+			switch (consoleInput.readTrimmedLine()) {
+				case "1" -> showListings();
+				case "2" -> createListing();
+				case "3" -> showMySales();
+				case "4" -> showRewards();
+				case "0" -> {
+					return;
+				}
+				default -> System.out.println("\nOpção inválida.");
 			}
 		}
-	}
-
-	private void displayMenu() {
-		System.out.println("\n[POSTO DE TROCAS]");
-
-		System.out.println();
-		System.out.println("Compre e venda itens com outros jogadores.");
-
-		System.out.println();
-		System.out.println("[1] Ver anúncios");
-		System.out.println("[2] Criar anúncio");
-		System.out.println("[3] Minhas vendas");
-		System.out.println("[4] Recompensas");
-
-		System.out.println();
-		System.out.println("[0] Voltar");
-
-		System.out.print("> ");
 	}
 
 	private void showListings() {
-	    System.out.println("\n[ANÚNCIOS]");
-
-	    List<MarketplaceListing> activeListings;
-
-	    try {
-	        activeListings =
-	                transactionService.getActiveListings();
-
-	    } catch (InterruptedException exception) {
-	        Thread.currentThread().interrupt();
-
-	        System.out.println();
-	        System.out.println(
-	                "A atualização dos anúncios foi interrompida."
-	        );
-
-	        waitForReturn();
-	        return;
-
-	    } catch (IOException exception) {
-	        System.out.println();
-	        System.out.println(
-	                "Não foi possível acessar o posto de trocas."
-	        );
-	        System.out.println(
-	                "Verifique se a Marketplace API está ligada."
-	        );
-
-	        waitForReturn();
-	        return;
-	    }
-
-		if (activeListings.isEmpty()) {
-			System.out.println();
-			System.out.println("Nenhum anúncio disponível.");
-
-			waitForReturn();
-			return;
-		}
-
-		for (int i = 0; i < activeListings.size(); i++) {
-			MarketplaceListing listing = activeListings.get(i);
-
-			Item item = itemCatalog.getById(listing.getItemId());
-
-			int totalPrice =
-					listing.getUnitPrice() * listing.getQuantity();
-
-			System.out.println();
-			System.out.println("[" + (i + 1) + "] " + item.getName());
-			System.out.println("Quantidade: " + listing.getQuantity());
-			System.out.println("Preço unitário: " + listing.getUnitPrice());
-			System.out.println("Total: " + totalPrice);
-			System.out.println("Vendedor: " + listing.getSellerId());
-		}
-
-		System.out.println();
-		System.out.println("[0] Voltar");
-		System.out.print("> ");
-
-		String input = scanner.nextLine().trim();
-
-		if (input.equals("0")) {
-			return;
-		}
+		List<MarketplaceListing> listings;
 
 		try {
-			int option = Integer.parseInt(input);
-
-			if (option < 1 || option > activeListings.size()) {
-				System.out.println("\nOpção inválida.");
-				waitForReturn();
-				return;
-			}
-
-			MarketplaceListing selectedListing =
-					activeListings.get(option - 1);
-
-			showListingDetails(selectedListing);
-
-		} catch (NumberFormatException exception) {
-			System.out.println("\nOpção inválida.");
-			waitForReturn();
+			listings = transactionService.getActiveListings();
+		} catch (IOException exception) {
+			displayApiUnavailable();
+			return;
+		} catch (InterruptedException exception) {
+			Thread.currentThread().interrupt();
+			displayApiUnavailable();
+			return;
 		}
-	}
 
-	private String getListingStatusLabel(
-			ListingStatus status) {
+		System.out.println("\n[ANÚNCIOS]");
 
-		return switch (status) {
-		case ACTIVE -> "Ativo";
-		case SOLD -> "Vendido";
-		case CANCELLED -> "Cancelado";
-		};
+		if (listings.isEmpty()) {
+			System.out.println("\nNenhum anúncio disponível.");
+			waitForReturn();
+			return;
+		}
+
+		for (int index = 0; index < listings.size(); index++) {
+			displayListingSummary(index + 1, listings.get(index), true);
+		}
+
+		int selection = readSelection(listings.size());
+		if (selection == 0) {
+			return;
+		}
+
+		showListingDetails(listings.get(selection - 1));
 	}
 
 	private void showListingDetails(MarketplaceListing listing) {
-		Item item = itemCatalog.getById(listing.getItemId());
+		System.out.println("\n[DETALHES DO ANÚNCIO]");
+		displayListingFields(listing, true);
+		System.out.println("\n[1] Comprar");
+		System.out.println("[0] Voltar");
+		System.out.print("> ");
 
-		int totalPrice =
-				listing.getUnitPrice() * listing.getQuantity();
-
-		while (true) {
-			System.out.println("\n[DETALHES DO ANÚNCIO]");
-
-			System.out.println();
-			System.out.println("Item: " + item.getName());
-			System.out.println("Quantidade: " + listing.getQuantity());
-			System.out.println("Preço unitário: " + listing.getUnitPrice());
-			System.out.println("Total: " + totalPrice);
-			System.out.println("Vendedor: " + listing.getSellerId());
-
-			System.out.println();
-			System.out.println("[1] Comprar");
-			System.out.println("[0] Voltar");
-			System.out.print("> ");
-
-			String choice = scanner.nextLine().trim();
-
-			switch (choice) {
-			case "1" -> {
-				purchaseListing(listing);
-				return;
-			}
-
-			case "0" -> {
-				return;
-			}
-
-			default -> System.out.println("\nOpção inválida.");
-			}
+		if (!consoleInput.readTrimmedLine().equals("1")) {
+			return;
 		}
-	}
 
-	private void purchaseListing(MarketplaceListing listing) {
-		MarketplacePurchaseResult result =
-				transactionService.purchase(listing);
+		MarketplacePurchaseResult result = transactionService.purchase(listing);
 
 		System.out.println("\n[COMPRA]");
-
 		switch (result) {
-
-		case SUCCESS ->
-		System.out.println("\nCompra realizada com sucesso!");
-
-		case INVALID_LISTING ->
-		System.out.println("\nAnúncio inválido.");
-
-		case LISTING_NOT_ACTIVE ->
-		System.out.println("\nEste anúncio não está mais disponível.");
-
-		case CANNOT_BUY_OWN_LISTING ->
-		System.out.println("\nVocê não pode comprar seu próprio anúncio.");
-
-		case INSUFFICIENT_GOLD ->
-		System.out.println("\nVocê não possui moedas suficientes.");
-
-		case INVENTORY_ERROR ->
-		System.out.println("\nNão foi possível adicionar o item ao inventário.");
+			case SUCCESS -> System.out.println("\nCompra realizada com sucesso!");
+			case INVALID_LISTING -> System.out.println("\nO anúncio é inválido para este jogo.");
+			case LISTING_NOT_ACTIVE -> System.out.println("\nEste anúncio não está mais disponível.");
+			case CANNOT_BUY_OWN_LISTING -> System.out.println("\nVocê não pode comprar seu próprio anúncio.");
+			case INSUFFICIENT_GOLD -> System.out.println("\nVocê não possui GOLD suficiente.");
+			case INVENTORY_CAPACITY_EXCEEDED -> System.out.println("\nNão há espaço suficiente no inventário.");
+			case API_UNAVAILABLE -> System.out.println("\nNão foi possível acessar o Posto de Trocas.");
+			case SERVER_REJECTED -> System.out.println("\nA API recusou a compra.");
 		}
 
 		waitForReturn();
 	}
 
 	private void createListing() {
+		Map<Item, Integer> inventoryItems = transactionService.getInventoryItemsForListing();
+
 		System.out.println("\n[CRIAR ANÚNCIO]");
 
-		Map<Item, Integer> inventoryItems =
-				transactionService.getInventoryItemsForListing();
-
 		if (inventoryItems.isEmpty()) {
-			System.out.println();
-			System.out.println(
-					"Você não possui itens disponíveis para venda."
-					);
-
+			System.out.println("\nVocê não possui itens negociáveis.");
 			waitForReturn();
 			return;
 		}
 
-		List<Item> availableItems =
-				new ArrayList<>(inventoryItems.keySet());
+		List<Item> availableItems = new ArrayList<>(inventoryItems.keySet());
+		availableItems.sort(Comparator.comparing(Item::getName));
 
-		for (int i = 0; i < availableItems.size(); i++) {
-			Item item = availableItems.get(i);
-			int quantity = inventoryItems.get(item);
-
-			System.out.println();
-			System.out.println(
-					"[" + (i + 1) + "] " + item.getName()
-					);
-			System.out.println(
-					"Quantidade disponível: " + quantity
-					);
+		for (int index = 0; index < availableItems.size(); index++) {
+			Item item = availableItems.get(index);
+			System.out.println("\n[" + (index + 1) + "] " + item.getName());
+			System.out.println("Quantidade disponível: " + inventoryItems.get(item));
 		}
 
-		while (true) {
-			System.out.println();
-			System.out.println("[0] Voltar");
-			System.out.print("> ");
-
-			String input = scanner.nextLine().trim();
-
-			if (input.equals("0")) {
-				return;
-			}
-
-			int option;
-
-			try {
-				option = Integer.parseInt(input);
-			} catch (NumberFormatException exception) {
-				System.out.println("\nOpção inválida.");
-				continue;
-			}
-
-			if (option < 1 || option > availableItems.size()) {
-				System.out.println("\nOpção inválida.");
-				continue;
-			}
-
-			Item selectedItem =
-					availableItems.get(option - 1);
-
-			int availableQuantity =
-					inventoryItems.get(selectedItem);
-
-			showListingCreationForm(
-					selectedItem,
-					availableQuantity
-					);
-
+		int selection = readSelection(availableItems.size());
+		if (selection == 0) {
 			return;
 		}
+
+		Item selectedItem = availableItems.get(selection - 1);
+		createListingForItem(selectedItem, inventoryItems.get(selectedItem));
 	}
 
-	private void showListingCreationForm(
-			Item item,
-			int availableQuantity) {
-
+	private void createListingForItem(Item item, int availableQuantity) {
 		System.out.println("\n[NOVO ANÚNCIO]");
+		System.out.println("\nItem: " + item.getName());
+		System.out.println("Quantidade disponível: " + availableQuantity);
 
-		System.out.println();
-		System.out.println("Item: " + item.getName());
-		System.out.println(
-				"Quantidade disponível: " + availableQuantity
-				);
-
-		System.out.println();
-		System.out.print("Quantidade para venda (0 para cancelar): ");
-
-		String quantityInput = scanner.nextLine().trim();
-
-		if (quantityInput.equals("0")) {
+		Integer quantity = readPositiveValue("Quantidade para venda (0 para cancelar): ");
+		if (quantity == null) {
 			return;
 		}
 
-		int quantity;
-
-		try {
-			quantity = Integer.parseInt(quantityInput);
-		} catch (NumberFormatException exception) {
-			System.out.println("\nQuantidade inválida.");
-			waitForReturn();
+		Integer unitPrice = readPositiveValue("Preço por unidade (0 para cancelar): ");
+		if (unitPrice == null) {
 			return;
 		}
 
-		System.out.print("Preço por unidade (0 para cancelar): ");
-
-		String priceInput = scanner.nextLine().trim();
-
-		if (priceInput.equals("0")) {
-			return;
-		}
-
-		int unitPrice;
-
-		try {
-			unitPrice = Integer.parseInt(priceInput);
-		} catch (NumberFormatException exception) {
-			System.out.println("\nPreço inválido.");
-			waitForReturn();
-			return;
-		}
-
-		MarketplaceListingCreationResult result =
-				transactionService.createListing(
-						item.getId(),
-						quantity,
-						unitPrice
-						);
+		MarketplaceListingCreationResult result = transactionService.createListing(
+				item.getId(), quantity, unitPrice);
 
 		System.out.println("\n[CRIAÇÃO DO ANÚNCIO]");
-
 		switch (result) {
-		case SUCCESS ->
-		System.out.println(
-				"\nAnúncio criado com sucesso!"
-				);
-
-		case INVALID_ITEM ->
-		System.out.println(
-				"\nO item selecionado é inválido."
-				);
-
-		case INVALID_QUANTITY ->
-		System.out.println(
-				"\nA quantidade deve ser maior que zero."
-				);
-
-		case INVALID_UNIT_PRICE ->
-		System.out.println(
-				"\nO preço deve ser maior que zero."
-				);
-
-		case INSUFFICIENT_ITEMS ->
-		System.out.println(
-				"\nVocê não possui essa quantidade de itens."
-				);
-
-		case INVENTORY_ERROR ->
-		System.out.println(
-				"\nNão foi possível retirar os itens do inventário."
-				);
-
-		case API_UNAVAILABLE ->
-		System.out.println(
-				"\nNão foi possível acessar o posto de trocas."
-						+ "\nOs itens foram devolvidos ao inventário."
-				);
+			case SUCCESS -> System.out.println("\nAnúncio criado com sucesso!");
+			case INVALID_ITEM -> System.out.println("\nO item selecionado é inválido.");
+			case ITEM_NOT_TRADABLE -> System.out.println("\nEste item não pode ser negociado.");
+			case INVALID_QUANTITY -> System.out.println("\nA quantidade informada é inválida.");
+			case INVALID_UNIT_PRICE -> System.out.println("\nO preço informado é inválido.");
+			case INSUFFICIENT_ITEMS -> System.out.println("\nVocê não possui essa quantidade de itens.");
+			case API_UNAVAILABLE -> System.out.println("\nNão foi possível acessar o Posto de Trocas. Seus itens foram devolvidos.");
+			case SERVER_REJECTED -> System.out.println("\nA API recusou o anúncio. Seus itens foram devolvidos.");
 		}
 
 		waitForReturn();
 	}
 
 	private void showMySales() {
+		List<MarketplaceListing> listings;
+
+		try {
+			listings = transactionService.getListingsForCurrentPlayer();
+		} catch (IOException exception) {
+			displayApiUnavailable();
+			return;
+		} catch (InterruptedException exception) {
+			Thread.currentThread().interrupt();
+			displayApiUnavailable();
+			return;
+		}
+
 		System.out.println("\n[MINHAS VENDAS]");
 
-		List<MarketplaceListing> playerListings =
-				transactionService.getListingsForCurrentPlayer();
-
-		if (playerListings.isEmpty()) {
-			System.out.println();
-			System.out.println("Você ainda não criou nenhum anúncio.");
-
+		if (listings.isEmpty()) {
+			System.out.println("\nVocê ainda não criou nenhum anúncio.");
 			waitForReturn();
 			return;
 		}
 
-		for (int i = 0; i < playerListings.size(); i++) {
-			MarketplaceListing listing =
-					playerListings.get(i);
-
-			Item item = itemCatalog.getById(
-					listing.getItemId()
-					);
-
-			int totalPrice =
-					listing.getUnitPrice() * listing.getQuantity();
-
-			System.out.println();
-			System.out.println(
-					"[" + (i + 1) + "] " + item.getName()
-					);
-			System.out.println(
-					"Quantidade: " + listing.getQuantity()
-					);
-			System.out.println(
-					"Preço unitário: " + listing.getUnitPrice()
-					);
-			System.out.println("Total: " + totalPrice);
-			System.out.println(
-					"Status: "
-							+ getListingStatusLabel(listing.getStatus())
-					);
+		for (int index = 0; index < listings.size(); index++) {
+			displayListingSummary(index + 1, listings.get(index), false);
 		}
 
-		System.out.println();
+		int selection = readSelection(listings.size());
+		if (selection == 0) {
+			return;
+		}
+
+		showMyListingDetails(listings.get(selection - 1));
+	}
+
+	private void showMyListingDetails(MarketplaceListing listing) {
+		System.out.println("\n[MEU ANÚNCIO]");
+		displayListingFields(listing, false);
+
+		if (listing.status() != ListingStatus.ACTIVE) {
+			waitForReturn();
+			return;
+		}
+
+		System.out.println("\n[1] Cancelar anúncio");
 		System.out.println("[0] Voltar");
 		System.out.print("> ");
 
-		String input = scanner.nextLine().trim();
-
-		if (input.equals("0")) {
+		if (!consoleInput.readTrimmedLine().equals("1")) {
 			return;
 		}
 
-		try {
-			int option = Integer.parseInt(input);
-
-			if (option < 1 || option > playerListings.size()) {
-				System.out.println("\nOpção inválida.");
-				waitForReturn();
-				return;
-			}
-
-			MarketplaceListing selectedListing =
-					playerListings.get(option - 1);
-
-			showMyListingDetails(selectedListing);
-
-		} catch (NumberFormatException exception) {
-			System.out.println("\nOpção inválida.");
-			waitForReturn();
-		}
-	}
-
-	private void showMyListingDetails(
-			MarketplaceListing listing) {
-
-		Item item = itemCatalog.getById(
-				listing.getItemId()
-				);
-
-		int totalPrice =
-				listing.getUnitPrice() * listing.getQuantity();
-
-		while (true) {
-			System.out.println("\n[MEU ANÚNCIO]");
-
-			System.out.println();
-			System.out.println("Item: " + item.getName());
-			System.out.println(
-					"Quantidade: " + listing.getQuantity()
-					);
-			System.out.println(
-					"Preço unitário: " + listing.getUnitPrice()
-					);
-			System.out.println("Total: " + totalPrice);
-			System.out.println(
-					"Status: "
-							+ getListingStatusLabel(listing.getStatus())
-					);
-
-			if (listing.getStatus() == ListingStatus.ACTIVE) {
-				System.out.println();
-				System.out.println("[1] Cancelar anúncio");
-			}
-
-			System.out.println();
-			System.out.println("[0] Voltar");
-			System.out.print("> ");
-
-			String choice = scanner.nextLine().trim();
-
-			switch (choice) {
-			case "1" -> {
-				if (listing.getStatus() != ListingStatus.ACTIVE) {
-					System.out.println("\nOpção inválida.");
-					continue;
-				}
-
-				cancelMyListing(listing);
-				return;
-			}
-
-			case "0" -> {
-				return;
-			}
-
-			default ->
-			System.out.println("\nOpção inválida.");
-			}
-		}
-	}
-
-	private void cancelMyListing(
-			MarketplaceListing listing) {
-
-		MarketplaceListingCancellationResult result =
-				transactionService.cancelListing(listing);
+		MarketplaceListingCancellationResult result = transactionService.cancelListing(listing);
 
 		System.out.println("\n[CANCELAMENTO]");
-
 		switch (result) {
-		case SUCCESS ->
-		System.out.println(
-				"\nAnúncio cancelado com sucesso!"
-				);
-
-		case INVALID_LISTING ->
-		System.out.println(
-				"\nO anúncio selecionado é inválido."
-				);
-
-		case NOT_LISTING_OWNER ->
-		System.out.println(
-				"\nEste anúncio pertence a outro jogador."
-				);
-
-		case LISTING_NOT_ACTIVE ->
-		System.out.println(
-				"\nEste anúncio não está mais ativo."
-				);
-
-		case INVENTORY_ERROR ->
-		System.out.println(
-				"\nNão foi possível devolver os itens ao inventário."
-				);
-
-		case API_UNAVAILABLE ->
-		System.out.println(
-				"\nNão foi possível acessar o posto de trocas."
-						+ "\nO anúncio continua ativo e nenhum item foi devolvido."
-				);
+			case SUCCESS -> System.out.println("\nAnúncio cancelado e itens devolvidos!");
+			case INVALID_LISTING -> System.out.println("\nO anúncio selecionado é inválido.");
+			case NOT_LISTING_OWNER -> System.out.println("\nEste anúncio pertence a outro jogador.");
+			case LISTING_NOT_ACTIVE -> System.out.println("\nEste anúncio não está mais ativo.");
+			case INVENTORY_CAPACITY_EXCEEDED -> System.out.println("\nLibere espaço no inventário antes de cancelar.");
+			case API_UNAVAILABLE -> System.out.println("\nNão foi possível acessar o Posto de Trocas.");
+			case SERVER_REJECTED -> System.out.println("\nA API recusou o cancelamento.");
 		}
 
 		waitForReturn();
 	}
 
 	private void showRewards() {
-		System.out.println("\n[RECOMPENSAS]");
-
-		List<PendingReward> availableRewards =
-				transactionService.getPendingRewardsForCurrentPlayer();
-
-		if (availableRewards.isEmpty()) {
-			System.out.println();
-			System.out.println("Não há recompensas disponíveis.");
-
-			waitForReturn();
-			return;
-		}
-
-		for (int i = 0; i < availableRewards.size(); i++) {
-			PendingReward reward = availableRewards.get(i);
-
-			System.out.println();
-			System.out.println(
-					"[" + (i + 1) + "] "
-							+ reward.getAmount()
-							+ " moedas"
-					);
-		}
-
-		System.out.println();
-		System.out.println("[0] Voltar");
-		System.out.print("> ");
-
-		String input = scanner.nextLine().trim();
-
-		if (input.equals("0")) {
-			return;
-		}
+		List<PendingReward> rewards;
 
 		try {
-			int option = Integer.parseInt(input);
-
-			if (option < 1 || option > availableRewards.size()) {
-				System.out.println("\nOpção inválida.");
-				waitForReturn();
-				return;
-			}
-
-			PendingReward selectedReward =
-					availableRewards.get(option - 1);
-
-			showRewardDetails(selectedReward);
-
-		} catch (NumberFormatException exception) {
-			System.out.println("\nOpção inválida.");
-			waitForReturn();
-		}
-	}
-
-	private void showRewardDetails(PendingReward reward) {
-		System.out.println("\n[RECOMPENSA]");
-
-		System.out.println();
-		System.out.println("Valor: " + reward.getAmount() + " moedas");
-		System.out.println(
-				"Transação: " + reward.getTransactionId()
-				);
-
-		System.out.println();
-		System.out.println("[1] Resgatar");
-		System.out.println("[0] Voltar");
-		System.out.print("> ");
-
-		String choice = scanner.nextLine().trim();
-
-		switch (choice) {
-		case "1" -> claimReward(reward);
-
-		case "0" -> {
+			rewards = transactionService.getPendingRewardsForCurrentPlayer();
+		} catch (IOException exception) {
+			displayApiUnavailable();
+			return;
+		} catch (InterruptedException exception) {
+			Thread.currentThread().interrupt();
+			displayApiUnavailable();
 			return;
 		}
 
-		default -> {
-			System.out.println("\nOpção inválida.");
+		System.out.println("\n[RECOMPENSAS]");
+
+		if (rewards.isEmpty()) {
+			System.out.println("\nNão há recompensas disponíveis.");
 			waitForReturn();
+			return;
 		}
+
+		for (int index = 0; index < rewards.size(); index++) {
+			System.out.println("\n[" + (index + 1) + "] " + GameCurrency.format(rewards.get(index).amount()));
 		}
+
+		int selection = readSelection(rewards.size());
+		if (selection == 0) {
+			return;
+		}
+
+		claimReward(rewards.get(selection - 1));
 	}
 
 	private void claimReward(PendingReward reward) {
-		MarketplaceRewardClaimResult result =
-				transactionService.claimReward(reward);
+		System.out.println("\n[RECOMPENSA]");
+		System.out.println("\nValor: " + GameCurrency.format(reward.amount()));
+		System.out.println("Transação: " + reward.transactionId());
+		System.out.println("\n[1] Resgatar");
+		System.out.println("[0] Voltar");
+		System.out.print("> ");
 
-		System.out.println("\n[RESGATE]");
-
-		switch (result) {
-		case SUCCESS -> {
-			System.out.println();
-			System.out.println(
-					"Recompensa resgatada com sucesso!"
-					);
-			System.out.println(
-					"+" + reward.getAmount() + " moedas"
-					);
+		if (!consoleInput.readTrimmedLine().equals("1")) {
+			return;
 		}
 
-		case INVALID_REWARD ->
-		System.out.println("\nRecompensa inválida.");
+		MarketplaceRewardClaimResult result = transactionService.claimReward(reward);
 
-		case REWARD_NOT_PENDING ->
-		System.out.println(
-				"\nEsta recompensa já foi resgatada."
-				);
-
-		case NOT_REWARD_OWNER ->
-		System.out.println(
-				"\nEsta recompensa pertence a outro jogador."
-				);
-
-		case GOLD_CAPACITY_EXCEEDED ->
-		System.out.println(
-				"\nNão foi possível adicionar as moedas."
-				);
+		switch (result) {
+			case SUCCESS -> System.out.println("\nRecompensa resgatada com sucesso!");
+			case INVALID_REWARD -> System.out.println("\nA recompensa é inválida.");
+			case REWARD_NOT_PENDING -> System.out.println("\nEsta recompensa já foi resgatada.");
+			case NOT_REWARD_OWNER -> System.out.println("\nEsta recompensa pertence a outro jogador.");
+			case GOLD_CAPACITY_EXCEEDED -> System.out.println("\nVocê não consegue carregar todo esse GOLD.");
+			case API_UNAVAILABLE -> System.out.println("\nNão foi possível acessar o Posto de Trocas.");
+			case SERVER_REJECTED -> System.out.println("\nA API recusou o resgate.");
 		}
 
 		waitForReturn();
 	}
 
+	private void displayListingSummary(int position, MarketplaceListing listing, boolean showSeller) {
+		System.out.println("\n[" + position + "] " + getItemName(listing.itemId()));
+		System.out.println("Quantidade: " + listing.quantity());
+		System.out.println("Total: " + GameCurrency.format(listing.totalPrice()));
+		if (showSeller) {
+			System.out.println("Vendedor: " + listing.sellerId());
+		} else {
+			System.out.println("Status: " + getStatusLabel(listing.status()));
+		}
+	}
+
+	private void displayListingFields(MarketplaceListing listing, boolean showSeller) {
+		System.out.println("\nItem: " + getItemName(listing.itemId()));
+		System.out.println("Quantidade: " + listing.quantity());
+		System.out.println("Preço unitário: " + GameCurrency.format(listing.unitPrice()));
+		System.out.println("Total: " + GameCurrency.format(listing.totalPrice()));
+		if (showSeller) {
+			System.out.println("Vendedor: " + listing.sellerId());
+		}
+		System.out.println("Status: " + getStatusLabel(listing.status()));
+	}
+
+	private String getItemName(String itemId) {
+		try {
+			return itemCatalog.getById(itemId).getName();
+		} catch (IllegalArgumentException exception) {
+			return "Item desconhecido (" + itemId + ")";
+		}
+	}
+
+	private static String getStatusLabel(ListingStatus status) {
+		return switch (status) {
+			case ACTIVE -> "Ativo";
+			case SOLD -> "Vendido";
+			case CANCELLED -> "Cancelado";
+		};
+	}
+
+	private int readSelection(int maximum) {
+		while (true) {
+			System.out.println("\n[0] Voltar");
+			System.out.print("> ");
+
+			try {
+				int selection = Integer.parseInt(consoleInput.readTrimmedLine());
+				if (selection >= 0 && selection <= maximum) {
+					return selection;
+				}
+			} catch (NumberFormatException exception) {
+				// The common feedback below also covers non-numeric input.
+			}
+
+			System.out.println("Opção inválida.");
+		}
+	}
+
+	private Integer readPositiveValue(String prompt) {
+		while (true) {
+			System.out.print("\n" + prompt);
+
+			try {
+				int value = Integer.parseInt(consoleInput.readTrimmedLine());
+				if (value == 0) {
+					return null;
+				}
+				if (value > 0) {
+					return value;
+				}
+			} catch (NumberFormatException exception) {
+				// The common feedback below also covers non-numeric input.
+			}
+
+			System.out.println("Valor inválido.");
+		}
+	}
+
+	private void displayApiUnavailable() {
+		System.out.println("\nNão foi possível acessar o Posto de Trocas.");
+		System.out.println("Confirme se a marketplace-api está em execução.");
+		waitForReturn();
+	}
+
 	private void waitForReturn() {
-		System.out.println();
-		System.out.println("[0] Voltar");
+		System.out.println("\n[0] Voltar");
 		System.out.print("> ");
 
-		while (!scanner.nextLine().trim().equals("0")) {
+		while (!consoleInput.readTrimmedLine().equals("0")) {
 			System.out.println("Digite 0 para voltar.");
 			System.out.print("> ");
 		}

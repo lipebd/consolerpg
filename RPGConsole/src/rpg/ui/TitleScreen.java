@@ -1,17 +1,16 @@
 package rpg.ui;
 
-import java.util.Scanner;
 
 // Displays the provisional title screen.
 public final class TitleScreen {
 
     private static final String GAME_TITLE =
-            "RPG CONSOLE — V3";
+            "RPG CONSOLE — V5";
 
     private TitleScreen() {
     }
 
-    public static void show(Scanner scanner) {
+    public static void show(ConsoleInput consoleInput) {
         System.out.println(
                 "========================================"
         );
@@ -33,6 +32,6 @@ public final class TitleScreen {
         );
 
         System.out.print("> ");
-        scanner.nextLine();
+        consoleInput.readLine();
     }
 }

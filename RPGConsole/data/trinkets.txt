@@ -1,0 +1,23 @@
+# itemId;trinketType;levelRequirement;hpBonus;mpBonus;spBonus;attackBonus;defenseBonus;magicBonus;resistanceBonus;speedBonus;luckBonus;experienceModifierPercent;goldModifierPercent
+anel_arcano;JEWELRY;7;;;;;;;5;;;;
+trevo_ressecado;JEWELRY;7;;;;;;;;;5;;
+chaveiro_de_capivara;JEWELRY;1;;;;;;;;;;5;
+relogio_do_pai;JEWELRY;1;;;;;;;;;;;5
+colar_da_mae;JEWELRY;7;;;;;;;3;;2;;
+origami_de_flor;AMULET;12;;;;;;;10;;;;
+trevo_murcho;AMULET;12;;;;;;;;;10;;
+broche_do_flagelo;AMULET;12;;;;;;;;;;10;
+mini_goblin_de_madeira;AMULET;12;;;;;;;;;;;10
+dente_de_goblin;AMULET;12;;;;;;;;;;2;8
+eletrorrocha_redonda;AMULET;12;;;;;;;;;2;8;
+insignia_do_veterano;AMULET;12;;;;;;;8;;2;;
+talisma_do_espirito;TALISMAN;17;;;;;;;15;;;;
+pe_de_coelho;TALISMAN;17;;;;;;;;;15;;
+talisma_do_erudito;TALISMAN;17;;;;;;;;;;15;
+talisma_da_ganancia;TALISMAN;17;;;;;;;;;;;15
+talisma_do_aprendiz;TALISMAN;17;;;;;;;5;;;10;
+talisma_do_discipulo;TALISMAN;17;;;;;;;10;;;5;
+talisma_da_prosperidade;TALISMAN;17;;;;;;;;;;5;10
+talisma_do_cacador;TALISMAN;17;;;;;;;;;;10;5
+talisma_do_ladrao;TALISMAN;17;;;;;;;5;;;;10
+talisma_da_perseveranca;TALISMAN;17;;;;;;;10;;;;5

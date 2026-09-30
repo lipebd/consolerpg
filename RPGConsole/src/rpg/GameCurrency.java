@@ -4,7 +4,7 @@ package rpg;
 public final class GameCurrency {
 
         private static final String NAME = "GOLD";
-        private static final String SYMBOL = "G$ ";
+        private static final String SYMBOL = "G";
 
         private GameCurrency() {
         }
@@ -14,6 +14,6 @@ public final class GameCurrency {
         }
 
         public static String format(int amount) {
-                return SYMBOL + amount;
+                return amount + SYMBOL;
         }
 }

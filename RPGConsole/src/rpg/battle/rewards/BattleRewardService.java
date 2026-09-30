@@ -13,14 +13,20 @@ import rpg.characters.Party;
 import rpg.items.DropEntry;
 import rpg.items.Item;
 import rpg.world.scenarios.CombatScenario;
+import rpg.characters.CharacterStats;
+import rpg.skills.SkillDefinition;
 
 // Calculates and grants rewards after a battle victory.
 public final class BattleRewardService {
 
 	private final Random random;
 
+	private final RewardCalculator rewardCalculator;
+
 	public BattleRewardService(Random random) {
 		this.random = Objects.requireNonNull(random, "Random generator cannot be null.");
+
+		this.rewardCalculator = new RewardCalculator();
 	}
 
 	// Overload for a battle against a single enemy.
@@ -49,20 +55,107 @@ public final class BattleRewardService {
 
 			double rankMultiplier = defeatedEnemy.getRank().getRewardMultiplier();
 
-			experienceReward += (int) Math.round(combatScenario.getBaseExperienceReward() * rankMultiplier);
+			int enemyExperienceReward = Math
+					.toIntExact(Math.round(combatScenario.getBaseExperienceReward() * rankMultiplier));
 
-			goldReward += (int) Math.round(combatScenario.getBaseGoldReward() * rankMultiplier);
+			int enemyGoldReward = Math.toIntExact(Math.round(combatScenario.getBaseGoldReward() * rankMultiplier));
+
+			experienceReward = Math.addExact(experienceReward, enemyExperienceReward);
+
+			goldReward = Math.addExact(goldReward, enemyGoldReward);
+
 		}
 
-		List<CharacterProgressionResult> progressionResults = grantExperienceToParty(party, experienceReward);
+		BattleRewardModifiers rewardModifiers = createRewardModifiers(party);
 
-		party.addGold(goldReward);
+		int globalExperienceReward = rewardCalculator
+				.calculateModifiedReward(experienceReward, rewardModifiers.getTemporaryExperienceModifierPercent());
 
-		Map<Item, Integer> collectedItems = collectEnemyDrops(defeatedEnemies);
+		int modifiedGoldReward = rewardCalculator
+				.calculateModifiedReward(goldReward, rewardModifiers.getTotalGoldModifierPercent());
 
-		addCollectedItemsToInventory(party, collectedItems);
+		List<CharacterProgressionResult> progressionResults = grantExperienceToParty(
+				party,
+				experienceReward,
+				rewardModifiers
+		);
 
-		return new BattleRewards(progressionResults, goldReward, collectedItems);
+		int grantedGold = Math.min(modifiedGoldReward, party.getRemainingGoldCapacity());
+
+		if (!party.addGold(grantedGold)) {
+			throw new IllegalStateException("Validated battle GOLD reward could not be added.");
+		}
+
+		int discardedGold = Math.subtractExact(modifiedGoldReward, grantedGold);
+
+		Map<Item, Integer> rolledItems = collectEnemyDrops(defeatedEnemies);
+
+		Map<Item, Integer> collectedItems = new LinkedHashMap<>();
+
+		Map<Item, Integer> discardedItems = new LinkedHashMap<>();
+
+		for (Map.Entry<Item, Integer> entry : rolledItems.entrySet()) {
+			Item item = entry.getKey();
+			int rolledQuantity = entry.getValue();
+
+			int grantedQuantity = Math.min(rolledQuantity, party.getInventory().getRemainingCapacity(item));
+
+			if (grantedQuantity > 0) {
+				if (!party.getInventory().addItem(item, grantedQuantity)) {
+					throw new IllegalStateException("Validated battle item reward could not be added: " + item.getId());
+				}
+
+				collectedItems.put(item, grantedQuantity);
+			}
+
+			int discardedQuantity = Math.subtractExact(rolledQuantity, grantedQuantity);
+
+			if (discardedQuantity > 0) {
+				discardedItems.put(item, discardedQuantity);
+			}
+		}
+
+		party.getRewardModifierState().consumeRewardedVictory();
+
+		return new BattleRewards(
+				progressionResults,
+				globalExperienceReward,
+				grantedGold,
+				discardedGold,
+				collectedItems,
+				discardedItems,
+				rewardModifiers
+		);
+	}
+
+	private BattleRewardModifiers createRewardModifiers(Party party) {
+		PartyRewardModifierState modifierState = party.getRewardModifierState();
+
+		int experienceVictoriesRemaining = Math.max(0, modifierState.getExperienceVictoriesRemaining() - 1);
+
+		int goldVictoriesRemaining = Math.max(0, modifierState.getGoldVictoriesRemaining() - 1);
+
+		Map<PlayableCharacter, Integer> individualExperienceModifierPercents = new LinkedHashMap<>();
+
+		int equipmentGoldModifierPercent = party.getEquipmentGoldModifierPercent();
+
+		for (PlayableCharacter member : party.getMembers()) {
+			int individualExperienceModifierPercent = member.getEquipment().getExperienceModifierPercent();
+
+			if (individualExperienceModifierPercent > 0) {
+				individualExperienceModifierPercents.put(member, individualExperienceModifierPercent);
+			}
+
+		}
+
+		return new BattleRewardModifiers(
+				modifierState.getExperienceModifierPercent(),
+				experienceVictoriesRemaining,
+				modifierState.getGoldModifierPercent(),
+				goldVictoriesRemaining,
+				equipmentGoldModifierPercent,
+				individualExperienceModifierPercents
+		);
 	}
 
 	private Map<Item, Integer> collectEnemyDrops(List<Enemy> defeatedEnemies) {
@@ -79,29 +172,37 @@ public final class BattleRewardService {
 
 				Item item = dropEntry.getItem();
 
-				collectedItems.merge(item, quantity, Integer::sum);
+				collectedItems.merge(item, quantity, Math::addExact);
 			}
 		}
 
 		return collectedItems;
 	}
 
-	private void addCollectedItemsToInventory(Party party, Map<Item, Integer> collectedItems) {
-		for (Map.Entry<Item, Integer> entry : collectedItems.entrySet()) {
-
-			party.getInventory().addItem(entry.getKey(), entry.getValue());
-		}
-	}
-
-	private List<CharacterProgressionResult> grantExperienceToParty(Party party, int experienceReward) {
+	private List<CharacterProgressionResult>
+			grantExperienceToParty(Party party, int baseExperienceReward, BattleRewardModifiers rewardModifiers) {
 		List<CharacterProgressionResult> results = new ArrayList<>();
 
 		for (PlayableCharacter member : party.getMembers()) {
+			int experienceReward = rewardCalculator.calculateModifiedReward(
+					baseExperienceReward,
+					rewardModifiers.getTotalExperienceModifierPercent(member)
+			);
+
 			int previousLevel = member.getLevel();
 
-			member.gainExperience(experienceReward);
+			CharacterStats previousNaturalStats = member.getNaturalStats();
+
+			int experienceReceived = member.gainExperience(experienceReward);
 
 			int currentLevel = member.getLevel();
+
+			CharacterStats currentNaturalStats = member.getNaturalStats();
+
+			List<SkillDefinition> newlyUnlockedSkillDefinitions = member.getUnlockedSkillDefinitions().stream()
+					.filter(skillDefinition -> !skillDefinition.isScrollSkill())
+					.filter(skillDefinition -> skillDefinition.getLevelRequirement() > previousLevel)
+					.filter(skillDefinition -> skillDefinition.getLevelRequirement() <= currentLevel).toList();
 
 			boolean resourcesRestored = false;
 
@@ -109,8 +210,18 @@ public final class BattleRewardService {
 				resourcesRestored = member.restoreAllResources();
 			}
 
-			results.add(new CharacterProgressionResult(member, experienceReward, previousLevel, currentLevel,
-					resourcesRestored));
+			results.add(
+					new CharacterProgressionResult(
+							member,
+							experienceReceived,
+							previousLevel,
+							currentLevel,
+							resourcesRestored,
+							previousNaturalStats,
+							currentNaturalStats,
+							newlyUnlockedSkillDefinitions
+					)
+			);
 		}
 
 		return results;

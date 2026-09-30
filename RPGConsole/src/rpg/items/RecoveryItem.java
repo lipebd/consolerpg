@@ -36,7 +36,8 @@ public final class RecoveryItem extends Item {
 
 		return (getHpRecovery() > 0 && target.getCurrentHp() < target.getMaxHp())
 				|| (getMpRecovery() > 0 && target.getCurrentMp() < target.getMaxMp())
-				|| (getSpRecovery() > 0 && target.getCurrentSp() < target.getMaxSp());
+				|| (getSpRecovery() > 0 && target.getCurrentSp() < target.getMaxSp())
+				|| (purifiesStatusEffects() && target.hasNegativeAttributeStates());
 	}
 
 	public RecoveryItemUseResult use(PlayableCharacter target) {
@@ -63,7 +64,9 @@ public final class RecoveryItem extends Item {
 
 		recoveredSp = target.recoverSp(getSpRecovery());
 
-		return new RecoveryItemUseResult(revivedHp, recoveredHp, recoveredMp, recoveredSp, false);
+		boolean purifiedStatusEffects = purifiesStatusEffects() && target.purifyNegativeAttributeStates();
+
+		return new RecoveryItemUseResult(revivedHp, recoveredHp, recoveredMp, recoveredSp, purifiedStatusEffects);
 	}
 
 	public RecoveryItemTargetType getTargetType() {

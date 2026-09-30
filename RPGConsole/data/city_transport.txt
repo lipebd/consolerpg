@@ -5,3 +5,4 @@ o_vao;75;Ao atravessar os grandes portões, o grupo desaparece além da barreira
 entrelugar;100;A paisagem se distorce durante o caminho até que o grupo finalmente alcança Entrelugar.
 deep_valley;125;O caminho conduz o grupo pelas profundezas até a cidade afundada de Deep Valley.
 mist_suburb;150;Uma névoa cada vez mais densa anuncia a chegada a Mist Suburb.
+reino_altaneve;200;A nevasca característica da iluminada Altaneve pode ser vista no horizonte.

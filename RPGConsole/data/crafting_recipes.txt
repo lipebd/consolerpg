@@ -1,0 +1,3 @@
+# id;outputItemId;name;description;materialItemId;requiredQuantity;...
+pocao_de_meruma;pocao_de_meruma;Preparar Poção de Merumã;Quatro Merumãs são maceradas e combinadas em uma poção restauradora.;meruma;4
+espada_de_ferro;espada_de_ferro;Forjar Espada de Ferro;Um cabo de madeira é combinado a uma lâmina moldada em ferro.;madeira;3;ferro;5
