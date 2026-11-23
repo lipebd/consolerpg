@@ -47,13 +47,17 @@ public final class InnMenu {
 				return Selection.SAVE_AND_EXIT;
 			}
 
+			case "4" -> {
+				return Selection.MARKETPLACE;
+			}
+
 			default -> feedbackMessage = "Opção inválida.";
 			}
 		}
 	}
 
 	public enum Selection {
-		BACK, SAVE_AND_CONTINUE, SAVE_AND_EXIT
+		BACK, SAVE_AND_CONTINUE, SAVE_AND_EXIT, MARKETPLACE
 	}
 
 	private void displayInnDetails(String cityName, InnDefinition innDefinition) {
@@ -77,6 +81,7 @@ public final class InnMenu {
 		System.out.println("[1] Descansar");
 		System.out.println("[2] Salvar e continuar");
 		System.out.println("[3] Salvar e encerrar");
+		System.out.println("[4] Posto de Trocas");
 		if (feedbackMessage != null) {
 			System.out.println();
 			ConsoleUI.displayWrappedText(feedbackMessage);

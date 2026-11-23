@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 
+import rpg.audio.BattleBgmPlayer;
 import rpg.battle.rewards.BattleRewardService;
 import rpg.battle.rewards.BattleRewards;
 import rpg.characters.Enemy;
@@ -39,6 +40,7 @@ public final class BattleCoordinator {
 	private final BattleRewardService rewardService;
 	private final BattleRewardScreen rewardScreen;
 	private final BestiaryStateCatalog bestiaryStateCatalog;
+	private final BattleBgmPlayer battleBgmPlayer;
 
 	public BattleCoordinator(
 			Party party,
@@ -49,6 +51,7 @@ public final class BattleCoordinator {
 			BattleRewardScreen rewardScreen,
 			QuestProgressCoordinator questProgressCoordinator,
 			BestiaryStateCatalog bestiaryStateCatalog,
+			BattleBgmPlayer battleBgmPlayer,
 			Random random
 	) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
@@ -65,6 +68,7 @@ public final class BattleCoordinator {
 				bestiaryStateCatalog,
 				"Bestiary state catalog cannot be null."
 		);
+		this.battleBgmPlayer = Objects.requireNonNull(battleBgmPlayer, "Battle BGM player cannot be null.");
 	}
 
 	public BattleResult start(EnemySpawn enemySpawn, CombatScenario combatScenario) {
@@ -90,26 +94,34 @@ public final class BattleCoordinator {
 		EnemyBattleGroup enemyGroup = new EnemyBattleGroup(enemies);
 
 		Battle battle = new Battle(party, enemyGroup, consoleInput, random, battleType, combatScenario.getName());
-		BattleResult result = battle.start();
+		try {
+			BattleResult result = battle.start();
 
-		List<QuestProgressEvent> progressEvents = new ArrayList<>();
+			if (result != BattleResult.VICTORY) {
+				battleBgmPlayer.stop();
+			}
 
-		List<String> analyzedEnemyIds = battle.getAnalyzedEnemyIds();
+			List<QuestProgressEvent> progressEvents = new ArrayList<>();
 
-		recordBestiaryDiscoveries(analyzedEnemyIds);
-		addAnalysisProgressEvents(progressEvents, analyzedEnemyIds);
+			List<String> analyzedEnemyIds = battle.getAnalyzedEnemyIds();
 
-		if (result == BattleResult.VICTORY) {
-			BattleRewards rewards = grantVictoryRewards(enemies, combatScenario);
+			recordBestiaryDiscoveries(analyzedEnemyIds);
+			addAnalysisProgressEvents(progressEvents, analyzedEnemyIds);
 
-			addVictoryProgressEvents(progressEvents, enemies, rewards, combatScenario);
+			if (result == BattleResult.VICTORY) {
+				BattleRewards rewards = grantVictoryRewards(enemies, combatScenario);
+
+				addVictoryProgressEvents(progressEvents, enemies, rewards, combatScenario);
+			}
+
+			if (!progressEvents.isEmpty()) {
+				questProgressCoordinator.processBattleEventsAndDisplay(progressEvents);
+			}
+
+			return result;
+		} finally {
+			battleBgmPlayer.stop();
 		}
-
-		if (!progressEvents.isEmpty()) {
-			questProgressCoordinator.processBattleEventsAndDisplay(progressEvents);
-		}
-
-		return result;
 	}
 
 	private void recordBestiaryDiscoveries(List<String> analyzedEnemyIds) {
@@ -210,6 +222,7 @@ public final class BattleCoordinator {
 	private BattleRewards grantVictoryRewards(List<Enemy> defeatedEnemies, CombatScenario combatScenario) {
 		BattleRewards rewards = rewardService.grantRewards(party, defeatedEnemies, combatScenario);
 
+		battleBgmPlayer.stop();
 		rewardScreen.show(rewards);
 
 		return rewards;

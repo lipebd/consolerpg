@@ -5,7 +5,7 @@ public enum CityAction {
 
 	VISIT_LOCATION("Visitar um local"),
 	LEAVE_CITY("Sair da cidade"),
-	CITY_TRANSPORT("Viajar"),
+	REGION_MAP("Mapa"),
 	INVENTORY("Inventário"),
 	QUESTS("Diário"),
 	VIEW_STATUS("Ver status");

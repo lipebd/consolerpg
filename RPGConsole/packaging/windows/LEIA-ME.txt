@@ -1,4 +1,4 @@
-RPGCONSOLE — VERSÃO 8.0.0
+RPGCONSOLE — VERSÃO 9.0.0
 
 COMO EXECUTAR
 
@@ -37,13 +37,24 @@ REQUISITOS
 * Windows 10 ou Windows 11 de 64 bits.
 * Não é necessário instalar o Java. O runtime necessário acompanha o jogo.
 
+POSTO DE TROCAS
+
+Para usar o Posto de Trocas, baixe o JAR da API na página da versão e
+inicie-o com Java 25 na pasta onde deseja guardar o banco:
+
+java -jar marketplace-api-0.0.1-SNAPSHOT.jar --server.address=127.0.0.1
+
+Com a API em execução, acesse [4] Posto de Trocas na hospedaria. O jogo
+continua disponível com a API desligada.
+
 SALVAMENTO
 
 O jogo possui um único espaço de salvamento. Salve sua campanha nas estalagens.
 O arquivo save.txt será criado ao lado de RPGConsole.cmd após o primeiro salvamento.
 
-Saves de versões anteriores não são compatíveis com a V8. Antes de atualizar,
-faça uma cópia de segurança do save.txt existente.
+A V9 mantém o formato de salvamento 4 usado pela V8. Antes de atualizar,
+faça uma cópia de segurança do save.txt existente. Arquivos no formato 3
+precisam ser convertidos antes de carregar.
 
 Um save incompatível é preservado, mas não pode ser carregado. Para manter
 campanhas de versões diferentes, utilize pastas separadas para cada versão.

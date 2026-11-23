@@ -1,5 +1,6 @@
 package rpg.world;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.Random;
 import java.util.Set;
 
 import rpg.GameCurrency;
+import rpg.audio.BattleBgmPlayer;
 import rpg.battle.BattleCoordinator;
 import rpg.battle.BattleType;
 import rpg.battle.BattleResult;
@@ -21,6 +23,9 @@ import rpg.enemies.EnemyDefinition;
 import rpg.enemies.EnemyDropCatalog;
 import rpg.enemies.EnemySpawn;
 import rpg.flags.CampaignFlags;
+import rpg.marketplace.MarketplaceTransactionService;
+import rpg.marketplace.api.MarketplaceApiClient;
+import rpg.ui.MarketplaceMenu;
 import rpg.items.Item;
 import rpg.items.ItemCatalog;
 import rpg.items.equipment.EquipmentCatalog;
@@ -86,6 +91,7 @@ import rpg.ui.EquipmentMenu;
 import rpg.ui.ExitConfirmationMenu;
 import rpg.ui.InnMenu;
 import rpg.ui.InventoryMenu;
+import rpg.ui.MapPrototype;
 import rpg.ui.NarrativeLocationMenu;
 import rpg.ui.NpcInteractionMenu;
 import rpg.ui.PartyRescueScreen;
@@ -151,7 +157,8 @@ public class World {
 
 	private final CityLocationMenu cityLocationMenu;
 	private final CityMenu cityMenu;
-	private final CityTransportMenu cityTransportMenu;
+	private final MarketplaceMenu marketplaceMenu;
+	private final MapPrototype mapPrototype;
 	private final InnCatalog innCatalog;
 	private final InnMenu innMenu;
 	private final PartyStatusMenu partyStatusMenu;
@@ -207,6 +214,7 @@ public class World {
 	private final QuestProgress questProgress;
 	private final CampaignFlags campaignFlags;
 	private final BattleCoordinator battleCoordinator;
+	private final BattleBgmPlayer battleBgmPlayer;
 
 	private Party party;
 	private ExplorationSession explorationSession;
@@ -264,7 +272,8 @@ public class World {
 			QuestCatalog questCatalog,
 			QuestRewardCatalog questRewardCatalog,
 			QuestDialogueCatalog questDialogueCatalog,
-			BestiaryStateCatalog bestiaryStateCatalog) {
+			BestiaryStateCatalog bestiaryStateCatalog,
+			MarketplaceApiClient marketplaceApiClient) {
 
 		Objects.requireNonNull(consoleInput, "Console input cannot be null.");
 		Objects.requireNonNull(enemyDropCatalog, "Enemy drop catalog cannot be null.");
@@ -347,6 +356,7 @@ public class World {
 
         // Shared random generator and gameplay services
         this.random = new Random();
+		this.battleBgmPlayer = new BattleBgmPlayer(Path.of("data", "audio"));
         BattleRewardService rewardService = new BattleRewardService(random);
         this.encounterGenerator =
                 new EncounterGenerator(this.enemyCatalog, encounterCatalog, random);
@@ -387,8 +397,9 @@ public class World {
         this.inventoryMenu = new InventoryMenu(this.party, consoleInput, equipmentMenu);
         this.partyStatusMenu = new PartyStatusMenu(this.party, consoleInput, equipmentMenu);
         this.cityMenu = new CityMenu(consoleInput, this.worldClock);
-        this.cityTransportMenu =
-                new CityTransportMenu(this.party, consoleInput, this.scenarioCatalog);
+        this.mapPrototype = new MapPrototype(
+				consoleInput,
+				new CityTransportMenu(this.party, consoleInput, this.scenarioCatalog));
         this.cityLocationMenu = new CityLocationMenu(consoleInput);
         this.narrativeLocationMenu = new NarrativeLocationMenu(consoleInput);
         this.npcInteractionMenu = new NpcInteractionMenu(consoleInput);
@@ -408,8 +419,9 @@ public class World {
                         enemySkillsetCatalog,
                         rewardService,
                         rewardScreen,
-                        this.questProgressCoordinator,
+						this.questProgressCoordinator,
 						this.bestiaryStateCatalog,
+						this.battleBgmPlayer,
                         random);
 		BestiaryMenu bestiaryMenu =
 				new BestiaryMenu(consoleInput, this.enemyCatalog, this.bestiaryStateCatalog);
@@ -441,6 +453,11 @@ public class World {
         this.shopMenu =
                 new ShopMenu(
                         this.party, consoleInput, this.worldClock, this.questProgressCoordinator);
+        this.marketplaceMenu = new MarketplaceMenu(
+                consoleInput, this.itemCatalog,
+                new MarketplaceTransactionService(
+                        this.party, this.itemCatalog, this.party.getLeader().getName(),
+                        marketplaceApiClient));
         this.partyRescueScreen = new PartyRescueScreen(consoleInput);
         this.exitConfirmationMenu = new ExitConfirmationMenu(consoleInput);
 		this.allyRecruitmentMenu =
@@ -573,10 +590,8 @@ public class World {
             availableActions.add(CityAction.LEAVE_CITY);
         }
 
-        if (!getAvailableCityTransportDestinations().isEmpty()) {
-            availableActions.add(CityAction.CITY_TRANSPORT);
-        }
 
+        availableActions.add(CityAction.REGION_MAP);
         availableActions.add(CityAction.INVENTORY);
         availableActions.add(CityAction.QUESTS);
         availableActions.add(CityAction.VIEW_STATUS);
@@ -596,7 +611,7 @@ public class World {
 
             case VIEW_STATUS -> partyStatusMenu.open();
 
-            case CITY_TRANSPORT -> executeCityTransportMenu();
+            case REGION_MAP -> executeMapMenu();
         }
     }
 
@@ -820,6 +835,16 @@ public class World {
 
 			if (selection == InnMenu.Selection.BACK) {
 				return;
+			}
+
+			if (selection == InnMenu.Selection.MARKETPLACE) {
+				CampaignSaveResult saveResult = saveCampaign(innDefinition);
+				if (saveResult.isSuccess()) {
+					marketplaceMenu.open(() -> saveCampaign(innDefinition));
+				} else {
+					innMenu.displaySaveResult(city.getName(), innDefinition, saveResult);
+				}
+				continue;
 			}
 
 			innMenu.displaySaving(city.getName(), innDefinition);
@@ -1283,9 +1308,7 @@ public class World {
             availableActions.add(CombatScenarioAction.FOLLOW_ROUTE);
         }
 
-        if (!getAvailableCityTransportDestinations().isEmpty()) {
-            availableActions.add(CombatScenarioAction.CITY_TRANSPORT);
-        }
+        availableActions.add(CombatScenarioAction.REGION_MAP);
         availableActions.add(CombatScenarioAction.INVENTORY);
         availableActions.add(CombatScenarioAction.QUESTS);
         availableActions.add(CombatScenarioAction.VIEW_STATUS);
@@ -1321,7 +1344,7 @@ public class World {
 
             case FOLLOW_BRANCH -> executeScenarioBranchMenu();
 
-            case CITY_TRANSPORT -> executeCityTransportMenu();
+            case REGION_MAP -> executeMapMenu();
         }
     }
 
@@ -1461,6 +1484,7 @@ public class World {
 		}
 
 		queueExplorationMessage("Inimigos se aproximam!");
+		battleBgmPlayer.play(BattleType.NORMAL);
 
 		combatScenarioMenu.displayExplorationEncounter(
 		        currentScenario.getName(),
@@ -1663,6 +1687,7 @@ public class World {
 
 		DungeonSettings settings = dungeon.getDungeonSettings();
 		int epicLevel = rollEnemyLevel(settings.getEpicMinLevel(), settings.getEpicMaxLevel());
+		battleBgmPlayer.play(BattleType.EPIC);
 		BattleResult result = startEncounter(createEnemySpawns(epicDefinitions, epicLevel), BattleType.EPIC);
 
 		if (result == BattleResult.VICTORY) {
@@ -1726,31 +1751,20 @@ public class World {
 		shopStateCatalog = replacementShopStateCatalog;
 	}
 
-	private void executeCityTransportMenu() {
-        List<CityTransportDefinition> availableDestinations =
-                getAvailableCityTransportDestinations();
-
-		if (availableDestinations.isEmpty()) {
-			throw new IllegalStateException("There are no available city transport destinations.");
-		}
-
-		Optional<CityTransportDefinition> selectedDestination =
-				cityTransportMenu.open(
-						currentScenario.getName(),
-						availableDestinations,
-						getCityTransportDestinationSlotCount(),
-						getMarkedDestinationScenarioIds()
-				);
+	private void executeMapMenu() {
+		Optional<CityTransportDefinition> selectedDestination = mapPrototype.open(
+				currentScenario,
+				getAvailableCityTransportDestinations(),
+				getCityTransportDestinationSlotCount(),
+				getMarkedDestinationScenarioIds(),
+				worldProgress);
 
 		if (selectedDestination.isEmpty()) {
 			return;
 		}
 
-		CityTransportDefinition destinationDefinition = selectedDestination.get();
-
-        Scenario destination =
-                scenarioCatalog.getById(destinationDefinition.getDestinationScenarioId());
-
+		Scenario destination =
+				scenarioCatalog.getById(selectedDestination.get().getDestinationScenarioId());
 		changeScenario(destination);
 	}
 
@@ -1921,6 +1935,7 @@ public class World {
         int bossLevel = narrativeBoss
                 ? settings.getNarrativeBossLevel()
                 : rollEnemyLevel(settings.getRecurringBossMinLevel(), settings.getRecurringBossMaxLevel());
+		battleBgmPlayer.play(BattleType.BOSS);
 		ConsoleUI.clearScreen();
 		ConsoleUI.displayHeading(dungeon.getName(), "Boss");
 
@@ -2075,9 +2090,9 @@ public class World {
 		    markedActions.add(CityAction.LEAVE_CITY);
 		}
 
-		if (availableActions.contains(CityAction.CITY_TRANSPORT)
+		if (availableActions.contains(CityAction.REGION_MAP)
 				&& hasPendingCityTransportDestination(markedDestinationIds)) {
-			markedActions.add(CityAction.CITY_TRANSPORT);
+			markedActions.add(CityAction.REGION_MAP);
 		}
 
 		return Set.copyOf(markedActions);
@@ -2093,9 +2108,9 @@ public class World {
 		    markedActions.add(CombatScenarioAction.FOLLOW_ROUTE);
 		}
 
-		if (availableActions.contains(CombatScenarioAction.CITY_TRANSPORT)
+		if (availableActions.contains(CombatScenarioAction.REGION_MAP)
 				&& hasPendingCityTransportDestination(markedDestinationIds)) {
-			markedActions.add(CombatScenarioAction.CITY_TRANSPORT);
+			markedActions.add(CombatScenarioAction.REGION_MAP);
 		}
 
 		if (availableActions.contains(CombatScenarioAction.FOLLOW_BRANCH) && travelProgress

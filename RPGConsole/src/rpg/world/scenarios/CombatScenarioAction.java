@@ -9,7 +9,7 @@ public enum CombatScenarioAction {
 	QUESTS("Diário"),
 	VIEW_STATUS("Ver status"),
 	FOLLOW_ROUTE("Seguir caminho"),
-	CITY_TRANSPORT("Viajar"),
+	REGION_MAP("Mapa"),
 	FOLLOW_BRANCH("Bifurcação");
 
 	private final String displayName;
