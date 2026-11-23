@@ -2,15 +2,11 @@
 
 ## Current version
 
-V8 is complete and released as `v8.0.0`.
+V9.0.0 is prepared on `feature/v9-release`. The previous published release is `v8.0.0`.
 
-Current stage:
+V9 includes the Trading Post with a local Spring Boot API and automatic campaign saves, the regional map with discovery markers, and battle music for normal, epic and boss encounters.
 
-`V8 released — enemy levels and skills, target personalities, persistent Bestiary, dungeon level ranges, V8 branding and new-campaign terminal guidance are implemented and verified.`
-
-Current Git branch:
-
-`master`
+Validation on JDK 25 covered 201 API tests, including 200 concurrent purchase rounds, and manual gameplay checks for trading, campaign persistence, API unavailability, the map and battle music.
 
 Preserved release tags:
 
@@ -996,7 +992,7 @@ Part 8 completed fixed and percentage-based recovery and revival items, battle-o
 
 ## V8 enemy combat
 
-The title screen identifies the current build as V8. Normal New Game selection opens an ASCII-only 77-column by 17-line terminal-sizing guide before character creation. Continue and `--dev-party` skip that guide. Automated checks verify every line width, total height and the absence of a trailing eighteenth line; the complete visual flow was also verified in the target terminal.
+V8 introduced its version label on the title screen. Normal New Game selection opens an ASCII-only 77-column by 17-line terminal-sizing guide before character creation. Continue and `--dev-party` skip that guide. Automated checks verify every line width, total height and the absence of a trailing eighteenth line; the complete visual flow was also verified in the target terminal.
 
 The V7 carryover for INN resting is complete. A successful rest uses a separate bounded result screen with shared wrapping and line animation; Enter reveals the complete result before a subsequent Enter returns to the INN.
 

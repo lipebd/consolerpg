@@ -3,7 +3,7 @@ setlocal EnableExtensions EnableDelayedExpansion
 
 for %%I in ("%~dp0..\..") do set "PROJECT_ROOT=%%~fI"
 
-set "VERSION=8.0.0"
+set "VERSION=9.0.0"
 set "APP_NAME=RPGConsole"
 set "BUILD_DIR=%PROJECT_ROOT%\output\windows-v%VERSION%-build"
 set "RELEASE_DIR=%PROJECT_ROOT%\output\%APP_NAME%-v%VERSION%"
@@ -77,7 +77,7 @@ jpackage ^
     --main-jar "%APP_NAME%-v%VERSION%.jar" ^
     --main-class rpg.Main ^
     --dest "%APP_IMAGE_DIR%" ^
-    --add-modules java.base ^
+    --add-modules java.base,java.desktop,java.net.http ^
     --win-console
 
 if errorlevel 1 goto :error
@@ -121,5 +121,5 @@ exit /b 0
 
 :error
 echo.
-echo O build da V8 falhou.
+echo O build da V9 falhou.
 exit /b 1

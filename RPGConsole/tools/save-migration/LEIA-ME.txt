@@ -1,0 +1,28 @@
+CONVERSOR PRIVADO DE SAVE V3 PARA V4
+
+Esta ferramenta existe somente para recuperar saves internos de desenvolvimento.
+Ela nao altera a incompatibilidade oficial entre saves de versoes publicadas.
+
+COMPORTAMENTO
+
+* Aceita somente um save interno V3 autenticado pela chave do RPGConsole.
+* Preserva o arquivo V3 original.
+* Cria um novo save interno V4 com o Bestiario vazio.
+* Valida integralmente o payload V4 antes de escrever o arquivo convertido.
+* Recusa sobrescrever um arquivo de saida existente.
+
+USO PADRAO
+
+Coloque o save V3 como save.txt na raiz do projeto e execute:
+
+cmd.exe /c tools\save-migration\convert-save-v3-to-v4.cmd
+
+O novo arquivo sera criado como save-v4.txt.
+
+CAMINHOS PERSONALIZADOS
+
+cmd.exe /c tools\save-migration\convert-save-v3-to-v4.cmd "save-v3.txt" "save-v4.txt"
+
+Depois da conversao, preserve o V3 original e teste o arquivo V4 em uma copia da
+distribuicao. O jogo reconhece apenas o nome save.txt, portanto renomeie uma copia
+do arquivo convertido somente dentro da pasta usada para o teste.
