@@ -31,6 +31,7 @@ import rpg.enemies.EnemyLoader;
 import rpg.flags.CampaignFlags;
 import rpg.flags.FlagCatalog;
 import rpg.flags.FlagLoader;
+import rpg.marketplace.api.MarketplaceApiClient;
 import rpg.items.Item;
 import rpg.items.ItemCatalog;
 import rpg.items.ItemDefinition;
@@ -821,7 +822,9 @@ public class Main {
                     questCatalog,
                     questRewardCatalog,
 					questDialogueCatalog,
-					bestiaryStateCatalog);
+					bestiaryStateCatalog,
+                    new MarketplaceApiClient(System.getProperty(
+                            "rpg.marketplace.api.url", "http://localhost:8080")));
 
 			world.start();
 
