@@ -1,4 +1,4 @@
-# RPGConsole V9.1 (Unreleased)
+# RPGConsole V9.1.0 - Demo
 
 RPGConsole is a console RPG developed in Java as a Computer Engineering project. V9 adds the Trading Post, a regional map and battle music for normal, epic and boss encounters. V9.1 identifies each campaign by a persistent UUID, so campaigns with the same leader name have separate listings and rewards.
 
