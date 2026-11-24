@@ -4,10 +4,12 @@ import java.util.Objects;
 
 // Represents sale proceeds kept by the API until the seller claims them.
 public record PendingReward(
-		String id,
-		String transactionId,
-		int amount,
-		RewardStatus status) {
+        String id,
+        String transactionId,
+        int amount,
+        RewardStatus status,
+        String itemId,
+        int quantity) {
 
 	public PendingReward {
 		if (id == null || id.isBlank()) {
@@ -18,6 +20,12 @@ public record PendingReward(
 		}
 		if (amount <= 0) {
 			throw new IllegalArgumentException("Reward amount must be positive.");
+		}
+		if (itemId == null || itemId.isBlank()) {
+		    throw new IllegalArgumentException("Reward item ID cannot be empty.");
+		}
+		if (quantity <= 0) {
+		    throw new IllegalArgumentException("Reward quantity must be positive.");
 		}
 		Objects.requireNonNull(status, "Reward status cannot be null.");
 	}

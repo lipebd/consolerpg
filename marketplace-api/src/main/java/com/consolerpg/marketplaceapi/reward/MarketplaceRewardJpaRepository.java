@@ -9,13 +9,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.EntityGraph;
 
 public interface MarketplaceRewardJpaRepository
         extends JpaRepository<MarketplaceRewardEntity, UUID> {
 
-    List<MarketplaceRewardEntity> findAllBySellerCampaignIdAndStatus(
-            UUID sellerCampaignId,
-            RewardStatus status);
+	@EntityGraph(attributePaths = "transaction")
+	List<MarketplaceRewardEntity> findAllBySellerCampaignIdAndStatus(
+	        UUID sellerCampaignId, RewardStatus status);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select reward from MarketplaceRewardEntity reward where reward.id = :id")

@@ -11,6 +11,9 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 
 @Entity
 @Table(name = "marketplace_rewards")
@@ -19,8 +22,9 @@ public class MarketplaceRewardEntity {
     @Id
     private UUID id;
 
-    @Column(nullable = false, updatable = false, unique = true)
-    private UUID transactionId;
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "transaction_id", nullable = false, updatable = false, unique = true)
+    private MarketplaceTransactionEntity transaction;
 
     @Column(nullable = false, updatable = false)
     private UUID sellerCampaignId;
@@ -44,7 +48,7 @@ public class MarketplaceRewardEntity {
         }
 
         this.id = UUID.randomUUID();
-        this.transactionId = transaction.getId();
+        this.transaction = transaction;
         this.sellerCampaignId = transaction.getSellerCampaignId();
         this.amount = transaction.getTotalPrice();
         this.status = RewardStatus.PENDING;
@@ -55,7 +59,11 @@ public class MarketplaceRewardEntity {
     }
 
     public UUID getTransactionId() {
-        return transactionId;
+        return transaction.getId();
+    }
+
+    public MarketplaceTransactionEntity getTransaction() {
+        return transaction;
     }
 
     public UUID getSellerCampaignId() {
