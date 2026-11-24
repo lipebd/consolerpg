@@ -165,11 +165,13 @@ public final class MarketplaceApiClient {
 	}
 
 	private static PendingReward parseReward(Map<String, Object> object) {
-		return new PendingReward(
-				JsonSupport.requiredString(object, "id"),
-				JsonSupport.requiredString(object, "transactionId"),
-				JsonSupport.requiredInt(object, "amount"),
-				RewardStatus.valueOf(JsonSupport.requiredString(object, "status")));
+	    return new PendingReward(
+	            JsonSupport.requiredString(object, "id"),
+	            JsonSupport.requiredString(object, "transactionId"),
+	            JsonSupport.requiredInt(object, "amount"),
+	            RewardStatus.valueOf(JsonSupport.requiredString(object, "status")),
+	            JsonSupport.requiredString(object, "itemId"),
+	            JsonSupport.requiredInt(object, "quantity"));
 	}
 
 	private static String encode(String value) {

@@ -6,13 +6,7 @@ RPGConsole is a console RPG developed in Java as a Computer Engineering project.
 
 Extract the Windows x64 ZIP and run `RPGConsole.cmd`. The game includes its own Java runtime.
 
-To use the Trading Post, start the executable API JAR from the same release with Java 25. Run it in the directory where the local database should be stored:
-
-```bat
-java -jar marketplace-api-0.0.1-SNAPSHOT.jar --server.address=127.0.0.1
-```
-
-Check http://localhost:8080/api/health. In the game, visit an inn and select **[4] Posto de Trocas**. The game remains playable with the API stopped. Use the API JAR distributed with V9.1. It stores trades in a separate local database.
+The Windows demo connects to the hosted Trading Post. In the game, visit an inn and select **[4] Posto de Trocas**. The server can take about a minute to start after inactivity. Its in-memory database clears on restart. The rest of the game remains playable offline.
 
 ## Run from source
 
