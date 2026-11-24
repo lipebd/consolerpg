@@ -18,7 +18,10 @@ public class MarketplaceListingEntity {
     private UUID id;
 
     @Column(nullable = false, updatable = false)
-    private String sellerId;
+    private UUID sellerCampaignId;
+
+    @Column(nullable = false, updatable = false)
+    private String sellerName;
 
     @Column(nullable = false, updatable = false)
     private String itemId;
@@ -40,14 +43,18 @@ public class MarketplaceListingEntity {
     }
 
     public MarketplaceListingEntity(
-            String sellerId,
+            UUID sellerCampaignId,
+            String sellerName,
             String itemId,
             int quantity,
             int unitPrice) {
 
-        if (sellerId == null || sellerId.isBlank()) {
+        if (sellerCampaignId == null) {
+            throw new IllegalArgumentException("Seller campaign ID cannot be null.");
+        }
+        if (sellerName == null || sellerName.isBlank()) {
             throw new IllegalArgumentException(
-                    "Seller ID cannot be null or blank."
+                    "Seller name cannot be null or blank."
             );
         }
 
@@ -70,7 +77,8 @@ public class MarketplaceListingEntity {
         }
 
         this.id = UUID.randomUUID();
-        this.sellerId = sellerId;
+        this.sellerCampaignId = sellerCampaignId;
+        this.sellerName = sellerName;
         this.itemId = itemId;
         this.quantity = quantity;
         this.unitPrice = unitPrice;
@@ -81,8 +89,12 @@ public class MarketplaceListingEntity {
         return id;
     }
 
-    public String getSellerId() {
-        return sellerId;
+    public UUID getSellerCampaignId() {
+        return sellerCampaignId;
+    }
+
+    public String getSellerName() {
+        return sellerName;
     }
 
     public String getItemId() {

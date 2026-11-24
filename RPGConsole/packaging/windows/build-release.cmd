@@ -3,7 +3,7 @@ setlocal EnableExtensions EnableDelayedExpansion
 
 for %%I in ("%~dp0..\..") do set "PROJECT_ROOT=%%~fI"
 
-set "VERSION=9.0.0"
+set "VERSION=9.1.0"
 set "APP_NAME=RPGConsole"
 set "BUILD_DIR=%PROJECT_ROOT%\output\windows-v%VERSION%-build"
 set "RELEASE_DIR=%PROJECT_ROOT%\output\%APP_NAME%-v%VERSION%"
@@ -121,5 +121,5 @@ exit /b 0
 
 :error
 echo.
-echo O build da V9 falhou.
+echo O build da V9.1 falhou.
 exit /b 1

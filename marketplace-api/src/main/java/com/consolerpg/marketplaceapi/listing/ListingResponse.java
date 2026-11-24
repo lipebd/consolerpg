@@ -5,26 +5,28 @@ import java.util.UUID;
 public record ListingResponse(
 
         UUID id,
-        String sellerId,
+        String sellerName,
         String itemId,
         int quantity,
         int unitPrice,
         int totalPrice,
-        ListingStatus status
+        ListingStatus status,
+        boolean ownedByCurrentCampaign
 
 ) {
 
     public static ListingResponse from(
-            MarketplaceListingEntity listing) {
+            MarketplaceListingEntity listing, UUID campaignId) {
 
         return new ListingResponse(
                 listing.getId(),
-                listing.getSellerId(),
+                listing.getSellerName(),
                 listing.getItemId(),
                 listing.getQuantity(),
                 listing.getUnitPrice(),
                 listing.getTotalPrice(),
-                listing.getStatus()
+                listing.getStatus(),
+                listing.getSellerCampaignId().equals(campaignId)
         );
     }
 }

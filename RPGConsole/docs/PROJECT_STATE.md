@@ -2,7 +2,7 @@
 
 ## Current version
 
-V9.0.0 is prepared on `feature/v9-release`. The previous published release is `v8.0.0`.
+V9.1.0 is in preparation. It adds a persistent campaign UUID to save format 5 and uses that UUID to identify the owner of listings and rewards. The game can still load format 4 saves, and the V9.1 API stores trades in a separate local database.
 
 V9 includes the Trading Post with a local Spring Boot API and automatic campaign saves, the regional map with discovery markers, and battle music for normal, epic and boss encounters.
 

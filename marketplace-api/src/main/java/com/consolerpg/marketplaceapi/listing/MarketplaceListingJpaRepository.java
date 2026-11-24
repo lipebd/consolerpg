@@ -19,8 +19,8 @@ public interface MarketplaceListingJpaRepository
             ListingStatus status
     );
 
-    List<MarketplaceListingEntity> findAllBySellerId(
-            String sellerId
+    List<MarketplaceListingEntity> findAllBySellerCampaignId(
+            UUID sellerCampaignId
     );
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

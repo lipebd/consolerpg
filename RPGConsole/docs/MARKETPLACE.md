@@ -8,7 +8,7 @@ O cliente mantém apenas os recursos da campanha:
 
 - GOLD;
 - inventário;
-- identidade do jogador, obtida pelo nome do líder permanente da campanha.
+- UUID da campanha, persistido no save e enviado à API para identificar seu dono.
 
 A API mantém o estado compartilhado:
 
@@ -16,7 +16,7 @@ A API mantém o estado compartilhado:
 - transações concluídas;
 - recompensas pendentes e resgatadas.
 
-Na V9, `save.txt` continua usando o formato de salvamento 4 da V8. A campanha é salva antes de abrir o Posto. Cada criação de anúncio, compra, cancelamento e resgate concluído salva imediatamente os itens e o GOLD atualizados, enquanto anúncios e recompensas permanecem no banco da API. Se o salvamento inicial falhar, o Posto não abre. Se falhar após uma negociação, o jogador deve tentar salvar novamente antes de continuar; essa tentativa não repete a operação remota.
+Na V9.1, `save.txt` usa o formato 5 e inclui o identificador da campanha. Saves no formato 4 recebem um UUID ao serem carregados e gravam esse UUID no próximo salvamento. A campanha é salva antes de abrir o Posto. Cada criação de anúncio, compra, cancelamento e resgate concluído salva imediatamente os itens e o GOLD atualizados, enquanto anúncios e recompensas permanecem no banco da API. Se o salvamento inicial falhar, o Posto não abre. Se falhar após uma negociação, o jogador deve tentar salvar novamente antes de continuar; essa tentativa não repete a operação remota.
 
 ## Executando localmente
 
@@ -47,7 +47,7 @@ Para testar duas campanhas, use nomes de líder diferentes e um `save.txt` para 
 
 ## Persistência da API
 
-O H2 usa a pasta `marketplace-data` no diretório de trabalho da API. Reiniciar a API não apaga os anúncios. A pasta é ignorada pelo Git.
+O H2 da V9.1 usa a pasta `marketplace-data/v9.1` no diretório de trabalho da API. Os registros da V9.0.0 ficam no banco anterior. Use o cliente e a API da mesma versão. Reiniciar a API não apaga os anúncios. A pasta é ignorada pelo Git.
 
 ## Concorrência
 
@@ -55,17 +55,19 @@ Compra, cancelamento e resgate abrem transações no servidor e bloqueiam o regi
 
 ## Endpoints
 
+As rotas de anúncios e recompensas recebem o cabeçalho `X-Campaign-Id`. O nome do líder é exibido nos anúncios e o UUID do vendedor fica no servidor. A resposta de um anúncio informa se ele pertence à campanha que fez a consulta.
+
 | Método | Endpoint | Função |
 | --- | --- | --- |
 | `GET` | `/api/health` | Verifica se a API está ativa |
 | `GET` | `/api/listings` | Lista anúncios ativos |
-| `GET` | `/api/listings?sellerId=...` | Lista os anúncios de um vendedor |
+| `GET` | `/api/listings?mine=true` | Lista os anúncios da campanha atual |
 | `POST` | `/api/listings` | Cria um anúncio |
 | `POST` | `/api/listings/{id}/purchase` | Compra um anúncio ativo |
 | `POST` | `/api/listings/{id}/cancel` | Cancela um anúncio do vendedor |
-| `GET` | `/api/rewards?sellerId=...` | Lista recompensas pendentes |
+| `GET` | `/api/rewards` | Lista recompensas pendentes da campanha atual |
 | `POST` | `/api/rewards/{id}/claim` | Resgata uma recompensa |
 
 ## Limites do salvamento automático
 
-O salvamento imediato reduz a possibilidade de duplicação por recarga após uma negociação confirmada. A operação no servidor e o arquivo local continuam sem uma transação única: perda de resposta, encerramento forçado antes do save e restauração de backups antigos ainda podem causar divergências. A API foi integrada para uso local. A identidade usada pelo servidor é o nome do líder da campanha, sem autenticação.
+O salvamento imediato reduz a possibilidade de duplicação por recarga após uma negociação confirmada. A operação no servidor e o arquivo local continuam sem uma transação única: perda de resposta, encerramento forçado antes do save e restauração de backups antigos ainda podem causar divergências. A API foi integrada para uso local. A API compara o UUID recebido com o dono registrado. O fluxo local segue sem autenticação de contas.

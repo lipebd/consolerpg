@@ -15,6 +15,7 @@ public final class CampaignPropertiesSerializer {
 		Properties properties = new Properties();
 
 		properties.setProperty("save.formatVersion", Integer.toString(SaveFormat.CURRENT_VERSION));
+		properties.setProperty("campaign.id", campaignSnapshot.getCampaignId().toString());
 
 		serializeParty(properties, campaignSnapshot.getParty());
 		serializeWorld(properties, campaignSnapshot.getWorld());

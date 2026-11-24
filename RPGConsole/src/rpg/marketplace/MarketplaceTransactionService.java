@@ -17,20 +17,14 @@ public final class MarketplaceTransactionService {
 
 	private final Party party;
 	private final ItemCatalog itemCatalog;
-	private final String playerId;
 	private final MarketplaceApiClient apiClient;
 
 	public MarketplaceTransactionService(
 			Party party,
 			ItemCatalog itemCatalog,
-			String playerId,
 			MarketplaceApiClient apiClient) {
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
 		this.itemCatalog = Objects.requireNonNull(itemCatalog, "Item catalog cannot be null.");
-		if (playerId == null || playerId.isBlank()) {
-			throw new IllegalArgumentException("Marketplace player ID cannot be empty.");
-		}
-		this.playerId = playerId;
 		this.apiClient = Objects.requireNonNull(apiClient, "Marketplace API client cannot be null.");
 	}
 
@@ -41,12 +35,12 @@ public final class MarketplaceTransactionService {
 
 	public List<MarketplaceListing> getListingsForCurrentPlayer()
 			throws IOException, InterruptedException {
-		return apiClient.getListingsForSeller(playerId);
+		return apiClient.getOwnListings();
 	}
 
 	public List<PendingReward> getPendingRewardsForCurrentPlayer()
 			throws IOException, InterruptedException {
-		return apiClient.getPendingRewards(playerId);
+		return apiClient.getPendingRewards();
 	}
 
 	public Map<Item, Integer> getInventoryItemsForListing() {
@@ -96,7 +90,7 @@ public final class MarketplaceTransactionService {
 		}
 
 		try {
-			apiClient.createListing(playerId, itemId, quantity, unitPrice);
+			apiClient.createListing(party.getLeader().getName(), itemId, quantity, unitPrice);
 			return MarketplaceListingCreationResult.SUCCESS;
 		} catch (InterruptedException exception) {
 			Thread.currentThread().interrupt();
@@ -118,7 +112,7 @@ public final class MarketplaceTransactionService {
 		if (listing.status() != ListingStatus.ACTIVE) {
 			return MarketplacePurchaseResult.LISTING_NOT_ACTIVE;
 		}
-		if (listing.sellerId().equals(playerId)) {
+		if (listing.ownedByCurrentCampaign()) {
 			return MarketplacePurchaseResult.CANNOT_BUY_OWN_LISTING;
 		}
 
@@ -137,7 +131,7 @@ public final class MarketplaceTransactionService {
 		}
 
 		try {
-			apiClient.purchaseListing(listing.id(), playerId);
+			apiClient.purchaseListing(listing.id());
 		} catch (InterruptedException exception) {
 			Thread.currentThread().interrupt();
 			return MarketplacePurchaseResult.API_UNAVAILABLE;
@@ -174,7 +168,7 @@ public final class MarketplaceTransactionService {
 		if (listing == null) {
 			return MarketplaceListingCancellationResult.INVALID_LISTING;
 		}
-		if (!listing.sellerId().equals(playerId)) {
+		if (!listing.ownedByCurrentCampaign()) {
 			return MarketplaceListingCancellationResult.NOT_LISTING_OWNER;
 		}
 		if (listing.status() != ListingStatus.ACTIVE) {
@@ -193,7 +187,7 @@ public final class MarketplaceTransactionService {
 		}
 
 		try {
-			apiClient.cancelListing(listing.id(), playerId);
+			apiClient.cancelListing(listing.id());
 		} catch (InterruptedException exception) {
 			Thread.currentThread().interrupt();
 			return MarketplaceListingCancellationResult.API_UNAVAILABLE;
@@ -223,9 +217,6 @@ public final class MarketplaceTransactionService {
 		if (reward == null) {
 			return MarketplaceRewardClaimResult.INVALID_REWARD;
 		}
-		if (!reward.sellerId().equals(playerId)) {
-			return MarketplaceRewardClaimResult.NOT_REWARD_OWNER;
-		}
 		if (reward.status() != RewardStatus.PENDING) {
 			return MarketplaceRewardClaimResult.REWARD_NOT_PENDING;
 		}
@@ -234,7 +225,7 @@ public final class MarketplaceTransactionService {
 		}
 
 		try {
-			apiClient.claimReward(reward.id(), playerId);
+			apiClient.claimReward(reward.id());
 		} catch (InterruptedException exception) {
 			Thread.currentThread().interrupt();
 			return MarketplaceRewardClaimResult.API_UNAVAILABLE;

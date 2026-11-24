@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.UUID;
 
 import rpg.characters.Party;
 
@@ -25,11 +26,15 @@ public final class CampaignPropertiesDeserializer {
 					);
 		}
 
-		if (formatVersion != SaveFormat.CURRENT_VERSION) {
+		if (formatVersion != SaveFormat.CURRENT_VERSION && formatVersion != SaveFormat.PREVIOUS_VERSION) {
 			throw new IllegalArgumentException(
 					"Unsupported save format version: " + formatVersion
 					);
 		}
+
+		UUID campaignId = formatVersion == SaveFormat.PREVIOUS_VERSION
+				? UUID.randomUUID()
+				: readCampaignId(reader);
 
 		PartySnapshot partySnapshot = deserializeParty(reader);
 		WorldSnapshot worldSnapshot = deserializeWorld(reader);
@@ -43,6 +48,7 @@ public final class CampaignPropertiesDeserializer {
 		reader.rejectUnreadProperties();
 
 		return new CampaignSnapshot(
+				campaignId,
 				partySnapshot,
 				worldSnapshot,
 				shopSnapshots,
@@ -51,6 +57,15 @@ public final class CampaignPropertiesDeserializer {
 				recruitmentCandidates,
 				bestiarySnapshot
 				);
+	}
+
+	private static UUID readCampaignId(StrictPropertyReader reader) {
+		String value = reader.readRequired("campaign.id");
+		UUID campaignId = UUID.fromString(value);
+		if (!campaignId.toString().equals(value)) {
+			throw new IllegalArgumentException("Campaign ID must be a canonical UUID.");
+		}
+		return campaignId;
 	}
 
 	private static BestiarySnapshot deserializeBestiary(StrictPropertyReader reader) {

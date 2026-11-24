@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,19 +30,21 @@ public class MarketplaceListingController {
 
     @GetMapping
     public List<ListingResponse> getListings(
-            @RequestParam(name = "sellerId", required = false) String sellerId) {
+            @RequestHeader("X-Campaign-Id") UUID campaignId,
+            @RequestParam(name = "mine", defaultValue = "false") boolean mine) {
 
-        return sellerId == null
-                ? service.getActiveListings()
-                : service.getListingsForSeller(sellerId);
+        return mine
+                ? service.getListingsForSeller(campaignId)
+                : service.getActiveListings(campaignId);
     }
 
     @PostMapping
     public ResponseEntity<ListingResponse> createListing(
+            @RequestHeader("X-Campaign-Id") UUID campaignId,
             @Valid @RequestBody CreateListingRequest request) {
 
         ListingResponse response =
-                service.createListing(request);
+                service.createListing(campaignId, request);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -51,16 +54,16 @@ public class MarketplaceListingController {
     @PostMapping("/{listingId}/purchase")
     public ListingResponse purchaseListing(
             @PathVariable("listingId") UUID listingId,
-            @Valid @RequestBody PurchaseListingRequest request) {
+            @RequestHeader("X-Campaign-Id") UUID campaignId) {
 
-        return service.purchaseListing(listingId, request);
+        return service.purchaseListing(listingId, campaignId);
     }
 
     @PostMapping("/{listingId}/cancel")
     public ListingResponse cancelListing(
             @PathVariable("listingId") UUID listingId,
-            @Valid @RequestBody CancelListingRequest request) {
+            @RequestHeader("X-Campaign-Id") UUID campaignId) {
 
-        return service.cancelListing(listingId, request);
+        return service.cancelListing(listingId, campaignId);
     }
 }

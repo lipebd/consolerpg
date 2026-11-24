@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Random;
+import java.util.UUID;
 import java.util.Set;
 
 import rpg.GameCurrency;
@@ -216,6 +217,7 @@ public class World {
 	private final BattleCoordinator battleCoordinator;
 	private final BattleBgmPlayer battleBgmPlayer;
 
+	private final UUID campaignId;
 	private Party party;
 	private ExplorationSession explorationSession;
 	private final QuestTransportState questTransportState;
@@ -228,6 +230,7 @@ public class World {
 	private boolean shouldDisplayScenarioDescription;
 
 	public World(
+			UUID campaignId,
 			Party party,
 			Scenario initialScenario,
 			ConsoleInput consoleInput,
@@ -281,6 +284,7 @@ public class World {
 		Objects.requireNonNull(enemySkillsetCatalog, "Enemy skillset catalog cannot be null.");
 
         // Core world state and shared data
+        this.campaignId = Objects.requireNonNull(campaignId, "Campaign ID cannot be null.");
         this.party = Objects.requireNonNull(party, "Party cannot be null.");
         this.currentScenario =
                 Objects.requireNonNull(initialScenario, "Initial scenario cannot be null.");
@@ -456,8 +460,7 @@ public class World {
         this.marketplaceMenu = new MarketplaceMenu(
                 consoleInput, this.itemCatalog,
                 new MarketplaceTransactionService(
-                        this.party, this.itemCatalog, this.party.getLeader().getName(),
-                        marketplaceApiClient));
+                        this.party, this.itemCatalog, marketplaceApiClient));
         this.partyRescueScreen = new PartyRescueScreen(consoleInput);
         this.exitConfirmationMenu = new ExitConfirmationMenu(consoleInput);
 		this.allyRecruitmentMenu =
@@ -871,6 +874,7 @@ public class World {
 		try {
             snapshot =
                     CampaignSnapshotFactory.create(
+                            campaignId,
                             party,
                             currentScenario,
                             worldProgress,

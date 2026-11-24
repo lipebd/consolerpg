@@ -6,7 +6,6 @@ import java.util.Objects;
 public record PendingReward(
 		String id,
 		String transactionId,
-		String sellerId,
 		int amount,
 		RewardStatus status) {
 
@@ -16,9 +15,6 @@ public record PendingReward(
 		}
 		if (transactionId == null || transactionId.isBlank()) {
 			throw new IllegalArgumentException("Transaction ID cannot be empty.");
-		}
-		if (sellerId == null || sellerId.isBlank()) {
-			throw new IllegalArgumentException("Seller ID cannot be empty.");
 		}
 		if (amount <= 0) {
 			throw new IllegalArgumentException("Reward amount must be positive.");

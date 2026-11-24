@@ -18,24 +18,20 @@ public class MarketplaceRewardService {
     }
 
     @Transactional(readOnly = true)
-    public List<RewardResponse> getPendingRewards(String sellerId) {
-        if (sellerId == null || sellerId.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Seller ID cannot be empty.");
-        }
-
-        return repository.findAllBySellerIdAndStatus(sellerId, RewardStatus.PENDING)
+    public List<RewardResponse> getPendingRewards(UUID sellerCampaignId) {
+        return repository.findAllBySellerCampaignIdAndStatus(sellerCampaignId, RewardStatus.PENDING)
                 .stream()
                 .map(RewardResponse::from)
                 .toList();
     }
 
     @Transactional
-    public RewardResponse claimReward(UUID rewardId, ClaimRewardRequest request) {
+    public RewardResponse claimReward(UUID rewardId, UUID sellerCampaignId) {
         MarketplaceRewardEntity reward = repository.findByIdForUpdate(rewardId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Reward was not found."));
 
-        if (!reward.getSellerId().equals(request.sellerId())) {
+        if (!reward.getSellerCampaignId().equals(sellerCampaignId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the seller can claim this reward.");
         }
         if (reward.getStatus() != RewardStatus.PENDING) {
