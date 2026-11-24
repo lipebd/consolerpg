@@ -39,14 +39,11 @@ REQUISITOS
 
 POSTO DE TROCAS
 
-Para usar o Posto de Trocas, baixe o JAR da API na página da versão e
-inicie-o com Java 25 na pasta onde deseja guardar o banco:
-
-java -jar marketplace-api-0.0.1-SNAPSHOT.jar --server.address=127.0.0.1
-
-Com a API em execução, acesse [4] Posto de Trocas na hospedaria. O jogo
-continua disponível com a API desligada. Use a API distribuída com a
-V9.1. Ela inicia um banco separado para os novos anúncios e recompensas.
+Na hospedaria, selecione [4] Posto de Trocas. Esta edição se conecta ao
+servidor da demonstração pela internet e dispensa uma API local.
+Quando o servidor estiver iniciando, aguarde um minuto e tente novamente.
+Anúncios e recompensas ficam em memória e são apagados se a API reiniciar.
+As demais partes do jogo continuam disponíveis offline.
 
 SALVAMENTO
 

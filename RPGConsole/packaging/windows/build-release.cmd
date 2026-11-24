@@ -5,9 +5,9 @@ for %%I in ("%~dp0..\..") do set "PROJECT_ROOT=%%~fI"
 
 set "VERSION=9.1.0"
 set "APP_NAME=RPGConsole"
-set "BUILD_DIR=%PROJECT_ROOT%\output\windows-v%VERSION%-build"
-set "RELEASE_DIR=%PROJECT_ROOT%\output\%APP_NAME%-v%VERSION%"
-set "ZIP_FILE=%PROJECT_ROOT%\output\%APP_NAME%-v%VERSION%-windows-x64.zip"
+set "BUILD_DIR=%PROJECT_ROOT%\output\windows-v%VERSION%-render-demo-build"
+set "RELEASE_DIR=%PROJECT_ROOT%\output\%APP_NAME%-v%VERSION%-render-demo"
+set "ZIP_FILE=%PROJECT_ROOT%\output\%APP_NAME%-v%VERSION%-render-demo-windows-x64.zip"
 set "CLASSES_DIR=%BUILD_DIR%\classes"
 set "INPUT_DIR=%BUILD_DIR%\input"
 set "APP_IMAGE_DIR=%BUILD_DIR%\app-image"
@@ -77,7 +77,8 @@ jpackage ^
     --main-jar "%APP_NAME%-v%VERSION%.jar" ^
     --main-class rpg.Main ^
     --dest "%APP_IMAGE_DIR%" ^
-    --add-modules java.base,java.desktop,java.net.http ^
+    --add-modules java.base,java.desktop,java.net.http,jdk.crypto.ec ^
+    --java-options "-Drpg.marketplace.api.url=https://consolerpg-marketplace.onrender.com" ^
     --win-console
 
 if errorlevel 1 goto :error
