@@ -65,6 +65,13 @@ final class JsonSupport {
 		return text;
 	}
 
+	public static boolean requiredBoolean(Map<String, Object> object, String key) {
+		if (object.get(key) instanceof Boolean value) {
+			return value;
+		}
+		throw new IllegalArgumentException("Missing or invalid JSON boolean: " + key);
+	}
+
 	static int requiredInt(Map<String, Object> object, String field) {
 		Object value = object.get(field);
 

@@ -23,7 +23,7 @@ public class MarketplaceRewardEntity {
     private UUID transactionId;
 
     @Column(nullable = false, updatable = false)
-    private String sellerId;
+    private UUID sellerCampaignId;
 
     @Column(nullable = false, updatable = false)
     private int amount;
@@ -45,7 +45,7 @@ public class MarketplaceRewardEntity {
 
         this.id = UUID.randomUUID();
         this.transactionId = transaction.getId();
-        this.sellerId = transaction.getSellerId();
+        this.sellerCampaignId = transaction.getSellerCampaignId();
         this.amount = transaction.getTotalPrice();
         this.status = RewardStatus.PENDING;
     }
@@ -58,8 +58,8 @@ public class MarketplaceRewardEntity {
         return transactionId;
     }
 
-    public String getSellerId() {
-        return sellerId;
+    public UUID getSellerCampaignId() {
+        return sellerCampaignId;
     }
 
     public int getAmount() {

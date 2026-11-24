@@ -1,6 +1,7 @@
 package rpg.persistence;
 
 import java.util.Objects;
+import java.util.UUID;
 
 import rpg.characters.Party;
 import rpg.flags.CampaignFlags;
@@ -21,6 +22,7 @@ public final class RestoredCampaign {
 	private final CampaignFlags campaignFlags;
 	private final RecruitmentCandidateStateCatalog candidateStateCatalog;
 	private final DungeonProgress dungeonProgress;
+	private final UUID campaignId;
 	private final Party party;
 	private final Scenario currentScenario;
 	private final WorldProgress worldProgress;
@@ -30,6 +32,7 @@ public final class RestoredCampaign {
 	private final BestiaryStateCatalog bestiaryStateCatalog;
 
 	public RestoredCampaign(
+			UUID campaignId,
 			Party party,
 			Scenario currentScenario,
 			WorldProgress worldProgress,
@@ -41,6 +44,7 @@ public final class RestoredCampaign {
 			CampaignFlags campaignFlags,
 			RecruitmentCandidateStateCatalog candidateStateCatalog,
 			BestiaryStateCatalog bestiaryStateCatalog) {
+		this.campaignId = Objects.requireNonNull(campaignId, "Campaign ID cannot be null.");
 		this.party = Objects.requireNonNull(party, "Party cannot be null.");
 		this.currentScenario =
 				Objects.requireNonNull(currentScenario, "Current scenario cannot be null.");
@@ -76,6 +80,10 @@ public final class RestoredCampaign {
 
 	public RecruitmentCandidateStateCatalog getCandidateStateCatalog() {
 		return candidateStateCatalog;
+	}
+
+	public UUID getCampaignId() {
+		return campaignId;
 	}
 
 	public Party getParty() {

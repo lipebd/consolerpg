@@ -6,12 +6,9 @@ import java.util.UUID;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/rewards")
@@ -24,15 +21,15 @@ public class MarketplaceRewardController {
     }
 
     @GetMapping
-    public List<RewardResponse> getPendingRewards(@RequestParam("sellerId") String sellerId) {
-        return service.getPendingRewards(sellerId);
+    public List<RewardResponse> getPendingRewards(@RequestHeader("X-Campaign-Id") UUID campaignId) {
+        return service.getPendingRewards(campaignId);
     }
 
     @PostMapping("/{rewardId}/claim")
     public RewardResponse claimReward(
             @PathVariable("rewardId") UUID rewardId,
-            @Valid @RequestBody ClaimRewardRequest request) {
+            @RequestHeader("X-Campaign-Id") UUID campaignId) {
 
-        return service.claimReward(rewardId, request);
+        return service.claimReward(rewardId, campaignId);
     }
 }

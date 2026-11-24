@@ -5,19 +5,20 @@ import java.util.Objects;
 // Represents one listing whose authoritative state is stored by the marketplace API.
 public record MarketplaceListing(
 		String id,
-		String sellerId,
+		String sellerName,
 		String itemId,
 		int quantity,
 		int unitPrice,
 		int totalPrice,
-		ListingStatus status) {
+		ListingStatus status,
+		boolean ownedByCurrentCampaign) {
 
 	public MarketplaceListing {
 		if (id == null || id.isBlank()) {
 			throw new IllegalArgumentException("Listing ID cannot be empty.");
 		}
-		if (sellerId == null || sellerId.isBlank()) {
-			throw new IllegalArgumentException("Seller ID cannot be empty.");
+		if (sellerName == null || sellerName.isBlank()) {
+			throw new IllegalArgumentException("Seller name cannot be empty.");
 		}
 		if (itemId == null || itemId.isBlank()) {
 			throw new IllegalArgumentException("Item ID cannot be empty.");

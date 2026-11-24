@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.UUID;
 
 import rpg.characters.CharacterNameCatalog;
 import rpg.characters.CharacterNameLoader;
@@ -565,6 +566,7 @@ public class Main {
 
 			CharacterGrowthCalculator characterGrowthCalculator = new CharacterGrowthCalculator();
 
+			UUID campaignId;
 			Party party;
 			WorldClock worldClock;
 
@@ -577,6 +579,7 @@ public class Main {
 				                characterGrowthCalculator
 				        );
 
+				campaignId = UUID.randomUUID();
 				party = developmentPartyFactory.create();
 				currentScenario = scenarioCatalog.getById("bree");
 				worldProgress = new WorldProgress(scenarioCatalog);
@@ -627,6 +630,7 @@ public class Main {
                         RestoredCampaign restoredCampaign =
                                 loadResult.getRestoredCampaign().orElseThrow();
 
+						campaignId = restoredCampaign.getCampaignId();
 						party = restoredCampaign.getParty();
 						currentScenario = restoredCampaign.getCurrentScenario();
 						worldProgress = restoredCampaign.getWorldProgress();
@@ -657,6 +661,7 @@ public class Main {
 						continue;
 					}
 
+					campaignId = UUID.randomUUID();
 					party = createdParty.get();
 					currentScenario = scenarioCatalog.getById("bree");
 					worldProgress = new WorldProgress(scenarioCatalog);
@@ -778,6 +783,7 @@ public class Main {
 
             World world =
                     new World(
+					campaignId,
 					party,
 					currentScenario,
 					consoleInput,
@@ -824,7 +830,7 @@ public class Main {
 					questDialogueCatalog,
 					bestiaryStateCatalog,
                     new MarketplaceApiClient(System.getProperty(
-                            "rpg.marketplace.api.url", "http://localhost:8080")));
+                            "rpg.marketplace.api.url", "http://localhost:8080"), campaignId));
 
 			world.start();
 

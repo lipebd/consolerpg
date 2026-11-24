@@ -1,6 +1,6 @@
 # RPGConsole — Save State
 
-> **Implementation status:** Internal save format version 4 is fully integrated. The game creates one coordinated immutable snapshot containing party, world, shop, quest, permanent-flag, recruitment-candidate and bestiary-discovery state; serializes and encrypts it into `save.txt`; atomically replaces the previous save; and validates and reconstructs an isolated complete campaign before runtime activation. Earlier internal versions are rejected without migration. Version 4 preserves the implemented version-3 narrative contract and adds explicit discovered enemy IDs. The bestiary property round trip and strict earlier-version rejection have automated coverage; a representative full restart after the Quest 5 recruitment and invalid narrative-payload cases remain pending.
+> **Implementation status:** Internal save format 5 adds the persistent campaign UUID to the encrypted snapshot. The game can still read format 4 and writes format 5 on the next successful save. The encrypted outer container and atomic write behavior are unchanged.
 
 ## Purpose
 
@@ -866,7 +866,7 @@ Rules:
 * Incompatible catalog-ID changes may require migration or intentional save incompatibility.
 * Raising the playable-character maximum level alone does not require a save-format change.
 
-The current implementation supports only internal format version 4. Internal versions 1, 2 and 3 are rejected without migration. The encrypted outer-container format remains version 1 and is unchanged by this schema evolution.
+The current implementation reads internal formats 4 and 5 and writes format 5. When format 4 is loaded, a UUID is generated for the campaign and written as `campaign.id` during the next successful save. Format 5 requires this field. Internal versions 1, 2 and 3 are rejected without migration. The encrypted outer-container format remains version 1 and is unchanged by this schema evolution.
 
 ### V6 Part 9 persistence boundary
 

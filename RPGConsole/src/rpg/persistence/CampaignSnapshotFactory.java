@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 import rpg.battle.rewards.PartyRewardModifierState;
 import rpg.characters.CharacterEquipment;
@@ -34,6 +35,7 @@ public final class CampaignSnapshotFactory {
 	private CampaignSnapshotFactory() {}
 
 	public static CampaignSnapshot create(
+			UUID campaignId,
 			Party party,
 			Scenario currentScenario,
 			WorldProgress worldProgress,
@@ -85,6 +87,7 @@ public final class CampaignSnapshotFactory {
 				new BestiarySnapshot(bestiaryStateCatalog.getDiscoveredEnemyIds());
 
 		return new CampaignSnapshot(
+				campaignId,
 				partySnapshot,
 				worldSnapshot,
 				shopSnapshots,

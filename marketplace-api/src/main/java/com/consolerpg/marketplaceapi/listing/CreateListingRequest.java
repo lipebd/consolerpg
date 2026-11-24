@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Positive;
 public record CreateListingRequest(
 
         @NotBlank
-        String sellerId,
+        String sellerName,
 
         @NotBlank
         String itemId,

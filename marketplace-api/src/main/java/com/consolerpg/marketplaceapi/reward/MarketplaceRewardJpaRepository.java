@@ -13,8 +13,8 @@ import org.springframework.data.repository.query.Param;
 public interface MarketplaceRewardJpaRepository
         extends JpaRepository<MarketplaceRewardEntity, UUID> {
 
-    List<MarketplaceRewardEntity> findAllBySellerIdAndStatus(
-            String sellerId,
+    List<MarketplaceRewardEntity> findAllBySellerCampaignIdAndStatus(
+            UUID sellerCampaignId,
             RewardStatus status);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

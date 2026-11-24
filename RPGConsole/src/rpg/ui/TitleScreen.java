@@ -6,7 +6,7 @@ public final class TitleScreen {
 	private static final int SCREEN_WIDTH = 77;
 	private static final String SEPARATOR = "=";
 	private static final String GAME_TITLE = "RPG CONSOLE";
-	private static final String GAME_VERSION = "v9.0.0";
+	private static final String GAME_VERSION = "v9.1.0";
 
 	private TitleScreen() {
 	}

@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 import rpg.marketplace.ListingStatus;
 import rpg.marketplace.MarketplaceListing;
@@ -26,12 +27,14 @@ public final class MarketplaceApiClient {
 
 	private final HttpClient httpClient;
 	private final String baseUrl;
+	private final UUID campaignId;
 
-	public MarketplaceApiClient(String baseUrl) {
+	public MarketplaceApiClient(String baseUrl, UUID campaignId) {
 		if (baseUrl == null || baseUrl.isBlank()) {
 			throw new IllegalArgumentException("Marketplace API base URL cannot be empty.");
 		}
 
+		this.campaignId = Objects.requireNonNull(campaignId, "Campaign ID cannot be null.");
 		this.baseUrl = baseUrl.endsWith("/")
 				? baseUrl.substring(0, baseUrl.length() - 1)
 				: baseUrl;
@@ -46,20 +49,19 @@ public final class MarketplaceApiClient {
 		return parseListings(responseBody);
 	}
 
-	public List<MarketplaceListing> getListingsForSeller(String sellerId)
+	public List<MarketplaceListing> getOwnListings()
 			throws IOException, InterruptedException {
-		String query = "?sellerId=" + encode(sellerId);
-		String responseBody = send("GET", "/api/listings" + query, null, 200);
+		String responseBody = send("GET", "/api/listings?mine=true", null, 200);
 		return parseListings(responseBody);
 	}
 
 	public MarketplaceListing createListing(
-			String sellerId,
+			String sellerName,
 			String itemId,
 			int quantity,
 			int unitPrice) throws IOException, InterruptedException {
 		Map<String, Object> fields = new LinkedHashMap<>();
-		fields.put("sellerId", sellerId);
+		fields.put("sellerName", sellerName);
 		fields.put("itemId", itemId);
 		fields.put("quantity", quantity);
 		fields.put("unitPrice", unitPrice);
@@ -68,34 +70,30 @@ public final class MarketplaceApiClient {
 		return parseListing(JsonSupport.parseObject(responseBody));
 	}
 
-	public MarketplaceListing purchaseListing(String listingId, String buyerId)
+	public MarketplaceListing purchaseListing(String listingId)
 			throws IOException, InterruptedException {
-		String requestBody = JsonSupport.object(Map.of("buyerId", buyerId));
 		String path = "/api/listings/" + encode(listingId) + "/purchase";
-		String responseBody = send("POST", path, requestBody, 200);
+		String responseBody = send("POST", path, null, 200);
 		return parseListing(JsonSupport.parseObject(responseBody));
 	}
 
-	public MarketplaceListing cancelListing(String listingId, String sellerId)
+	public MarketplaceListing cancelListing(String listingId)
 			throws IOException, InterruptedException {
-		String requestBody = JsonSupport.object(Map.of("sellerId", sellerId));
 		String path = "/api/listings/" + encode(listingId) + "/cancel";
-		String responseBody = send("POST", path, requestBody, 200);
+		String responseBody = send("POST", path, null, 200);
 		return parseListing(JsonSupport.parseObject(responseBody));
 	}
 
-	public List<PendingReward> getPendingRewards(String sellerId)
+	public List<PendingReward> getPendingRewards()
 			throws IOException, InterruptedException {
-		String path = "/api/rewards?sellerId=" + encode(sellerId);
-		String responseBody = send("GET", path, null, 200);
+		String responseBody = send("GET", "/api/rewards", null, 200);
 		return parseRewards(responseBody);
 	}
 
-	public PendingReward claimReward(String rewardId, String sellerId)
+	public PendingReward claimReward(String rewardId)
 			throws IOException, InterruptedException {
-		String requestBody = JsonSupport.object(Map.of("sellerId", sellerId));
 		String path = "/api/rewards/" + encode(rewardId) + "/claim";
-		String responseBody = send("POST", path, requestBody, 200);
+		String responseBody = send("POST", path, null, 200);
 		return parseReward(JsonSupport.parseObject(responseBody));
 	}
 
@@ -104,7 +102,8 @@ public final class MarketplaceApiClient {
 		HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
 				.uri(URI.create(baseUrl + path))
 				.timeout(REQUEST_TIMEOUT)
-				.header("Accept", "application/json");
+				.header("Accept", "application/json")
+				.header("X-Campaign-Id", campaignId.toString());
 
 		if (requestBody == null) {
 			requestBuilder.method(method, HttpRequest.BodyPublishers.noBody());
@@ -142,12 +141,13 @@ public final class MarketplaceApiClient {
 	private static MarketplaceListing parseListing(Map<String, Object> object) {
 		return new MarketplaceListing(
 				JsonSupport.requiredString(object, "id"),
-				JsonSupport.requiredString(object, "sellerId"),
+				JsonSupport.requiredString(object, "sellerName"),
 				JsonSupport.requiredString(object, "itemId"),
 				JsonSupport.requiredInt(object, "quantity"),
 				JsonSupport.requiredInt(object, "unitPrice"),
 				JsonSupport.requiredInt(object, "totalPrice"),
-				ListingStatus.valueOf(JsonSupport.requiredString(object, "status")));
+				ListingStatus.valueOf(JsonSupport.requiredString(object, "status")),
+				JsonSupport.requiredBoolean(object, "ownedByCurrentCampaign"));
 	}
 
 	private static List<PendingReward> parseRewards(String json) throws IOException {
@@ -168,7 +168,6 @@ public final class MarketplaceApiClient {
 		return new PendingReward(
 				JsonSupport.requiredString(object, "id"),
 				JsonSupport.requiredString(object, "transactionId"),
-				JsonSupport.requiredString(object, "sellerId"),
 				JsonSupport.requiredInt(object, "amount"),
 				RewardStatus.valueOf(JsonSupport.requiredString(object, "status")));
 	}

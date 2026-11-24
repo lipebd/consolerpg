@@ -164,6 +164,7 @@ public final class CampaignSnapshotRestorer {
 		        candidateStateCatalog);
 
 		return new RestoredCampaign(
+		        snapshot.getCampaignId(),
 		        party,
 		        currentScenario,
 		        worldProgress,

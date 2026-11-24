@@ -32,7 +32,7 @@ public class MarketplaceListingService {
 
     @Transactional
     public ListingResponse createListing(
-            CreateListingRequest request) {
+            UUID sellerCampaignId, CreateListingRequest request) {
 
         try {
             Math.multiplyExact(request.quantity(), request.unitPrice());
@@ -43,7 +43,8 @@ public class MarketplaceListingService {
 
         MarketplaceListingEntity listing =
                 new MarketplaceListingEntity(
-                        request.sellerId(),
+                        sellerCampaignId,
+                        request.sellerName(),
                         request.itemId(),
                         request.quantity(),
                         request.unitPrice()
@@ -52,64 +53,60 @@ public class MarketplaceListingService {
         MarketplaceListingEntity savedListing =
                 repository.save(listing);
 
-        return ListingResponse.from(savedListing);
+        return ListingResponse.from(savedListing, sellerCampaignId);
     }
 
     @Transactional(readOnly = true)
-    public List<ListingResponse> getActiveListings() {
+    public List<ListingResponse> getActiveListings(UUID campaignId) {
         return repository
                 .findAllByStatus(ListingStatus.ACTIVE)
                 .stream()
-                .map(ListingResponse::from)
+                .map(listing -> ListingResponse.from(listing, campaignId))
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<ListingResponse> getListingsForSeller(String sellerId) {
-        if (sellerId == null || sellerId.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Seller ID cannot be empty.");
-        }
-
+    public List<ListingResponse> getListingsForSeller(UUID campaignId) {
         return repository
-                .findAllBySellerId(sellerId)
+                .findAllBySellerCampaignId(campaignId)
                 .stream()
                 .filter(listing -> listing.getStatus() != ListingStatus.CANCELLED)
-                .map(ListingResponse::from)
+                .map(listing -> ListingResponse.from(listing, campaignId))
                 .toList();
     }
 
     @Transactional
     public ListingResponse purchaseListing(
             UUID listingId,
-            PurchaseListingRequest request) {
+            UUID campaignId) {
 
         MarketplaceListingEntity listing = findLockedListing(listingId);
 
         if (listing.getStatus() != ListingStatus.ACTIVE) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Listing is not active.");
         }
-        if (listing.getSellerId().equals(request.buyerId())) {
+        if (listing.getSellerCampaignId().equals(campaignId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "A seller cannot buy their own listing.");
         }
 
         listing.markAsSold();
 
         MarketplaceTransactionEntity transaction = transactionRepository.save(
-                new MarketplaceTransactionEntity(listing, request.buyerId()));
+                new MarketplaceTransactionEntity(listing, campaignId));
 
         rewardRepository.save(new MarketplaceRewardEntity(transaction));
 
-        return ListingResponse.from(listing);
+        return ListingResponse.from(listing, campaignId);
     }
 
     @Transactional
     public ListingResponse cancelListing(
             UUID listingId,
-            CancelListingRequest request) {
+            UUID campaignId) {
 
         MarketplaceListingEntity listing = findLockedListing(listingId);
 
-        if (!listing.getSellerId().equals(request.sellerId())) {
+        if (!listing.getSellerCampaignId().equals(campaignId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the seller can cancel this listing.");
         }
         if (listing.getStatus() != ListingStatus.ACTIVE) {
@@ -118,7 +115,7 @@ public class MarketplaceListingService {
 
         listing.cancel();
 
-        return ListingResponse.from(listing);
+        return ListingResponse.from(listing, campaignId);
     }
 
     private MarketplaceListingEntity findLockedListing(UUID listingId) {

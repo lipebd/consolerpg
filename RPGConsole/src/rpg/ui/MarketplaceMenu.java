@@ -402,7 +402,7 @@ public final class MarketplaceMenu {
 		System.out.println("Quantidade: " + listing.quantity());
 		System.out.println("Total: " + GameCurrency.format(listing.totalPrice()));
 		if (showSeller) {
-			System.out.println("Vendedor: " + listing.sellerId());
+			System.out.println("Vendedor: " + listing.sellerName());
 		} else {
 			System.out.println("Status: " + getStatusLabel(listing.status()));
 		}
@@ -414,7 +414,7 @@ public final class MarketplaceMenu {
 		System.out.println("Preço unitário: " + GameCurrency.format(listing.unitPrice()));
 		System.out.println("Total: " + GameCurrency.format(listing.totalPrice()));
 		if (showSeller) {
-			System.out.println("Vendedor: " + listing.sellerId());
+			System.out.println("Vendedor: " + listing.sellerName());
 		}
 		System.out.println("Status: " + getStatusLabel(listing.status()));
 	}

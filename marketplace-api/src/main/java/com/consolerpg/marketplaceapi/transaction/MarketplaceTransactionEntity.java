@@ -20,10 +20,10 @@ public class MarketplaceTransactionEntity {
     private UUID listingId;
 
     @Column(nullable = false, updatable = false)
-    private String buyerId;
+    private UUID buyerCampaignId;
 
     @Column(nullable = false, updatable = false)
-    private String sellerId;
+    private UUID sellerCampaignId;
 
     @Column(nullable = false, updatable = false)
     private String itemId;
@@ -42,22 +42,22 @@ public class MarketplaceTransactionEntity {
 
     public MarketplaceTransactionEntity(
             MarketplaceListingEntity listing,
-            String buyerId) {
+            UUID buyerCampaignId) {
 
         if (listing == null) {
             throw new IllegalArgumentException("Listing cannot be null.");
         }
-        if (buyerId == null || buyerId.isBlank()) {
-            throw new IllegalArgumentException("Buyer ID cannot be empty.");
+        if (buyerCampaignId == null) {
+            throw new IllegalArgumentException("Buyer campaign ID cannot be null.");
         }
-        if (buyerId.equals(listing.getSellerId())) {
+        if (buyerCampaignId.equals(listing.getSellerCampaignId())) {
             throw new IllegalArgumentException("Buyer and seller cannot be the same player.");
         }
 
         this.id = UUID.randomUUID();
         this.listingId = listing.getId();
-        this.buyerId = buyerId;
-        this.sellerId = listing.getSellerId();
+        this.buyerCampaignId = buyerCampaignId;
+        this.sellerCampaignId = listing.getSellerCampaignId();
         this.itemId = listing.getItemId();
         this.quantity = listing.getQuantity();
         this.unitPrice = listing.getUnitPrice();
@@ -72,12 +72,12 @@ public class MarketplaceTransactionEntity {
         return listingId;
     }
 
-    public String getBuyerId() {
-        return buyerId;
+    public UUID getBuyerCampaignId() {
+        return buyerCampaignId;
     }
 
-    public String getSellerId() {
-        return sellerId;
+    public UUID getSellerCampaignId() {
+        return sellerCampaignId;
     }
 
     public String getItemId() {

@@ -3,6 +3,7 @@ package rpg.persistence;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.Set;
 
 import rpg.characters.CharacterNameRules;
@@ -10,6 +11,7 @@ import rpg.characters.CharacterNameRules;
 // Stores one complete immutable campaign snapshot.
 public final class CampaignSnapshot {
 
+	private final UUID campaignId;
 	private final PartySnapshot party;
 	private final WorldSnapshot world;
 	private final List<ShopSnapshot> shops;
@@ -19,6 +21,7 @@ public final class CampaignSnapshot {
 	private final BestiarySnapshot bestiary;
 
 	public CampaignSnapshot(
+			UUID campaignId,
 			PartySnapshot party,
 			WorldSnapshot world,
 			List<ShopSnapshot> shops,
@@ -27,6 +30,7 @@ public final class CampaignSnapshot {
 			List<RecruitmentCandidateSnapshot> recruitmentCandidates,
 			BestiarySnapshot bestiary
 	) {
+		this.campaignId = Objects.requireNonNull(campaignId, "Campaign ID cannot be null.");
 		this.party =
 				Objects.requireNonNull(
 						party,
@@ -127,6 +131,10 @@ public final class CampaignSnapshot {
 				}
 			}
 		}
+	}
+
+	public UUID getCampaignId() {
+		return campaignId;
 	}
 
 	public PartySnapshot getParty() {
