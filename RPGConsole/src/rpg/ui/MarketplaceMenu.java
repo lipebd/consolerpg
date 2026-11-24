@@ -85,7 +85,7 @@ public final class MarketplaceMenu {
 		if (!consoleInput.readTrimmedLine().equals("1")) {
 			return;
 		}
-		
+
 		ConsoleUI.clearScreen();
 		System.out.println("[COMPRA]");
 		System.out.println("\nRealizando a transação. Aguarde...");
@@ -213,13 +213,13 @@ public final class MarketplaceMenu {
 		if (unitPrice == null) {
 			return;
 		}
-		
+
 		ConsoleUI.clearScreen();
 		System.out.println("[NOVO ANÚNCIO]");
 		System.out.println("\nRegistrando anúncio. Aguarde...");
 
 		MarketplaceListingCreationResult result = transactionService.createListing(item.getId(), quantity, unitPrice);
-		
+
 		ConsoleUI.clearScreen();
 		System.out.println("[NOVO ANÚNCIO]");
 		switch (result) {
@@ -330,7 +330,7 @@ public final class MarketplaceMenu {
 		if (!consoleInput.readTrimmedLine().equals("1")) {
 			return;
 		}
-		
+
 		ConsoleUI.clearScreen();
 		System.out.println("[CANCELAR ANÚNCIO]");
 		System.out.println("\nSolicitiando o cancelamento do anúncio. Aguarde...");
